@@ -121,7 +121,8 @@ type
   public
     constructor Create(ASource: TObject; ASourcePropertyName: string;
       ATarget: TObject; ATargetPropertyName: string;
-      ABindingMode: TBindingMode = BindingModeDefault); overload;
+      ABindingMode: TBindingMode = BindingModeDefault;
+      AConverter: IValueConverter = nil); overload;
     destructor Destroy; override;
 
     procedure UpdateSource;
@@ -240,12 +241,14 @@ end;
 { TBinding }
 
 constructor TBinding.Create(ASource: TObject; ASourcePropertyName: string;
-  ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode);
+  ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
+  AConverter: IValueConverter);
 begin
   inherited Create();
   FActive := False;
 
   FBindingMode := ABindingMode;
+  FConverter := AConverter;
 
   FSourcePropertyName := ASourcePropertyName;
   SetSource(ASource);

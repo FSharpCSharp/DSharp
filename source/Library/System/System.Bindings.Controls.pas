@@ -66,6 +66,8 @@ type
   private
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure CMExit(var Message: TCMExit); message CM_EXIT;
+    function GetText: TCaption;
+    procedure SetText(const Value: TCaption);
   protected
     procedure Change; override;
     procedure Select; override;
@@ -73,6 +75,8 @@ type
     procedure SetItemIndex(const Value: Integer); override;
   public
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+  published
+    property Text: TCaption read GetText write SetText;
   end;
 
   TDateTimePicker = class(ComCtrls.TDateTimePicker, INotifyPropertyChanged)
@@ -195,6 +199,11 @@ begin
   Result := FOnPropertyChanged.EventHandler;
 end;
 
+function TComboBox.GetText: TCaption;
+begin
+  Result := inherited Text;
+end;
+
 procedure TComboBox.Select;
 begin
   inherited;
@@ -205,6 +214,21 @@ procedure TComboBox.SetItemIndex(const Value: Integer);
 begin
   inherited;
   FOnPropertyChanged.Invoke(Self, 'ItemIndex', utPropertyChanged);
+end;
+
+procedure TComboBox.SetText(const Value: TCaption);
+var
+  i: Integer;
+begin
+  inherited Text := Value;
+  if Style = csDropDownList then
+  begin
+    i := Items.IndexOf(Value);
+    if i > -1 then
+    begin
+      ItemIndex := i;
+    end;
+  end;
 end;
 
 { TDateTimePicker }

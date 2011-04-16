@@ -35,4 +35,31 @@ object MainForm: TMainForm
     Height = 22
     TabOrder = 2
   end
+  object CheckBox1: TCheckBox
+    Left = 208
+    Top = 58
+    Width = 121
+    Height = 17
+    Caption = 'Enable color picker'
+    TabOrder = 3
+  end
+  object ComboBox1: TComboBox
+    Left = 208
+    Top = 96
+    Width = 145
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 4
+    Items.Strings = (
+      '6'
+      '7'
+      '8'
+      '9'
+      '10'
+      '11'
+      '12'
+      '14'
+      '16'
+      '18')
+  end
 end

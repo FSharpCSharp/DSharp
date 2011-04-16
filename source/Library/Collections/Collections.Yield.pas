@@ -31,13 +31,14 @@ unit Collections.Yield;
 
 interface
 
-{$DEFINE USE_FIBERS}
 {.$DEFINE USE_COLLECTIONS}
+{$DEFINE USE_FIBERS}
 
 uses
 {$IFDEF USE_COLLECTIONS}
   Collections.Base,
 {$ELSE}
+  Collections.Generics,
   Generics.Collections,
 {$ENDIF}
 {$IFDEF USE_FIBERS}
@@ -53,7 +54,7 @@ type
 {$IFDEF USE_COLLECTIONS}
   TDelegateEnumerable<T> = class(TEnexCollection<T>)
 {$ELSE}
-  TDelegateEnumerable<T> = class(TEnumerable<T>)
+  TDelegateEnumerable<T> = class(TEnumerableEx<T>)
 {$ENDIF}
   strict private
     FEnumeration: TProc;
@@ -62,7 +63,7 @@ type
 {$IFDEF USE_COLLECTIONS}
       TEnumerator = class(TInterfacedObject, IEnumerator<T>)
 {$ELSE}
-      TEnumerator = class(TEnumerator<T>)
+      TEnumerator = class(TEnumeratorEx<T>)
 {$ENDIF}
       private
 {$IFDEF USE_FIBERS}

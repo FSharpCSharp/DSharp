@@ -1,7 +1,7 @@
-object Form1: TForm1
+object Form2: TForm2
   Left = 0
   Top = 0
-  Caption = 'Sample 3'
+  Caption = 'Sample 4'
   ClientHeight = 290
   ClientWidth = 554
   Color = clBtnFace
@@ -11,6 +11,7 @@ object Form1: TForm1
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
   DesignSize = (
     554
     290)
@@ -21,9 +22,8 @@ object Form1: TForm1
     Top = 8
     Width = 105
     Height = 25
-    Caption = 'Get numbers'
+    Caption = 'Trigger event'
     TabOrder = 0
-    OnClick = Button1Click
   end
   object Memo1: TMemo
     Left = 8
@@ -31,16 +31,6 @@ object Form1: TForm1
     Width = 538
     Height = 243
     Anchors = [akLeft, akTop, akRight, akBottom]
-    ScrollBars = ssVertical
     TabOrder = 1
-  end
-  object Button2: TButton
-    Left = 136
-    Top = 8
-    Width = 105
-    Height = 25
-    Caption = 'Power'
-    TabOrder = 2
-    OnClick = Button2Click
   end
 end

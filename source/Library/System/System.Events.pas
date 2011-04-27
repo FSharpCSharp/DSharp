@@ -44,6 +44,8 @@ type
     FInternalDispatcher: TMethod;
     FMethods: TList<TMethod>;
     procedure InternalInvoke(Params: PParameters; StackSize: Integer);
+    procedure InternalNotify(Sender: TObject; const Item: TMethod;
+      Action: TCollectionNotification);
   strict protected
     type
       TEvent = procedure of object;
@@ -81,10 +83,14 @@ type
   public
     constructor Create(AOwner: TComponent); overload;
     constructor Create(AOwner: TComponent; AEvents: array of T); overload;
+    class function Create<TDelegate>(AOwner: TComponent;
+      ADelegates: array of TDelegate): TEventHandler<T>; overload;
     destructor Destroy; override;
-    procedure Add(AEvent: T);
+    procedure Add(AEvent: T); overload;
+    procedure Add<TDelegate>(ADelegate: TDelegate); overload;
+    procedure Remove(AEvent: T); overload;
+    procedure Remove<TDelegate>(ADelegate: TDelegate); overload;
     function IndexOf(AEvent: T): Integer;
-    procedure Remove(AEvent: T);
     property Invoke: T read GetInvoke;
     property Owner: TComponent read FOwner;
   end;
@@ -106,13 +112,39 @@ type
     class operator Implicit(const AValue: IEventHandler<T>): TEvent<T>;
   end;
 
+function IsValid(AObject: TObject): Boolean;
+procedure MethodReferenceToMethodPointer(const AMethodReference; var AMethodPointer);
+
 implementation
+
+function IsValid(AObject: TObject): Boolean;
+begin
+  Result := False;
+  if Assigned(AObject) then
+  try
+    Result := Pointer(PPointer(AObject)^) =
+      Pointer(Pointer(Cardinal(PPointer(AObject)^) + Cardinal(vmtSelfPtr))^);
+  except
+  end;
+end;
+
+procedure MethodReferenceToMethodPointer(const AMethodReference; var AMethodPointer);
+type
+  TVtable = array[0..3] of Pointer;
+  PVtable = ^TVtable;
+  PPVtable = ^PVtable;
+begin
+  // 3 is offset of Invoke, after QI, AddRef, Release
+  TMethod(AMethodPointer).Code := PPVtable(AMethodReference)^^[3];
+  TMethod(AMethodPointer).Data := Pointer(AMethodReference);
+end;
 
 { TEventHandler }
 
 constructor TEventHandler.Create;
 begin
   FMethods := TList<TMethod>.Create();
+  FMethods.OnNotify := InternalNotify;
 end;
 
 destructor TEventHandler.Destroy;
@@ -153,6 +185,18 @@ begin
       MOV ECX,[EAX].TParameters.Registers.DWORD[4]
       MOV EAX,LMethod.Data
       CALL LMethod.Code
+    end;
+  end;
+end;
+
+procedure TEventHandler.InternalNotify(Sender: TObject; const Item: TMethod;
+  Action: TCollectionNotification);
+begin
+  if not IsValid(Item.Data) then
+  begin
+    case Action of
+      cnAdded: IInterface(Item.Data)._AddRef();
+      cnRemoved: IInterface(Item.Data)._Release();
     end;
   end;
 end;
@@ -269,10 +313,79 @@ begin
   end;
 end;
 
+class function TEventHandler<T>.Create<TDelegate>(AOwner: TComponent;
+  ADelegates: array of TDelegate): TEventHandler<T>;
+var
+  LDelegate: TDelegate;
+begin
+  Result := Create(AOwner);
+  for LDelegate in ADelegates do
+  begin
+    Result.Add<TDelegate>(LDelegate);
+  end;
+end;
+
 destructor TEventHandler<T>.Destroy;
 begin
   FNotificationHandler.Free();
   inherited;
+end;
+
+procedure TEventHandler<T>.Add(AEvent: T);
+begin
+  inherited Add(TEvent(Pointer(@AEvent)^));
+end;
+
+procedure TEventHandler<T>.Add<TDelegate>(ADelegate: TDelegate);
+var
+  LEvent: T;
+  LTypeInfo: PTypeInfo;
+  LTypeData: PTypeData;
+//  LContext: TRttiContext;
+//  LMethod: TRttiMethod;
+//  LParams: TArray<TRttiParameter>;
+begin
+  LTypeInfo := TypeInfo(TDelegate);
+  Assert(LTypeInfo.Kind = tkInterface, 'TDelegate must be a method reference');
+  LTypeInfo := TypeInfo(T);
+  LTypeData := GetTypeData(LTypeInfo);
+
+//  Does not work right now because method references are missing RTTI
+//  LMethod := LContext.GetType(TypeInfo(TDelegate)).GetMethod('Invoke');
+//  Assert(LMethod.MethodKind = LTypeData.MethodKind, 'MethodKind does not match');
+//  LParams := LMethod.GetParameters();
+//  Assert(Length(LParams) = LTypeData.ParamCount, 'ParamCount does not match');
+  MethodReferenceToMethodPointer(ADelegate, LEvent);
+  Add(LEvent);
+end;
+
+function TEventHandler<T>.GetInvoke: T;
+begin
+  Result := FInvoke;
+end;
+
+function TEventHandler<T>.IndexOf(AEvent: T): Integer;
+begin
+  Result := inherited IndexOf(TEvent(Pointer(@AEvent)^));
+end;
+
+procedure TEventHandler<T>.MethodAdded(const AMethod: TMethod);
+begin
+  inherited;
+  if IsValid(AMethod.Data) and (TObject(AMethod.Data) is TComponent) then
+  begin
+    FNotificationHandler.FreeNotification(TComponent(AMethod.Data));
+  end;
+end;
+
+procedure TEventHandler<T>.MethodRemoved(const AMethod: TMethod);
+begin
+  inherited;
+  if IsValid(AMethod.Data) and (TObject(AMethod.Data) is TComponent)
+    and (IndexOfInstance(TObject(AMethod.Data)) < 0) then
+  begin
+    FNotificationHandler.RemoveFreeNotification(TComponent(AMethod.Data));
+  end;
 end;
 
 procedure TEventHandler<T>.Notification(
@@ -289,43 +402,17 @@ begin
   end;
 end;
 
-procedure TEventHandler<T>.Add(AEvent: T);
-begin
-  inherited Add(TEvent(Pointer(@AEvent)^));
-end;
-
-function TEventHandler<T>.GetInvoke: T;
-begin
-  Result := FInvoke;
-end;
-
-function TEventHandler<T>.IndexOf(AEvent: T): Integer;
-begin
-  Result := inherited IndexOf(TEvent(Pointer(@AEvent)^));
-end;
-
-procedure TEventHandler<T>.MethodAdded(const AMethod: TMethod);
-begin
-  inherited;
-  if TObject(AMethod.Data) is TComponent then
-  begin
-    FNotificationHandler.FreeNotification(TComponent(AMethod.Data));
-  end;
-end;
-
-procedure TEventHandler<T>.MethodRemoved(const AMethod: TMethod);
-begin
-  inherited;
-  if (TObject(AMethod.Data) is TComponent)
-    and (IndexOfInstance(TObject(AMethod.Data)) < 0) then
-  begin
-    FNotificationHandler.RemoveFreeNotification(TComponent(AMethod.Data));
-  end;
-end;
-
 procedure TEventHandler<T>.Remove(AEvent: T);
 begin
   inherited Remove(TEvent(Pointer(@AEvent)^));
+end;
+
+procedure TEventHandler<T>.Remove<TDelegate>(ADelegate: TDelegate);
+var
+  LEvent: T;
+begin
+  MethodReferenceToMethodPointer(ADelegate, LEvent);
+  Remove(LEvent);
 end;
 
 procedure TEventHandler<T>.SetEventDispatcher(var ADispatcher: T;

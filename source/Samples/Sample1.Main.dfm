@@ -38,7 +38,7 @@ object MainForm: TMainForm
   object CheckBox1: TCheckBox
     Left = 208
     Top = 58
-    Width = 121
+    Width = 145
     Height = 17
     Caption = 'Enable color picker'
     TabOrder = 3
@@ -61,5 +61,21 @@ object MainForm: TMainForm
       '14'
       '16'
       '18')
+  end
+  object Button1: TButton
+    Left = 16
+    Top = 136
+    Width = 105
+    Height = 25
+    Caption = 'Change caption'
+    TabOrder = 5
+    OnClick = Button1Click
+  end
+  object Edit3: TEdit
+    Left = 16
+    Top = 96
+    Width = 145
+    Height = 21
+    TabOrder = 6
   end
 end

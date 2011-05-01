@@ -32,23 +32,34 @@ unit Collections.Generics;
 interface
 
 uses
-  Generics.Collections;
+  Generics.Collections,
+  Rtti;
 
 type
   TEnumerableEx<T> = class(TEnumerable<T>, IEnumerable<T>, IEnumerable)
   private
     FRefCount: Integer;
+    FEnumerable: TEnumerable<T>;
+    FList: TList<T>;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
     function GetEnumerator: IEnumerator;
     function GetEnumeratorGeneric: IEnumerator<T>; virtual;
     function IEnumerable<T>.GetEnumerator = GetEnumeratorGeneric;
+  protected
+    function DoGetEnumerator: TEnumerator<T>; override;
+  public
+    constructor Create(AArray: array of T); overload;
+    constructor Create(AEnumerable: TEnumerable<T>); overload;
+    destructor Destroy; override;
   end;
 
   TEnumeratorEx<T> = class(TEnumerator<T>, IEnumerator<T>, IEnumerator)
   private
     FRefCount: Integer;
+    FItems: TObjectList<TObject>;
+    FEnumerator: TEnumerator<T>;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
@@ -59,6 +70,8 @@ type
     function DoGetCurrent: T; override;
     function DoMoveNext: Boolean; override;
   public
+    constructor Create(AEnumerator: TEnumerator<T>);
+    destructor Destroy; override;
     function MoveNext: Boolean;
     procedure Reset; virtual;
   end;
@@ -66,13 +79,44 @@ type
 implementation
 
 uses
+  System.Generics,
   Windows;
 
 { TEnumerableEx<T> }
 
+constructor TEnumerableEx<T>.Create(AArray: array of T);
+begin
+  FList := TList<T>.Create();
+  FList.AddRange(AArray);
+  FEnumerable := FList;
+end;
+
+constructor TEnumerableEx<T>.Create(AEnumerable: TEnumerable<T>);
+begin
+  FEnumerable := AEnumerable;
+end;
+
+destructor TEnumerableEx<T>.Destroy;
+begin
+  FList.Free();
+  inherited;
+end;
+
+function TEnumerableEx<T>.DoGetEnumerator: TEnumerator<T>;
+begin
+  inherited;
+end;
+
 function TEnumerableEx<T>.GetEnumerator: IEnumerator;
 begin
-  Result := TEnumeratorEx<TObject>(DoGetEnumerator());
+  if Assigned(FEnumerable) then
+  begin
+    Result := TEnumeratorEx<T>.Create(FEnumerable.GetEnumerator());
+  end
+  else
+  begin
+    Result := TEnumeratorEx<TObject>(DoGetEnumerator());
+  end;
 end;
 
 function TEnumerableEx<T>.GetEnumeratorGeneric: IEnumerator<T>;
@@ -134,19 +178,54 @@ begin
   end;
 end;
 
+constructor TEnumeratorEx<T>.Create(AEnumerator: TEnumerator<T>);
+begin
+  FItems := TObjectList<TObject>.Create(True);
+  FEnumerator := AEnumerator;
+end;
+
+destructor TEnumeratorEx<T>.Destroy;
+begin
+  FItems.Free();
+  FEnumerator.Free();
+  inherited;
+end;
+
 function TEnumeratorEx<T>.DoGetCurrent: T;
 begin
-  Result := Default(T);
+  if Assigned(FEnumerator) then
+  begin
+    Result := FEnumerator.Current;
+  end
+  else
+  begin
+    Result := Default(T);
+  end;
 end;
 
 function TEnumeratorEx<T>.DoMoveNext: Boolean;
 begin
-  Result := False;
+  if Assigned(FEnumerator) then
+  begin
+    Result := FEnumerator.MoveNext;
+  end
+  else
+  begin
+    Result := False;
+  end;
 end;
 
 function TEnumeratorEx<T>.GetCurrent: TObject;
 begin
-  Result := TObject(DoGetCurrent());
+  if TRttiContext.Create.GetType(TypeInfo(T)).IsInstance then
+  begin
+    Result := TObject(DoGetCurrent());
+  end
+  else
+  begin
+    Result := TBox<T>.Create(DoGetCurrent());
+    FItems.Add(Result);
+  end;
 end;
 
 function TEnumeratorEx<T>.GetCurrentGeneric: T;

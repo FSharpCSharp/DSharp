@@ -114,6 +114,11 @@ end;
 
 constructor TDelegateEnumerable<T>.Create(const AEnumeration: TProc);
 begin
+{$IFDEF USE_COLLECTIONS}
+  inherited Create();
+{$ELSE}
+  inherited Create(nil);
+{$ENDIF}
   FEnumeration := AEnumeration;
 end;
 

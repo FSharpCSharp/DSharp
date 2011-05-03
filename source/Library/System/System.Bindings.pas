@@ -63,7 +63,7 @@ type
     function ConvertBack(Value: TValue): TValue;
   end;
 
-  TBindingBase = class abstract
+  TBindingBase = class abstract(TPersistent)
   strict protected
     FActive: Boolean;
     FBindingMode: TBindingMode;
@@ -93,16 +93,17 @@ type
     function Validate: Boolean; virtual; abstract;
 
     property Active: Boolean read FActive write SetActive;
-    property BindingMode: TBindingMode read FBindingMode write FBindingMode;
     property Converter: IValueConverter read FConverter write FConverter;
     property OnValidation: TEvent<TValidationEvent> read GetOnValidation;
-    property Target: TObject read FTarget write SetTarget;
     property TargetProperty: TRttiProperty read FTargetProperty;
+    property ValidationRules: TObjectList<TValidationRule> read FValidationRules;
+  published
+    property BindingMode: TBindingMode read FBindingMode write FBindingMode;
+    property Target: TObject read FTarget write SetTarget;
     property TargetPropertyName: string read FTargetPropertyName
       write SetTargetPropertyName;
     property TargetUpdateTrigger: TUpdateTrigger
       read FTargetUpdateTrigger write FTargetUpdateTrigger;
-    property ValidationRules: TObjectList<TValidationRule> read FValidationRules;
   end;
 
   TBinding = class(TBindingBase)
@@ -129,12 +130,26 @@ type
     procedure UpdateTarget; override;
     function Validate: Boolean; override;
 
-    property Source: TObject read FSource write SetSource;
     property SourceProperty: TRttiProperty read FSourceProperty;
+  published
+    property Source: TObject read FSource write SetSource;
     property SourcePropertyName: string read FSourcePropertyName
       write SetSourcePropertyName;
     property SourceUpdateTrigger: TUpdateTrigger
       read FSourceUpdateTrigger write FSourceUpdateTrigger;
+  end;
+
+  TBindingGroup = class(TComponent)
+  private
+    FBindings: TList<TBinding>;
+  protected
+    procedure DefineProperties(Filer: TFiler); override;
+    procedure ReadBindings(AReader: TReader);
+    procedure WriteBindings(AWriter: TWriter);
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property Bindings: TList<TBinding> read FBindings;
   end;
 
 implementation
@@ -233,8 +248,11 @@ begin
   if not SameText(FTargetPropertyName, AValue) then
   begin
     FTargetPropertyName := AValue;
-    FTargetProperty := FContext.GetType(FTarget.ClassInfo).GetProperty(FTargetPropertyName);
-    UpdateTarget();
+    if Assigned(FTarget) then
+    begin
+      FTargetProperty := FContext.GetType(FTarget.ClassInfo).GetProperty(FTargetPropertyName);
+      UpdateTarget();
+    end;
   end;
 end;
 
@@ -362,8 +380,11 @@ begin
   if not SameText(FSourcePropertyName, AValue) then
   begin
     FSourcePropertyName := AValue;
-    FSourceProperty := FContext.GetType(FSource.ClassInfo).GetProperty(FSourcePropertyName);
-    UpdateTarget();
+    if Assigned(FSource) then
+    begin
+      FSourceProperty := FContext.GetType(FSource.ClassInfo).GetProperty(FSourcePropertyName);
+      UpdateTarget();
+    end;
   end;
 end;
 
@@ -475,6 +496,102 @@ begin
       FOnValidation.Invoke(Self, LValidationRule, TValidationResult.Create(False, E.Message));
       Result := False;
     end;
+  end;
+end;
+
+{ TBindingGroup }
+
+constructor TBindingGroup.Create(AOwner: TComponent);
+var
+  i: Integer;
+begin
+  if Assigned(AOwner) then
+  begin
+    for i := 0 to AOwner.ComponentCount - 1 do
+    begin
+      if AOwner.Components[i] is TBindingGroup then
+      begin
+        raise Exception.Create('Only one binding group allowed');
+      end;
+    end;
+  end;
+  inherited;
+  FBindings := TList<TBinding>.Create;
+end;
+
+destructor TBindingGroup.Destroy;
+begin
+  FBindings.Free();
+  inherited;
+end;
+
+procedure TBindingGroup.DefineProperties(Filer: TFiler);
+begin
+  inherited;
+  Filer.DefineProperty('Bindings', ReadBindings, WriteBindings, True);
+end;
+
+type
+  TReaderHack = class(TReader)
+  end;
+
+procedure TBindingGroup.ReadBindings(AReader: TReader);
+var
+  LBinding: TBinding;
+begin
+  AReader.ReadValue();
+  try
+    if not AReader.EndOfList() then
+    begin
+      FBindings.Clear();
+    end;
+    while not AReader.EndOfList() do
+    begin
+      if AReader.NextValue in [vaInt8, vaInt16, vaInt32] then
+      begin
+        AReader.ReadInteger;
+      end;
+      LBinding := TBinding.Create(nil, '', nil, '');
+      if csDesigning in ComponentState then
+      begin
+        LBinding.Active := False;
+      end;
+      FBindings.Add(LBinding);
+      AReader.ReadListBegin();
+      while not AReader.EndOfList do
+      begin
+        TReaderHack(AReader).ReadProperty(LBinding);
+      end;
+      AReader.ReadListEnd();
+    end;
+    AReader.ReadListEnd();
+  finally
+
+  end;
+end;
+
+type
+  TWriterHack = class(TWriter)
+  end;
+
+procedure TBindingGroup.WriteBindings(AWriter: TWriter);
+var
+  LAncestor: TPersistent;
+  LBinding: TBinding;
+begin
+  LAncestor := AWriter.Ancestor;
+  AWriter.Ancestor := nil;
+  try
+    TWriterHack(AWriter).WriteValue(vaCollection);
+    for LBinding in FBindings do
+    begin
+      AWriter.WriteListBegin();
+      AWriter.WriteProperties(LBinding);
+      AWriter.WriteListEnd();
+    end;
+    AWriter.WriteListEnd();
+  finally
+    AWriter.Ancestor := LAncestor;
   end;
 end;
 

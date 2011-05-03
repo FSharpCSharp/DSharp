@@ -40,9 +40,15 @@ uses
   TypInfo;
 
 type
-  TBindingPropertyFilter = class(TSelectionEditor, ISelectionPropertyFilter)
+  TBindingSelectionEditor = class(TSelectionEditor, ISelectionPropertyFilter)
+  public
     procedure FilterProperties(const ASelection: IDesignerSelections;
       const ASelectionProperties: IInterfaceList);
+  end;
+
+  TBindingGroupSelectionEditor = class(TSelectionEditor)
+  public
+    procedure RequiresUnits(Proc: TGetStrProc); override;
   end;
 
   TBindingProperty = class(TClassProperty, IProperty, IPropertyKind)
@@ -91,40 +97,21 @@ uses
   Consts,
   RTLConsts,
   Rtti,
+  StrUtils,
   SysUtils;
 
 procedure Register;
 var
   LClass: TClass;
 begin
+  RegisterSelectionEditor(TBindingGroup, TBindingGroupSelectionEditor);
   for LClass in SupportedClasses.Keys do
   begin
-    RegisterSelectionEditor(LClass, TBindingPropertyFilter);
+    RegisterSelectionEditor(LClass, TBindingSelectionEditor);
   end;
   RegisterComponents('Data binding', [TBindingGroup]);
   RegisterPropertyEditor(TypeInfo(TObject), TBinding, 'Source', TSourceProperty);
   RegisterPropertyEditor(TypeInfo(string), TBinding, 'SourcePropertyName', TSourcePropertyNameProperty);
-end;
-
-function GetBindingByTarget(ABindingGroup: TBindingGroup; AObject: TObject): TBinding;
-var
-  LBinding: TBinding;
-begin
-  Result := nil;
-  for LBinding in ABindingGroup.Bindings do
-  begin
-    if LBinding.Target = AObject then
-    begin
-      Result := LBinding;
-    end;
-  end;
-  if not Assigned(Result) then
-  begin
-    Result := TBinding.Create(nil, '', nil, '');
-    Result.Active := False;
-    Result.Target := AObject;
-    ABindingGroup.Bindings.Add(Result);
-  end;
 end;
 
 function SupportsBinding(AComponent: TPersistent): Boolean;
@@ -137,39 +124,52 @@ begin
   Result := SupportedClasses[AComponent.ClassType];
 end;
 
-{ TBindingPropertyFilter }
+{ TBindingSelectionEditor }
 
-procedure TBindingPropertyFilter.FilterProperties(
+procedure TBindingSelectionEditor.FilterProperties(
   const ASelection: IDesignerSelections; const ASelectionProperties: IInterfaceList);
 var
-  i, k: Integer;
+  i: Integer;
+  LBindingGroup: TBindingGroup;
   LProperty: TBindingProperty;
 begin
   if ASelection.Count = 1 then
   begin
     if SupportsBinding(ASelection[0]) then
     begin
-      for i := 0 to TComponent(ASelection[0]).Owner.ComponentCount - 1 do
+      LBindingGroup := FindBindingGroup(TComponent(ASelection[0]).Owner);
+      if Assigned(LBindingGroup) then
       begin
-        if TComponent(ASelection[0]).Owner.Components[i] is TBindingGroup then
+        LProperty := TBindingProperty.Create(inherited Designer, 0);
+        LProperty.BindingGroup := LBindingGroup;
+        LProperty.Binding := LBindingGroup.GetBindingForTarget(ASelection[0] as TObject);
+        LProperty.Binding.TargetPropertyName := GetTargetPropertyName(ASelection[0]);
+        for i := 0 to ASelectionProperties.Count - 1 do
         begin
-          LProperty := TBindingProperty.Create(inherited Designer, 0);
-          LProperty.BindingGroup := TComponent(ASelection[0]).Owner.Components[i] as TBindingGroup;
-          LProperty.Binding := GetBindingByTarget(LProperty.BindingGroup, ASelection[0] as TObject);
-          LProperty.Binding.TargetPropertyName := GetTargetPropertyName(ASelection[0]);
-          for k := 0 to ASelectionProperties.Count - 1 do
+          if Supports(ASelectionProperties[i], IProperty)
+            and ((ASelectionProperties[i] as IProperty).GetName > 'Binding') then
           begin
-            if Supports(ASelectionProperties[k], IProperty)
-              and ((ASelectionProperties[k] as IProperty).GetName > 'Binding') then
-            begin
-              Break;
-            end;
+            Break;
           end;
-          ASelectionProperties.Insert(k, LProperty);
         end;
+        ASelectionProperties.Insert(i, LProperty);
       end;
     end;
   end;
+end;
+
+{ TBindingGroupSelectionEditor }
+
+procedure TBindingGroupSelectionEditor.RequiresUnits(Proc: TGetStrProc);
+var
+  LClass: TClass;
+begin
+  inherited;
+  for LClass in SupportedClasses.Keys do
+  begin
+    Proc(LClass.UnitName);
+  end;
+  Proc('System.Bindings.Controls.VCL');
 end;
 
 { TBindingProperty }
@@ -229,23 +229,25 @@ end;
 
 procedure TSourceProperty.SetValue(const Value: string);
 var
-  Component: TComponent;
   LBinding: TBinding;
+  LObject: TObject;
   LProperty: TRttiProperty;
 begin
   LBinding := TBinding(GetComponent(0));
 
   if Value = '' then
-    Component := nil
+  begin
+    LObject := nil;
+  end
   else
   begin
-    Component := Designer.GetComponent(Value);
-    if not (Component is GetTypeData(GetPropType)^.ClassType) then
+    LObject := Designer.GetComponent(Value);
+    if not (LObject is GetTypeData(GetPropType)^.ClassType) then
       raise EDesignPropertyError.CreateRes(@SInvalidPropertyValue);
-    if Assigned(LBinding) and (LBinding.Target = Component) then
+    if Assigned(LBinding) and (LBinding.Target = LObject) then
       raise EDesignPropertyError.Create('Binding source must be different from binding target');
   end;
-  SetOrdValue(LongInt(Component));
+  SetOrdValue(NativeInt(LObject));
 
   if Assigned(LBinding.Source) and (LBinding.SourcePropertyName <> '') then
   begin

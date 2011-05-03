@@ -46,6 +46,7 @@ type
 
 const
   BindingModeDefault = bmTwoWay;
+  UpdateTriggerDefault = utPropertyChanged;
 
 type
   TPropertyChangedEvent = procedure(ASender: TObject;
@@ -63,9 +64,12 @@ type
     function ConvertBack(Value: TValue): TValue;
   end;
 
+  TBindingGroup = class;
+
   TBindingBase = class abstract(TPersistent)
   strict protected
     FActive: Boolean;
+    FBindingGroup: TBindingGroup;
     FBindingMode: TBindingMode;
     FConverter: IValueConverter;
     FNotificationHandler: TNotificationHandler<TBindingBase>;
@@ -79,8 +83,11 @@ type
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); virtual; abstract;
     function GetOnValidation: TEvent<TValidationEvent>;
+    procedure InitConverter; virtual; abstract;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
     procedure SetActive(AValue: Boolean);
+    procedure SetBindingGroup(const Value: TBindingGroup);
+    procedure SetConverter(Value: IValueConverter);
     procedure SetTarget(AValue: TObject);
     procedure SetTargetPropertyName(AValue: string);
 
@@ -93,17 +100,18 @@ type
     function Validate: Boolean; virtual; abstract;
 
     property Active: Boolean read FActive write SetActive;
-    property Converter: IValueConverter read FConverter write FConverter;
+    property BindingGroup: TBindingGroup read FBindingGroup write SetBindingGroup;
+    property Converter: IValueConverter read FConverter write SetConverter;
     property OnValidation: TEvent<TValidationEvent> read GetOnValidation;
     property TargetProperty: TRttiProperty read FTargetProperty;
     property ValidationRules: TObjectList<TValidationRule> read FValidationRules;
   published
-    property BindingMode: TBindingMode read FBindingMode write FBindingMode;
+    property BindingMode: TBindingMode read FBindingMode write FBindingMode default BindingModeDefault;
     property Target: TObject read FTarget write SetTarget;
     property TargetPropertyName: string read FTargetPropertyName
       write SetTargetPropertyName;
     property TargetUpdateTrigger: TUpdateTrigger
-      read FTargetUpdateTrigger write FTargetUpdateTrigger;
+      read FTargetUpdateTrigger write FTargetUpdateTrigger default UpdateTriggerDefault;
   end;
 
   TBinding = class(TBindingBase)
@@ -116,6 +124,7 @@ type
       APropertyName: string; AUpdateTrigger: TUpdateTrigger);
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); override;
+    procedure InitConverter; override;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); override;
     procedure SetSource(AValue: TObject);
     procedure SetSourcePropertyName(AValue: string);
@@ -136,12 +145,12 @@ type
     property SourcePropertyName: string read FSourcePropertyName
       write SetSourcePropertyName;
     property SourceUpdateTrigger: TUpdateTrigger
-      read FSourceUpdateTrigger write FSourceUpdateTrigger;
+      read FSourceUpdateTrigger write FSourceUpdateTrigger default UpdateTriggerDefault;
   end;
 
   TBindingGroup = class(TComponent)
   private
-    FBindings: TList<TBinding>;
+    FBindings: TList<TBindingBase>;
   protected
     procedure DefineProperties(Filer: TFiler); override;
     procedure ReadBindings(AReader: TReader);
@@ -149,10 +158,31 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property Bindings: TList<TBinding> read FBindings;
+    function GetBindingForTarget(ATarget: TObject): TBinding;
+    property Bindings: TList<TBindingBase> read FBindings;
   end;
 
+function FindBindingGroup(AOwner: TComponent): TBindingGroup;
+
 implementation
+
+uses
+  System.Data.Converter.Default;
+
+function FindBindingGroup(AOwner: TComponent): TBindingGroup;
+var
+  I: Integer;
+begin
+  Result := nil;
+  for i := 0 to Pred(AOwner.ComponentCount) do
+  begin
+    if AOwner.Components[i] is TBindingGroup then
+    begin
+      Result := AOwner.Components[i] as TBindingGroup;
+      Break;
+    end;
+  end;
+end;
 
 { TBindingBase }
 
@@ -168,6 +198,7 @@ end;
 
 destructor TBindingBase.Destroy;
 begin
+  SetBindingGroup(nil);
   SetTarget(nil);
 
   FNotificationHandler.Free();
@@ -202,6 +233,33 @@ begin
   end;
 end;
 
+procedure TBindingBase.SetBindingGroup(const Value: TBindingGroup);
+begin
+  if FBindingGroup <> Value then
+  begin
+    if Assigned(FBindingGroup) and FBindingGroup.Bindings.Contains(Self) then
+    begin
+      FBindingGroup.Bindings.Remove(Self);
+    end;
+
+    FBindingGroup := Value;
+
+    if Assigned(FBindingGroup) and not FBindingGroup.Bindings.Contains(Self) then
+    begin
+      FBindingGroup.Bindings.Add(Self);
+    end;
+  end;
+end;
+
+procedure TBindingBase.SetConverter(Value: IValueConverter);
+begin
+  if FConverter <> Value then
+  begin
+    FConverter := Value;
+  end;
+  InitConverter();
+end;
+
 procedure TBindingBase.SetTarget(AValue: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
@@ -227,6 +285,7 @@ begin
     if Assigned(FTarget) then
     begin
       FTargetProperty := FContext.GetType(FTarget.ClassInfo).GetProperty(FTargetPropertyName);
+      InitConverter();
 
       if FTarget is TComponent then
       begin
@@ -251,6 +310,7 @@ begin
     if Assigned(FTarget) then
     begin
       FTargetProperty := FContext.GetType(FTarget.ClassInfo).GetProperty(FTargetPropertyName);
+      InitConverter();
       UpdateTarget();
     end;
   end;
@@ -266,13 +326,13 @@ begin
   FActive := False;
 
   FBindingMode := ABindingMode;
-  FConverter := AConverter;
 
   FSourcePropertyName := ASourcePropertyName;
   SetSource(ASource);
   FTargetPropertyName := ATargetPropertyName;
   SetTarget(ATarget);
 
+  SetConverter(AConverter);
   FActive := True;
 
   UpdateTarget();
@@ -320,6 +380,17 @@ begin
   end;
 end;
 
+procedure TBinding.InitConverter;
+begin
+  if not Assigned(FConverter) and Assigned(FSourceProperty) and Assigned(FTargetProperty)
+    and (FSourceProperty.PropertyType.Handle <> FTargetProperty.PropertyType.Handle) then
+  begin
+    FConverter := TDefaultConverter.Create(
+      FSourceProperty.PropertyType.Handle,
+      FTargetProperty.PropertyType.Handle);
+  end;
+end;
+
 procedure TBinding.Notification(AComponent: TComponent; AOperation: TOperation);
 begin
   inherited;
@@ -359,6 +430,7 @@ begin
     if Assigned(FSource) then
     begin
       FSourceProperty := FContext.GetType(FSource.ClassInfo).GetProperty(FSourcePropertyName);
+      InitConverter();
 
       if FSource is TComponent then
       begin
@@ -383,6 +455,7 @@ begin
     if Assigned(FSource) then
     begin
       FSourceProperty := FContext.GetType(FSource.ClassInfo).GetProperty(FSourcePropertyName);
+      InitConverter();
       UpdateTarget();
     end;
   end;
@@ -516,13 +589,35 @@ begin
     end;
   end;
   inherited;
-  FBindings := TList<TBinding>.Create;
+  FBindings := TList<TBindingBase>.Create;
 end;
 
 destructor TBindingGroup.Destroy;
 begin
   FBindings.Free();
   inherited;
+end;
+
+function TBindingGroup.GetBindingForTarget(ATarget: TObject): TBinding;
+var
+  LBinding: TBindingBase;
+begin
+  Result := nil;
+  for LBinding in Bindings do
+  begin
+    if LBinding.Target = ATarget then
+    begin
+      Result := LBinding as TBinding;
+      Break;
+    end;
+  end;
+  if not Assigned(Result) then
+  begin
+    Result := TBinding.Create(nil, '', nil, '');
+    Result.Active := False;
+    Result.BindingGroup := Self;
+    Result.Target := ATarget;
+  end;
 end;
 
 procedure TBindingGroup.DefineProperties(Filer: TFiler);
@@ -552,11 +647,11 @@ begin
         AReader.ReadInteger;
       end;
       LBinding := TBinding.Create(nil, '', nil, '');
+      LBinding.BindingGroup := Self;
       if csDesigning in ComponentState then
       begin
         LBinding.Active := False;
       end;
-      FBindings.Add(LBinding);
       AReader.ReadListBegin();
       while not AReader.EndOfList do
       begin
@@ -577,7 +672,7 @@ type
 procedure TBindingGroup.WriteBindings(AWriter: TWriter);
 var
   LAncestor: TPersistent;
-  LBinding: TBinding;
+  LBinding: TBindingBase;
 begin
   LAncestor := AWriter.Ancestor;
   AWriter.Ancestor := nil;

@@ -440,7 +440,7 @@ end;
 class operator TValueExpression.Implicit(Value: Variant): TValueExpression;
 begin
   case TVarData(Value).VType of
-    varByRef:
+    varByRef or varVariant:
     begin
       Result.FValue := IExpression(TVarData(Value).VPointer);
       Result.FValue._Release;
@@ -910,7 +910,8 @@ end;
 
 function TEntityExpression.Compile: TValue;
 begin
-  raise ENotImplemented.Create('TEntityExpression.Compile');
+  Result := TValue.From<string>(FName);
+//  raise ENotImplemented.Create('TEntityExpression.Compile');
 end;
 
 constructor TEntityExpression.Create(Name: string);

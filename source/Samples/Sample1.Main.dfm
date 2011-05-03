@@ -78,4 +78,36 @@ object MainForm: TMainForm
     Height = 21
     TabOrder = 6
   end
+  object BindingGroup1: TBindingGroup
+    Left = 272
+    Top = 152
+    Bindings = <
+      item
+        Target = ComboBox1
+        TargetPropertyName = 'Text'
+        SourcePropertyName = 'Size'
+      end
+      item
+        Target = CheckBox1
+        TargetPropertyName = 'Checked'
+        Source = ColorBox1
+        SourcePropertyName = 'Enabled'
+      end
+      item
+        Target = ColorBox1
+        TargetPropertyName = 'Selected'
+        Source = Owner
+        SourcePropertyName = 'Color'
+      end
+      item
+        Target = Edit1
+        TargetPropertyName = 'Text'
+      end
+      item
+        Target = Edit2
+        TargetPropertyName = 'Text'
+        Source = Edit1
+        SourcePropertyName = 'Text'
+      end>
+  end
 end

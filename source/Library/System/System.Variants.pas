@@ -31,7 +31,8 @@ unit System.Variants;
 
 interface
 
-function AsVariant(AObject: TObject): Variant;
+function ToVariant(AObject: TObject): Variant;
+
 
 implementation
 
@@ -41,44 +42,153 @@ uses
   Variants;
 
 type
-  TBoxedObjectVarData = packed record
+  TExpressionInfo = class
+    Expression: IExpression;
+    Instance: TObject;
+  end;
+
+  TExpressionVarData = packed record
     VType: TVarType;
     Reserved1, Reserved2, Reserved3: Word;
-    FObject: TObject;
+    VExpressionInfo: TExpressionInfo;
     Reserved4: LongWord;
   end;
 
   TBoxedObjectVariantType = class(TInvokeableVariantType)
   private
-    class var FContext: TRttiContext;
+    class var Context: TRttiContext;
   public
+    procedure Cast(var Dest: TVarData; const Source: TVarData); override;
     procedure Clear(var V: TVarData); override;
     procedure Copy(var Dest: TVarData; const Source: TVarData;
       const Indirect: Boolean); override;
     function GetProperty(var Dest: TVarData; const V: TVarData;
       const Name: string): Boolean; override;
+    procedure BinaryOp(var Left: TVarData; const Right: TVarData;
+      const Operator: TVarOp); override;
+    function CompareOp(const Left, Right: TVarData;
+      const Operator: TVarOp): Boolean; override;
   end;
 
 var
   BoxedObject: TBoxedObjectVariantType;
 
-function AsVariant(AObject: TObject): Variant;
+function ToVariant(AObject: TObject): Variant;
 begin
   VarClear(Result);
 
-  with TBoxedObjectVarData(Result) do
+  with TExpressionVarData(Result) do
   begin
     VType := BoxedObject.VarType;
-    FObject := AObject;
+    VExpressionInfo := TExpressionInfo.Create;
+    VExpressionInfo.Instance := AObject;
   end;
+end;
+
+function VarDataIsBoolean(const V: TVarData): Boolean;
+begin
+  Result := V.VType = varBoolean;
 end;
 
 { TBoxedObjectVariantType }
 
+procedure TBoxedObjectVariantType.BinaryOp(var Left: TVarData;
+  const Right: TVarData; const &Operator: TVarOp);
+begin
+  inherited;
+
+end;
+
+procedure TBoxedObjectVariantType.Cast(var Dest: TVarData;
+  const Source: TVarData);
+var
+  LSource, LTemp: TVarData;
+begin
+  VarDataInit(LSource);
+  try
+    VarDataCopyNoInd(LSource, Source);
+    VarDataClear(Dest);
+    if VarDataIsStr(LSource) then
+    begin
+      TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
+      TExpressionVarData(Dest).VExpressionInfo.Expression :=
+        TStringConstantExpression.Create(VarDataToStr(LSource));
+    end
+    else
+    begin
+      VarDataInit(LTemp);
+      try
+        if VarDataIsBoolean(LSource) then
+        begin
+          VarDataCastTo(LTemp, LSource, varBoolean);
+          TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
+          TExpressionVarData(Dest).VExpressionInfo.Expression :=
+            TBooleanConstantExpression.Create(LTemp.VBoolean);
+        end
+        else
+        begin
+          if VarDataIsOrdinal(LSource) then
+          begin
+            VarDataCastTo(LTemp, LSource, varInteger);
+            TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
+            TExpressionVarData(Dest).VExpressionInfo.Expression :=
+              TIntegerConstantExpression.Create(LTemp.VInteger);
+          end
+          else
+          begin
+            if VarDataIsFloat(LSource) then
+            begin
+              VarDataCastTo(LTemp, LSource, varDouble);
+              TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
+              TExpressionVarData(Dest).VExpressionInfo.Expression :=
+                TFloatConstantExpression.Create(LTemp.VDouble);
+            end;
+          end;
+        end;
+      finally
+        VarDataClear(LTemp);
+      end;
+    end;
+    Dest.VType := VarType;
+  finally
+    VarDataClear(LSource);
+  end;
+end;
+
 procedure TBoxedObjectVariantType.Clear(var V: TVarData);
 begin
   V.VType := varEmpty;
-  TBoxedObjectVarData(V).FObject := nil;
+  if Assigned(TExpressionVarData(V).VExpressionInfo) then
+    TExpressionVarData(V).VExpressionInfo.Free;
+end;
+
+function TBoxedObjectVariantType.CompareOp(const Left, Right: TVarData;
+  const &Operator: TVarOp): Boolean;
+var
+  LExpression: IExpression;
+begin
+  Result := False;
+  if (Left.VType = VarType) and (Right.VType = VarType) then
+    case Operator of
+      opCmpEQ:
+      begin
+        LExpression := TEqualExpression.Create(
+          TExpressionVarData(Left).VExpressionInfo.Expression,
+          TExpressionVarData(Right).VExpressionInfo.Expression);
+        Result := LExpression.Compile.AsBoolean;
+      end;
+      opCmpNE:
+      begin
+        LExpression := TNotEqualExpression.Create(
+          TExpressionVarData(Left).VExpressionInfo.Expression,
+          TExpressionVarData(Right).VExpressionInfo.Expression);
+        Result := LExpression.Compile.AsBoolean;
+      end
+    else
+      RaiseInvalidOp;
+    end
+  else
+    RaiseInvalidOp;
 end;
 
 procedure TBoxedObjectVariantType.Copy(var Dest: TVarData;
@@ -90,10 +200,12 @@ begin
   end
   else
   begin
-    with TBoxedObjectVarData(Dest) do
+    with TExpressionVarData(Dest) do
     begin
       VType := VarType;
-      FObject := TBoxedObjectVarData(Source).FObject;
+      VExpressionInfo := TExpressionInfo.Create();
+      VExpressionInfo.Expression := TExpressionVarData(Source).VExpressionInfo.Expression;
+      VExpressionInfo.Instance := TExpressionVarData(Source).VExpressionInfo.Instance;
     end;
   end;
 end;
@@ -102,19 +214,17 @@ function TBoxedObjectVariantType.GetProperty(var Dest: TVarData;
   const V: TVarData; const Name: string): Boolean;
 var
   LProperty: TRttiProperty;
-  LExpression: IExpression;
 begin
-  with TBoxedObjectVarData(V) do
+  with TExpressionVarData(V) do
   begin
-    LProperty := FContext.GetType(FObject.ClassInfo).GetProperty(Name);
+    LProperty := Context.GetType(VExpressionInfo.Instance.ClassInfo).GetProperty(Name);
     Result := Assigned(LProperty);
 
     if Result then
     begin
-      Dest.VType := varByRef;
-      LExpression := TEntityExpression.Create(LProperty.Name);
-      LExpression._AddRef;
-      Dest.VPointer := Pointer(LExpression);
+      Dest.VType := VarType;
+      VExpressionInfo.Expression := TEntityExpression.Create(LProperty.Name);
+      Copy(Dest, V, False);
     end
     else
     begin

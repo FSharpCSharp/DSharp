@@ -54,9 +54,16 @@
 			<DelphiCompile Include="DataBindings.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<DCCReference Include="..\Resources\System.Bindings.dcr"/>
 			<DCCReference Include="rtl.dcp"/>
 			<DCCReference Include="designide.dcp"/>
+			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.pas"/>
 			<DCCReference Include="..\Library\System\System.Bindings.Designtime.pas"/>
+			<DCCReference Include="..\Library\System\System.Bindings.pas"/>
+			<DCCReference Include="..\Library\System\System.Events.pas"/>
+			<DCCReference Include="..\Library\System\System.NotificationHandler.pas"/>
+			<DCCReference Include="..\Library\System\System.Validations.pas"/>
+			<DCCReference Include="..\Library\System\System.Data.Converter.Default.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

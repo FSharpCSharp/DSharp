@@ -1,6 +1,7 @@
 package DataBindings;
 
 {$R *.res}
+{$R '..\Resources\System.Bindings.dcr'}
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
@@ -31,6 +32,12 @@ requires
   designide;
 
 contains
-  System.Bindings.Designtime in '..\Library\System\System.Bindings.Designtime.pas';
+  System.Bindings.Controls.VCL in '..\Library\System\System.Bindings.Controls.VCL.pas',
+  System.Bindings.Designtime in '..\Library\System\System.Bindings.Designtime.pas',
+  System.Bindings in '..\Library\System\System.Bindings.pas',
+  System.Events in '..\Library\System\System.Events.pas',
+  System.NotificationHandler in '..\Library\System\System.NotificationHandler.pas',
+  System.Validations in '..\Library\System\System.Validations.pas',
+  System.Data.Converter.Default in '..\Library\System\System.Data.Converter.Default.pas';
 
 end.

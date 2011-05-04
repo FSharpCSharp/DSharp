@@ -114,14 +114,36 @@ begin
   RegisterPropertyEditor(TypeInfo(string), TBinding, 'SourcePropertyName', TSourcePropertyNameProperty);
 end;
 
+function FindSupportedClass(AComponent: TPersistent): TClass;
+var
+  LSupportedClass: TClass;
+begin
+  if SupportedClasses.ContainsKey(AComponent.ClassType) then
+  begin
+    Result := AComponent.ClassType
+  end
+  else
+  begin
+    Result := nil;
+    for LSupportedClass in SupportedClasses.Keys do
+    begin
+      if AComponent is LSupportedClass then
+      begin
+        Result := LSupportedClass;
+        Break;
+      end;
+    end;
+  end;
+end;
+
 function SupportsBinding(AComponent: TPersistent): Boolean;
 begin
-  Result := SupportedClasses.ContainsKey(AComponent.ClassType);
+  Result := Assigned(FindSupportedClass(AComponent));
 end;
 
 function GetTargetPropertyName(AComponent: TPersistent): string;
 begin
-  Result := SupportedClasses[AComponent.ClassType];
+  Result := SupportedClasses[FindSupportedClass(AComponent)];
 end;
 
 { TBindingSelectionEditor }
@@ -291,6 +313,7 @@ initialization
   SupportedClasses.Add(TComboBox, 'Text');
   SupportedClasses.Add(TDateTimePicker, 'Date'); // need some review to change binding property depending on state
   SupportedClasses.Add(TEdit, 'Text');
+  SupportedClasses.Add(TMemo, 'Text');
   SupportedClasses.Add(TMonthCalendar, 'Date');
   SupportedClasses.Add(TRadioButton, 'Checked');
   SupportedClasses.Add(TRadioGroup, 'ItemIndex');

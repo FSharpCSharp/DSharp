@@ -98,6 +98,16 @@ type
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
   end;
 
+  TMemo = class(StdCtrls.TMemo, INotifyPropertyChanged)
+  private
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
+  protected
+    procedure Change; override;
+  public
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+  end;
+
   TMonthCalendar = class(ComCtrls.TMonthCalendar, INotifyPropertyChanged)
   private
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
@@ -166,6 +176,13 @@ type
   end;
 
   TEditHelper = class helper for TEdit
+  private
+    function GetBinding: TBinding;
+  public
+    property Binding: TBinding read GetBinding;
+  end;
+
+  TMemoHelper = class helper for TMemo
   private
     function GetBinding: TBinding;
   public
@@ -356,6 +373,25 @@ begin
   Result := FOnPropertyChanged.EventHandler;
 end;
 
+{ TMemo }
+
+procedure TMemo.Change;
+begin
+  inherited;
+  FOnPropertyChanged.Invoke(Self, 'Text', utPropertyChanged);
+end;
+
+procedure TMemo.CMExit(var Message: TCMExit);
+begin
+  inherited;
+  FOnPropertyChanged.Invoke(Self, 'Text', utLostFocus);
+end;
+
+function TMemo.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
 { TMonthCalendar }
 
 procedure TMonthCalendar.CMExit(var Message: TCMExit);
@@ -466,6 +502,13 @@ end;
 { TEditHelper }
 
 function TEditHelper.GetBinding: TBinding;
+begin
+  Result := GetBindingForComponent(Self);
+end;
+
+{ TMemoHelper }
+
+function TMemoHelper.GetBinding: TBinding;
 begin
   Result := GetBindingForComponent(Self);
 end;

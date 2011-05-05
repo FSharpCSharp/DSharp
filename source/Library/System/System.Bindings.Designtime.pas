@@ -159,10 +159,10 @@ begin
   begin
     if SupportsBinding(ASelection[0]) then
     begin
-      LBindingGroup := FindBindingGroup(TComponent(ASelection[0]).Owner);
+      LBindingGroup := FindBindingGroup(ASelection[0]);
       if Assigned(LBindingGroup) then
       begin
-        LProperty := TBindingProperty.Create(inherited Designer, 0);
+        LProperty := TBindingProperty.Create(Designer, 0);
         LProperty.BindingGroup := LBindingGroup;
         LProperty.Binding := LBindingGroup.GetBindingForTarget(ASelection[0] as TObject);
         LProperty.Binding.TargetPropertyName := GetTargetPropertyName(ASelection[0]);
@@ -247,6 +247,7 @@ end;
 procedure TSourceProperty.GetValues(Proc: TGetStrProc);
 begin
   inherited;
+  Proc(Designer.Root.Name);
 end;
 
 procedure TSourceProperty.SetValue(const Value: string);
@@ -313,10 +314,13 @@ initialization
   SupportedClasses.Add(TComboBox, 'Text');
   SupportedClasses.Add(TDateTimePicker, 'Date'); // need some review to change binding property depending on state
   SupportedClasses.Add(TEdit, 'Text');
+  SupportedClasses.Add(TLabel, 'Caption');
   SupportedClasses.Add(TMemo, 'Text');
   SupportedClasses.Add(TMonthCalendar, 'Date');
+  SupportedClasses.Add(TPanel, 'Caption');
   SupportedClasses.Add(TRadioButton, 'Checked');
   SupportedClasses.Add(TRadioGroup, 'ItemIndex');
+//  SupportedClasses.Add(TStatusPanel, 'Text'); // does not work (yet)
   SupportedClasses.Add(TTrackBar, 'Position');
 
 finalization

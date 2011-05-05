@@ -92,8 +92,16 @@ begin
         case ATypeInfo.Kind of
           tkUString:
           begin
-            AResult := TValue.From<string>(IntToStr(AsOrdinal));
-            Result := True;
+            if TypeInfo = System.TypeInfo(Boolean) then
+            begin
+              AResult := TValue.From<string>(BoolToStr(AsBoolean, True));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.From<string>(IntToStr(AsOrdinal));
+              Result := True;
+            end;
           end;
         end;
       end;
@@ -132,8 +140,16 @@ begin
         case ATypeInfo.Kind of
           tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
           begin
-            AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
-            Result := True;
+            if TypeInfo = System.TypeInfo(Boolean) then
+            begin
+              AResult := TValue.From<Boolean>(StrToBoolDef(AsString, False));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
+              Result := True;
+            end;
           end;
           tkFloat:
           begin

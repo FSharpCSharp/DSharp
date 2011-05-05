@@ -182,6 +182,13 @@ type
     property Binding: TBinding read GetBinding;
   end;
 
+  TLabelHelper = class helper for TLabel
+  private
+    function GetBinding: TBinding;
+  public
+    property Binding: TBinding read GetBinding;
+  end;
+
   TMemoHelper = class helper for TMemo
   private
     function GetBinding: TBinding;
@@ -190,6 +197,13 @@ type
   end;
 
   TMonthCalendarHelper = class helper for TMonthCalendar
+  private
+    function GetBinding: TBinding;
+  public
+    property Binding: TBinding read GetBinding;
+  end;
+
+  TPanelHelper = class helper for TPanel
   private
     function GetBinding: TBinding;
   public
@@ -227,7 +241,7 @@ var
   LBindingGroup: TBindingGroup;
 begin
   Result := nil;
-  LBindingGroup := FindBindingGroup(AComponent.Owner);
+  LBindingGroup := FindBindingGroup(AComponent);
   if Assigned(LBindingGroup) then
   begin
     Result := LBindingGroup.GetBindingForTarget(AComponent);
@@ -506,6 +520,13 @@ begin
   Result := GetBindingForComponent(Self);
 end;
 
+{ TLabelHelper }
+
+function TLabelHelper.GetBinding: TBinding;
+begin
+  Result := GetBindingForComponent(Self);
+end;
+
 { TMemoHelper }
 
 function TMemoHelper.GetBinding: TBinding;
@@ -516,6 +537,13 @@ end;
 { TMonthCalendarHelper }
 
 function TMonthCalendarHelper.GetBinding: TBinding;
+begin
+  Result := GetBindingForComponent(Self);
+end;
+
+{ TPanelHelper }
+
+function TPanelHelper.GetBinding: TBinding;
 begin
   Result := GetBindingForComponent(Self);
 end;

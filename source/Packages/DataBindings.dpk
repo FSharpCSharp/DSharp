@@ -38,6 +38,8 @@ contains
   System.Events in '..\Library\System\System.Events.pas',
   System.NotificationHandler in '..\Library\System\System.NotificationHandler.pas',
   System.Validations in '..\Library\System\System.Validations.pas',
-  System.Data.Converter.Default in '..\Library\System\System.Data.Converter.Default.pas';
+  System.Data.Converter.Default in '..\Library\System\System.Data.Converter.Default.pas',
+  System.PropertyPath in '..\Library\System\System.PropertyPath.pas',
+  System.Collections in '..\Library\System\System.Collections.pas';
 
 end.

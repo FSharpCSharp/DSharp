@@ -9,8 +9,9 @@
 			<AppType>Package</AppType>
 			<FrameworkType>None</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+			<Base>True</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='Basis' or '$(Base)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
@@ -64,11 +65,13 @@
 			<DCCReference Include="..\Library\System\System.NotificationHandler.pas"/>
 			<DCCReference Include="..\Library\System\System.Validations.pas"/>
 			<DCCReference Include="..\Library\System\System.Data.Converter.Default.pas"/>
+			<DCCReference Include="..\Library\System\System.PropertyPath.pas"/>
+			<DCCReference Include="..\Library\System\System.Collections.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
 			</BuildConfiguration>
-			<BuildConfiguration Include="Basis">
+			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
 			<BuildConfiguration Include="Debug">

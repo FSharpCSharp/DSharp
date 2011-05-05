@@ -46,8 +46,6 @@ begin
   TBinding.Create(FSettings, 'Caption', MainForm, 'Caption');
   TBinding.Create(FSettings, 'Color', MainForm, 'Color');
   TBinding.Create(FSettings, 'Caption', Edit3, 'Text');
-
-  ComboBox1.Binding.Source := Self.Font;
 end;
 
 end.

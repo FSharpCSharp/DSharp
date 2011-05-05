@@ -85,7 +85,8 @@ object MainForm: TMainForm
       item
         Target = ComboBox1
         TargetPropertyName = 'Text'
-        SourcePropertyName = 'Size'
+        Source = Owner
+        SourcePropertyName = 'Font.Size'
       end
       item
         Target = CheckBox1

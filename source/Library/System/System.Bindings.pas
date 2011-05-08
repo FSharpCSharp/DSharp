@@ -436,10 +436,9 @@ end;
 
 procedure TBinding.InitConverter;
 begin
-  if ((not Assigned(FConverter)) or ((FConverter as TObject) is TDefaultConverter))
+  if (not Assigned(FConverter) or ((FConverter as TObject) is TDefaultConverter))
     and Assigned(FSourceProperty) and Assigned(FSourceProperty.PropertyType)
-    and Assigned(FTargetProperty) and Assigned(FTargetProperty.PropertyType)
-    and (FSourceProperty.PropertyType.Handle <> FTargetProperty.PropertyType.Handle) then
+    and Assigned(FTargetProperty) and Assigned(FTargetProperty.PropertyType) then
   begin
     FConverter := TDefaultConverter.Create(
       FSourceProperty.PropertyType.Handle,

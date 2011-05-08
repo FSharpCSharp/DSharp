@@ -27,38 +27,40 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.PropertyChangedBase;
+unit System.Data.Templates.Default;
 
 interface
 
 uses
-  Classes,
-  System.Bindings,
-  System.Events;
+  System.Data.Templates;
 
 type
-  TPropertyChangedBase = class abstract(TInterfacedPersistent, INotifyPropertyChanged)
-  private
-    FPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-  protected
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+  TDefaultDataTemplate = class(TDataTemplate)
+  public
+    function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
+    function GetTemplateDataClass: TClass; override;
   end;
 
 implementation
 
-{ TPropertyChangedBase }
+{ TDefaultDataTemplate }
 
-procedure TPropertyChangedBase.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
+function TDefaultDataTemplate.GetTemplateDataClass: TClass;
 begin
-  FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+  Result := TObject;
 end;
 
-function TPropertyChangedBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TDefaultDataTemplate.GetText(const Item: TObject;
+  const ColumnIndex: Integer): string;
 begin
-  Result := FPropertyChanged.EventHandler;
+  if Assigned(Item) then
+  begin
+    Result := Item.UnitName + '.' + Item.ClassName;
+  end
+  else
+  begin
+    Result := inherited;
+  end;
 end;
 
 end.

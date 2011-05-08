@@ -27,38 +27,62 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.PropertyChangedBase;
+unit Collections.ObservableCollection;
 
 interface
 
 uses
-  Classes,
-  System.Bindings,
+  Collections.Generics,
+  Generics.Collections,
+  Generics.Defaults,
+  System.Bindings.Collections,
   System.Events;
 
 type
-  TPropertyChangedBase = class abstract(TInterfacedPersistent, INotifyPropertyChanged)
+  TObservableCollection<T: class> = class(TObjectList<T>, INotifyCollectionChanged)
   private
-    FPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
   protected
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure Notify(const Value: T; Action: TCollectionNotification); override;
+
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+  public
+    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
   end;
 
 implementation
 
-{ TPropertyChangedBase }
+{ TObservableCollection<T> }
 
-procedure TPropertyChangedBase.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
+function TObservableCollection<T>.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
-  FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+  Result := FOnCollectionChanged.EventHandler;
 end;
 
-function TPropertyChangedBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+procedure TObservableCollection<T>.Notify(const Value: T;
+  Action: TCollectionNotification);
 begin
-  Result := FPropertyChanged.EventHandler;
+  inherited;
+  FOnCollectionChanged.Invoke(Self, Value, Action);
+end;
+
+function TObservableCollection<T>.QueryInterface(const IID: TGUID;
+  out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then Result := 0 else Result := E_NOINTERFACE;
+end;
+
+function TObservableCollection<T>._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function TObservableCollection<T>._Release: Integer;
+begin
+  Result := -1;
 end;
 
 end.

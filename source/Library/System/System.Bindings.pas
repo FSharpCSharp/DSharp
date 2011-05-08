@@ -35,7 +35,9 @@ uses
   Classes,
   Generics.Collections,
   Rtti,
+  System.Bindings.Collections,
   System.Collections,
+  System.Data.Conversion,
   System.Events,
   System.NotificationHandler,
   System.PropertyPath,
@@ -60,12 +62,6 @@ type
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
-  IValueConverter = interface
-    ['{20006CE1-6C5A-41AF-9E2C-5D625C2BC07D}']
-    function Convert(Value: TValue): TValue;
-    function ConvertBack(Value: TValue): TValue;
-  end;
-
   TBindingGroup = class;
 
   TBindingBase = class abstract(TCollectionItem)
@@ -87,15 +83,16 @@ type
     function GetOnValidation: TEvent<TValidationEvent>;
     procedure InitConverter; virtual; abstract;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
-    procedure SetActive(AValue: Boolean);
+    procedure SetActive(const Value: Boolean);
     procedure SetBindingGroup(const Value: TBindingGroup);
-    procedure SetConverter(Value: IValueConverter);
-    procedure SetTarget(AValue: TObject);
-    procedure SetTargetPropertyName(AValue: string);
+    procedure SetConverter(const Value: IValueConverter);
+    procedure SetTarget(const Value: TObject);
+    procedure SetTargetPropertyName(const AValue: string);
   public
     constructor Create(Collection: TCollection); override;
     destructor Destroy; override;
 
+    procedure Assign(Source: TPersistent); override;
     procedure UpdateTarget; virtual; abstract;
     function Validate: Boolean; virtual; abstract;
 
@@ -117,17 +114,21 @@ type
   TBinding = class(TBindingBase)
   strict protected
     FSource: TObject;
+    FSourceCollectionChanged: INotifyCollectionChanged;
     FSourceProperty: IPropertyPath;
     FSourcePropertyName: string;
     FSourceUpdateTrigger: TUpdateTrigger;
+    procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
+      Action: TCollectionNotification);
     procedure DoSourcePropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger);
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); override;
     procedure InitConverter; override;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); override;
-    procedure SetSource(AValue: TObject);
-    procedure SetSourcePropertyName(AValue: string);
+    procedure SetSource(const Value: TObject);
+    procedure SetSourceProperty(AObject: TObject; APropertyName: string);
+    procedure SetSourcePropertyName(const Value: string);
   public
     constructor Create(ASource: TObject = nil; ASourcePropertyName: string = '';
       ATarget: TObject = nil; ATargetPropertyName: string = '';
@@ -135,6 +136,7 @@ type
       AConverter: IValueConverter = nil); reintroduce; overload;
     destructor Destroy; override;
 
+    procedure Assign(Source: TPersistent); override;
     procedure UpdateSource;
     procedure UpdateTarget; override;
     function Validate: Boolean; override;
@@ -167,7 +169,7 @@ function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 implementation
 
 uses
-  System.Data.Converter.Default;
+  System.Data.Conversion.Default;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 var
@@ -202,6 +204,19 @@ begin
 end;
 
 { TBindingBase }
+
+procedure TBindingBase.Assign(Source: TPersistent);
+begin
+  if Assigned(Source) and (Source is TBindingBase) then
+  begin
+    Active := TBindingBase(Source).Active;
+//    BindingGroup := TBindingBase(Source).BindingGroup;
+    Converter := TBindingBase(Source).Converter;
+    Target := TBindingBase(Source).Target;
+    TargetPropertyName := TBindingBase(Source).TargetPropertyName;
+    TargetUpdateTrigger := TBindingBase(Source).TargetUpdateTrigger;
+  end;
+end;
 
 constructor TBindingBase.Create(Collection: TCollection);
 begin
@@ -244,11 +259,11 @@ begin
   end;
 end;
 
-procedure TBindingBase.SetActive(AValue: Boolean);
+procedure TBindingBase.SetActive(const Value: Boolean);
 begin
-  if FActive <> AValue then
+  if FActive <> Value then
   begin
-    FActive := AValue;
+    FActive := Value;
   end;
 end;
 
@@ -265,7 +280,7 @@ begin
   end;
 end;
 
-procedure TBindingBase.SetConverter(Value: IValueConverter);
+procedure TBindingBase.SetConverter(const Value: IValueConverter);
 begin
   if FConverter <> Value then
   begin
@@ -274,11 +289,11 @@ begin
   InitConverter();
 end;
 
-procedure TBindingBase.SetTarget(AValue: TObject);
+procedure TBindingBase.SetTarget(const Value: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
 begin
-  if FTarget <> AValue then
+  if FTarget <> Value then
   begin
     if Assigned(FTarget) then
     begin
@@ -293,13 +308,12 @@ begin
       end;
     end;
 
-    FTarget := AValue;
+    FTarget := Value;
     FTargetProperty := nil;
 
     if Assigned(FTarget) then
     begin
-      FTargetProperty := TPropertyPath.Create(FTarget.ClassType, FTargetPropertyName);
-      InitConverter();
+      FTargetProperty := TPropertyPath.Create(FTarget, FTargetPropertyName);
 
       if FTarget is TComponent then
       begin
@@ -316,21 +330,31 @@ begin
   end;
 end;
 
-procedure TBindingBase.SetTargetPropertyName(AValue: string);
+procedure TBindingBase.SetTargetPropertyName(const AValue: string);
 begin
   if not SameText(FTargetPropertyName, AValue) then
   begin
     FTargetPropertyName := AValue;
     if Assigned(FTarget) then
     begin
-      FTargetProperty := TPropertyPath.Create(FTarget.ClassType, FTargetPropertyName);
-      InitConverter();
+      FTargetProperty := TPropertyPath.Create(FTarget, FTargetPropertyName);
       UpdateTarget();
     end;
   end;
 end;
 
 { TBinding }
+
+procedure TBinding.Assign(Source: TPersistent);
+begin
+  inherited;
+  if Assigned(Source) and (Source is TBinding) then
+  begin
+    Self.Source := TBinding(Source).Source;
+    Self.SourcePropertyName := TBinding(Source).SourcePropertyName;
+    Self.SourceUpdateTrigger := TBinding(Source).SourceUpdateTrigger;
+  end;
+end;
 
 constructor TBinding.Create(ASource: TObject; ASourcePropertyName: string;
   ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
@@ -354,9 +378,25 @@ end;
 
 destructor TBinding.Destroy;
 begin
-  SetSource(nil);
+  if IsValid(FSource) then  // workaround for already freed non TComponent source
+  begin
+    SetSource(nil);
+  end;
 
   inherited;
+end;
+
+procedure TBinding.DoSourceCollectionChanged(Sender: TObject;
+  Item: TObject; Action: TCollectionNotification);
+var
+  LCollectionView: ICollectionView;
+  LEvent: TEvent<TCollectionChangedEvent>;
+begin
+  if Supports(FTarget, ICollectionView, LCollectionView) then
+  begin
+    LEvent := LCollectionView.OnCollectionChanged;
+    LEvent.Invoke(Sender, Item, Action);
+  end;
 end;
 
 procedure TBinding.DoSourcePropertyChanged(ASender: TObject;
@@ -364,7 +404,7 @@ procedure TBinding.DoSourcePropertyChanged(ASender: TObject;
 begin
   if not FUpdating and (FBindingMode in [bmOneWay..bmTwoWay])
     and (AUpdateTrigger = FTargetUpdateTrigger)
-    and SameText(APropertyName, FSourceProperty.Name) then
+    and (SameText(APropertyName, FSourceProperty.Root)) then
   begin
     FUpdating := True;
     try
@@ -380,7 +420,7 @@ procedure TBinding.DoTargetPropertyChanged(ASender: TObject;
 begin
   if not FUpdating and (FBindingMode in [bmTwoWay..bmOneWayToSource])
     and (AUpdateTrigger = FSourceUpdateTrigger)
-    and SameText(APropertyName, FTargetProperty.Name) then
+    and SameText(APropertyName, FTargetProperty.Root) then
   begin
     FUpdating := True;
     try
@@ -396,7 +436,7 @@ end;
 
 procedure TBinding.InitConverter;
 begin
-  if not Assigned(FConverter)
+  if ((not Assigned(FConverter)) or ((FConverter as TObject) is TDefaultConverter))
     and Assigned(FSourceProperty) and Assigned(FSourceProperty.PropertyType)
     and Assigned(FTargetProperty) and Assigned(FTargetProperty.PropertyType)
     and (FSourceProperty.PropertyType.Handle <> FTargetProperty.PropertyType.Handle) then
@@ -421,11 +461,11 @@ begin
   end;
 end;
 
-procedure TBinding.SetSource(AValue: TObject);
+procedure TBinding.SetSource(const Value: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
 begin
-  if FSource <> AValue then
+  if FSource <> Value then
   begin
     if Assigned(FSource) then
     begin
@@ -438,15 +478,18 @@ begin
       begin
         LNotifyPropertyChanged.OnPropertyChanged.Remove(DoSourcePropertyChanged);
       end;
+
+      if Assigned(FSourceCollectionChanged) then
+      begin
+        FSourceCollectionChanged.OnCollectionChanged.Remove(DoSourceCollectionChanged);
+      end;
     end;
 
-    FSource := AValue;
-    FSourceProperty := nil;
+    SetSourceProperty(Value, FSourcePropertyName);
 
     if Assigned(FSource) then
     begin
-      FSourceProperty := TPropertyPath.Create(FSource.ClassType, FSourcePropertyName);
-      InitConverter();
+      SetSourceProperty(FSource, FSourcePropertyName);
 
       if FSource is TComponent then
       begin
@@ -457,21 +500,55 @@ begin
       begin
         LNotifyPropertyChanged.OnPropertyChanged.Add(DoSourcePropertyChanged);
       end;
+
+      // maybe the source itself is a collection?
+      if not Assigned(FSourceCollectionChanged)
+        and Supports(FSource, INotifyCollectionChanged, FSourceCollectionChanged) then
+      begin
+        FSourceCollectionChanged.OnCollectionChanged.Add(DoSourceCollectionChanged);
+      end;
     end;
 
     UpdateTarget();
   end;
 end;
 
-procedure TBinding.SetSourcePropertyName(AValue: string);
+procedure TBinding.SetSourceProperty(AObject: TObject; APropertyName: string);
 begin
-  if not SameText(FSourcePropertyName, AValue) then
+  if Assigned(FSourceCollectionChanged) then
   begin
-    FSourcePropertyName := AValue;
+    FSourceCollectionChanged.OnCollectionChanged.Remove(DoSourceCollectionChanged);
+  end;
+
+  FSource := AObject;
+
+  if Assigned(FSource) then
+  begin
+    FSourceProperty := TPropertyPath.Create(FSource, FSourcePropertyName);
+  end
+  else
+  begin
+    FSourceProperty := nil;
+  end;
+
+  if Assigned(FSource) and Assigned(FSourceProperty)
+    and FSourceProperty.PropertyType.IsInstance and FSourceProperty.IsReadable
+    and Supports(FSourceProperty.GetValue(FSource).AsObject,
+    INotifyCollectionChanged, FSourceCollectionChanged) then
+  begin
+    FSourceCollectionChanged.OnCollectionChanged.Add(DoSourceCollectionChanged);
+  end;
+end;
+
+procedure TBinding.SetSourcePropertyName(const Value: string);
+begin
+  if not SameText(FSourcePropertyName, Value) then
+  begin
+    FSourcePropertyName := Value;
     if Assigned(FSource) then
     begin
-      FSourceProperty := TPropertyPath.Create(FSource.ClassType, FSourcePropertyName);
-      InitConverter();
+      SetSourceProperty(FSource, FSourcePropertyName);
+
       UpdateTarget();
     end;
   end;
@@ -483,19 +560,14 @@ var
   LTargetValue: TValue;
 begin
   if FActive
-    and Assigned(FSource) and Assigned(FSourceProperty) and FSourceProperty.IsWritable
-    and Assigned(FTarget) and Assigned(FTargetProperty) and FTargetProperty.IsReadable then
+    and Assigned(FTarget) and Assigned(FTargetProperty)
+    and Assigned(FSource) and Assigned(FSourceProperty)
+    and FTargetProperty.IsReadable and FSourceProperty.IsWritable then
   begin
     LTargetValue := FTargetProperty.GetValue(FTarget);
 
-    if Assigned(FConverter) then
-    begin
-      LSourceValue := FConverter.ConvertBack(LTargetValue);
-    end
-    else
-    begin
-      LSourceValue := LTargetValue;
-    end;
+    InitConverter();
+    LSourceValue := FConverter.ConvertBack(LTargetValue);
 
     FSourceProperty.SetValue(FSource, LSourceValue);
   end;
@@ -507,19 +579,27 @@ var
   LTargetValue: TValue;
 begin
   if FActive
-    and Assigned(FSource) and Assigned(FSourceProperty) and FSourceProperty.IsReadable
-    and Assigned(FTarget) and Assigned(FTargetProperty) and FTargetProperty.IsWritable then
+    and Assigned(FTarget) and Assigned(FTargetProperty)
+    and Assigned(FSource) and Assigned(FSourceProperty)
+    and FTargetProperty.IsWritable and FSourceProperty.IsReadable then
   begin
     LSourceValue := FSourceProperty.GetValue(FSource);
 
-    if Assigned(FConverter) then
+    if Assigned(FSourceCollectionChanged) then
     begin
-      LTargetValue := FConverter.Convert(LSourceValue);
-    end
-    else
-    begin
-      LTargetValue := LSourceValue;
+      FSourceCollectionChanged.OnCollectionChanged.Remove(DoSourceCollectionChanged);
     end;
+
+    FSourceCollectionChanged := nil;
+
+    if LSourceValue.IsObject and Supports(LSourceValue.AsObject,
+      INotifyCollectionChanged, FSourceCollectionChanged) then
+    begin
+      FSourceCollectionChanged.OnCollectionChanged.Add(DoSourceCollectionChanged);
+    end;
+
+    InitConverter();
+    LTargetValue := FConverter.Convert(LSourceValue);
 
     FTargetProperty.SetValue(FTarget, LTargetValue);
   end;
@@ -555,14 +635,8 @@ begin
 
       if Result then
       begin
-        if Assigned(FConverter) then
-        begin
-          LSourceValue := FConverter.ConvertBack(LTargetValue);
-        end
-        else
-        begin
-          LSourceValue := LTargetValue;
-        end;
+        InitConverter();
+        LSourceValue := FConverter.ConvertBack(LTargetValue);
 
         for LValidationRule in FValidationRules do
         begin
@@ -662,8 +736,24 @@ begin
 end;
 
 procedure TBindingGroup.WriteBindings(AWriter: TWriter);
+var
+  LBinding: TBindingBase;
+  LBindings: TCollection<TBinding>;
 begin
-  AWriter.WriteCollection(FBindings);
+  LBindings := TCollection<TBinding>.Create();
+  try
+    for LBinding in FBindings do
+    begin
+      if (LBinding is TBinding) and Assigned(TBinding(LBinding).Source)
+        and (Trim(TBinding(LBinding).SourcePropertyName) <> '') then
+      begin
+        LBindings.Add().Assign(LBinding);
+      end;
+    end;
+    AWriter.WriteCollection(LBindings);
+  finally
+    LBindings.Free();
+  end;
 end;
 
 end.

@@ -15,6 +15,9 @@
 			<Projects Include="Sample4.dproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="Sample5.dproj">
+				<Dependencies/>
+			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -59,14 +62,23 @@
 		<Target Name="Sample4:Make">
 			<MSBuild Projects="Sample4.dproj" Targets="Make"/>
 		</Target>
+		<Target Name="Sample5">
+			<MSBuild Projects="Sample5.dproj"/>
+		</Target>
+		<Target Name="Sample5:Clean">
+			<MSBuild Projects="Sample5.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample5:Make">
+			<MSBuild Projects="Sample5.dproj" Targets="Make"/>
+		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="Sample1;Sample2;Sample3;Sample4"/>
+			<CallTarget Targets="Sample1;Sample2;Sample3;Sample4;Sample5"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="Sample1:Clean;Sample2:Clean;Sample3:Clean;Sample4:Clean"/>
+			<CallTarget Targets="Sample1:Clean;Sample2:Clean;Sample3:Clean;Sample4:Clean;Sample5:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="Sample1:Make;Sample2:Make;Sample3:Make;Sample4:Make"/>
+			<CallTarget Targets="Sample1:Make;Sample2:Make;Sample3:Make;Sample4:Make;Sample5:Make"/>
 		</Target>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
 	</Project>

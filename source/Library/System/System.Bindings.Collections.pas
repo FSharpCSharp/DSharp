@@ -27,38 +27,44 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.PropertyChangedBase;
+unit System.Bindings.Collections;
 
 interface
 
 uses
   Classes,
-  System.Bindings,
-  System.Events;
+  Generics.Collections,
+  System.Data.Templates,
+  System.Events,
+  SysUtils;
 
 type
-  TPropertyChangedBase = class abstract(TInterfacedPersistent, INotifyPropertyChanged)
-  private
-    FPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-  protected
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+  TCollectionChangedEvent = procedure(Sender: TObject; Item: TObject;
+    Action: TCollectionNotification) of object;
+
+  INotifyCollectionChanged = interface
+    ['{FE0D3160-6BCE-46B6-B01D-1B3C23EA76F3}']
+    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
+  end;
+
+  ICollectionView = interface(INotifyCollectionChanged)
+    ['{A13215DC-49AC-46AF-A85A-EEC3CC0D709C}']
+    function GetCurrentItem: TObject;
+    procedure SetCurrentItem(const Value: TObject);
+    function GetFilter: TPredicate<TObject>;
+    procedure SetFilter(const Value: TPredicate<TObject>);
+    function GetItemsSource: TEnumerable<TObject>;
+    procedure SetItemsSource(const Value: TEnumerable<TObject>);
+    function GetItemTemplate: IDataTemplate;
+    procedure SetItemTemplate(const Value: IDataTemplate);
+
+    property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
+    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
+    property ItemsSource: TEnumerable<TObject> read GetItemsSource write SetItemsSource;
+    property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
   end;
 
 implementation
-
-{ TPropertyChangedBase }
-
-procedure TPropertyChangedBase.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
-end;
-
-function TPropertyChangedBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FPropertyChanged.EventHandler;
-end;
 
 end.

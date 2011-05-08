@@ -1,15 +1,14 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
-			<ProjectGuid>{C0E8F88B-AAB2-4931-8303-05D5D8B7E7EF}</ProjectGuid>
-			<MainSource>DataBindings.dpk</MainSource>
+			<ProjectGuid>{EF9E34F1-29B9-4C32-BA10-F2AB89E4498D}</ProjectGuid>
 			<ProjectVersion>12.2</ProjectVersion>
-			<Basis>True</Basis>
+			<MainSource>Sample5.dpr</MainSource>
+			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
-			<AppType>Package</AppType>
-			<FrameworkType>None</FrameworkType>
+			<AppType>Application</AppType>
+			<FrameworkType>VCL</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-			<Base>True</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
 			<Base>true</Base>
@@ -25,20 +24,10 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DesignOnlyPackage>true</DesignOnlyPackage>
-			<GenPackage>true</GenPackage>
-			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
+			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_CBuilderOutput>All</DCC_CBuilderOutput>
-			<DCC_Description>Data binding designtime support</DCC_Description>
-			<DCC_S>false</DCC_S>
-			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
-			<GenDll>true</GenDll>
-			<DCC_N>false</DCC_N>
-			<DCC_E>false</DCC_E>
-			<DCC_F>false</DCC_F>
-			<DCC_K>false</DCC_K>
+			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -52,25 +41,14 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="DataBindings.dpk">
+			<DelphiCompile Include="Sample5.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="..\Resources\System.Bindings.dcr"/>
-			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="designide.dcp"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Designtime.pas"/>
-			<DCCReference Include="..\Library\System\System.Events.pas"/>
-			<DCCReference Include="..\Library\System\System.NotificationHandler.pas"/>
-			<DCCReference Include="..\Library\System\System.Validations.pas"/>
-			<DCCReference Include="..\Library\System\System.PropertyPath.pas"/>
-			<DCCReference Include="..\Library\System\System.Collections.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Conversion.Default.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Conversion.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Templates.Default.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Templates.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Collections.pas"/>
+			<DCCReference Include="Sample5.Main.pas">
+				<Form>MainForm</Form>
+			</DCCReference>
+			<DCCReference Include="Sample5.Contact.pas"/>
+			<DCCReference Include="Sample5.Contact.Template.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -87,11 +65,14 @@
 		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\8.0\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\8.0\UserTools.proj"/>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
-			<Borland.ProjectType>Package</Borland.ProjectType>
+			<Borland.ProjectType/>
 			<BorlandProject>
 				<Delphi.Personality>
+					<Source>
+						<Source Name="MainSource">Sample5.dpr</Source>
+					</Source>
 					<VersionInfo>
-						<VersionInfo Name="IncludeVerInfo">True</VersionInfo>
+						<VersionInfo Name="IncludeVerInfo">False</VersionInfo>
 						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
 						<VersionInfo Name="MajorVer">1</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
@@ -117,9 +98,11 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Source>
-						<Source Name="MainSource">DataBindings.dpk</Source>
-					</Source>
+					<Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\dclIntraweb_110_150.bpl">VCL for the Web 11.0 Design Package for Embarcadero RAD Studio XE</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k150.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\dclofficexp150.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+					</Excluded_Packages>
 				</Delphi.Personality>
 				<Platforms>
 					<Platform value="Win32">True</Platform>

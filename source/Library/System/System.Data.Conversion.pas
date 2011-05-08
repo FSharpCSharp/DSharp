@@ -27,38 +27,22 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.PropertyChangedBase;
+unit System.Data.Conversion;
 
 interface
 
 uses
-  Classes,
-  System.Bindings,
-  System.Events;
+  Rtti;
 
 type
-  TPropertyChangedBase = class abstract(TInterfacedPersistent, INotifyPropertyChanged)
-  private
-    FPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-  protected
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+  TValue = Rtti.TValue;
+
+  IValueConverter = interface
+    ['{20006CE1-6C5A-41AF-9E2C-5D625C2BC07D}']
+    function Convert(Value: TValue): TValue;
+    function ConvertBack(Value: TValue): TValue;
   end;
 
 implementation
-
-{ TPropertyChangedBase }
-
-procedure TPropertyChangedBase.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
-end;
-
-function TPropertyChangedBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FPropertyChanged.EventHandler;
-end;
 
 end.

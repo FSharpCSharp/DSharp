@@ -122,8 +122,9 @@ begin
   Result := False;
   if Assigned(AObject) then
   try
-    Result := Pointer(PPointer(AObject)^) =
-      Pointer(Pointer(Cardinal(PPointer(AObject)^) + Cardinal(vmtSelfPtr))^);
+    if NativeInt(Pointer(PPointer(AObject)^)) > $FFFF then  // "hotfix" to prevent some access violations (no clue if this works) :)
+      Result := Pointer(PPointer(AObject)^) =
+        Pointer(Pointer(Cardinal(PPointer(AObject)^) + Cardinal(vmtSelfPtr))^);
   except
   end;
 end;

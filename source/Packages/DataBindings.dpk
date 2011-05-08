@@ -34,12 +34,16 @@ requires
 contains
   System.Bindings.Controls.VCL in '..\Library\System\System.Bindings.Controls.VCL.pas',
   System.Bindings.Designtime in '..\Library\System\System.Bindings.Designtime.pas',
-  System.Bindings in '..\Library\System\System.Bindings.pas',
   System.Events in '..\Library\System\System.Events.pas',
   System.NotificationHandler in '..\Library\System\System.NotificationHandler.pas',
   System.Validations in '..\Library\System\System.Validations.pas',
-  System.Data.Converter.Default in '..\Library\System\System.Data.Converter.Default.pas',
   System.PropertyPath in '..\Library\System\System.PropertyPath.pas',
-  System.Collections in '..\Library\System\System.Collections.pas';
+  System.Collections in '..\Library\System\System.Collections.pas',
+  System.Bindings in '..\Library\System\System.Bindings.pas',
+  System.Data.Conversion.Default in '..\Library\System\System.Data.Conversion.Default.pas',
+  System.Data.Conversion in '..\Library\System\System.Data.Conversion.pas',
+  System.Data.Templates.Default in '..\Library\System\System.Data.Templates.Default.pas',
+  System.Data.Templates in '..\Library\System\System.Data.Templates.pas',
+  System.Bindings.Collections in '..\Library\System\System.Bindings.Collections.pas';
 
 end.

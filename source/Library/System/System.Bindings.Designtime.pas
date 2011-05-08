@@ -92,6 +92,7 @@ uses
   ComCtrls,
   CommCtrl,
   ExtCtrls,
+  Forms,
   StdCtrls,
 
   Consts,
@@ -247,7 +248,10 @@ end;
 procedure TSourceProperty.GetValues(Proc: TGetStrProc);
 begin
   inherited;
-  Proc(Designer.Root.Name);
+  if Designer.Root is TForm then
+  begin
+    Proc(Designer.Root.Name);
+  end;
 end;
 
 procedure TSourceProperty.SetValue(const Value: string);
@@ -315,6 +319,7 @@ initialization
   SupportedClasses.Add(TDateTimePicker, 'Date'); // need some review to change binding property depending on state
   SupportedClasses.Add(TEdit, 'Text');
   SupportedClasses.Add(TLabel, 'Caption');
+  SupportedClasses.Add(TListBox, 'ItemsSource');
   SupportedClasses.Add(TMemo, 'Text');
   SupportedClasses.Add(TMonthCalendar, 'Date');
   SupportedClasses.Add(TPanel, 'Caption');

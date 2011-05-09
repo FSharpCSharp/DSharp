@@ -44,11 +44,11 @@ type
     function ToString: string;
   end;
 
-  IParameter = interface
+  IParameter = interface(IExpression)
     ['{E276DEFC-4223-4709-AF19-75F8EEF7104E}']
-    function GetValue: TObject;
-    procedure SetValue(const Value: TObject);
-    property Value: TObject read GetValue write SetValue;
+    function GetValue: TValue;
+    procedure SetValue(const Value: TValue);
+    property Value: TValue read GetValue write SetValue;
   end;
 
   IUnaryExpression = interface(IExpression)
@@ -143,6 +143,8 @@ type
     property Left: IExpression read GetLeft;
     property Right: IExpression read GetRight;
   end;
+
+  TBinaryExpressionClass = class of TBinaryExpression;
 
   TAdditionExpression = class(TBinaryExpression)
   public
@@ -279,16 +281,21 @@ type
     property Value: string read FValue;
   end;
 
-  TObjectConstantExpression = class(TConstantExpression, IParameter)
+  TValueConstantExpression = class(TConstantExpression, IParameter)
   private
-    FValue: TObject;
-    procedure SetValue(const Value: TObject);
-    function GetValue: TObject;
+    FValue: TValue;
+    procedure SetValue(const Value: TValue);
+    function GetValue: TValue;
   public
-    constructor Create(Value: TObject);
+    constructor Create(Value: TValue);
     function Compile: TValue; override;
     function ToString: string; override;
-    property Value: TObject read GetValue write SetValue;
+    property Value: TValue read GetValue write SetValue;
+  end;
+
+  TParameterExpression = class(TValueConstantExpression)
+  public
+    function ToString: string; override;
   end;
 
   TEntityExpression = class(TInterfacedObject, IExpression)
@@ -301,23 +308,31 @@ type
     property Value: string read FName;
   end;
 
-  TMethodExpression = class(TInterfacedObject, IExpression)
-  private
-    FExpression: IExpression;
-    FMethod: TRttiMethod;
-    FParameters: array of IExpression;
-  public
-    constructor Create(Instance: TObject; Method: TRttiMethod; Parameters: array of IExpression);
-    function Compile: TValue;
-  end;
-
   TPropertyExpression = class(TInterfacedObject, IExpression)
   private
     FExpression: IExpression;
-    FProperty: TRttiProperty;
+    FPropertyName: string;
+    function GetMethod(AObject: TObject): TRttiMethod;
+    function GetObject: TObject;
+    function GetProperty(AObject: TObject): TRttiProperty;
   public
-    constructor Create(Instance: TObject; AProperty: TRttiProperty);
+    constructor Create(AExpression: IExpression; APropertyName: string);
     function Compile: TValue;
+    function ToString: string; override;
+  end;
+
+  TMethodExpression = class(TInterfacedObject, IExpression)
+  private
+    FExpression: IExpression;
+    FMethodName: string;
+    FParameters: TArray<IExpression>;
+    function GetMethod(AObject: TObject): TRttiMethod;
+    function GetObject: TObject;
+    function GetParameters: TArray<TValue>;
+  public
+    constructor Create(AExpression: IExpression; AMethodName: string; AParameters: TArray<IExpression>);
+    function Compile: TValue;
+    function ToString: string; override;
   end;
 
   TMaxExpression = class(TInterfacedObject, IExpression)
@@ -332,7 +347,7 @@ type
 
 var
   ExpressionStack: TStack<IExpression>;
-  ParameterList: TList<IParameter>;
+  ParameterList: array[0..3] of IParameter;
 
 function Bool(value: Boolean): TBooleanExpression;
 
@@ -343,11 +358,15 @@ implementation
 uses
   TypInfo;
 
+var
+  Context: TRttiContext;
+
 type
   TValueHelper = record helper for TValue
   public
     function IsFloat: Boolean;
     function IsNumeric: Boolean;
+    function IsString: Boolean;
   end;
 
 function Bool(value: Boolean): TBooleanExpression;
@@ -364,9 +383,14 @@ end;
 
 function TValueHelper.IsNumeric: Boolean;
 const
-  tkNumeric = [tkInteger, tkChar, tkWChar, tkEnumeration, tkFloat, tkInt64];
+  tkNumeric = [tkInteger, {tkChar, }tkWChar, tkEnumeration, tkFloat, tkInt64];
 begin
   Result := Self.Kind in tkNumeric;
+end;
+
+function TValueHelper.IsString: Boolean;
+begin
+  Result := Self.Kind in [tkChar, tkString, tkWChar, tkLString, tkWString, tkUString];
 end;
 
 { TBooleanExpression }
@@ -388,7 +412,7 @@ var
   Expr: IExpression;
 begin
   Expr := ExpressionStack.Pop();
-  ParameterList.Clear();
+//  ParameterList.Clear();
 
   Result :=
     function: Boolean
@@ -405,7 +429,7 @@ var
 begin
   Expr := ExpressionStack.Pop();
   Param1 := ParameterList[0];  // todo: check for actual params
-  ParameterList.Clear();
+//  ParameterList.Clear();
 
   Result :=
     function(Arg1: TObject): Boolean
@@ -732,6 +756,10 @@ begin
   if LLeft.IsFloat and LRight.IsFloat then
   begin
     Result := TValue.From<Extended>(LLeft.AsExtended + LRight.AsExtended);
+  end;
+  if LLeft.IsString and LRight.IsString then
+  begin
+    Result := TValue.From<string>(LLeft.AsString + LRight.AsString);
   end;
 end;
 
@@ -1089,121 +1117,226 @@ begin
   Result := '('  + FLeft.ToString + ' xor ' + FRight.ToString + ')';
 end;
 
+{ TPropertyExpression }
+
+function TPropertyExpression.Compile: TValue;
+var
+  LMethod: TRttiMethod;
+  LObject: TObject;
+  LProperty: TRttiProperty;
+begin
+  Result := TValue.Empty;
+  LObject := GetObject();
+  LProperty := GetProperty(LObject);
+  if Assigned(LProperty) then
+  begin
+    Result := LProperty.GetValue(LObject);
+  end
+  else
+  begin
+    LMethod := GetMethod(LObject);
+    if Assigned(LMethod) then
+    begin
+      if LMethod.IsClassMethod then
+      begin
+        Result := LMethod.Invoke(LObject.ClassType, []);
+      end
+      else
+      begin
+        Result := LMethod.Invoke(LObject, []);
+      end;
+    end;
+  end;
+end;
+
+constructor TPropertyExpression.Create(AExpression: IExpression; APropertyName: string);
+begin
+  FExpression := AExpression;
+  FPropertyName := APropertyName;
+end;
+
+function TPropertyExpression.GetMethod(AObject: TObject): TRttiMethod;
+var
+  LType: TRttiType;
+begin
+  if Assigned(AObject) then
+  begin
+    LType := Context.GetType(AObject.ClassType);
+    Result := LType.GetMethod(FPropertyName);
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TPropertyExpression.GetObject: TObject;
+begin
+  if Assigned(FExpression) then
+  begin
+    Result := FExpression.Compile.AsObject;
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TPropertyExpression.GetProperty(AObject: TObject): TRttiProperty;
+var
+  LType: TRttiType;
+begin
+  if Assigned(AObject) then
+  begin
+    LType := Context.GetType(AObject.ClassType);
+    Result := LType.GetProperty(FPropertyName);
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TPropertyExpression.ToString: string;
+begin
+  Result := FExpression.ToString() + '.' + FPropertyName;
+end;
+
 { TMethodExpression }
 
 function TMethodExpression.Compile: TValue;
 var
-  LParameters: array of TValue;
-  i: Integer;
+  LMethod: TRttiMethod;
+  LObject: TObject;
+  LParameters: TArray<TValue>;
 begin
-  SetLength(LParameters, Length(FParameters));
-  for i := 0 to Pred(Length(LParameters)) do
+  Result := TValue.Empty;
+  LObject := GetObject();
+  LMethod := GetMethod(LObject);
+  if Assigned(LMethod) then
   begin
-    LParameters[i] := FParameters[i].Compile();
-  end;
-  if FMethod.IsClassMethod then
+    LParameters := GetParameters();
+    if LMethod.IsClassMethod then
+    begin
+      Result := LMethod.Invoke(LObject.ClassType, LParameters);
+    end
+    else
+    begin
+      Result := LMethod.Invoke(LObject, LParameters);
+    end;
+  end
+end;
+
+constructor TMethodExpression.Create(AExpression: IExpression; AMethodName: string;
+  AParameters: TArray<IExpression>);
+begin
+  FExpression := AExpression;
+  FMethodName := AMethodName;
+  FParameters := AParameters;
+end;
+
+function TMethodExpression.GetMethod(AObject: TObject): TRttiMethod;
+var
+  LType: TRttiType;
+begin
+  if Assigned(AObject) then
   begin
-    Result := FMethod.Invoke(FExpression.Compile.AsObject.ClassType, []);
+    LType := Context.GetType(AObject.ClassType);
+    Result := LType.GetMethod(FMethodName);
   end
   else
   begin
-    Result := FMethod.Invoke(FExpression.Compile.AsObject, []);
+    Result := nil;
   end;
 end;
 
-constructor TMethodExpression.Create(Instance: TObject; Method: TRttiMethod;
-  Parameters: array of IExpression);
+function TMethodExpression.GetObject: TObject;
+begin
+  if Assigned(FExpression) then
+  begin
+    Result := FExpression.Compile.AsObject;
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TMethodExpression.GetParameters: TArray<TValue>;
 var
-  LParameter: IParameter;
+  I: Integer;
+begin
+  SetLength(Result, Length(FParameters));
+  for i := Low(FParameters) to High(FParameters) do
+  begin
+    Result[i] := FParameters[i].Compile();
+  end;
+end;
+
+function TMethodExpression.ToString: string;
+var
   i: Integer;
 begin
-  for LParameter in ParameterList do
+  Result := FExpression.ToString() + '.' + FMethodName + '(';
+  for i := Low(FParameters) to High(FParameters) do
   begin
-    if (LParameter.Value = Instance) and Supports(LParameter, IExpression, FExpression) then
+    if i < High(FParameters) then
     begin
-      Break;
+      Result := Result + FParameters[i].ToString() + ', ';
+    end
+    else
+    begin
+      Result := Result + FParameters[i].ToString() + ')';
     end;
   end;
-  if not Assigned(FExpression) then
-  begin
-    FExpression := TObjectConstantExpression.Create(Instance);
-    if Supports(FExpression, IParameter, LParameter) then
-    begin
-      ParameterList.Add(LParameter);
-    end;
-  end;
-  FMethod := Method;
-
-  SetLength(FParameters, Length(Parameters));
-  for i := 0 to Pred(Length(Parameters)) do
-  begin
-    FParameters[i] := Parameters[i];
-  end;
 end;
 
-{ TPropertyExpression }
+{ TValueConstantExpression }
 
-function TPropertyExpression.Compile: TValue;
-begin
-  Result := FProperty.GetValue(FExpression.Compile.AsObject);
-end;
-
-constructor TPropertyExpression.Create(Instance: TObject;
-  AProperty: TRttiProperty);
-var
-  LParameter: IParameter;
-begin
-  for LParameter in ParameterList do
-  begin
-    if (LParameter.Value = Instance) and Supports(LParameter, IExpression, FExpression) then
-    begin
-      Break;
-    end;
-  end;
-  if not Assigned(FExpression) then
-  begin
-    FExpression := TObjectConstantExpression.Create(Instance);
-    if Supports(FExpression, IParameter, LParameter) then
-    begin
-      ParameterList.Add(LParameter);
-    end;
-  end;
-  FProperty := AProperty;
-end;
-
-{ TObjectConstantExpression }
-
-function TObjectConstantExpression.Compile: TValue;
-begin
-  Result := TValue.From<TObject>(FValue);
-end;
-
-constructor TObjectConstantExpression.Create(Value: TObject);
-begin
-  FValue := Value;
-end;
-
-function TObjectConstantExpression.GetValue: TObject;
+function TValueConstantExpression.Compile: TValue;
 begin
   Result := FValue;
 end;
 
-procedure TObjectConstantExpression.SetValue(const Value: TObject);
+constructor TValueConstantExpression.Create(Value: TValue);
 begin
   FValue := Value;
 end;
 
-function TObjectConstantExpression.ToString: string;
+function TValueConstantExpression.GetValue: TValue;
+begin
+  Result := FValue;
+end;
+
+procedure TValueConstantExpression.SetValue(const Value: TValue);
+begin
+  FValue := Value;
+end;
+
+function TValueConstantExpression.ToString: string;
 begin
   Result := FValue.ToString;
 end;
 
+{ TParameterExpression }
+
+function TParameterExpression.ToString: string;
+begin
+  if FValue.IsObject then
+  begin
+    Result := FValue.AsObject.ToString;
+  end
+  else
+  begin
+    Result := FValue.ToString;
+  end;
+end;
+
 initialization
+  Context := TRttiContext.Create();
   ExpressionStack := TStack<IExpression>.Create();
-  ParameterList := TList<IParameter>.Create();
 
 finalization
   ExpressionStack.Free();
-  ParameterList.Free();
 
 end.

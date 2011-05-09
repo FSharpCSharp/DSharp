@@ -31,15 +31,11 @@ unit System.Variants;
 
 interface
 
-function ToVar(AObject: TObject): Variant; overload;
-function ToVar(AObject: Variant): Variant; overload;
-
-implementation
-
 uses
-  Rtti,
-  System.Expressions,
-  Variants;
+  System.Expressions;
+
+function AsDynamic(AObject: TObject): Variant; overload;
+function AsDynamic(AValue: Variant): Variant; overload;
 
 type
   TExpressionInfo = class
@@ -54,9 +50,14 @@ type
     Reserved4: LongWord;
   end;
 
-  TBoxedObjectVariantType = class(TInvokeableVariantType)
-  private
-    class var Context: TRttiContext;
+implementation
+
+uses
+  Rtti,
+  Variants;
+
+type
+  TExpressionVariantType = class(TInvokeableVariantType)
   public
     procedure Cast(var Dest: TVarData; const Source: TVarData); override;
     procedure Clear(var V: TVarData); override;
@@ -73,49 +74,73 @@ type
   end;
 
 var
-  BoxedObject: TBoxedObjectVariantType;
+  Expression: TExpressionVariantType;
 
-function ToVar(AObject: TObject): Variant;
+  OperatorExpressions: array[opAdd..opCmpGE] of TBinaryExpressionClass = (
+    TAdditionExpression, TSubtractionExpression, TMultiplicationExpression,
+    TDivisionExpression, TIntegerDivisionExpression, TModulusExpression,
+    nil, nil, TLogicalAndExpression, TLogicalOrExpression, TLogicalXorExpression,
+    nil, nil, nil, TEqualExpression, TNotEqualExpression,
+    TLessThanExpression, TLessThanOrEqualExpression, TGreaterThanExpression,
+    TGreaterThanOrEqualExpression);
+
+function AsDynamic(AObject: TObject): Variant;
 begin
   VarClear(Result);
 
   with TExpressionVarData(Result) do
   begin
-    VType := BoxedObject.VarType;
+    VType := Expression.VarType;
     VExpressionInfo := TExpressionInfo.Create;
+    VExpressionInfo.Expression := TValueConstantExpression.Create(TValue.From<TObject>(AObject));
     VExpressionInfo.Instance := AObject;
   end;
 end;
 
-function ToVar(AObject: Variant): Variant;
+function AsDynamic(AValue: Variant): Variant; overload;
 begin
   VarClear(Result);
 
   with TExpressionVarData(Result) do
   begin
-    VType := BoxedObject.VarType;
+    VType := Expression.VarType;
     VExpressionInfo := TExpressionInfo.Create;
-    VExpressionInfo.Instance := TExpressionVarData(AObject).VExpressionInfo.Instance;
+    VExpressionInfo.Expression := TValueConstantExpression.Create(TValue.FromVariant(AValue));
   end;
 end;
 
+{ TExpressionVariantType }
 
-function VarDataIsBoolean(const V: TVarData): Boolean;
-begin
-  Result := V.VType = varBoolean;
-end;
-
-{ TBoxedObjectVariantType }
-
-procedure TBoxedObjectVariantType.BinaryOp(var Left: TVarData;
+procedure TExpressionVariantType.BinaryOp(var Left: TVarData;
   const Right: TVarData; const &Operator: TVarOp);
+var
+  LLeft, LRight: IExpression;
 begin
-  inherited;
-
+  if (Right.VType = VarType) and (Left.VType = VarType) then
+  begin
+    LRight := ExpressionStack.Pop();
+    LLeft := ExpressionStack.Pop();
+    TExpressionVarData(Left).VExpressionInfo.Expression :=
+      OperatorExpressions[Operator].Create(LLeft, LRight);
+//    TExpressionVarData(Left).VExpressionInfo.Expression :=
+//      OperatorExpressions[Operator].Create(TExpressionVarData(Left).VExpressionInfo.Expression,
+//        TExpressionVarData(Right).VExpressionInfo.Expression);
+    ExpressionStack.Push(TExpressionVarData(Left).VExpressionInfo.Expression);
+  end
+  else
+  begin
+    inherited;
+  end;
 end;
 
-procedure TBoxedObjectVariantType.Cast(var Dest: TVarData;
+procedure TExpressionVariantType.Cast(var Dest: TVarData;
   const Source: TVarData);
+
+  function VarDataIsBoolean(const V: TVarData): Boolean;
+  begin
+    Result := V.VType = varBoolean;
+  end;
+
 var
   LSource, LTemp: TVarData;
 begin
@@ -138,7 +163,9 @@ begin
           VarDataCastTo(LTemp, LSource, varBoolean);
           TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
           TExpressionVarData(Dest).VExpressionInfo.Expression :=
-            TBooleanConstantExpression.Create(LTemp.VBoolean);
+//            TBooleanConstantExpression.Create(LTemp.VBoolean);
+            TValueConstantExpression.Create(TValue.FromVariant(Variant(LTemp)));
+          ExpressionStack.Push(TExpressionVarData(Dest).VExpressionInfo.Expression);
         end
         else
         begin
@@ -170,44 +197,34 @@ begin
   end;
 end;
 
-procedure TBoxedObjectVariantType.Clear(var V: TVarData);
+procedure TExpressionVariantType.Clear(var V: TVarData);
 begin
   V.VType := varEmpty;
   if Assigned(TExpressionVarData(V).VExpressionInfo) then
     TExpressionVarData(V).VExpressionInfo.Free;
 end;
 
-function TBoxedObjectVariantType.CompareOp(const Left, Right: TVarData;
+function TExpressionVariantType.CompareOp(const Left, Right: TVarData;
   const &Operator: TVarOp): Boolean;
 var
   LExpression: IExpression;
 begin
-  Result := False;
   if (Left.VType = VarType) and (Right.VType = VarType) then
-    case Operator of
-      opCmpEQ:
-      begin
-        LExpression := TEqualExpression.Create(
-          TExpressionVarData(Left).VExpressionInfo.Expression,
-          TExpressionVarData(Right).VExpressionInfo.Expression);
-        ExpressionStack.Push(LExpression);
-        Result := LExpression.Compile.AsBoolean;
-      end;
-      opCmpNE:
-      begin
-        LExpression := TNotEqualExpression.Create(
-          TExpressionVarData(Left).VExpressionInfo.Expression,
-          TExpressionVarData(Right).VExpressionInfo.Expression);
-        Result := LExpression.Compile.AsBoolean;
-      end
-    else
-      RaiseInvalidOp;
-    end
+  begin
+    LExpression := OperatorExpressions[Operator].Create(
+      TExpressionVarData(Left).VExpressionInfo.Expression,
+      TExpressionVarData(Right).VExpressionInfo.Expression);
+    ExpressionStack.Clear();
+    ExpressionStack.Push(LExpression);
+    Result := LExpression.Compile.AsBoolean;
+  end
   else
-    RaiseInvalidOp;
+  begin
+    Result := inherited;
+  end;
 end;
 
-procedure TBoxedObjectVariantType.Copy(var Dest: TVarData;
+procedure TExpressionVariantType.Copy(var Dest: TVarData;
   const Source: TVarData; const Indirect: Boolean);
 begin
   if Indirect and VarDataIsByRef(Source) then
@@ -226,68 +243,61 @@ begin
   end;
 end;
 
-function TBoxedObjectVariantType.DoFunction(var Dest: TVarData;
+function TExpressionVariantType.DoFunction(var Dest: TVarData;
   const V: TVarData; const Name: string;
   const Arguments: TVarDataArray): Boolean;
 var
-  LMethod: TRttiMethod;
-  LParameters: array of IExpression;
   i: Integer;
+  LParameter: IExpression;
+  LParameters: TArray<IExpression>;
 begin
   with TExpressionVarData(V) do
   begin
-    LMethod := Context.GetType(VExpressionInfo.Instance.ClassInfo).GetMethod(Name);
-    Result := Assigned(LMethod);
-
-    if Result then
+    SetLength(LParameters, Length(Arguments));
+    for i := Low(Arguments) to High(Arguments) do
     begin
-      for i := 0 to Pred(Length(Arguments)) do
+      if Arguments[i].VType = VarType then
       begin
-        SetLength(LParameters, Succ(i));
-        if Arguments[i].VType = VarType then
-        begin
-          LParameters[i] := TExpressionVarData(Arguments[i]).VExpressionInfo.Expression;
-        end
-        else
-        begin
-          LParameters[i] := nil;
-        end;
+        LParameters[i] := TExpressionVarData(Arguments[i]).VExpressionInfo.Expression;
+      end
+      else
+      begin
+        LParameters[i] := TValueConstantExpression.Create(TValue.FromVariant(Variant(Arguments[i])));
       end;
-
-      Dest.VType := VarType;
-      VExpressionInfo.Expression := TMethodExpression.Create(VExpressionInfo.Instance, LMethod, LParameters);
-      Copy(Dest, V, False);
-    end
-    else
-    begin
-      Clear(Dest);
     end;
+
+    LParameter := VExpressionInfo.Expression;
+
+    Result := True;
+    Dest.VType := VarType;
+    VExpressionInfo.Expression := TMethodExpression.Create(LParameter, Name, LParameters);
+    ExpressionStack.Push(VExpressionInfo.Expression);
+    Copy(Dest, V, False);
   end;
 end;
 
-function TBoxedObjectVariantType.GetProperty(var Dest: TVarData;
+function TExpressionVariantType.GetProperty(var Dest: TVarData;
   const V: TVarData; const Name: string): Boolean;
 var
-  LProperty: TRttiProperty;
+  LParameter: IExpression;
 begin
   with TExpressionVarData(V) do
   begin
-    LProperty := Context.GetType(VExpressionInfo.Instance.ClassInfo).GetProperty(Name);
-    Result := Assigned(LProperty);
+    ExpressionStack.Pop();
+    LParameter := VExpressionInfo.Expression;
 
-    if Result then
-    begin
-      Dest.VType := VarType;
-      VExpressionInfo.Expression := TPropertyExpression.Create(VExpressionInfo.Instance, LProperty);
-      Copy(Dest, V, False);
-    end;
+    Result := True;
+    Dest.VType := VarType;
+    VExpressionInfo.Expression := TPropertyExpression.Create(LParameter, Name);
+    ExpressionStack.Push(VExpressionInfo.Expression);
+    Copy(Dest, V, False);
   end;
 end;
 
 initialization
-  BoxedObject := TBoxedObjectVariantType.Create();
+  Expression := TExpressionVariantType.Create();
 
 finalization
-  BoxedObject.Free();;
+  Expression.Free();;
 
 end.

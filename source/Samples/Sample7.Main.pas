@@ -7,7 +7,7 @@ uses
   Dialogs, Sample7.Customer, Collections.Base, Collections.Lists, StdCtrls;
 
 type
-  TForm3 = class(TForm)
+  TMainForm = class(TForm)
     Button1: TButton;
     Memo1: TMemo;
     Button2: TButton;
@@ -26,7 +26,7 @@ type
   end;
 
 var
-  Form3: TForm3;
+  MainForm: TMainForm;
 
 implementation
 
@@ -59,7 +59,7 @@ begin
   ExpressionStack.Push(Result);
 end;
 
-procedure TForm3.Button1Click(Sender: TObject);
+procedure TMainForm.Button1Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
@@ -69,7 +69,7 @@ begin
   end;
 end;
 
-procedure TForm3.Button2Click(Sender: TObject);
+procedure TMainForm.Button2Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
@@ -79,7 +79,7 @@ begin
   end;
 end;
 
-procedure TForm3.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 begin
   filter1 := TLambda.Make<TCustomer, Boolean>(Arg1.CustomerId = 'ALFKI');
   filter2 := TLambda.Make<TCustomer, Boolean>(StartsText(Arg(Edit1).Text, Arg1.CompanyName));
@@ -93,7 +93,7 @@ begin
   customers.Add(TCustomer.Create('BLAUS', 'Blauer See Delikatessen'));
 end;
 
-procedure TForm3.FormDestroy(Sender: TObject);
+procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   customers.Free();
 end;

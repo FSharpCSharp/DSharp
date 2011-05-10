@@ -37,16 +37,36 @@ uses
 
 type
   TLambda = record
+  private
+    class function InitExpression(Expression: Variant): IExpression; static;
+  public
     class constructor Create;
     class destructor Destroy;
-    class function Make<TResult>(Expression: Variant): TFunc<TResult>; overload; static;
-    class function Make<T, TResult>(Expression: Variant): TFunc<T, TResult>; overload; static;
-    class function Make<T1, T2, TResult>(Expression: Variant): TFunc<T1, T2, TResult>; overload; static;
+    class function Make<TResult>(
+      Expression: Variant): TFunc<TResult>; overload; static;
+    class function Make<T, TResult>(
+      Expression: Variant): TFunc<T, TResult>; overload; static;
+    class function Make<T1, T2, TResult>(
+      Expression: Variant): TFunc<T1, T2, TResult>; overload; static;
+    class function Make<T1, T2, T3, TResult>(
+      Expression: Variant): TFunc<T1, T2, T3, TResult>; overload; static;
+    class function Make<T1, T2, T3, T4, TResult>(
+      Expression: Variant): TFunc<T1, T2, T3, T4, TResult>; overload; static;
 
-    class function Make<TResult>(Expression: IExpression): TFunc<TResult>; overload; static;
+    class function Make<TResult>(
+      Expression: IExpression): TFunc<TResult>; overload; static;
+    class function Make<T, TResult>(
+      Expression: IExpression): TFunc<T, TResult>; overload; static;
+    class function Make<T1, T2, TResult>(
+      Expression: IExpression): TFunc<T1, T2, TResult>; overload; static;
+    class function Make<T1, T2, T3, TResult>(
+      Expression: IExpression): TFunc<T1, T2, T3, TResult>; overload; static;
+    class function Make<T1, T2, T3, T4, TResult>(
+      Expression: IExpression): TFunc<T1, T2, T3, T4, TResult>; overload; static;
 
     class function GetExpression(var AFunc): IExpression; static;
-    class function SetExpression(var AFunc; AExpression: IExpression): Boolean; static;
+    class function SetExpression(var AFunc;
+      AExpression: IExpression): Boolean; static;
   end;
 
 function Arg(AObject: TObject): Variant; overload;
@@ -79,7 +99,6 @@ var
 function Arg(AObject: TObject): Variant;
 begin
   Result := AsDynamic(AObject);
-//  TExpressionVarData(Result).VExpressionInfo.Expression := TParameterExpression.Create(TValue.From<TObject>(AObject));
   ExpressionStack.Push(TExpressionVarData(Result).VExpressionInfo.Expression);
 end;
 
@@ -139,6 +158,18 @@ begin
   Args[3].Free();
 end;
 
+class function TLambda.InitExpression(Expression: Variant): IExpression;
+begin
+  if ExpressionStack.Count = 0 then
+  begin
+    Result := TValueConstantExpression.Create(TValue.FromVariant(Expression));
+  end
+  else
+  begin
+    Result := ExpressionStack.Pop();
+  end;
+end;
+
 class function TLambda.GetExpression(var AFunc): IExpression;
 var
   LInterface: IInterface absolute AFunc;
@@ -186,31 +217,12 @@ begin
   end;
 end;
 
-class function TLambda.Make<TResult>(Expression: Variant): TFunc<TResult>;
-var
-  expr: IExpression;
-begin
-  if ExpressionStack.Count = 0 then
-  begin
-    expr := TValueConstantExpression.Create(TValue.FromVariant(Expression));
-  end
-  else
-  begin
-    expr := ExpressionStack.Pop();
-  end;
-
-  Result :=
-    function: TResult
-    begin
-      Result := expr.Compile.AsType<TResult>;
-    end;
-end;
-
 class function TLambda.Make<TResult>(Expression: IExpression): TFunc<TResult>;
 var
   expr: IExpression;
 begin
   ExpressionStack.Clear();
+  expr := Expression;
 
   Result :=
     function: TResult
@@ -219,12 +231,18 @@ begin
     end;
 end;
 
-class function TLambda.Make<T, TResult>(Expression: Variant): TFunc<T, TResult>;
+class function TLambda.Make<TResult>(Expression: Variant): TFunc<TResult>;
+begin
+  Result := Make<TResult>(InitExpression(Expression));
+end;
+
+class function TLambda.Make<T, TResult>(Expression: IExpression): TFunc<T, TResult>;
 var
   expr: IExpression;
   param: IParameter;
 begin
-  expr := ExpressionStack.Pop();
+  ExpressionStack.Clear();
+  expr := Expression;
   param := ParameterList[0];
 
   Result :=
@@ -235,13 +253,19 @@ begin
     end;
 end;
 
+class function TLambda.Make<T, TResult>(Expression: Variant): TFunc<T, TResult>;
+begin
+  Result := Make<T, TResult>(InitExpression(Expression));
+end;
+
 class function TLambda.Make<T1, T2, TResult>(
-  Expression: Variant): TFunc<T1, T2, TResult>;
+  Expression: IExpression): TFunc<T1, T2, TResult>;
 var
   expr: IExpression;
   param1, param2: IParameter;
 begin
-  expr := ExpressionStack.Pop();
+  ExpressionStack.Clear();
+  expr := Expression;
   param1 := ParameterList[0];
   param2 := ParameterList[1];
 
@@ -252,6 +276,71 @@ begin
       param2.Value := TValue.From<T2>(Arg2);
       Result := expr.Compile.AsType<TResult>;
     end;
+end;
+
+class function TLambda.Make<T1, T2, TResult>(
+  Expression: Variant): TFunc<T1, T2, TResult>;
+begin
+  Result := Make<T1, T2, TResult>(InitExpression(Expression));
+end;
+
+class function TLambda.Make<T1, T2, T3, TResult>(
+  Expression: IExpression): TFunc<T1, T2, T3, TResult>;
+var
+  expr: IExpression;
+  param1, param2, param3: IParameter;
+begin
+  ExpressionStack.Clear();
+  expr := Expression;
+  param1 := ParameterList[0];
+  param2 := ParameterList[1];
+  param3 := ParameterList[2];
+
+  Result :=
+    function(Arg1: T1; Arg2: T2; Arg3: T3): TResult
+    begin
+      param1.Value := TValue.From<T1>(Arg1);
+      param2.Value := TValue.From<T2>(Arg2);
+      param3.Value := TValue.From<T3>(Arg3);
+      Result := expr.Compile.AsType<TResult>;
+    end;
+end;
+
+
+class function TLambda.Make<T1, T2, T3, TResult>(
+  Expression: Variant): TFunc<T1, T2, T3, TResult>;
+begin
+  Result := Make<T1, T2, T3, TResult>(InitExpression(Expression));
+end;
+
+class function TLambda.Make<T1, T2, T3, T4, TResult>(
+  Expression: IExpression): TFunc<T1, T2, T3, T4, TResult>;
+var
+  expr: IExpression;
+  param1, param2, param3, param4: IParameter;
+begin
+  ExpressionStack.Clear();
+  expr := Expression;
+  param1 := ParameterList[0];
+  param2 := ParameterList[1];
+  param3 := ParameterList[2];
+  param4 := ParameterList[3];
+
+  Result :=
+    function(Arg1: T1; Arg2: T2; Arg3: T3; Arg4: T4): TResult
+    begin
+      param1.Value := TValue.From<T1>(Arg1);
+      param2.Value := TValue.From<T2>(Arg2);
+      param3.Value := TValue.From<T3>(Arg3);
+      param4.Value := TValue.From<T4>(Arg4);
+      Result := expr.Compile.AsType<TResult>;
+    end;
+end;
+
+class function TLambda.Make<T1, T2, T3, T4, TResult>(
+  Expression: Variant): TFunc<T1, T2, T3, T4, TResult>;
+begin
+  Result := Make<T1, T2, T3, T4, TResult>(InitExpression(Expression));
 end;
 
 { TArgument }

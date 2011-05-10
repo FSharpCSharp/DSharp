@@ -1,9 +1,8 @@
-program Sample7;
+program Sample8;
 
 uses
   Forms,
-  Sample7.Main in 'Sample7.Main.pas' {MainForm},
-  Sample7.Customer in 'Sample7.Customer.pas';
+  Sample8.Main in 'Sample8.Main.pas' {MainForm};
 
 {$R *.res}
 

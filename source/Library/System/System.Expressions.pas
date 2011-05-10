@@ -32,7 +32,6 @@ unit System.Expressions;
 interface
 
 uses
-  DB,
   Generics.Collections,
   Rtti,
   SysUtils;
@@ -61,9 +60,6 @@ type
     function GetRight: IExpression;
     property Left: IExpression read GetLeft;
     property Right: IExpression read GetRight;
-  end;
-
-  TEntityBase = class
   end;
 
   TBooleanExpression = record
@@ -106,8 +102,6 @@ type
     class operator Implicit(Value: Integer): TValueExpression;
     class operator Implicit(Value: TBooleanExpression): TValueExpression;
     class operator Implicit(Value: Variant): TValueExpression;
-    class operator Implicit(Name: TField): TValueExpression;
-    class operator Implicit(Name: TObject): TValueExpression;
     class operator Implicit(Value: string): TValueExpression;
     class operator Implicit(Value: TValueExpression): Extended;
     class operator Implicit(Value: TValueExpression): Integer;
@@ -115,13 +109,17 @@ type
     function ToString: string;
   end;
 
-  TUnaryExpression = class(TInterfacedObject, IExpression, IUnaryExpression)
+  TExpression = class abstract(TInterfacedObject, IExpression)
+  public
+    function Compile: TValue; virtual; abstract;
+  end;
+
+  TUnaryExpression = class(TExpression, IUnaryExpression)
   private
     FValue: IExpression;
     function GetValue: IExpression;
   public
     constructor Create(Value: IExpression);
-    function Compile: TValue; virtual; abstract;
     property Value: IExpression read GetValue;
   end;
 
@@ -131,7 +129,7 @@ type
     function ToString: string; override;
   end;
 
-  TBinaryExpression = class(TInterfacedObject, IExpression, IBinaryExpression)
+  TBinaryExpression = class(TExpression, IBinaryExpression)
   private
     FLeft: IExpression;
     FRight: IExpression;
@@ -139,7 +137,6 @@ type
     function GetRight: IExpression;
   public
     constructor Create(Left, Right: IExpression);
-    function Compile: TValue; virtual; abstract;
     property Left: IExpression read GetLeft;
     property Right: IExpression read GetRight;
   end;
@@ -182,42 +179,6 @@ type
     function ToString: string; override;
   end;
 
-  TEqualExpression = class(TBinaryExpression)
-  public
-    function Compile: TValue; override;
-    function ToString: string; override;
-  end;
-
-  TNotEqualExpression = class(TBinaryExpression)
-  public
-    function Compile: TValue; override;
-    function ToString: string; override;
-  end;
-
-  TGreaterThanExpression = class(TBinaryExpression)
-  public
-    function Compile: TValue; override;
-    function ToString: string; override;
-  end;
-
-  TGreaterThanOrEqualExpression = class(TBinaryExpression)
-  public
-    function Compile: TValue; override;
-    function ToString: string; override;
-  end;
-
-  TLessThanExpression = class(TBinaryExpression)
-  public
-    function Compile: TValue; override;
-    function ToString: string; override;
-  end;
-
-  TLessThanOrEqualExpression = class(TBinaryExpression)
-  public
-    function Compile: TValue; override;
-    function ToString: string; override;
-  end;
-
   TLogicalAndExpression = class(TBinaryExpression)
   public
     function Compile: TValue; override;
@@ -236,9 +197,94 @@ type
     function ToString: string; override;
   end;
 
-  TConstantExpression = class(TInterfacedObject, IExpression)
+  TEqualExpression = class(TBinaryExpression)
   public
-    function Compile: TValue; virtual; abstract;
+    function Compile: TValue; override;
+    function ToString: string; override;
+  end;
+
+  TNotEqualExpression = class(TBinaryExpression)
+  public
+    function Compile: TValue; override;
+    function ToString: string; override;
+  end;
+
+  TLessThanExpression = class(TBinaryExpression)
+  public
+    function Compile: TValue; override;
+    function ToString: string; override;
+  end;
+
+  TLessThanOrEqualExpression = class(TBinaryExpression)
+  public
+    function Compile: TValue; override;
+    function ToString: string; override;
+  end;
+
+  TGreaterThanExpression = class(TBinaryExpression)
+  public
+    function Compile: TValue; override;
+    function ToString: string; override;
+  end;
+
+  TGreaterThanOrEqualExpression = class(TBinaryExpression)
+  public
+    function Compile: TValue; override;
+    function ToString: string; override;
+  end;
+
+  TAssignExpression = class(TBinaryExpression, IParameter)
+  private
+    function GetValue: TValue;
+    procedure SetValue(const Value: TValue);
+  public
+    function Compile: TValue; override;
+    function ToString: string; override;
+    property Value: TValue read GetValue write SetValue;
+  end;
+
+  TBlockExpression = class(TExpression)
+  private
+    FExpressions: TArray<IExpression>;
+  public
+    constructor Create(Expressions: array of IExpression);
+    function Compile: TValue; override;
+    property Expressions: TArray<IExpression> read FExpressions;
+  end;
+
+  TConditionalExpression = class(TExpression)
+  private
+    FTest: IExpression;
+    FIfTrue: IExpression;
+    FIfFalse: IExpression;
+  public
+    property Text: IExpression read FTest;
+    property IfTrue: IExpression read FIfTrue;
+    property IfFalse: IExpression read FIfFalse;
+  end;
+
+  TIfThenExpression = class(TConditionalExpression)
+  public
+    constructor Create(ATest: IExpression; AIfTrue: IExpression);
+    function Compile: TValue; override;
+  end;
+
+  TIfThenElseExpression = class(TConditionalExpression)
+  public
+    constructor Create(ATest, AIfTrue, AIfFalse: IExpression);
+    function Compile: TValue; override;
+  end;
+
+  TRepeatUntilLoopExpression = class(TExpression)
+  private
+    FBody: IExpression;
+    FTest: IExpression;
+  public
+    constructor Create(Body, Test: IExpression);
+    function Compile: TValue; override;
+  end;
+
+  TConstantExpression = class(TExpression)
   end;
 
   TBooleanConstantExpression = class(TConstantExpression)
@@ -251,16 +297,6 @@ type
     property Value: Boolean read FValue;
   end;
 
-  TFloatConstantExpression = class(TConstantExpression)
-  private
-    FValue: Double;
-  public
-    constructor Create(Value: Double);
-    function Compile: TValue; override;
-    function ToString: string; override;
-    property Value: Double read FValue;
-  end;
-
   TIntegerConstantExpression = class(TConstantExpression)
   private
     FValue: Integer;
@@ -269,6 +305,16 @@ type
     function Compile: TValue; override;
     function ToString: string; override;
     property Value: Integer read FValue;
+  end;
+
+  TFloatConstantExpression = class(TConstantExpression)
+  private
+    FValue: Double;
+  public
+    constructor Create(Value: Double);
+    function Compile: TValue; override;
+    function ToString: string; override;
+    property Value: Double read FValue;
   end;
 
   TStringConstantExpression = class(TConstantExpression)
@@ -281,34 +327,27 @@ type
     property Value: string read FValue;
   end;
 
-  TValueConstantExpression = class(TConstantExpression, IParameter)
+  TValueConstantExpression = class(TConstantExpression)
   private
     FValue: TValue;
+  public
+    constructor Create(Value: TObject); overload;
+    constructor Create(Value: TValue); overload;
+    constructor Create(Value: Variant); overload;
+    function Compile: TValue; override;
+    function ToString: string; override;
+  end;
+
+  TParameterExpression = class(TValueConstantExpression, IParameter)
+  private
     procedure SetValue(const Value: TValue);
     function GetValue: TValue;
   public
-    constructor Create(Value: TValue);
-    function Compile: TValue; override;
     function ToString: string; override;
     property Value: TValue read GetValue write SetValue;
   end;
 
-  TParameterExpression = class(TValueConstantExpression)
-  public
-    function ToString: string; override;
-  end;
-
-  TEntityExpression = class(TInterfacedObject, IExpression)
-  private
-    FName: string;
-  public
-    constructor Create(Name: string);
-    function Compile: TValue;
-    function ToString: string; override;
-    property Value: string read FName;
-  end;
-
-  TPropertyExpression = class(TInterfacedObject, IExpression)
+  TPropertyExpression = class(TExpression)
   private
     FExpression: IExpression;
     FPropertyName: string;
@@ -317,11 +356,11 @@ type
     function GetProperty(AObject: TObject): TRttiProperty;
   public
     constructor Create(AExpression: IExpression; APropertyName: string);
-    function Compile: TValue;
+    function Compile: TValue; override;
     function ToString: string; override;
   end;
 
-  TMethodExpression = class(TInterfacedObject, IExpression)
+  TMethodExpression = class(TExpression)
   private
     FExpression: IExpression;
     FMethodName: string;
@@ -330,17 +369,17 @@ type
     function GetObject: TObject;
     function GetParameters: TArray<TValue>;
   public
-    constructor Create(AExpression: IExpression; AMethodName: string; AParameters: TArray<IExpression>);
-    function Compile: TValue;
+    constructor Create(AExpression: IExpression; AMethodName: string; AParameters: array of IExpression);
+    function Compile: TValue; override;
     function ToString: string; override;
   end;
 
-  TMaxExpression = class(TInterfacedObject, IExpression)
+  TMaxExpression = class(TExpression)
   private
     FParam: TValueExpression;
   public
     constructor Create(Param: TValueExpression);
-    function Compile: TValue;
+    function Compile: TValue; override;
     function ToString: string; override;
     property Param: TValueExpression read FParam;
   end;
@@ -348,8 +387,6 @@ type
 var
   ExpressionStack: TStack<IExpression>;
   ParameterList: array[0..3] of IParameter;
-
-function Bool(value: Boolean): TBooleanExpression;
 
 function Max(E: TValueExpression): TValueExpression;
 
@@ -369,10 +406,10 @@ type
     function IsString: Boolean;
   end;
 
-function Bool(value: Boolean): TBooleanExpression;
-begin
-  Result := TBooleanExpression.Create(ExpressionStack.Peek);
-end;
+  TArrayHelper = class helper for TArray
+  public
+    class function Copy<T>(Values: array of T): TArray<T>;
+  end;
 
 { TValueHelper }
 
@@ -412,7 +449,6 @@ var
   Expr: IExpression;
 begin
   Expr := ExpressionStack.Pop();
-//  ParameterList.Clear();
 
   Result :=
     function: Boolean
@@ -428,8 +464,7 @@ var
   Param1: IParameter;
 begin
   Expr := ExpressionStack.Pop();
-  Param1 := ParameterList[0];  // todo: check for actual params
-//  ParameterList.Clear();
+  Param1 := ParameterList[0];
 
   Result :=
     function(Arg1: TObject): Boolean
@@ -533,16 +568,6 @@ begin
   Result.FValue := TGreaterThanOrEqualExpression.Create(Left.FValue, Right.FValue);
 end;
 
-class operator TValueExpression.Implicit(Name: TObject): TValueExpression;
-begin
-  Result.FValue := TEntityExpression.Create(Name.ToString);
-end;
-
-class operator TValueExpression.Implicit(Name: TField): TValueExpression;
-begin
-  Result.FValue := TEntityExpression.Create(Name.FieldName);
-end;
-
 class operator TValueExpression.Implicit(Value: Extended): TValueExpression;
 begin
   Result.FValue := TFloatConstantExpression.Create(Value);
@@ -642,6 +667,40 @@ begin
   Result := FValue.ToString;
 end;
 
+{ TUnaryExpression }
+
+constructor TUnaryExpression.Create(Value: IExpression);
+begin
+  FValue := Value;
+end;
+
+function TUnaryExpression.GetValue: IExpression;
+begin
+  Result := FValue;
+end;
+
+{ TNegativeExpression }
+
+function TNegativeExpression.Compile: TValue;
+var
+  LValue: TValue;
+begin
+  LValue := FValue.Compile;
+  if LValue.IsOrdinal  then
+  begin
+    Result := TValue.From<Int64>(LValue.AsOrdinal * -1);
+  end;
+  if LValue.IsFloat then
+  begin
+    Result := TValue.From<Extended>(LValue.AsExtended * -1);
+  end;
+end;
+
+function TNegativeExpression.ToString: string;
+begin
+  Result := '(-' + FValue.ToString + ')';
+end;
+
 { TBinaryExpression }
 
 constructor TBinaryExpression.Create(Left, Right: IExpression);
@@ -658,86 +717,6 @@ end;
 function TBinaryExpression.GetRight: IExpression;
 begin
   Result := FRight;
-end;
-
-{ TUnaryExpression }
-
-constructor TUnaryExpression.Create(Value: IExpression);
-begin
-  FValue := Value;
-end;
-
-function TUnaryExpression.GetValue: IExpression;
-begin
-  Result := FValue;
-end;
-
-{ TBooleanConstantExpression }
-
-function TBooleanConstantExpression.Compile: TValue;
-begin
-  Result := TValue.From<Boolean>(FValue);
-end;
-
-constructor TBooleanConstantExpression.Create(Value: Boolean);
-begin
-  FValue := Value;
-end;
-
-function TBooleanConstantExpression.ToString: string;
-begin
-  Result := BoolToStr(FValue, True);
-end;
-
-{ TFloatConstantExpression }
-
-function TFloatConstantExpression.Compile: TValue;
-begin
-  Result := TValue.From<Double>(FValue);
-end;
-
-constructor TFloatConstantExpression.Create(Value: Double);
-begin
-  FValue := Value;
-end;
-
-function TFloatConstantExpression.ToString: string;
-begin
-  Result := FloatToStr(FValue);
-end;
-
-{ TIntegerConstantExpression }
-
-function TIntegerConstantExpression.Compile: TValue;
-begin
-  Result := TValue.From<Integer>(FValue);
-end;
-
-constructor TIntegerConstantExpression.Create(Value: Integer);
-begin
-  FValue := Value;
-end;
-
-function TIntegerConstantExpression.ToString: string;
-begin
-  Result := IntToStr(FValue);
-end;
-
-{ TStringConstantExpression }
-
-function TStringConstantExpression.Compile: TValue;
-begin
-  Result := TValue.From<string>(FValue);
-end;
-
-constructor TStringConstantExpression.Create(Value: string);
-begin
-  FValue := Value;
-end;
-
-function TStringConstantExpression.ToString: string;
-begin
-  Result := '''' + StringReplace(FValue, '''', '''''', [rfReplaceAll]) + '''';
 end;
 
 { TAdditionExpression }
@@ -876,6 +855,42 @@ begin
   Result := '(' + FLeft.ToString + ' mod ' + FRight.ToString + ')';
 end;
 
+{ TLogicalAndExpression }
+
+function TLogicalAndExpression.Compile: TValue;
+begin
+  Result := TValue.From<Boolean>(FLeft.Compile.AsBoolean and FRight.Compile.AsBoolean);
+end;
+
+function TLogicalAndExpression.ToString: string;
+begin
+  Result := '('  + FLeft.ToString + ' and ' + FRight.ToString + ')';
+end;
+
+{ TLogicalOrExpression }
+
+function TLogicalOrExpression.Compile: TValue;
+begin
+  Result := TValue.From<Boolean>(FLeft.Compile.AsBoolean or FRight.Compile.AsBoolean);
+end;
+
+function TLogicalOrExpression.ToString: string;
+begin
+  Result := '('  + FLeft.ToString + ' or ' + FRight.ToString + ')';
+end;
+
+{ TLogicalXorExpression }
+
+function TLogicalXorExpression.Compile: TValue;
+begin
+  Result := TValue.From<Boolean>(FLeft.Compile.AsBoolean xor FRight.Compile.AsBoolean);
+end;
+
+function TLogicalXorExpression.ToString: string;
+begin
+  Result := '('  + FLeft.ToString + ' xor ' + FRight.ToString + ')';
+end;
+
 { TEqualExpression }
 
 function TEqualExpression.Compile: TValue;
@@ -924,54 +939,6 @@ begin
   Result := '(' + FLeft.ToString + ' <> ' + FRight.ToString + ')';
 end;
 
-{ TGreaterThanExpression }
-
-function TGreaterThanExpression.Compile: TValue;
-var
-  LLeft: TValue;
-  LRight: TValue;
-begin
-  LLeft := FLeft.Compile;
-  LRight := FRight.Compile;
-  if LLeft.IsNumeric and LRight.IsNumeric then
-  begin
-    Result := TValue.From<Boolean>(LLeft.AsExtended > LRight.AsExtended);
-  end
-  else
-  begin
-    Result := TValue.From<Boolean>(LLeft.ToString > LRight.ToString);
-  end;
-end;
-
-function TGreaterThanExpression.ToString: string;
-begin
-  Result := '(' + FLeft.ToString + ' > ' + FRight.ToString + ')';
-end;
-
-{ TGreaterEqualThanExpression }
-
-function TGreaterThanOrEqualExpression.Compile: TValue;
-var
-  LLeft: TValue;
-  LRight: TValue;
-begin
-  LLeft := FLeft.Compile;
-  LRight := FRight.Compile;
-  if LLeft.IsNumeric and LRight.IsNumeric then
-  begin
-    Result := TValue.From<Boolean>(LLeft.AsExtended >= LRight.AsExtended);
-  end
-  else
-  begin
-    Result := TValue.From<Boolean>(LLeft.ToString >= LRight.ToString);
-  end;
-end;
-
-function TGreaterThanOrEqualExpression.ToString: string;
-begin
-  Result := '(' + FLeft.ToString + ' >= ' + FRight.ToString + ')';
-end;
-
 { TLessThanExpression }
 
 function TLessThanExpression.Compile: TValue;
@@ -996,7 +963,7 @@ begin
   Result := '(' + FLeft.ToString + ' < ' + FRight.ToString + ')';
 end;
 
-{ TLessEqualThanExpression }
+{ TLessThanOrEqualExpression }
 
 function TLessThanOrEqualExpression.Compile: TValue;
 var
@@ -1019,102 +986,172 @@ function TLessThanOrEqualExpression.ToString: string;
 begin
   Result := '(' + FLeft.ToString + ' <= ' + FRight.ToString + ')';
 end;
-{ TNegativeExpression }
 
-function TNegativeExpression.Compile: TValue;
+{ TGreaterThanExpression }
+
+function TGreaterThanExpression.Compile: TValue;
 var
-  LValue: TValue;
+  LLeft: TValue;
+  LRight: TValue;
 begin
-  LValue := FValue.Compile;
-  if LValue.IsOrdinal  then
+  LLeft := FLeft.Compile;
+  LRight := FRight.Compile;
+  if LLeft.IsNumeric and LRight.IsNumeric then
   begin
-    Result := TValue.From<Int64>(LValue.AsOrdinal * -1);
-  end;
-  if LValue.IsFloat then
+    Result := TValue.From<Boolean>(LLeft.AsExtended > LRight.AsExtended);
+  end
+  else
   begin
-    Result := TValue.From<Extended>(LValue.AsExtended * -1);
+    Result := TValue.From<Boolean>(LLeft.ToString > LRight.ToString);
   end;
 end;
 
-function TNegativeExpression.ToString: string;
+function TGreaterThanExpression.ToString: string;
 begin
-  Result := '(-' + FValue.ToString + ')';
+  Result := '(' + FLeft.ToString + ' > ' + FRight.ToString + ')';
 end;
 
-{ TEntityExpression }
+{ TGreaterThanOrEqualExpression }
 
-function TEntityExpression.Compile: TValue;
+function TGreaterThanOrEqualExpression.Compile: TValue;
+var
+  LLeft: TValue;
+  LRight: TValue;
 begin
-  Result := TValue.From<string>(FName);
-//  raise ENotImplemented.Create('TEntityExpression.Compile');
+  LLeft := FLeft.Compile;
+  LRight := FRight.Compile;
+  if LLeft.IsNumeric and LRight.IsNumeric then
+  begin
+    Result := TValue.From<Boolean>(LLeft.AsExtended >= LRight.AsExtended);
+  end
+  else
+  begin
+    Result := TValue.From<Boolean>(LLeft.ToString >= LRight.ToString);
+  end;
 end;
 
-constructor TEntityExpression.Create(Name: string);
+function TGreaterThanOrEqualExpression.ToString: string;
 begin
-  FName := Name;
+  Result := '(' + FLeft.ToString + ' >= ' + FRight.ToString + ')';
 end;
 
-function TEntityExpression.ToString: string;
+{ TBooleanConstantExpression }
+
+function TBooleanConstantExpression.Compile: TValue;
 begin
-  Result := '[' + FName + ']';
+  Result := TValue.From<Boolean>(FValue);
 end;
 
-{ TMaxExpression }
-
-constructor TMaxExpression.Create(Param: TValueExpression);
+constructor TBooleanConstantExpression.Create(Value: Boolean);
 begin
-  FParam := Param;
+  FValue := Value;
 end;
 
-function TMaxExpression.Compile: TValue;
+function TBooleanConstantExpression.ToString: string;
 begin
-  raise ENotImplemented.Create('TMaxExpression.Compile');
+  Result := BoolToStr(FValue, True);
 end;
 
-function TMaxExpression.ToString: string;
+{ TIntegerConstantExpression }
+
+function TIntegerConstantExpression.Compile: TValue;
 begin
-  Result := 'Max(' + FParam.ToString + ')';
+  Result := TValue.From<Integer>(FValue);
 end;
 
-function Max(E: TValueExpression): TValueExpression;
+constructor TIntegerConstantExpression.Create(Value: Integer);
 begin
-  Result.FValue := TMaxExpression.Create(E);
+  FValue := Value;
 end;
 
-{ TLogicalAndExpression }
-
-function TLogicalAndExpression.Compile: TValue;
+function TIntegerConstantExpression.ToString: string;
 begin
-  Result := TValue.From<Boolean>(FLeft.Compile.AsBoolean and FRight.Compile.AsBoolean);
+  Result := IntToStr(FValue);
 end;
 
-function TLogicalAndExpression.ToString: string;
+{ TFloatConstantExpression }
+
+function TFloatConstantExpression.Compile: TValue;
 begin
-  Result := '('  + FLeft.ToString + ' and ' + FRight.ToString + ')';
+  Result := TValue.From<Double>(FValue);
 end;
 
-{ TLogicalOrExpression }
-
-function TLogicalOrExpression.Compile: TValue;
+constructor TFloatConstantExpression.Create(Value: Double);
 begin
-  Result := TValue.From<Boolean>(FLeft.Compile.AsBoolean or FRight.Compile.AsBoolean);
+  FValue := Value;
 end;
 
-function TLogicalOrExpression.ToString: string;
+function TFloatConstantExpression.ToString: string;
 begin
-  Result := '('  + FLeft.ToString + ' or ' + FRight.ToString + ')';
+  Result := FloatToStr(FValue);
 end;
 
-{ TLogicalXorExpression }
+{ TStringConstantExpression }
 
-function TLogicalXorExpression.Compile: TValue;
+function TStringConstantExpression.Compile: TValue;
 begin
-  Result := TValue.From<Boolean>(FLeft.Compile.AsBoolean xor FRight.Compile.AsBoolean);
+  Result := TValue.From<string>(FValue);
 end;
 
-function TLogicalXorExpression.ToString: string;
+constructor TStringConstantExpression.Create(Value: string);
 begin
-  Result := '('  + FLeft.ToString + ' xor ' + FRight.ToString + ')';
+  FValue := Value;
+end;
+
+function TStringConstantExpression.ToString: string;
+begin
+  Result := '''' + StringReplace(FValue, '''', '''''', [rfReplaceAll]) + '''';
+end;
+
+{ TValueConstantExpression }
+
+function TValueConstantExpression.Compile: TValue;
+begin
+  Result := FValue;
+end;
+
+constructor TValueConstantExpression.Create(Value: TValue);
+begin
+  FValue := Value;
+end;
+
+constructor TValueConstantExpression.Create(Value: TObject);
+begin
+  FValue := TValue.From<TObject>(Value);
+end;
+
+constructor TValueConstantExpression.Create(Value: Variant);
+begin
+  FValue := TValue.FromVariant(Value);
+end;
+
+function TValueConstantExpression.ToString: string;
+begin
+  Result := FValue.ToString;
+end;
+
+{ TParameterExpression }
+
+function TParameterExpression.GetValue: TValue;
+begin
+  Result := FValue;
+end;
+
+procedure TParameterExpression.SetValue(const Value: TValue);
+begin
+  FValue := Value;
+end;
+
+function TParameterExpression.ToString: string;
+begin
+  if FValue.IsObject then
+  begin
+    Result := FValue.AsObject.ToString;
+  end
+  else
+  begin
+    Result := FValue.ToString;
+  end;
 end;
 
 { TPropertyExpression }
@@ -1228,11 +1265,11 @@ begin
 end;
 
 constructor TMethodExpression.Create(AExpression: IExpression; AMethodName: string;
-  AParameters: TArray<IExpression>);
+  AParameters: array of IExpression);
 begin
   FExpression := AExpression;
   FMethodName := AMethodName;
-  FParameters := AParameters;
+  FParameters := TArray.Copy<IExpression>(AParameters);
 end;
 
 function TMethodExpression.GetMethod(AObject: TObject): TRttiMethod;
@@ -1264,7 +1301,7 @@ end;
 
 function TMethodExpression.GetParameters: TArray<TValue>;
 var
-  I: Integer;
+  i: Integer;
 begin
   SetLength(Result, Length(FParameters));
   for i := Low(FParameters) to High(FParameters) do
@@ -1291,45 +1328,160 @@ begin
   end;
 end;
 
-{ TValueConstantExpression }
+{ TMaxExpression }
 
-function TValueConstantExpression.Compile: TValue;
+constructor TMaxExpression.Create(Param: TValueExpression);
 begin
-  Result := FValue;
+  FParam := Param;
 end;
 
-constructor TValueConstantExpression.Create(Value: TValue);
+function TMaxExpression.Compile: TValue;
 begin
-  FValue := Value;
+  raise ENotImplemented.Create('TMaxExpression.Compile');
 end;
 
-function TValueConstantExpression.GetValue: TValue;
+function TMaxExpression.ToString: string;
 begin
-  Result := FValue;
+  Result := 'Max(' + FParam.ToString + ')';
 end;
 
-procedure TValueConstantExpression.SetValue(const Value: TValue);
+function Max(E: TValueExpression): TValueExpression;
 begin
-  FValue := Value;
+  Result.FValue := TMaxExpression.Create(E);
 end;
 
-function TValueConstantExpression.ToString: string;
-begin
-  Result := FValue.ToString;
-end;
+{ TAssignExpression }
 
-{ TParameterExpression }
-
-function TParameterExpression.ToString: string;
+function TAssignExpression.Compile: TValue;
+var
+  LLeft: IParameter;
 begin
-  if FValue.IsObject then
+  if Supports(FLeft, IParameter, LLeft) then
   begin
-    Result := FValue.AsObject.ToString;
+    LLeft.Value := FRight.Compile();
+    Result := LLeft.Compile();
+  end
+  else
+    raise EArgumentException.Create('Left side cannot be assigned to');
+end;
+
+function TAssignExpression.GetValue: TValue;
+var
+  LLeft: IParameter;
+begin
+  if Supports(FLeft, IParameter, LLeft) then
+  begin
+    Result := LLeft.Value;
+  end
+  else
+    Result := TValue.Empty;
+end;
+
+procedure TAssignExpression.SetValue(const Value: TValue);
+begin
+
+end;
+
+function TAssignExpression.ToString: string;
+begin
+  Result := FLeft.ToString + ' := ' + FRight.ToString;
+end;
+
+{ TBlockExpression }
+
+function TBlockExpression.Compile: TValue;
+var
+  i: Integer;
+  LExpression: IParameter;
+begin
+  Result := TValue.Empty;
+  if Length(FExpressions) > 0 then
+  begin
+    Result := FExpressions[0].Compile();
+    for i := 1 to High(FExpressions) do
+    begin
+      FExpressions[i].Compile();
+    end;
+    if Supports(FExpressions[0], IParameter, LExpression) then
+    begin
+      Result := LExpression.Value;
+    end;
+  end;
+end;
+
+constructor TBlockExpression.Create(Expressions: array of IExpression);
+begin
+  FExpressions := TArray.Copy<IExpression>(Expressions);
+end;
+
+{ TIfThenExpression }
+
+function TIfThenExpression.Compile: TValue;
+begin
+  if FTest.Compile().AsBoolean() then
+  begin
+    Result := FIfTrue.Compile();
   end
   else
   begin
-    Result := FValue.ToString;
+    Result := TValue.Empty;
   end;
+end;
+
+constructor TIfThenExpression.Create(ATest, AIfTrue: IExpression);
+begin
+  FTest := ATest;
+  FIfTrue := AIfTrue;
+end;
+
+{ TIfThenElseExpression }
+
+function TIfThenElseExpression.Compile: TValue;
+begin
+  if FTest.Compile().AsBoolean() then
+  begin
+    Result := FIfTrue.Compile();
+  end
+  else
+  begin
+    Result := FIfFalse.Compile();
+  end;
+end;
+
+constructor TIfThenElseExpression.Create(ATest, AIfTrue, AIfFalse: IExpression);
+begin
+  FTest := ATest;
+  FIfTrue := AIfTrue;
+  FIfFalse := AIfFalse;
+end;
+
+{ TArrayHelper }
+
+class function TArrayHelper.Copy<T>(Values: array of T): TArray<T>;
+var
+  i: Integer;
+begin
+  SetLength(Result, Length(Values));
+  for i := Low(Values) to High(Values) do
+  begin
+    Result[i] := Values[i];
+  end;
+end;
+
+{ TRepeatUntilLoopExpression }
+
+function TRepeatUntilLoopExpression.Compile: TValue;
+begin
+  Result := TValue.Empty;
+  repeat
+    Result := FBody.Compile();
+  until FTest.Compile().AsBoolean();
+end;
+
+constructor TRepeatUntilLoopExpression.Create(Body, Test: IExpression);
+begin
+  FBody := Body;
+  FTest := Test;
 end;
 
 initialization

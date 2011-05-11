@@ -42,7 +42,7 @@ type
 
 constructor TFoo.Create;
 begin
-  FCount.Initialize();
+  FCount.Initialize(Self);
 end;
 
 destructor TFoo.Destroy;
@@ -59,16 +59,16 @@ begin
   f.Count.OnChange.Add(Changed);
   Memo1.Lines.Add('changing property...');
   f.Count := 12;
-  Memo1.Lines.Add('value of property: ' + IntToStr(f.Count));
+  Memo1.Lines.Add('value of property: ' + f.Count.ToString);
   Memo1.Lines.Add('changing property...');
   f.Count := 13;
-  Memo1.Lines.Add('value of property: ' + IntToStr(f.Count));
+  Memo1.Lines.Add('value of property: ' + f.Count.ToString);
   f.Free();
 end;
 
 procedure TForm1.Changed(Sender: TObject);
 begin
-  Memo1.Lines.Add('property changed');
+  Memo1.Lines.Add('property changed to: ' + (Sender as TFoo).Count.ToString);
 end;
 
 initialization

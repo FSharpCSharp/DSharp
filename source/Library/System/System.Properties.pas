@@ -34,32 +34,45 @@ interface
 uses
   Classes,
   System.CopyOperator,
-  System.Events;
+  System.Events,
+  SysUtils;
 
 type
   TProperty<T> = record
-  public
-    OnChange: IEventHandler<TNotifyEvent>;
-    Value: T;
   private
-    CopyOperator: IInterface;
+    FOnChange: IEventHandler<TNotifyEvent>;
+    FOwner: TObject;
+    FValue: T;
+    // this needs to be the last field so the other values
+    // are already copied when the CopyOperator mechanic fires
+    FCopyOperator: ICopyOperator;
+    procedure DoChange;
+    function GetValue: T;
+    procedure SetValue(const AValue: T);
   public
     class operator Implicit(AValue: T): TProperty<T>;
     class operator Implicit(AValue: TProperty<T>): T;
+
+    function ToString: string;
+    property OnChange: IEventHandler<TNotifyEvent> read FOnChange;
+    property Value: T read GetValue write SetValue;
   end;
 
   TField<T> = record
   private
-    Event: TEvent<TNotifyEvent>;
+    FEvent: TEvent<TNotifyEvent>;
   public
     Value: TProperty<T>;
-    procedure Initialize;
+    procedure Initialize(Owner: TObject);
     procedure Finalize;
+    class operator Implicit(AValue: T): TField<T>;
+    class operator Implicit(AValue: TField<T>): T;
   end;
 
   TPropertyCopyOperator<T> = class(TCopyOperator<TProperty<T>>)
   private
     FEventHandler: IEventHandler<TNotifyEvent>;
+    FOwner: TObject;
   protected
     procedure Copy; override;
     procedure Initialize; override;
@@ -67,7 +80,45 @@ type
 
 implementation
 
-{ TProperty }
+uses
+  Rtti;
+
+{ TProperty<T> }
+
+procedure TProperty<T>.DoChange;
+begin
+  if Assigned(FOnChange) then
+  begin
+    FOnChange.Invoke(FOwner);
+  end;
+end;
+
+function TProperty<T>.GetValue: T;
+begin
+  if Assigned(FCopyOperator) and FCopyOperator.IsValid then
+  begin
+    Result := TProperty<T>(FCopyOperator.GetInstance^).FValue;
+  end
+  else
+  begin
+    raise EInvalidOperation.Create('property reference is invalid');
+  end;
+end;
+
+procedure TProperty<T>.SetValue(const AValue: T);
+begin
+  FValue := AValue;
+  if Assigned(FCopyOperator) then
+  begin
+    TProperty<T>(FCopyOperator.GetInstance^).FValue := AValue;
+  end;
+  DoChange();
+end;
+
+function TProperty<T>.ToString: string;
+begin
+  Result := TValue.From<T>(FValue).ToString();
+end;
 
 class operator TProperty<T>.Implicit(AValue: T): TProperty<T>;
 begin
@@ -79,43 +130,59 @@ begin
   Result := AValue.Value;
 end;
 
-{ TField }
+{ TField<T> }
 
 procedure TField<T>.Finalize;
 begin
-  Value.CopyOperator := nil;
+  if Assigned(Value.FCopyOperator) then
+  begin
+    Value.FCopyOperator.Finalize();
+  end;
 end;
 
-procedure TField<T>.Initialize;
+procedure TField<T>.Initialize(Owner: TObject);
 begin
-  Value.OnChange := Event.EventHandler;
-  Value.CopyOperator := TPropertyCopyOperator<T>.Create(@Value);
+  Value.FOnChange := FEvent.EventHandler;
+  Value.FOwner := Owner;
+  Value.FCopyOperator := TPropertyCopyOperator<T>.Create(@Value);
+end;
+
+class operator TField<T>.Implicit(AValue: T): TField<T>;
+begin
+  Result.Value.Value := AValue
+end;
+
+class operator TField<T>.Implicit(AValue: TField<T>): T;
+begin
+  Result := AValue.Value;
 end;
 
 { TPropertyCopyOperator<T> }
 
 procedure TPropertyCopyOperator<T>.Copy;
 begin
-  if FValue.OnChange = nil then
+  if FInstance.FCopyOperator = nil then
   begin
-    FValue.CopyOperator := Self;
-    FValue.OnChange := FEventHandler;
-    FEventHandler.Invoke(nil);
+    FInstance.FCopyOperator := Self;
+    FInstance.FOnChange := FEventHandler;
+    FInstance.FOwner := FOwner;
+    FInstance.DoChange();
   end
   else
   begin
-    if Assigned(FValue.CopyOperator)
-      and (TObject(FValue.CopyOperator) <> Self) then
+    if (FInstance.FCopyOperator as TObject) <> Self then
     begin
-      FValue.OnChange.Invoke(nil);
-      FValue.CopyOperator := TPropertyCopyOperator<T>.Create(FValue);
+      FInstance.FOwner := FOwner;
+      FInstance.DoChange();
+      FInstance.FCopyOperator := TPropertyCopyOperator<T>.Create(FInstance);
     end;
   end;
 end;
 
 procedure TPropertyCopyOperator<T>.Initialize;
 begin
-  FEventHandler := FValue.OnChange;
+  FEventHandler := FInstance.FOnChange;
+  FOwner := FInstance.FOwner;
 end;
 
 end.

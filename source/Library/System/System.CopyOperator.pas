@@ -32,16 +32,28 @@ unit System.CopyOperator;
 interface
 
 type
-  TCopyOperator<T> = class abstract(TObject, IInterface)
+  ICopyOperator = interface
+    ['{4BDF3273-9E71-4C1E-929D-0673A353BEE0}']
+    function GetInstance: Pointer;
+    procedure Finalize;
+    function IsValid: Boolean;
+  end;
+
+  TCopyOperator<T: record> = class abstract(TInterfacedObject, IInterface, ICopyOperator)
   protected
-    FRefCount: Integer;
-    FValue: ^T;
+    FFinalized: Boolean;
+    FInstance: ^T;
+
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
 
+    function GetInstance: Pointer;
+
     procedure Copy; virtual; abstract;
+    procedure Finalize; virtual;
     procedure Initialize; virtual; abstract;
+    function IsValid: Boolean;
   public
     constructor Create(AValue: Pointer);
   end;
@@ -55,9 +67,24 @@ uses
 
 constructor TCopyOperator<T>.Create(AValue: Pointer);
 begin
-  FValue := AValue;
-
+  FInstance := AValue;
   Initialize();
+end;
+
+procedure TCopyOperator<T>.Finalize;
+begin
+  FFinalized := True;
+  FInstance^ := Default(T);
+end;
+
+function TCopyOperator<T>.GetInstance: Pointer;
+begin
+  Result := FInstance;
+end;
+
+function TCopyOperator<T>.IsValid: Boolean;
+begin
+  Result := not FFinalized;
 end;
 
 function TCopyOperator<T>.QueryInterface(const IID: TGUID; out Obj): HResult;
@@ -79,7 +106,10 @@ end;
 
 function TCopyOperator<T>._Release: Integer;
 begin
-  Copy();
+  if not FFinalized then
+  begin
+    Copy();
+  end;
 
   Result := InterlockedDecrement(FRefCount);
   if Result = 0 then

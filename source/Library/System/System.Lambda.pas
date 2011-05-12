@@ -37,11 +37,12 @@ uses
 
 type
   TLambda = record
-  private
-    class function InitExpression(Expression: Variant): IExpression; static;
   public
     class constructor Create;
-    class destructor Destroy;
+
+    class function InitExpression(Expression: IExpression): IExpression; overload; static; inline;
+    class function InitExpression(Expression: Variant): IExpression; overload; static; inline;
+
     class function Make<TResult>(
       Expression: Variant): TFunc<TResult>; overload; static;
     class function Make<T, TResult>(
@@ -76,6 +77,8 @@ function Arg2: Variant;
 function Arg3: Variant;
 function Arg4: Variant;
 
+function Bool(Expression: Variant): Variant;
+
 implementation
 
 uses
@@ -93,9 +96,6 @@ type
     function ToString: string; override;
   end;
 
-var
-  Args: array[0..3] of TArgument;
-
 function Arg(AObject: TObject): Variant;
 begin
   Result := AsDynamic(AObject);
@@ -110,63 +110,64 @@ end;
 
 function Arg1: Variant;
 begin
-  Result := AsDynamic(Args[0]);
-  TExpressionVarData(Result).VExpressionInfo.Expression := ParameterList[0];
-  ExpressionStack.Push(TExpressionVarData(Result).VExpressionInfo.Expression);
+  Result := AsDynamic(ParameterList[0]);
+  ExpressionStack.Push(ParameterList[0]);
 end;
 
 function Arg2: Variant;
 begin
-  Result := AsDynamic(Args[1]);
-  TExpressionVarData(Result).VExpressionInfo.Expression := ParameterList[1];
-  ExpressionStack.Push(TExpressionVarData(Result).VExpressionInfo.Expression);
+  Result := AsDynamic(ParameterList[1]);
+  ExpressionStack.Push(ParameterList[1]);
 end;
 
 function Arg3: Variant;
 begin
-  Result := AsDynamic(Args[2]);
-  TExpressionVarData(Result).VExpressionInfo.Expression := ParameterList[2];
-  ExpressionStack.Push(TExpressionVarData(Result).VExpressionInfo.Expression);
+  Result := AsDynamic(ParameterList[2]);
+  ExpressionStack.Push(ParameterList[2]);
 end;
 
 function Arg4: Variant;
 begin
-  Result := AsDynamic(Args[3]);
-  TExpressionVarData(Result).VExpressionInfo.Expression := ParameterList[3];
-  ExpressionStack.Push(TExpressionVarData(Result).VExpressionInfo.Expression);
+  Result := AsDynamic(ParameterList[3]);
+  ExpressionStack.Push(ParameterList[3]);
+end;
+
+function Bool(Expression: Variant): Variant;
+begin
+  Result := AsDynamic(ExpressionStack.Peek());
 end;
 
 { TLambda }
 
 class constructor TLambda.Create;
 begin
-  Args[0] := TArgument.Create();
-  Args[1] := TArgument.Create();
-  Args[2] := TArgument.Create();
-  Args[3] := TArgument.Create();
-  ParameterList[0] := TParameterExpression.Create(TValue.From<TObject>(Args[0]));
-  ParameterList[1] := TParameterExpression.Create(TValue.From<TObject>(Args[1]));
-  ParameterList[2] := TParameterExpression.Create(TValue.From<TObject>(Args[2]));
-  ParameterList[3] := TParameterExpression.Create(TValue.From<TObject>(Args[3]));
+  ParameterList[0] := TParameterExpression.Create('Arg1');
+  ParameterList[1] := TParameterExpression.Create('Arg2');
+  ParameterList[2] := TParameterExpression.Create('Arg3');
+  ParameterList[3] := TParameterExpression.Create('Arg4');
 end;
 
-class destructor TLambda.Destroy;
+class function TLambda.InitExpression(Expression: IExpression): IExpression;
 begin
-  Args[0].Free();
-  Args[1].Free();
-  Args[2].Free();
-  Args[3].Free();
+  if ExpressionStack.Count = 1 then
+  begin
+    Result := ExpressionStack.Pop();
+  end
+  else
+  begin
+    Result := Expression;
+  end;
 end;
 
 class function TLambda.InitExpression(Expression: Variant): IExpression;
 begin
-  if ExpressionStack.Count = 0 then
+  if ExpressionStack.Count = 1 then
   begin
-    Result := TValueConstantExpression.Create(TValue.FromVariant(Expression));
+    Result := ExpressionStack.Pop();
   end
   else
   begin
-    Result := ExpressionStack.Pop();
+    Result := TValueConstantExpression.Create(TValue.FromVariant(Expression));
   end;
 end;
 
@@ -221,8 +222,7 @@ class function TLambda.Make<TResult>(Expression: IExpression): TFunc<TResult>;
 var
   expr: IExpression;
 begin
-  ExpressionStack.Clear();
-  expr := Expression;
+  expr := InitExpression(Expression);
 
   Result :=
     function: TResult
@@ -241,8 +241,8 @@ var
   expr: IExpression;
   param: IParameter;
 begin
-  ExpressionStack.Clear();
-  expr := Expression;
+  expr := InitExpression(Expression);
+
   param := ParameterList[0];
 
   Result :=
@@ -264,8 +264,8 @@ var
   expr: IExpression;
   param1, param2: IParameter;
 begin
-  ExpressionStack.Clear();
-  expr := Expression;
+  expr := InitExpression(Expression);
+
   param1 := ParameterList[0];
   param2 := ParameterList[1];
 
@@ -290,8 +290,8 @@ var
   expr: IExpression;
   param1, param2, param3: IParameter;
 begin
-  ExpressionStack.Clear();
-  expr := Expression;
+  expr := InitExpression(Expression);
+
   param1 := ParameterList[0];
   param2 := ParameterList[1];
   param3 := ParameterList[2];
@@ -319,8 +319,8 @@ var
   expr: IExpression;
   param1, param2, param3, param4: IParameter;
 begin
-  ExpressionStack.Clear();
-  expr := Expression;
+  expr := InitExpression(Expression);
+
   param1 := ParameterList[0];
   param2 := ParameterList[1];
   param3 := ParameterList[2];

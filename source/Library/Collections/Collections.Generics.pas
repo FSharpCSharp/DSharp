@@ -50,6 +50,7 @@ type
   protected
     function DoGetEnumerator: TEnumerator<T>; override;
   public
+    constructor Create; overload;
     constructor Create(AArray: array of T); overload;
     constructor Create(AEnumerable: TEnumerable<T>); overload;
     destructor Destroy; override;
@@ -58,6 +59,7 @@ type
   TEnumeratorEx<T> = class(TEnumerator<T>, IEnumerator<T>, IEnumerator)
   private
     FRefCount: Integer;
+    FOwner: IEnumerable<T>;
     FItems: TObjectList<TObject>;
     FEnumerator: TEnumerator<T>;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
@@ -70,7 +72,7 @@ type
     function DoGetCurrent: T; override;
     function DoMoveNext: Boolean; override;
   public
-    constructor Create(AEnumerator: TEnumerator<T>);
+    constructor Create(AEnumerator: TEnumerator<T>; AOwner: IEnumerable<T>);
     destructor Destroy; override;
     function MoveNext: Boolean;
     procedure Reset; virtual;
@@ -80,9 +82,15 @@ implementation
 
 uses
   System.Generics,
+  SysUtils,
   Windows;
 
 { TEnumerableEx<T> }
+
+constructor TEnumerableEx<T>.Create;
+begin
+  ENotImplemented.Create('TEnumerableEx<T>.Create cannot be called with no parameters');
+end;
 
 constructor TEnumerableEx<T>.Create(AArray: array of T);
 begin
@@ -104,14 +112,14 @@ end;
 
 function TEnumerableEx<T>.DoGetEnumerator: TEnumerator<T>;
 begin
-  inherited;
+  Result := TEnumeratorEx<T>.Create(FEnumerable.GetEnumerator(), Self);
 end;
 
 function TEnumerableEx<T>.GetEnumerator: IEnumerator;
 begin
   if Assigned(FEnumerable) then
   begin
-    Result := TEnumeratorEx<T>.Create(FEnumerable.GetEnumerator());
+    Result := TEnumeratorEx<T>.Create(FEnumerable.GetEnumerator(), Self);
   end
   else
   begin
@@ -178,16 +186,18 @@ begin
   end;
 end;
 
-constructor TEnumeratorEx<T>.Create(AEnumerator: TEnumerator<T>);
+constructor TEnumeratorEx<T>.Create(AEnumerator: TEnumerator<T>; AOwner: IEnumerable<T>);
 begin
+  FOwner := AOwner;
   FItems := TObjectList<TObject>.Create(True);
   FEnumerator := AEnumerator;
 end;
 
 destructor TEnumeratorEx<T>.Destroy;
 begin
-  FItems.Free();
   FEnumerator.Free();
+  FItems.Free();
+  FOwner := nil;
   inherited;
 end;
 

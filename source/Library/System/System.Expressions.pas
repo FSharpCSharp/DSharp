@@ -129,7 +129,7 @@ type
     function ToString: string; override;
   end;
 
-  TBinaryExpression = class(TExpression, IBinaryExpression)
+  TBinaryExpression = class abstract(TExpression, IBinaryExpression)
   private
     FLeft: IExpression;
     FRight: IExpression;
@@ -340,38 +340,43 @@ type
 
   TParameterExpression = class(TValueConstantExpression, IParameter)
   private
+    FName: string;
     procedure SetValue(const Value: TValue);
     function GetValue: TValue;
   public
+    constructor Create(AName: string);
     function ToString: string; override;
+    property Name: string read FName;
     property Value: TValue read GetValue write SetValue;
   end;
 
   TPropertyExpression = class(TExpression)
   private
     FExpression: IExpression;
-    FPropertyName: string;
+    FName: string;
     function GetMethod(AObject: TObject): TRttiMethod;
     function GetObject: TObject;
     function GetProperty(AObject: TObject): TRttiProperty;
   public
-    constructor Create(AExpression: IExpression; APropertyName: string);
+    constructor Create(AExpression: IExpression; AName: string);
     function Compile: TValue; override;
     function ToString: string; override;
+    property Name: string read FName;
   end;
 
   TMethodExpression = class(TExpression)
   private
     FExpression: IExpression;
-    FMethodName: string;
+    FName: string;
     FParameters: TArray<IExpression>;
     function GetMethod(AObject: TObject): TRttiMethod;
     function GetObject: TObject;
     function GetParameters: TArray<TValue>;
   public
-    constructor Create(AExpression: IExpression; AMethodName: string; AParameters: array of IExpression);
+    constructor Create(AExpression: IExpression; AName: string; AParameters: array of IExpression);
     function Compile: TValue; override;
     function ToString: string; override;
+    property Name: string read FName;
   end;
 
   TMaxExpression = class(TExpression)
@@ -1132,6 +1137,11 @@ end;
 
 { TParameterExpression }
 
+constructor TParameterExpression.Create(AName: string);
+begin
+  FName := AName;
+end;
+
 function TParameterExpression.GetValue: TValue;
 begin
   Result := FValue;
@@ -1144,14 +1154,7 @@ end;
 
 function TParameterExpression.ToString: string;
 begin
-  if FValue.IsObject then
-  begin
-    Result := FValue.AsObject.ToString;
-  end
-  else
-  begin
-    Result := FValue.ToString;
-  end;
+  Result := FName;
 end;
 
 { TPropertyExpression }
@@ -1186,10 +1189,10 @@ begin
   end;
 end;
 
-constructor TPropertyExpression.Create(AExpression: IExpression; APropertyName: string);
+constructor TPropertyExpression.Create(AExpression: IExpression; AName: string);
 begin
   FExpression := AExpression;
-  FPropertyName := APropertyName;
+  FName := AName;
 end;
 
 function TPropertyExpression.GetMethod(AObject: TObject): TRttiMethod;
@@ -1199,7 +1202,7 @@ begin
   if Assigned(AObject) then
   begin
     LType := Context.GetType(AObject.ClassType);
-    Result := LType.GetMethod(FPropertyName);
+    Result := LType.GetMethod(FName);
   end
   else
   begin
@@ -1226,7 +1229,7 @@ begin
   if Assigned(AObject) then
   begin
     LType := Context.GetType(AObject.ClassType);
-    Result := LType.GetProperty(FPropertyName);
+    Result := LType.GetProperty(FName);
   end
   else
   begin
@@ -1236,7 +1239,7 @@ end;
 
 function TPropertyExpression.ToString: string;
 begin
-  Result := FExpression.ToString() + '.' + FPropertyName;
+  Result := FExpression.ToString() + '.' + FName;
 end;
 
 { TMethodExpression }
@@ -1264,11 +1267,11 @@ begin
   end
 end;
 
-constructor TMethodExpression.Create(AExpression: IExpression; AMethodName: string;
+constructor TMethodExpression.Create(AExpression: IExpression; AName: string;
   AParameters: array of IExpression);
 begin
   FExpression := AExpression;
-  FMethodName := AMethodName;
+  FName := AName;
   FParameters := TArray.Copy<IExpression>(AParameters);
 end;
 
@@ -1279,7 +1282,7 @@ begin
   if Assigned(AObject) then
   begin
     LType := Context.GetType(AObject.ClassType);
-    Result := LType.GetMethod(FMethodName);
+    Result := LType.GetMethod(FName);
   end
   else
   begin
@@ -1314,7 +1317,7 @@ function TMethodExpression.ToString: string;
 var
   i: Integer;
 begin
-  Result := FExpression.ToString() + '.' + FMethodName + '(';
+  Result := FExpression.ToString() + '.' + FName + '(';
   for i := Low(FParameters) to High(FParameters) do
   begin
     if i < High(FParameters) then

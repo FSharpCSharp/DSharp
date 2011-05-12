@@ -43,7 +43,7 @@ begin
   func := TLambda.Make<Boolean>(e);
   func();
 
-  v := TParameterExpression.Create(nil);
+  v := TParameterExpression.Create('Result');
   e := TBlockExpression.Create([
     TAssignExpression.Create(v, TValueConstantExpression.Create(1)),
     TRepeatUntilLoopExpression.Create(

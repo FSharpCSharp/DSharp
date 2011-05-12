@@ -42,11 +42,17 @@ type
   TStartsTextExpression = class(TBinaryExpression)
   public
     function Compile: TValue; override;
+    function ToString: string; override;
   end;
 
 function TStartsTextExpression.Compile: TValue;
 begin
   Result := TValue.From<Boolean>(StrUtils.StartsText(Left.Compile.ToString, Right.Compile.ToString));
+end;
+
+function TStartsTextExpression.ToString: string;
+begin
+  Result := Format('StartsText(%s, %s)', [Left.ToString(), Right.ToString()]);
 end;
 
 function StartsText(SubText, Text: Variant): IExpression;
@@ -63,9 +69,10 @@ procedure TMainForm.Button1Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
+  Memo1.Lines.Add(TLambda.GetExpression(filter1).ToString);
   for cust in customers.Where(filter1) do
   begin
-    Memo1.Lines.Add(cust.ToString);
+    Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));
   end;
 end;
 
@@ -73,18 +80,22 @@ procedure TMainForm.Button2Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
+  Memo1.Lines.Add(TLambda.GetExpression(filter2).ToString);
   for cust in customers.Where(filter2) do
   begin
-    Memo1.Lines.Add(cust.ToString);
+    Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));
   end;
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  filter1 := TLambda.Make<TCustomer, Boolean>(Arg1.CustomerId = 'ALFKI');
+  filter1 := TLambda.Make<TCustomer, Boolean>(
+    Bool(Arg1.CompanyName = 'Alfreds Futterkiste')
+      or Bool(Arg1.CompanyName = 'Around the Horn'));
   filter2 := TLambda.Make<TCustomer, Boolean>(StartsText(Arg(Edit1).Text, Arg1.CompanyName));
 
   customers := TObjectList<TCustomer>.Create();
+  customers.OwnsObjects := True;
   customers.Add(TCustomer.Create('ALFKI', 'Alfreds Futterkiste'));
   customers.Add(TCustomer.Create('ANATR', 'Ana Trujillo Emparedados y helados'));
   customers.Add(TCustomer.Create('ANTON', 'Antonio Moreno Taquería'));
@@ -97,5 +108,8 @@ procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   customers.Free();
 end;
+
+initialization
+  ReportMemoryLeaksOnShutdown := True;
 
 end.

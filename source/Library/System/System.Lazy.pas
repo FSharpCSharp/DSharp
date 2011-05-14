@@ -31,15 +31,17 @@ unit System.Lazy;
 
 interface
 
+uses
+  SysUtils;
+
 type
-  ILazy<T> = interface
+  ILazy<T> = interface(TFunc<T>)
     ['{78D1D1AA-ED7E-49B1-9DA0-402C4FA5036D}']
     function GetMetaData: TObject;//TExportMetaData;
-    function GetValue: T;
 
     function IsValueCreated: Boolean;
     property MetaData: TObject read GetMetaData;//TExportMetaData read GetMetaData;
-    property Value: T read GetValue;
+    property Value: T read Invoke;
   end;
 
 implementation

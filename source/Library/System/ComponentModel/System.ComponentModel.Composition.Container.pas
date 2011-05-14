@@ -106,6 +106,9 @@ type
 
 implementation
 
+uses
+  System.Reflection;
+
 type
   TLazy<T> = class(TInterfacedObject, ILazy<T>)
   private
@@ -114,14 +117,14 @@ type
     FMetaData: TExportMetaData;
     FTypeInfo: PTypeInfo;
     function GetMetaData: TObject; //TExportMetaData;
-    function GetValue: T;
+    function Invoke: T;
   public
     constructor Create(ALazyEvaluator: ILazyEvaluator; TypeInfo: PTypeInfo;
       MetaData: TExportMetaData = nil);
 
     function IsValueCreated: Boolean;
     property MetaData: TObject read GetMetaData;//TExportMetaData read GetMetaData;
-    property Value: T read GetValue;
+    property Value: T read Invoke;
   end;
 
 { TCompositionContainer }
@@ -177,8 +180,8 @@ function TCompositionContainer.CreateLazy(LazyType: TRttiType; LazyContentType: 
   ALazyEvaluator: ILazyEvaluator; MetaData: TExportMetaData): TValue;
 var
   LValue: TValue;
-  LLazyInterface: ILazy<IInterface>;
-  LLazyObject: ILazy<TObject>;
+  LLazyInterface: IInterface;
+  LLazyObject: IInterface;
 begin
   // a little bit of binary trickery
 
@@ -458,18 +461,13 @@ begin
 end;
 
 function TCompositionContainer.GetLazyContentType(RttiType: TRttiType): TRttiType;
-var
-  s: string;
-  LTypeName: string;
 begin
-  s := RttiType.Name;
-  if (Copy(s, 1, 6) = 'ILazy<') and (Copy(s, Length(s), 1) = '>') then
+  if RttiType.IsGenericTypeOf('ILazy') or RttiType.IsGenericTypeOf('TFunc') then
   begin
-    LTypeName := Copy(s, 7, Length(s) - 7);
-    Result := FContext.Create.FindType(LTypeName);
+    Result := RttiType.GetGenericArguments()[0];
     if not Assigned(Result) then
     begin
-      raise ECompositionException.Create('The type name ' + LTypeName + ' could not be found.');
+      raise ECompositionException.Create('Type parameter for ' + RttiType.Name + ' could not be found.');
     end;
   end
   else
@@ -685,7 +683,7 @@ begin
   Result := FMetaData;
 end;
 
-function TLazy<T>.GetValue: T;
+function TLazy<T>.Invoke: T;
 var
   LValue: TObject;
   LInterfaceValue: IInterface;

@@ -4,14 +4,15 @@ interface
 
 uses
   System.ComponentModel.Composition,
-  Sample10.Contracts;
+  Sample10.Contracts,
+  SysUtils;
 
 type
   TMain = class
   private
 //    FMsg: TObject;
 //    FMsg: IMessage;
-    FMsgs: TArray<IMessage>;
+    FMsgs: TArray<TFunc<IMessage>>;
   public
     procedure Run;
 
@@ -22,7 +23,7 @@ type
 //    property Msg: IMessage read FMsg write FMsg;
 
     [ImportMany]
-    property Msgs: TArray<IMessage> read FMsgs write FMsgs;
+    property Msgs: TArray<TFunc<IMessage>> read FMsgs write FMsgs;
   end;
 
 implementation
@@ -31,8 +32,7 @@ implementation
 
 procedure TMain.Run;
 var
-  m: IMessage;
-
+  m: TFunc<IMessage>;
 begin
 //  Writeln(Msg.ToString);
 
@@ -40,7 +40,9 @@ begin
 
   // step 3
   for m in FMsgs do
-    Writeln(m.ToString);
+    Writeln(m().ToString);
+  for m in FMsgs do
+    Writeln(m().ToString);
 end;
 
 end.

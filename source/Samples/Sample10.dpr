@@ -3,11 +3,11 @@ program Sample10;
 {$APPTYPE CONSOLE}
 
 uses
-  SysUtils,
+  Sample10.Main,
+  Sample10.Message,
   System.ComponentModel.Composition.Catalog,
   System.ComponentModel.Composition.Container,
-  Sample10.Message,
-  Sample10.Main;
+  SysUtils;
 
 var
   main: TMain;
@@ -21,7 +21,7 @@ begin
   try
     try
       container.SatisfyImportsOnce(main);
-      main.Run;
+      main.Run();
     except
       on E: Exception do
         Writeln(E.ClassName, ': ', E.Message);

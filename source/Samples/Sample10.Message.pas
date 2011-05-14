@@ -7,30 +7,21 @@ uses
   Sample10.Contracts;
 
 type
-  // step 1
 //  [Export('Message')]
 //  TSimpleHello = class
 
-  // step 2
   TSimpleHello = class(TInterfacedObject, IMessage)
-
-  public
-    function ToString: string; override;
-  end;
-
-  // step 3
-  TSimpleHola = class(TInterfacedObject, IMessage)
-  public
-    function ToString: string; override;
-  end;
-
-  TSimpleHello2 = class(TInterfacedObject, IMessage)
   private
     FText: string;
   public
     function ToString: string; override;
     [Import('Text')]
     property Text: string read FText write FText;
+  end;
+
+  TSimpleHola = class(TInterfacedObject, IMessage)
+  public
+    function ToString: string; override;
   end;
 
   TTextProvider = class
@@ -47,34 +38,27 @@ implementation
 
 function TSimpleHello.ToString: string;
 begin
-  Result := 'Hello World!';
+//  Result := 'Hello World!';
+  Result := FText;
 end;
 
 { TSimpleHola }
 
 function TSimpleHola.ToString: string;
 begin
-  Result := 'Hola';
-end;
-
-{ TSimpleHello2 }
-
-function TSimpleHello2.ToString: string;
-begin
-  Result := FText;
+  Result := 'Hola mundo';
 end;
 
 { TTextProvider }
 
 function TTextProvider.GetText: string;
 begin
-  Result := 'Bonjour!';
+  Result := 'Bonjour tout le monde';
 end;
 
 initialization
   TSimpleHello.ClassName;
   TSimpleHola.ClassName;
-  TSimpleHello2.ClassName;
   TTextProvider.ClassName;
 
 end.

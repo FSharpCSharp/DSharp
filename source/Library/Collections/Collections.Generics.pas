@@ -33,7 +33,8 @@ interface
 
 uses
   Generics.Collections,
-  Rtti;
+  Rtti,
+  SysUtils;
 
 type
   TEnumerableEx<T> = class(TEnumerable<T>, IEnumerable<T>, IEnumerable)
@@ -78,11 +79,15 @@ type
     procedure Reset; virtual;
   end;
 
+{$IFDEF VER210}
+type
+  ENotImplemented = class(Exception);
+{$ENDIF}
+
 implementation
 
 uses
   System.Generics,
-  SysUtils,
   Windows;
 
 { TEnumerableEx<T> }

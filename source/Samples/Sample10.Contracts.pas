@@ -14,4 +14,9 @@ type
 
 implementation
 
+{$IFDEF VER210} // see http://qc.embarcadero.com/wc/qcmain.aspx?d=85277
+initialization
+  if TypeInfo(IMessage) = nil then;
+{$ENDIF}
+
 end.

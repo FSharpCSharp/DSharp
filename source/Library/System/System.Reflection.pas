@@ -50,6 +50,7 @@ type
 implementation
 
 uses
+  Classes,
   StrUtils,
   SysUtils,
   Types;
@@ -70,6 +71,28 @@ begin
     end;
   end;
 end;
+
+{$IFDEF VER210}
+function SplitString(const S: string; const Delimiter: Char): TStringDynArray;
+var
+  list: TStrings;
+  i: Integer;
+begin
+  list := TStringList.Create();
+  try
+    list.StrictDelimiter := True;
+    list.Delimiter := Delimiter;
+    list.DelimitedText := s;
+    SetLength(Result, list.Count);
+    for i := Low(Result) to High(Result) do
+    begin
+      Result[i] := list[i];
+    end;
+  finally
+    list.Free();
+  end;
+end;
+{$ENDIF}
 
 { TRttiTypeHelper }
 

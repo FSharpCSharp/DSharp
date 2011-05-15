@@ -83,8 +83,12 @@ type
   public
     constructor Create(AOwner: TComponent); overload;
     constructor Create(AOwner: TComponent; AEvents: array of T); overload;
+{$IFNDEF VER210}
     class function Create<TDelegate>(AOwner: TComponent;
       ADelegates: array of TDelegate): TEventHandler<T>; overload;
+{$ENDIF}
+    class function Create<TDelegate>(AOwner: TComponent;
+      ADelegates: TArray<TDelegate>): TEventHandler<T>; overload;
     destructor Destroy; override;
     procedure Add(AEvent: T); overload;
     procedure Add<TDelegate>(ADelegate: TDelegate); overload;
@@ -314,8 +318,22 @@ begin
   end;
 end;
 
+{$IFNDEF VER210}
 class function TEventHandler<T>.Create<TDelegate>(AOwner: TComponent;
   ADelegates: array of TDelegate): TEventHandler<T>;
+var
+  LDelegate: TDelegate;
+begin
+  Result := Create(AOwner);
+  for LDelegate in ADelegates do
+  begin
+    Result.Add<TDelegate>(LDelegate);
+  end;
+end;
+{$ENDIF}
+
+class function TEventHandler<T>.Create<TDelegate>(AOwner: TComponent;
+  ADelegates: TArray<TDelegate>): TEventHandler<T>;
 var
   LDelegate: TDelegate;
 begin

@@ -124,12 +124,26 @@ type
 
   TFrame = class(Forms.TFrame, INotifyPropertyChanged)
   private
+    FBindingSource: TObject;
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure SetBindingSource(const Value: TObject);
   protected
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
   public
+    property BindingSource: TObject read FBindingSource write SetBindingSource;
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+  end;
+
+  TGroupBox = class(StdCtrls.TGroupBox, INotifyPropertyChanged)
+  private
+    FBindingSource: TObject;
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure SetBindingSource(const Value: TObject);
+  public
+    property BindingSource: TObject read FBindingSource write SetBindingSource;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
@@ -186,6 +200,17 @@ type
     procedure CNNotify(var Message: TWMNotifyMC); message CN_NOTIFY;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
   public
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+  end;
+
+  TPanel = class(ExtCtrls.TPanel, INotifyPropertyChanged)
+  private
+    FBindingSource: TObject;
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure SetBindingSource(const Value: TObject);
+  public
+    property BindingSource: TObject read FBindingSource write SetBindingSource;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
@@ -389,6 +414,25 @@ begin
   Result := FOnPropertyChanged.EventHandler;
 end;
 
+procedure TFrame.SetBindingSource(const Value: TObject);
+begin
+  FBindingSource := Value;
+  FOnPropertyChanged.Invoke(Self, 'BindingSource', utPropertyChanged);
+end;
+
+{ TGroupBox }
+
+function TGroupBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
+procedure TGroupBox.SetBindingSource(const Value: TObject);
+begin
+  FBindingSource := Value;
+  FOnPropertyChanged.Invoke(Self, 'BindingSource', utPropertyChanged);
+end;
+
 { TListBox }
 
 procedure TListBox.Click;
@@ -579,6 +623,19 @@ end;
 function TMonthCalendar.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   Result := FOnPropertyChanged.EventHandler;
+end;
+
+{ TPanel }
+
+function TPanel.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
+procedure TPanel.SetBindingSource(const Value: TObject);
+begin
+  FBindingSource := Value;
+  FOnPropertyChanged.Invoke(Self, 'BindingSource', utPropertyChanged);
 end;
 
 { TRadioButton }

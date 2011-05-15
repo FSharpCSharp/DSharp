@@ -318,11 +318,12 @@ initialization
   SupportedClasses.Add(TComboBox, 'Text');
   SupportedClasses.Add(TDateTimePicker, 'Date'); // need some review to change binding property depending on state
   SupportedClasses.Add(TEdit, 'Text');
+  SupportedClasses.Add(TGroupBox, 'BindingSource');
   SupportedClasses.Add(TLabel, 'Caption');
   SupportedClasses.Add(TListBox, 'ItemsSource');
   SupportedClasses.Add(TMemo, 'Text');
   SupportedClasses.Add(TMonthCalendar, 'Date');
-  SupportedClasses.Add(TPanel, 'Caption');
+  SupportedClasses.Add(TPanel, 'BindingSource');
   SupportedClasses.Add(TRadioButton, 'Checked');
   SupportedClasses.Add(TRadioGroup, 'ItemIndex');
 //  SupportedClasses.Add(TStatusPanel, 'Text'); // does not work (yet)

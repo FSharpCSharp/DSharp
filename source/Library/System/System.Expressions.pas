@@ -379,21 +379,9 @@ type
     property Name: string read FName;
   end;
 
-  TMaxExpression = class(TExpression)
-  private
-    FParam: TValueExpression;
-  public
-    constructor Create(Param: TValueExpression);
-    function Compile: TValue; override;
-    function ToString: string; override;
-    property Param: TValueExpression read FParam;
-  end;
-
 var
   ExpressionStack: TStack<IExpression>;
   ParameterList: array[0..3] of IParameter;
-
-function Max(E: TValueExpression): TValueExpression;
 
 implementation
 
@@ -1329,28 +1317,6 @@ begin
       Result := Result + FParameters[i].ToString() + ')';
     end;
   end;
-end;
-
-{ TMaxExpression }
-
-constructor TMaxExpression.Create(Param: TValueExpression);
-begin
-  FParam := Param;
-end;
-
-function TMaxExpression.Compile: TValue;
-begin
-  raise ENotImplemented.Create('TMaxExpression.Compile');
-end;
-
-function TMaxExpression.ToString: string;
-begin
-  Result := 'Max(' + FParam.ToString + ')';
-end;
-
-function Max(E: TValueExpression): TValueExpression;
-begin
-  Result.FValue := TMaxExpression.Create(E);
 end;
 
 { TAssignExpression }

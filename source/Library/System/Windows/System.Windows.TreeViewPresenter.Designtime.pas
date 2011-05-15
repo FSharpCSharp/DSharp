@@ -27,44 +27,21 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.Bindings.Collections;
+unit System.Windows.TreeViewPresenter.Designtime;
 
 interface
 
-uses
-  Classes,
-  Generics.Collections,
-  System.Data.Templates,
-  System.Events,
-  SysUtils;
-
-type
-  TCollectionChangedEvent = procedure(Sender: TObject; Item: TObject;
-    Action: TCollectionNotification) of object;
-
-  INotifyCollectionChanged = interface
-    ['{FE0D3160-6BCE-46B6-B01D-1B3C23EA76F3}']
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
-  end;
-
-  ICollectionView = interface(INotifyCollectionChanged)
-    ['{A13215DC-49AC-46AF-A85A-EEC3CC0D709C}']
-    function GetCurrentItem: TObject;
-    procedure SetCurrentItem(const Value: TObject);
-    function GetFilter: TPredicate<TObject>;
-    procedure SetFilter(const Value: TPredicate<TObject>);
-    function GetItemsSource: TList<TObject>;
-    procedure SetItemsSource(const Value: TList<TObject>);
-    function GetItemTemplate: IDataTemplate;
-    procedure SetItemTemplate(const Value: IDataTemplate);
-
-    property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
-    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
-    property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
-    property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
-  end;
+procedure Register;
 
 implementation
+
+uses
+  Classes,
+  System.Windows.TreeViewPresenter;
+
+procedure Register;
+begin
+  RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
+end;
 
 end.

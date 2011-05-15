@@ -1,13 +1,13 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
-			<ProjectGuid>{42AA9CF6-ECBC-4A29-903B-9C21946929EF}</ProjectGuid>
-			<MainSource>DataBindings.dpk</MainSource>
+			<ProjectGuid>{A66CF88D-A1B5-4559-A045-419CD57690C1}</ProjectGuid>
+			<MainSource>dclTreeViewPresenter.dpk</MainSource>
 			<ProjectVersion>12.2</ProjectVersion>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>VCL</FrameworkType>
+			<FrameworkType>None</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -24,11 +24,11 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_Description>Data binding runtime package</DCC_Description>
-			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
-			<RuntimeOnlyPackage>true</RuntimeOnlyPackage>
-			<GenPackage>true</GenPackage>
+			<DesignOnlyPackage>true</DesignOnlyPackage>
+			<DCC_Description>Treeview presenter designtime package</DCC_Description>
 			<DCC_CBuilderOutput>All</DCC_CBuilderOutput>
+			<GenPackage>true</GenPackage>
+			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
 			<GenDll>true</GenDll>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
@@ -47,24 +47,13 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="DataBindings.dpk">
+			<DelphiCompile Include="dclTreeViewPresenter.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="vcl.dcp"/>
-			<DCCReference Include="..\Library\System\System.Bindings.pas"/>
-			<DCCReference Include="..\Library\System\System.Collections.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Conversion.Default.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Conversion.pas"/>
-			<DCCReference Include="..\Library\System\System.NotificationHandler.pas"/>
-			<DCCReference Include="..\Library\System\System.Validations.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Collections.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Templates.pas"/>
-			<DCCReference Include="..\Library\System\System.Events.pas"/>
-			<DCCReference Include="..\Library\System\System.PropertyPath.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.Extensions.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Templates.Default.pas"/>
+			<DCCReference Include="DataBindings.dcp"/>
+			<DCCReference Include="VirtualTreesR.dcp"/>
+			<DCCReference Include="TreeViewPresenter.dcp"/>
+			<DCCReference Include="..\Library\System\Windows\System.Windows.TreeViewPresenter.Designtime.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -111,13 +100,9 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclIntraweb_110_150.bpl">VCL for the Web 11.0 Design Package for Embarcadero RAD Studio XE</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k150.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclofficexp150.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
-					</Excluded_Packages>
+					<Excluded_Packages/>
 					<Source>
-						<Source Name="MainSource">DataBindings.dpk</Source>
+						<Source Name="MainSource">dclTreeViewPresenter.dpk</Source>
 					</Source>
 				</Delphi.Personality>
 				<Platforms>

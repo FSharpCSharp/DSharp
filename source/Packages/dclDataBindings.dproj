@@ -1,14 +1,15 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
-			<ProjectGuid>{42AA9CF6-ECBC-4A29-903B-9C21946929EF}</ProjectGuid>
-			<MainSource>DataBindings.dpk</MainSource>
+			<ProjectGuid>{C0E8F88B-AAB2-4931-8303-05D5D8B7E7EF}</ProjectGuid>
+			<MainSource>dclDataBindings.dpk</MainSource>
 			<ProjectVersion>12.2</ProjectVersion>
-			<Base>True</Base>
+			<Basis>True</Basis>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>VCL</FrameworkType>
+			<FrameworkType>None</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+			<Base>True</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
 			<Base>true</Base>
@@ -24,16 +25,20 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_Description>Data binding runtime package</DCC_Description>
-			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
-			<RuntimeOnlyPackage>true</RuntimeOnlyPackage>
+			<DesignOnlyPackage>true</DesignOnlyPackage>
 			<GenPackage>true</GenPackage>
-			<DCC_CBuilderOutput>All</DCC_CBuilderOutput>
-			<GenDll>true</GenDll>
-			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
+			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
+			<DCC_CBuilderOutput>All</DCC_CBuilderOutput>
+			<DCC_Description>Data binding designtime package</DCC_Description>
+			<DCC_S>false</DCC_S>
+			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
+			<GenDll>true</GenDll>
+			<DCC_N>false</DCC_N>
+			<DCC_E>false</DCC_E>
+			<DCC_F>false</DCC_F>
+			<DCC_K>false</DCC_K>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -47,24 +52,13 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="DataBindings.dpk">
+			<DelphiCompile Include="dclDataBindings.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="vcl.dcp"/>
-			<DCCReference Include="..\Library\System\System.Bindings.pas"/>
-			<DCCReference Include="..\Library\System\System.Collections.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Conversion.Default.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Conversion.pas"/>
-			<DCCReference Include="..\Library\System\System.NotificationHandler.pas"/>
-			<DCCReference Include="..\Library\System\System.Validations.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Collections.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Templates.pas"/>
-			<DCCReference Include="..\Library\System\System.Events.pas"/>
-			<DCCReference Include="..\Library\System\System.PropertyPath.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.Extensions.pas"/>
-			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Templates.Default.pas"/>
+			<DCCReference Include="..\Resources\System.Bindings.dcr"/>
+			<DCCReference Include="designide.dcp"/>
+			<DCCReference Include="DataBindings.dcp"/>
+			<DCCReference Include="..\Library\System\System.Bindings.Designtime.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -111,13 +105,8 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclIntraweb_110_150.bpl">VCL for the Web 11.0 Design Package for Embarcadero RAD Studio XE</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k150.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclofficexp150.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
-					</Excluded_Packages>
 					<Source>
-						<Source Name="MainSource">DataBindings.dpk</Source>
+						<Source Name="MainSource">dclDataBindings.dpk</Source>
 					</Source>
 				</Delphi.Personality>
 				<Platforms>

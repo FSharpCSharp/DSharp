@@ -136,19 +136,19 @@ type
   TListBox = class(StdCtrls.TListBox, INotifyPropertyChanged, ICollectionView)
   private
     FFilter: TPredicate<TObject>;
-    FItemsSource: TEnumerable<TObject>;
+    FItemsSource: TList<TObject>;
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetCurrentItem: TObject;
     function GetFilter: TPredicate<TObject>;
-    function GetItemsSource: TEnumerable<TObject>;
+    function GetItemsSource: TList<TObject>;
     function GetItemTemplate: IDataTemplate;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure SetCurrentItem(const Value: TObject);
     procedure SetFilter(const Value: TPredicate<TObject>);
-    procedure SetItemsSource(const Value: TEnumerable<TObject>);
+    procedure SetItemsSource(const Value: TList<TObject>);
     procedure SetItemTemplate(const Value: IDataTemplate);
 
     procedure UpdateItems(AClearItems: Boolean = False);
@@ -162,7 +162,7 @@ type
     constructor Create(AOwner: TComponent); override;
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
-    property ItemsSource: TEnumerable<TObject> read GetItemsSource write SetItemsSource;
+    property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent> read FOnCollectionChanged;
@@ -427,7 +427,7 @@ begin
   Result := FFilter;
 end;
 
-function TListBox.GetItemsSource: TEnumerable<TObject>;
+function TListBox.GetItemsSource: TList<TObject>;
 begin
   Result := FItemsSource;
 end;
@@ -492,7 +492,7 @@ begin
   UpdateItems(True);
 end;
 
-procedure TListBox.SetItemsSource(const Value: TEnumerable<TObject>);
+procedure TListBox.SetItemsSource(const Value: TList<TObject>);
 begin
   if FItemsSource <> Value then
   begin

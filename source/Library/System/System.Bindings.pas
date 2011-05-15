@@ -292,6 +292,7 @@ end;
 procedure TBindingBase.SetTarget(const Value: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   if FTarget <> Value then
   begin
@@ -304,7 +305,8 @@ begin
 
       if Supports(FTarget, INotifyPropertyChanged, LNotifyPropertyChanged) then
       begin
-        LNotifyPropertyChanged.OnPropertyChanged.Remove(DoTargetPropertyChanged);
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Remove(DoTargetPropertyChanged);
       end;
     end;
 
@@ -322,7 +324,8 @@ begin
 
       if Supports(FTarget, INotifyPropertyChanged, LNotifyPropertyChanged) then
       begin
-        LNotifyPropertyChanged.OnPropertyChanged.Add(DoTargetPropertyChanged);
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Add(DoTargetPropertyChanged);
       end;
     end;
 
@@ -463,6 +466,8 @@ end;
 procedure TBinding.SetSource(const Value: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+  LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   if FSource <> Value then
   begin
@@ -475,12 +480,14 @@ begin
 
       if Supports(FSource, INotifyPropertyChanged, LNotifyPropertyChanged) then
       begin
-        LNotifyPropertyChanged.OnPropertyChanged.Remove(DoSourcePropertyChanged);
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Remove(DoSourcePropertyChanged);
       end;
 
       if Assigned(FSourceCollectionChanged) then
       begin
-        FSourceCollectionChanged.OnCollectionChanged.Remove(DoSourceCollectionChanged);
+        LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+        LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
       end;
     end;
 
@@ -497,14 +504,16 @@ begin
 
       if Supports(FSource, INotifyPropertyChanged, LNotifyPropertyChanged) then
       begin
-        LNotifyPropertyChanged.OnPropertyChanged.Add(DoSourcePropertyChanged);
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Add(DoSourcePropertyChanged);
       end;
 
       // maybe the source itself is a collection?
       if not Assigned(FSourceCollectionChanged)
         and Supports(FSource, INotifyCollectionChanged, FSourceCollectionChanged) then
       begin
-        FSourceCollectionChanged.OnCollectionChanged.Add(DoSourceCollectionChanged);
+        LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+        LSourceCollectionChanged.Add(DoSourceCollectionChanged);
       end;
     end;
 
@@ -513,10 +522,13 @@ begin
 end;
 
 procedure TBinding.SetSourceProperty(AObject: TObject; APropertyName: string);
+var
+  LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   if Assigned(FSourceCollectionChanged) then
   begin
-    FSourceCollectionChanged.OnCollectionChanged.Remove(DoSourceCollectionChanged);
+    LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+    LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
   end;
 
   FSource := AObject;
@@ -535,7 +547,8 @@ begin
     and Supports(FSourceProperty.GetValue(FSource).AsObject,
     INotifyCollectionChanged, FSourceCollectionChanged) then
   begin
-    FSourceCollectionChanged.OnCollectionChanged.Add(DoSourceCollectionChanged);
+    LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+    LSourceCollectionChanged.Add(DoSourceCollectionChanged);
   end;
 end;
 
@@ -576,6 +589,7 @@ procedure TBinding.UpdateTarget;
 var
   LSourceValue: TValue;
   LTargetValue: TValue;
+  LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   if FActive
     and Assigned(FTarget) and Assigned(FTargetProperty)
@@ -586,7 +600,8 @@ begin
 
     if Assigned(FSourceCollectionChanged) then
     begin
-      FSourceCollectionChanged.OnCollectionChanged.Remove(DoSourceCollectionChanged);
+      LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+      LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
     end;
 
     FSourceCollectionChanged := nil;
@@ -594,7 +609,8 @@ begin
     if LSourceValue.IsObject and Supports(LSourceValue.AsObject,
       INotifyCollectionChanged, FSourceCollectionChanged) then
     begin
-      FSourceCollectionChanged.OnCollectionChanged.Add(DoSourceCollectionChanged);
+      LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+      LSourceCollectionChanged.Add(DoSourceCollectionChanged);
     end;
 
     InitConverter();

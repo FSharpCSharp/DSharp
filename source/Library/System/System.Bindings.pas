@@ -150,9 +150,13 @@ type
       read FSourceUpdateTrigger write FSourceUpdateTrigger default UpdateTriggerDefault;
   end;
 
+  TBindingCollection = class(TOwnedCollection<TBinding>)
+  end;
+
   TBindingGroup = class(TComponent)
   private
-    FBindings: TCollection<TBindingBase>;
+    FBindings: TBindingCollection;
+    procedure SetBindings(const Value: TBindingCollection);
   protected
     procedure DefineProperties(Filer: TFiler); override;
     procedure ReadBindings(AReader: TReader);
@@ -161,7 +165,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     function GetBindingForTarget(ATarget: TObject): TBinding;
-    property Bindings: TCollection<TBindingBase> read FBindings;
+    property Bindings: TBindingCollection read FBindings write SetBindings;
   end;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
@@ -227,7 +231,8 @@ begin
 
   FBindingMode := BindingModeDefault;
 
-  FActive := True;
+  FActive := not (csDesigning in TBindingGroup(TBindingCollection(
+    Collection).Owner).ComponentState);
 end;
 
 destructor TBindingBase.Destroy;
@@ -694,7 +699,7 @@ begin
     end;
   end;
   inherited;
-  FBindings := TOwnedCollection<TBindingBase>.Create(Self);
+  FBindings := TBindingCollection.Create(Self);
 end;
 
 destructor TBindingGroup.Destroy;
@@ -705,7 +710,7 @@ end;
 
 function TBindingGroup.GetBindingForTarget(ATarget: TObject): TBinding;
 var
-  LBinding: TBindingBase;
+  LBinding: TBinding;
 begin
   Result := nil;
   for LBinding in Bindings do
@@ -732,43 +737,30 @@ begin
 end;
 
 procedure TBindingGroup.ReadBindings(AReader: TReader);
-var
-  LBindings: TCollection<TBinding>;
 begin
-  FBindings.Clear();
-  LBindings := TCollection<TBinding>.Create();
-  try
-    AReader.ReadValue();
-    AReader.ReadCollection(LBindings);
-    while LBindings.Count > 0 do
-    begin
-      LBindings[0].Active := not (csDesigning in ComponentState);
-      LBindings[0].BindingGroup := Self;
-    end;
-  finally
-    LBindings.Free();
-  end;
+  AReader.ReadValue();
+  AReader.ReadCollection(FBindings);
+end;
+
+procedure TBindingGroup.SetBindings(const Value: TBindingCollection);
+begin
+  FBindings.Assign(Value);
 end;
 
 procedure TBindingGroup.WriteBindings(AWriter: TWriter);
 var
-  LBinding: TBindingBase;
-  LBindings: TCollection<TBinding>;
+  i: Integer;
 begin
-  LBindings := TCollection<TBinding>.Create();
-  try
-    for LBinding in FBindings do
+  for i := Pred(FBindings.Count) downto 0 do
+  begin
+    if not Assigned(FBindings[i].Source) or not Assigned(FBindings[i].Target)
+      or (Trim(FBindings[i].SourcePropertyName) = '')
+      or (Trim(FBindings[i].TargetPropertyName) = '') then
     begin
-      if (LBinding is TBinding) and Assigned(TBinding(LBinding).Source)
-        and (Trim(TBinding(LBinding).SourcePropertyName) <> '') then
-      begin
-        LBindings.Add().Assign(LBinding);
-      end;
+      FBindings.Delete(i);
     end;
-    AWriter.WriteCollection(LBindings);
-  finally
-    LBindings.Free();
   end;
+  AWriter.WriteCollection(FBindings);
 end;
 
 end.

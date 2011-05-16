@@ -51,6 +51,13 @@ type
     procedure RequiresUnits(Proc: TGetStrProc); override;
   end;
 
+  TBindingGroupComponentEditor = class(TComponentEditor)
+  public
+    procedure ExecuteVerb(Index: Integer); override;
+    function GetVerb(Index: Integer): string; override;
+    function GetVerbCount: Integer; override;
+  end;
+
   TBindingProperty = class(TClassProperty, IProperty, IPropertyKind)
   private
     FBinding: TBinding;
@@ -81,6 +88,18 @@ type
     procedure GetValues(Proc: TGetStrProc); override;
   end;
 
+  TTargetProperty = class(TComponentProperty)
+  public
+    procedure GetValues(Proc: TGetStrProc); override;
+    procedure SetValue(const Value: string); override;
+  end;
+
+  TTargetPropertyNameProperty = class(TStringProperty)
+  public
+    function GetAttributes: TPropertyAttributes; override;
+    procedure GetValues(Proc: TGetStrProc); override;
+  end;
+
   procedure Register;
 
 var
@@ -95,6 +114,7 @@ uses
   Forms,
   StdCtrls,
 
+  ColnEdit,
   Consts,
   RTLConsts,
   Rtti,
@@ -111,8 +131,11 @@ begin
     RegisterSelectionEditor(LClass, TBindingSelectionEditor);
   end;
   RegisterComponents('Data binding', [TBindingGroup]);
+  RegisterComponentEditor(TBindingGroup, TBindingGroupComponentEditor);
   RegisterPropertyEditor(TypeInfo(TObject), TBinding, 'Source', TSourceProperty);
   RegisterPropertyEditor(TypeInfo(string), TBinding, 'SourcePropertyName', TSourcePropertyNameProperty);
+  RegisterPropertyEditor(TypeInfo(TObject), TBinding, 'Target', TTargetProperty);
+  RegisterPropertyEditor(TypeInfo(string), TBinding, 'TargetPropertyName', TTargetPropertyNameProperty);
 end;
 
 function FindSupportedClass(AComponent: TPersistent): TClass;
@@ -193,6 +216,26 @@ begin
     Proc(LClass.UnitName);
   end;
   Proc('System.Bindings.Controls.VCL');
+end;
+
+{ TBindingGroupComponentEditor }
+
+procedure TBindingGroupComponentEditor.ExecuteVerb(Index: Integer);
+begin
+  ShowCollectionEditorClass(Designer, TCollectionEditor, Component,
+    (Component as TBindingGroup).Bindings, 'Bindings');
+end;
+
+function TBindingGroupComponentEditor.GetVerb(Index: Integer): string;
+begin
+  case Index of
+    0: Result := 'Bindings Editor...';
+  end;
+end;
+
+function TBindingGroupComponentEditor.GetVerbCount: Integer;
+begin
+  Result := 1;
 end;
 
 { TBindingProperty }
@@ -294,6 +337,74 @@ begin
 end;
 
 procedure TSourcePropertyNameProperty.GetValues(Proc: TGetStrProc);
+var
+  LProperty: TRttiProperty;
+  LBinding: TBinding;
+begin
+  LBinding := TBinding(GetComponent(0));
+  if Assigned(LBinding.Source) then
+  begin
+    for LProperty in TRttiContext.Create.GetType(LBinding.Source.ClassInfo).GetProperties do
+    begin
+      if LProperty.PropertyType.TypeKind <> tkMethod then
+      begin
+        Proc(LProperty.Name);
+      end;
+    end;
+  end;
+end;
+
+{ TTargetProperty }
+
+procedure TTargetProperty.GetValues(Proc: TGetStrProc);
+begin
+  inherited;
+  if Designer.Root is TForm then
+  begin
+    Proc(Designer.Root.Name);
+  end;
+end;
+
+procedure TTargetProperty.SetValue(const Value: string);
+var
+  LBinding: TBinding;
+  LObject: TObject;
+  LProperty: TRttiProperty;
+begin
+  LBinding := TBinding(GetComponent(0));
+
+  if Value = '' then
+  begin
+    LObject := nil;
+  end
+  else
+  begin
+    LObject := Designer.GetComponent(Value);
+    if not (LObject is GetTypeData(GetPropType)^.ClassType) then
+      raise EDesignPropertyError.CreateRes(@SInvalidPropertyValue);
+    if Assigned(LBinding) and (LBinding.Target = LObject) then
+      raise EDesignPropertyError.Create('Binding source must be different from binding target');
+  end;
+  SetOrdValue(NativeInt(LObject));
+
+  if Assigned(LBinding.Source) and (LBinding.SourcePropertyName <> '') then
+  begin
+    LProperty := TRttiContext.Create.GetType(LBinding.Source.ClassInfo).GetProperty(LBinding.SourcePropertyName);
+    if not Assigned(LProperty) then
+    begin
+      LBinding.SourcePropertyName := '';
+    end;
+  end;
+end;
+
+{ TTargetPropertyNameProperty }
+
+function TTargetPropertyNameProperty.GetAttributes: TPropertyAttributes;
+begin
+  Result := inherited + [paValueList];
+end;
+
+procedure TTargetPropertyNameProperty.GetValues(Proc: TGetStrProc);
 var
   LProperty: TRttiProperty;
   LBinding: TBinding;

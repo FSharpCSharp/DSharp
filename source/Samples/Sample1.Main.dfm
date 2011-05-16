@@ -101,10 +101,6 @@ object MainForm: TMainForm
         SourcePropertyName = 'Color'
       end
       item
-        Target = Edit1
-        TargetPropertyName = 'Text'
-      end
-      item
         Target = Edit2
         TargetPropertyName = 'Text'
         Source = Edit1

@@ -52,6 +52,10 @@ type
     function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer;
     function GetText(const Item: TObject; const ColumnIndex: Integer): string;
 
+    // methods to edit items
+    procedure SetText(const Item: TObject; const ColumnIndex: Integer;
+      const Value: string);
+
     // methods to build the tree structure
     function GetItem(const Item: TObject; const Index: Integer): TObject;
     function GetItemCount(const Item: TObject): Integer;
@@ -74,6 +78,9 @@ type
       DrawMode: TDrawMode): Boolean; virtual;
     function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer; virtual;
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; virtual;
+
+    procedure SetText(const Item: TObject; const ColumnIndex: Integer;
+      const Value: string); virtual;
 
     function GetItem(const Item: TObject; const Index: Integer): TObject; virtual;
     function GetItemCount(const Item: TObject): Integer; virtual;
@@ -161,6 +168,12 @@ end;
 procedure TDataTemplate.RegisterDataTemplate(const DataTemplate: IDataTemplate);
 begin
   FTemplates.Add(DataTemplate);
+end;
+
+procedure TDataTemplate.SetText(const Item: TObject; const ColumnIndex: Integer;
+  const Value: string);
+begin
+
 end;
 
 end.

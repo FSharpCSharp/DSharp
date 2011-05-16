@@ -35,6 +35,9 @@ uses
   Classes;
 
 type
+  TCollectionNotifyEvent<T> = procedure(Sender: TObject; const Item: T;
+    Action: TCollectionNotification) of object;
+
   TCollectionEnumerator<T: TCollectionItem> = class(TCollectionEnumerator)
   public
     function GetCurrent: T; inline;
@@ -43,14 +46,18 @@ type
 
   TCollection<T: TCollectionItem> = class(TCollection)
   private
+    FOnNotify: TCollectionNotifyEvent<T>;
     function GetItem(Index: Integer): T;
     procedure SetItem(Index: Integer; Value: T);
+  protected
+    procedure Notify(Item: TCollectionItem; Action: TCollectionNotification); override;
   public
     constructor Create;
     function Add: T;
     function GetEnumerator: TCollectionEnumerator<T>;
     function Insert(Index: Integer): T;
     property Items[Index: Integer]: T read GetItem write SetItem; default;
+    property OnNotify: TCollectionNotifyEvent<T> read FOnNotify write FOnNotify;
   end;
 
   TOwnedCollection<T: TCollectionItem> = class(TCollection<T>)
@@ -59,7 +66,7 @@ type
   protected
     function GetOwner: TPersistent; override;
   public
-    constructor Create(AOwner: TPersistent);
+    constructor Create(AOwner: TPersistent); virtual;
   end;
 
 implementation
@@ -96,6 +103,16 @@ end;
 function TCollection<T>.Insert(Index: Integer): T;
 begin
   Result := T(inherited Insert(Index));
+end;
+
+procedure TCollection<T>.Notify(Item: TCollectionItem;
+  Action: TCollectionNotification);
+begin
+  inherited;
+  if Assigned(FOnNotify) then
+  begin
+    FOnNotify(Self, Item, Action);
+  end;
 end;
 
 procedure TCollection<T>.SetItem(Index: Integer; Value: T);

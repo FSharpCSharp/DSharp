@@ -382,17 +382,17 @@ begin
     LObject := Designer.GetComponent(Value);
     if not (LObject is GetTypeData(GetPropType)^.ClassType) then
       raise EDesignPropertyError.CreateRes(@SInvalidPropertyValue);
-    if Assigned(LBinding) and (LBinding.Target = LObject) then
+    if Assigned(LBinding) and (LBinding.Source = LObject) then
       raise EDesignPropertyError.Create('Binding source must be different from binding target');
   end;
   SetOrdValue(NativeInt(LObject));
 
-  if Assigned(LBinding.Source) and (LBinding.SourcePropertyName <> '') then
+  if Assigned(LBinding.Target) and (LBinding.TargetPropertyName <> '') then
   begin
-    LProperty := TRttiContext.Create.GetType(LBinding.Source.ClassInfo).GetProperty(LBinding.SourcePropertyName);
+    LProperty := TRttiContext.Create.GetType(LBinding.Target.ClassInfo).GetProperty(LBinding.TargetPropertyName);
     if not Assigned(LProperty) then
     begin
-      LBinding.SourcePropertyName := '';
+      LBinding.TargetPropertyName := '';
     end;
   end;
 end;
@@ -410,9 +410,9 @@ var
   LBinding: TBinding;
 begin
   LBinding := TBinding(GetComponent(0));
-  if Assigned(LBinding.Source) then
+  if Assigned(LBinding.Target) then
   begin
-    for LProperty in TRttiContext.Create.GetType(LBinding.Source.ClassInfo).GetProperties do
+    for LProperty in TRttiContext.Create.GetType(LBinding.Target.ClassInfo).GetProperties do
     begin
       if LProperty.PropertyType.TypeKind <> tkMethod then
       begin

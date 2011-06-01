@@ -124,6 +124,7 @@ type
       APropertyName: string; AUpdateTrigger: TUpdateTrigger);
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); override;
+    function GetDisplayName: string; override;
     procedure InitConverter; override;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); override;
     procedure SetSource(const Value: TObject);
@@ -231,7 +232,7 @@ begin
 
   FBindingMode := BindingModeDefault;
 
-  FActive := not (csDesigning in TBindingGroup(TBindingCollection(
+  FActive := Assigned(Collection) and not (csDesigning in TBindingGroup(TBindingCollection(
     Collection).Owner).ComponentState);
 end;
 
@@ -439,6 +440,26 @@ begin
     finally
       FUpdating := False;
     end;
+  end;
+end;
+
+function TBinding.GetDisplayName: string;
+const
+  BindingModeNames: array[TBindingMode] of string = ('->', '<->', '<-');
+begin
+  Result := inherited;
+  if Assigned(FSource) and (FSource is TComponent)
+    and Assigned(FTarget) and (FTarget is TComponent)
+    and not SameText(Trim(FSourcePropertyName), EmptyStr)
+    and not SameText(Trim(FTargetPropertyName), EmptyStr) then
+  begin
+    Result := Result + Format(' (%s.%s %s %s.%s)', [
+      TComponent(FSource).Name, FSourcePropertyName, BindingModeNames[FBindingMode],
+      TComponent(FTarget).Name, FTargetPropertyName]);
+  end
+  else
+  begin
+    Result := Result + ' (definition uncomplete)';
   end;
 end;
 

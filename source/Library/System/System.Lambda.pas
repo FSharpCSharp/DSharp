@@ -38,8 +38,6 @@ uses
 type
   TLambda = record
   public
-    class constructor Create;
-
     class function InitExpression(Expression: IExpression): IExpression; overload; static; inline;
     class function InitExpression(Expression: Variant): IExpression; overload; static; inline;
 
@@ -72,7 +70,8 @@ type
 
 function Arg(AObject: TObject): Variant; overload;
 function Arg(AValue: Variant): Variant; overload;
-function Arg1: Variant;
+function Arg1: Variant; overload;
+function Arg1(AObject: TObject): Variant; overload;
 function Arg2: Variant;
 function Arg3: Variant;
 function Arg4: Variant;
@@ -114,6 +113,12 @@ begin
   ExpressionStack.Push(ParameterList[0]);
 end;
 
+function Arg1(AObject: TObject): Variant;
+begin
+  Result := Arg1;
+  ParameterList[0].Value := TValue.From<TObject>(AObject);
+end;
+
 function Arg2: Variant;
 begin
   Result := AsDynamic(ParameterList[1]);
@@ -138,14 +143,6 @@ begin
 end;
 
 { TLambda }
-
-class constructor TLambda.Create;
-begin
-  ParameterList[0] := TParameterExpression.Create('Arg1');
-  ParameterList[1] := TParameterExpression.Create('Arg2');
-  ParameterList[2] := TParameterExpression.Create('Arg3');
-  ParameterList[3] := TParameterExpression.Create('Arg4');
-end;
 
 class function TLambda.InitExpression(Expression: IExpression): IExpression;
 begin

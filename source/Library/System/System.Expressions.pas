@@ -361,6 +361,7 @@ type
     constructor Create(AExpression: IExpression; AName: string);
     function Compile: TValue; override;
     function ToString: string; override;
+    property Expression: IExpression read FExpression;
     property Name: string read FName;
   end;
 
@@ -375,6 +376,7 @@ type
   public
     constructor Create(AExpression: IExpression; AName: string; AParameters: array of IExpression);
     function Compile: TValue; override;
+    property Expression: IExpression read FExpression;
     function ToString: string; override;
     property Name: string read FName;
   end;
@@ -1456,6 +1458,10 @@ end;
 initialization
   Context := TRttiContext.Create();
   ExpressionStack := TStack<IExpression>.Create();
+  ParameterList[0] := TParameterExpression.Create('Arg1');
+  ParameterList[1] := TParameterExpression.Create('Arg2');
+  ParameterList[2] := TParameterExpression.Create('Arg3');
+  ParameterList[3] := TParameterExpression.Create('Arg4');
 
 finalization
   ExpressionStack.Free();

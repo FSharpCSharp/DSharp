@@ -147,6 +147,17 @@ type
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
+  TLabeledEdit = class(ExtCtrls.TLabeledEdit, INotifyPropertyChanged)
+  private
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+  protected
+    procedure Change; override;
+  public
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+  end;
+
   TListBox = class(StdCtrls.TListBox, INotifyPropertyChanged, ICollectionView)
   private
     FFilter: TPredicate<TObject>;
@@ -431,6 +442,25 @@ procedure TGroupBox.SetBindingSource(const Value: TObject);
 begin
   FBindingSource := Value;
   FOnPropertyChanged.Invoke(Self, 'BindingSource', utPropertyChanged);
+end;
+
+{ TLabeledEdit }
+
+procedure TLabeledEdit.Change;
+begin
+  inherited;
+  FOnPropertyChanged.Invoke(Self, 'Text', utPropertyChanged);
+end;
+
+procedure TLabeledEdit.CMExit(var Message: TCMExit);
+begin
+  inherited;
+  FOnPropertyChanged.Invoke(Self, 'Text', utLostFocus);
+end;
+
+function TLabeledEdit.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
 end;
 
 { TListBox }

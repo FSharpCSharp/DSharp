@@ -85,16 +85,22 @@ object MainForm: TMainForm
         SourcePropertyName = 'Contacts'
       end
       item
+        Target = Panel1
+        TargetPropertyName = 'BindingSource'
+        Source = ListBox1
+        SourcePropertyName = 'CurrentItem'
+      end
+      item
         Target = Edit1
         TargetPropertyName = 'Text'
-        Source = ListBox1
-        SourcePropertyName = 'CurrentItem.Firstname'
+        Source = Panel1
+        SourcePropertyName = 'BindingSource.Firstname'
       end
       item
         Target = Edit2
         TargetPropertyName = 'Text'
-        Source = ListBox1
-        SourcePropertyName = 'CurrentItem.Lastname'
+        Source = Panel1
+        SourcePropertyName = 'BindingSource.Lastname'
       end>
   end
 end

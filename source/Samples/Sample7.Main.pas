@@ -5,6 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, Sample7.Customer, Collections.Base, Collections.Lists, StdCtrls;
+  // You need http://code.google.com/p/delphi-coll/ for this sample to compile
 
 type
   TMainForm = class(TForm)

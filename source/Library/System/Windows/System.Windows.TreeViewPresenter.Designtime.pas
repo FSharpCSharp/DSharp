@@ -37,11 +37,41 @@ implementation
 
 uses
   Classes,
+  ColnEdit,
+  DesignEditors,
+  DesignIntf,
   System.Windows.TreeViewPresenter;
+
+type
+  TTreeViewPresenterComponentEditor = class(TComponentEditor)
+  public
+    procedure ExecuteVerb(Index: Integer); override;
+    function GetVerb(Index: Integer): string; override;
+    function GetVerbCount: Integer; override;
+  end;
 
 procedure Register;
 begin
   RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
+  RegisterComponentEditor(TTreeViewPresenter, TTreeViewPresenterComponentEditor);
+end;
+
+{ TTreeViewPresenterComponentEditor }
+
+procedure TTreeViewPresenterComponentEditor.ExecuteVerb(Index: Integer);
+begin
+  ShowCollectionEditorClass(Designer, TCollectionEditor, Component,
+    (Component as TTreeViewPresenter).ColumnDefinitions, 'ColumnDefinitions');
+end;
+
+function TTreeViewPresenterComponentEditor.GetVerb(Index: Integer): string;
+begin
+  Result := 'Column defintions...';
+end;
+
+function TTreeViewPresenterComponentEditor.GetVerbCount: Integer;
+begin
+  Result := 1;
 end;
 
 end.

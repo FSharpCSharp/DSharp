@@ -83,6 +83,7 @@ type
     FPopupMenu: TPopupMenu;
     FSelectedItems: TList<TObject>;
     FTreeView: TVirtualStringTree;
+    FUseRtti: Boolean;
 
     procedure DoAfterCellPaint(Sender: TBaseVirtualTree; TargetCanvas: TCanvas;
       Node: PVirtualNode; Column: TColumnIndex; CellRect: TRect);
@@ -93,6 +94,8 @@ type
     procedure DoChecked(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoCompareNodes(Sender: TBaseVirtualTree;
       Node1, Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
+    procedure DoCurrentItemPropertyChanged(Sender: TObject;
+      PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoDblClick(Sender: TObject);
     procedure DoDragAllowed(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; var Allowed: Boolean);
@@ -156,6 +159,8 @@ type
     procedure UpdateCheckedItems;
     procedure UpdateExpandedItems;
     procedure UpdateSelectedItems;
+  protected
+    procedure Loaded; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -167,8 +172,6 @@ type
     procedure Refresh;
 
     property CheckedItems: TList<TObject> read GetCheckedItems;
-    property ColumnDefinitions: TColumnDefinitions
-      read FColumnDefinitions write SetColumnDefinitions;
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property ExpandedItems: TList<TObject> read GetExpandedItems write SetExpandedItems;
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
@@ -178,6 +181,8 @@ type
     property SelectedItems: TList<TObject> read GetSelectedItems write SetSelectedItems;
   published
     property CheckSupport: Boolean read FCheckSupport write SetCheckSupport default False;
+    property ColumnDefinitions: TColumnDefinitions
+      read FColumnDefinitions write SetColumnDefinitions;
     property ImageList: TImageList read FImageList write SetImageList;
     property ListMode: Boolean read FListMode write SetListMode default False;
     property MultiSelect: Boolean read FMultiSelect write SetMultiSelect default False;
@@ -191,9 +196,13 @@ type
       read FOnSelectionChanged write FOnSelectionChanged;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
     property TreeView: TVirtualStringTree read FTreeView write SetTreeView;
+    property UseRtti: Boolean read FUseRtti write FUseRtti default False;
   end;
 
 implementation
+
+uses
+  System.Data.Templates.Rtti;
 
 const
   CDefaultCellRect: TRect = (Left: 0; Top: 0; Right: 0; Bottom: 0);
@@ -207,6 +216,8 @@ begin
   FExpandedItems := TList<TObject>.Create();
   FSelectedItems := TList<TObject>.Create();
   FOnCollectionChanged.Add(DoSourceCollectionChanged);
+
+  FColumnDefinitions := TColumnDefinitions.Create(Self);
 end;
 
 destructor TTreeViewPresenter.Destroy;
@@ -305,6 +316,20 @@ begin
     begin
       Result := CompareStr(LItemTemplate1.GetText(LNodeData1.Item, Column),
         LItemTemplate2.GetText(LNodeData2.Item, Column));
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.DoCurrentItemPropertyChanged(Sender: TObject;
+  PropertyName: string; UpdateTrigger: TUpdateTrigger);
+var
+  LNode: PVirtualNode;
+begin
+  if Assigned(FTreeView) and (FTreeView.SelectedCount > 0) then
+  begin
+    for LNode in FTreeView.GetSortedSelection(True) do
+    begin
+      FTreeView.InvalidateNode(LNode);
     end;
   end;
 end;
@@ -575,6 +600,14 @@ begin
   begin
     Result := FItemTemplate.GetItemTemplate(Item);
   end
+  else
+  begin
+    if FUseRtti then
+    begin
+      FItemTemplate := TRttiDataTemplate.Create(FColumnDefinitions);
+      Result := FItemTemplate;
+    end;
+  end;
 end;
 
 function TTreeViewPresenter.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
@@ -608,7 +641,7 @@ procedure TTreeViewPresenter.InitColumns;
 var
   i: Integer;
 begin
-  if Assigned(FTreeView) then
+  if Assigned(FTreeView) and not (csDesigning in ComponentState) then
   begin
     FTreeView.Header.Columns.Clear;
     if Assigned(FColumnDefinitions) then
@@ -651,7 +684,7 @@ end;
 
 procedure TTreeViewPresenter.InitTreeOptions;
 begin
-  if Assigned(FTreeView) then
+  if Assigned(FTreeView) and not (csDesigning in ComponentState) then
   begin
     if FCheckSupport then
     begin
@@ -697,6 +730,12 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.Loaded;
+begin
+  inherited;
+  InitColumns();
+end;
+
 procedure TTreeViewPresenter.Refresh;
 begin
   ResetRootNodeCount();
@@ -727,6 +766,10 @@ end;
 procedure TTreeViewPresenter.SetColumnDefinitions(
   const Value: TColumnDefinitions);
 begin
+  if Assigned(FColumnDefinitions) and (FColumnDefinitions.Owner = Self) then
+  begin
+    FColumnDefinitions.Free();
+  end;
   FColumnDefinitions := Value;
   InitColumns();
 end;
@@ -771,20 +814,22 @@ end;
 procedure TTreeViewPresenter.SetItemsSource(const Value: TList<TObject>);
 var
   LNotifyCollectionChanged: INotifyCollectionChanged;
-//  LCollectionChanged: TEvent<TCollectionChangedEvent>;
+  LCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   if FItemsSource <> Value then
   begin
     if Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
     begin
-      LNotifyCollectionChanged.OnCollectionChanged.Remove(DoSourceCollectionChanged)
+      LCollectionChanged := LNotifyCollectionChanged.OnCollectionChanged;
+      LCollectionChanged.Remove(DoSourceCollectionChanged);
     end;
 
     FItemsSource := Value;
 
     if Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
     begin
-      LNotifyCollectionChanged.OnCollectionChanged.Add(DoSourceCollectionChanged)
+      LCollectionChanged := LNotifyCollectionChanged.OnCollectionChanged;
+      LCollectionChanged.Add(DoSourceCollectionChanged)
     end;
     ResetRootNodeCount();
   end;
@@ -829,6 +874,7 @@ var
   LNode: PVirtualNode;
   LNodeData: PNodeData;
 begin
+  FTreeView.BeginUpdate();
   FTreeView.ClearSelection();
   if Assigned(Value) then
   begin
@@ -843,6 +889,7 @@ begin
       LNode := FTreeView.GetNext(LNode);
     end;
   end;
+  FTreeView.EndUpdate();
 end;
 
 procedure TTreeViewPresenter.SetTreeView(const Value: TVirtualStringTree);
@@ -902,7 +949,19 @@ var
   i: Integer;
   LNodeData: PNodeData;
   LSelectedNodes: TNodeArray;
+  LItem: TObject;
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
+  for LItem in FSelectedItems do
+  begin
+    if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+    begin
+      LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+      LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
+    end;
+  end;
+
   FSelectedItems.Clear();
   LSelectedNodes := FTreeView.GetSortedSelection(False);
 
@@ -912,8 +971,14 @@ begin
     if Assigned(LNodeData) then
     begin
       FSelectedItems.Add(LNodeData.Item);
+      if Supports(LNodeData.Item, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      begin
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Add(DoCurrentItemPropertyChanged);
+      end;
     end;
   end;
+  FOnPropertyChanged.Invoke(Self, 'CurrentItem');
   FOnPropertyChanged.Invoke(Self, 'SelectedItem');
   FOnPropertyChanged.Invoke(Self, 'SelectedItems');
 end;

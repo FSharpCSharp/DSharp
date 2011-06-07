@@ -53,6 +53,7 @@
 			<DCCReference Include="DataBindings.dcp"/>
 			<DCCReference Include="VirtualTreesR.dcp"/>
 			<DCCReference Include="TreeViewPresenter.dcp"/>
+			<DCCReference Include="designide.dcp"/>
 			<DCCReference Include="..\Library\System\Windows\System.Windows.TreeViewPresenter.Designtime.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>

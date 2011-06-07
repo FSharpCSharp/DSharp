@@ -29,7 +29,8 @@ package dclTreeViewPresenter;
 requires
   DataBindings,
   VirtualTreesR,
-  TreeViewPresenter;
+  TreeViewPresenter,
+  designide;
 
 contains
   System.Windows.TreeViewPresenter.Designtime in '..\Library\System\Windows\System.Windows.TreeViewPresenter.Designtime.pas';

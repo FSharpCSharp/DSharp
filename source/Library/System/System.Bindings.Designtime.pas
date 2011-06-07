@@ -431,6 +431,7 @@ initialization
   SupportedClasses.Add(TEdit, 'Text');
   SupportedClasses.Add(TGroupBox, 'BindingSource');
   SupportedClasses.Add(TLabel, 'Caption');
+  SupportedClasses.Add(TLabeledEdit, 'Text');
   SupportedClasses.Add(TListBox, 'ItemsSource');
   SupportedClasses.Add(TMemo, 'Text');
   SupportedClasses.Add(TMonthCalendar, 'Date');

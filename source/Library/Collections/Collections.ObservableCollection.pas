@@ -65,8 +65,8 @@ end;
 procedure TObservableCollection<T>.Notify(const Value: T;
   Action: TCollectionNotification);
 begin
-  inherited;
   FOnCollectionChanged.Invoke(Self, Value, Action);
+  inherited;
 end;
 
 function TObservableCollection<T>.QueryInterface(const IID: TGUID;

@@ -3,6 +3,9 @@
 			<ProjectGuid>{F65371BF-C61C-4F2C-BB82-E2602E6BF976}</ProjectGuid>
 		</PropertyGroup>
 		<ItemGroup>
+			<Projects Include="VirtualTreeviewSample.dproj">
+				<Dependencies/>
+			</Projects>
 			<Projects Include="Sample1.dproj">
 				<Dependencies/>
 			</Projects>
@@ -38,6 +41,15 @@
 				<Default.Personality/>
 			</BorlandProject>
 		</ProjectExtensions>
+		<Target Name="VirtualTreeviewSample">
+			<MSBuild Projects="VirtualTreeviewSample.dproj"/>
+		</Target>
+		<Target Name="VirtualTreeviewSample:Clean">
+			<MSBuild Projects="VirtualTreeviewSample.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="VirtualTreeviewSample:Make">
+			<MSBuild Projects="VirtualTreeviewSample.dproj" Targets="Make"/>
+		</Target>
 		<Target Name="Sample1">
 			<MSBuild Projects="Sample1.dproj"/>
 		</Target>
@@ -120,13 +132,13 @@
 			<MSBuild Projects="Sample9.dproj" Targets="Make"/>
 		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="Sample1;Sample2;Sample3;Sample4;Sample5;Sample6;Sample7;Sample8;Sample9"/>
+			<CallTarget Targets="VirtualTreeviewSample;Sample1;Sample2;Sample3;Sample4;Sample5;Sample6;Sample7;Sample8;Sample9"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="Sample1:Clean;Sample2:Clean;Sample3:Clean;Sample4:Clean;Sample5:Clean;Sample6:Clean;Sample7:Clean;Sample8:Clean;Sample9:Clean"/>
+			<CallTarget Targets="VirtualTreeviewSample:Clean;Sample1:Clean;Sample2:Clean;Sample3:Clean;Sample4:Clean;Sample5:Clean;Sample6:Clean;Sample7:Clean;Sample8:Clean;Sample9:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="Sample1:Make;Sample2:Make;Sample3:Make;Sample4:Make;Sample5:Make;Sample6:Make;Sample7:Make;Sample8:Make;Sample9:Make"/>
+			<CallTarget Targets="VirtualTreeviewSample:Make;Sample1:Make;Sample2:Make;Sample3:Make;Sample4:Make;Sample5:Make;Sample6:Make;Sample7:Make;Sample8:Make;Sample9:Make"/>
 		</Target>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
 	</Project>

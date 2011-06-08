@@ -1,4 +1,4 @@
-object Main: TMain
+object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'VirtualTreeviewSample'
@@ -14,10 +14,10 @@ object Main: TMain
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
-  object VirtualStringTree1: TVirtualStringTree
+  object Contacts: TVirtualStringTree
     Left = 8
-    Top = 8
-    Width = 337
+    Top = 48
+    Width = 297
     Height = 185
     Header.AutoSizeIndex = 0
     Header.DefaultHeight = 17
@@ -32,8 +32,8 @@ object Main: TMain
     Columns = <>
   end
   object Lastname: TLabeledEdit
-    Left = 376
-    Top = 48
+    Left = 336
+    Top = 64
     Width = 121
     Height = 21
     EditLabel.Width = 46
@@ -42,8 +42,8 @@ object Main: TMain
     TabOrder = 1
   end
   object Firstname: TLabeledEdit
-    Left = 376
-    Top = 104
+    Left = 336
+    Top = 120
     Width = 121
     Height = 21
     EditLabel.Width = 47
@@ -51,7 +51,25 @@ object Main: TMain
     EditLabel.Caption = 'Firstname'
     TabOrder = 2
   end
-  object TreeViewPresenter1: TTreeViewPresenter
+  object AddContact: TButton
+    Left = 8
+    Top = 8
+    Width = 106
+    Height = 25
+    Caption = 'Add contact'
+    TabOrder = 3
+    OnClick = AddContactClick
+  end
+  object DeleteContact: TButton
+    Left = 128
+    Top = 8
+    Width = 105
+    Height = 25
+    Caption = 'Delete contact'
+    TabOrder = 4
+    OnClick = DeleteContactClick
+  end
+  object ContactsPresenter: TTreeViewPresenter
     ColumnDefinitions = <
       item
         Caption = 'Lastname'
@@ -60,25 +78,25 @@ object Main: TMain
         Caption = 'Firstname'
       end>
     ListMode = True
-    TreeView = VirtualStringTree1
+    TreeView = Contacts
     UseRtti = True
-    Left = 136
-    Top = 104
+    Left = 80
+    Top = 80
   end
-  object BindingGroup1: TBindingGroup
-    Left = 264
-    Top = 104
+  object BindingGroup: TBindingGroup
+    Left = 192
+    Top = 80
     Bindings = <
       item
         Target = Lastname
         TargetPropertyName = 'Text'
-        Source = TreeViewPresenter1
+        Source = ContactsPresenter
         SourcePropertyName = 'CurrentItem.Lastname'
       end
       item
         Target = Firstname
         TargetPropertyName = 'Text'
-        Source = TreeViewPresenter1
+        Source = ContactsPresenter
         SourcePropertyName = 'CurrentItem.Firstname'
       end>
   end

@@ -44,8 +44,12 @@ uses
 { TMainForm }
 
 procedure TMainForm.Button1Click(Sender: TObject);
+var
+  LContact: TContact;
 begin
-  FContacts.Add(TContact.Create);
+  LContact := TContact.Create('FirstName', 'LastName');
+  FContacts.Add(LContact);
+  ListBox1.CurrentItem := LContact;
 end;
 
 procedure TMainForm.Button2Click(Sender: TObject);

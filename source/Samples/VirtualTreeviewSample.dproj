@@ -45,7 +45,7 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="VirtualTreeviewSample.Main.pas">
-				<Form>Main</Form>
+				<Form>MainForm</Form>
 			</DCCReference>
 			<DCCReference Include="Sample5.Contact.pas"/>
 			<BuildConfiguration Include="Release">

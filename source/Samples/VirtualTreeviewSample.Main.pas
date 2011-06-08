@@ -8,13 +8,17 @@ uses
   System.Bindings, System.Windows.TreeViewPresenter, VirtualTrees;
 
 type
-  TMain = class(TForm)
-    VirtualStringTree1: TVirtualStringTree;
-    TreeViewPresenter1: TTreeViewPresenter;
-    BindingGroup1: TBindingGroup;
+  TMainForm = class(TForm)
+    Contacts: TVirtualStringTree;
+    ContactsPresenter: TTreeViewPresenter;
+    BindingGroup: TBindingGroup;
     Lastname: TLabeledEdit;
     Firstname: TLabeledEdit;
+    AddContact: TButton;
+    DeleteContact: TButton;
     procedure FormCreate(Sender: TObject);
+    procedure AddContactClick(Sender: TObject);
+    procedure DeleteContactClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -22,7 +26,7 @@ type
   end;
 
 var
-  Main: TMain;
+  MainForm: TMainForm;
 
 implementation
 
@@ -32,11 +36,25 @@ uses
   Collections.ObservableCollection,
   Sample5.Contact;
 
-procedure TMain.FormCreate(Sender: TObject);
+procedure TMainForm.AddContactClick(Sender: TObject);
+var
+  LContact: TContact;
 begin
-  TreeViewPresenter1.ItemsSource := TObservableCollection<TObject>.Create();
-  TreeViewPresenter1.ItemsSource.Add(TContact.Create('John', 'Doe'));
-  TreeViewPresenter1.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
+  LContact := TContact.Create('FirstName', 'LastName');
+  ContactsPresenter.ItemsSource.Add(LContact);
+  ContactsPresenter.CurrentItem := LContact;
+end;
+
+procedure TMainForm.DeleteContactClick(Sender: TObject);
+begin
+  ContactsPresenter.ItemsSource.Remove(ContactsPresenter.CurrentItem);
+end;
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  ContactsPresenter.ItemsSource := TObservableCollection<TObject>.Create();
+  ContactsPresenter.ItemsSource.Add(TContact.Create('John', 'Doe'));
+  ContactsPresenter.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
 end;
 
 end.

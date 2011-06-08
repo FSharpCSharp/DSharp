@@ -2,7 +2,7 @@ program VirtualTreeviewSample;
 
 uses
   Forms,
-  VirtualTreeviewSample.Main in 'VirtualTreeviewSample.Main.pas' {Main},
+  VirtualTreeviewSample.Main in 'VirtualTreeviewSample.Main.pas' {MainForm},
   Sample5.Contact in 'Sample5.Contact.pas';
 
 {$R *.res}
@@ -10,6 +10,6 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TMain, Main);
+  Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.

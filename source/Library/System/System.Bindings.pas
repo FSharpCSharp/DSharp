@@ -151,6 +151,11 @@ type
       read FSourceUpdateTrigger write FSourceUpdateTrigger default UpdateTriggerDefault;
   end;
 
+  IBindable = interface
+    function GetBinding: TBinding;
+    property Binding: TBinding read GetBinding;
+  end;
+
   TBindingCollection = class(TOwnedCollection<TBinding>)
   end;
 
@@ -170,6 +175,7 @@ type
   end;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
+function GetBindingForComponent(AComponent: TComponent): TBinding;
 
 implementation
 
@@ -206,6 +212,18 @@ begin
       end;
     end;
   end
+end;
+
+function GetBindingForComponent(AComponent: TComponent): TBinding;
+var
+  LBindingGroup: TBindingGroup;
+begin
+  Result := nil;
+  LBindingGroup := FindBindingGroup(AComponent);
+  if Assigned(LBindingGroup) then
+  begin
+    Result := LBindingGroup.GetBindingForTarget(AComponent);
+  end;
 end;
 
 { TBindingBase }

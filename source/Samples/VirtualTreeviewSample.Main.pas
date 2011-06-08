@@ -19,6 +19,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
   public
@@ -56,5 +57,13 @@ begin
   ContactsPresenter.ItemsSource.Add(TContact.Create('John', 'Doe'));
   ContactsPresenter.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
 end;
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  ContactsPresenter.ItemsSource.Free();
+end;
+
+initialization
+  ReportMemoryLeaksOnShutdown := True;
 
 end.

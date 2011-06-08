@@ -134,18 +134,6 @@ implementation
 uses
   Classes;
 
-function GetBindingForComponent(AComponent: TComponent): TBinding;
-var
-  LBindingGroup: TBindingGroup;
-begin
-  Result := nil;
-  LBindingGroup := FindBindingGroup(AComponent);
-  if Assigned(LBindingGroup) then
-  begin
-    Result := LBindingGroup.GetBindingForTarget(AComponent);
-  end;
-end;
-
 { TColorBoxHelper }
 
 function TColorBoxHelper.GetBinding: TBinding;

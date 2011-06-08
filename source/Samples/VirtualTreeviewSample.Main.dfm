@@ -12,6 +12,7 @@ object MainForm: TMainForm
   Font.Style = []
   OldCreateOrder = False
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
   object Contacts: TVirtualStringTree
@@ -79,7 +80,6 @@ object MainForm: TMainForm
       end>
     ListMode = True
     TreeView = Contacts
-    UseRtti = True
     Left = 80
     Top = 80
   end

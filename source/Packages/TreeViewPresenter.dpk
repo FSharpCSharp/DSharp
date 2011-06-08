@@ -33,6 +33,6 @@ requires
 contains
   System.Windows.ColumnDefinitions in '..\Library\System\Windows\System.Windows.ColumnDefinitions.pas',
   System.Windows.TreeViewPresenter in '..\Library\System\Windows\System.Windows.TreeViewPresenter.pas',
-  System.Data.Templates.Rtti in '..\Library\System\System.Data.Templates.Rtti.pas';
+  System.Windows.ColumnDefinitions.Template in '..\Library\System\Windows\System.Windows.ColumnDefinitions.Template.pas';
 
 end.

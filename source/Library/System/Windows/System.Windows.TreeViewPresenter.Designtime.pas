@@ -40,9 +40,20 @@ uses
   ColnEdit,
   DesignEditors,
   DesignIntf,
-  System.Windows.TreeViewPresenter;
+  System.Bindings,
+  System.Windows.ColumnDefinitions,
+  System.Windows.TreeViewPresenter,
+  SysUtils,
+  TypInfo;
 
 type
+  TBindingProperty = class(TClassProperty)
+  private
+    function FilterFunc(const ATestEditor: IProperty): Boolean;
+  public
+    procedure GetProperties(Proc: TGetPropProc); override;
+  end;
+
   TTreeViewPresenterComponentEditor = class(TComponentEditor)
   public
     procedure ExecuteVerb(Index: Integer); override;
@@ -54,6 +65,23 @@ procedure Register;
 begin
   RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
   RegisterComponentEditor(TTreeViewPresenter, TTreeViewPresenterComponentEditor);
+  RegisterPropertyEditor(TypeInfo(TBinding), TColumnDefinition, 'Binding', TBindingProperty);
+end;
+
+{ TBindingProperty }
+
+function TBindingProperty.FilterFunc(const ATestEditor: IProperty): Boolean;
+begin
+  Result := SameText(ATestEditor.GetName(), 'SourcePropertyName')
+end;
+
+procedure TBindingProperty.GetProperties(Proc: TGetPropProc);
+var
+  Components: IDesignerSelections;
+begin
+  Components := TDesignerSelections.Create;
+  Components.Add(TPersistent(GetOrdValue));
+  GetComponentProperties(Components, tkProperties, Designer, Proc, FilterFunc);
 end;
 
 { TTreeViewPresenterComponentEditor }

@@ -54,7 +54,7 @@
 			<DCCReference Include="VirtualTreesR.dcp"/>
 			<DCCReference Include="..\Library\System\Windows\System.Windows.ColumnDefinitions.pas"/>
 			<DCCReference Include="..\Library\System\Windows\System.Windows.TreeViewPresenter.pas"/>
-			<DCCReference Include="..\Library\System\System.Data.Templates.Rtti.pas"/>
+			<DCCReference Include="..\Library\System\Windows\System.Windows.ColumnDefinitions.Template.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

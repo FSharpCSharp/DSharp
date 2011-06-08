@@ -47,11 +47,6 @@ uses
   VirtualTrees;
 
 type
-  PNodeData = ^TNodeData;
-  TNodeData = record
-    Item: TObject;
-  end;
-
   TCompareEvent = procedure(Sender: TObject; Item1, Item2: TObject;
     ColumnIndex: Integer; var Result: Integer) of object;
   TDragBeginEvent = procedure(Sender: TObject; var AllowDrag: Boolean) of object;
@@ -83,7 +78,6 @@ type
     FPopupMenu: TPopupMenu;
     FSelectedItems: TList<TObject>;
     FTreeView: TVirtualStringTree;
-    FUseRtti: Boolean;
 
     procedure DoAfterCellPaint(Sender: TBaseVirtualTree; TargetCanvas: TCanvas;
       Node: PVirtualNode; Column: TColumnIndex; CellRect: TRect);
@@ -130,6 +124,7 @@ type
     function GetItemsSource: TList<TObject>;
     function GetItemTemplate: IDataTemplate; overload;
     function GetItemTemplate(const Item: TObject): IDataTemplate; overload;
+    function GetNodeItem(Tree: TBaseVirtualTree; Node: PVirtualNode): TObject;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetSelectedItem: TObject;
@@ -151,6 +146,7 @@ type
     procedure SetItemTemplate(const Value: IDataTemplate);
     procedure SetListMode(const Value: Boolean);
     procedure SetMultiSelect(const Value: Boolean);
+    procedure SetNodeItem(Tree: TBaseVirtualTree; Node: PVirtualNode; Item: TObject);
     procedure SetPopupMenu(const Value: TPopupMenu);
     procedure SetSelectedItem(const Value: TObject);
     procedure SetSelectedItems(const Value: TList<TObject>);
@@ -196,13 +192,12 @@ type
       read FOnSelectionChanged write FOnSelectionChanged;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
     property TreeView: TVirtualStringTree read FTreeView write SetTreeView;
-    property UseRtti: Boolean read FUseRtti write FUseRtti default False;
   end;
 
 implementation
 
 uses
-  System.Data.Templates.Rtti;
+  System.Windows.ColumnDefinitions.Template;
 
 const
   CDefaultCellRect: TRect = (Left: 0; Top: 0; Right: 0; Bottom: 0);
@@ -218,10 +213,15 @@ begin
   FOnCollectionChanged.Add(DoSourceCollectionChanged);
 
   FColumnDefinitions := TColumnDefinitions.Create(Self);
+  FItemTemplate := TColumnDefinitionsDataTemplate.Create(FColumnDefinitions);
 end;
 
 destructor TTreeViewPresenter.Destroy;
 begin
+  if Assigned(FColumnDefinitions) and (FColumnDefinitions.Owner = Self) then
+  begin
+    FColumnDefinitions.Free();
+  end;
   FCheckedItems.Free();
   FExpandedItems.Free();
   FSelectedItems.Free();
@@ -230,16 +230,16 @@ end;
 
 procedure TTreeViewPresenter.DeleteItems(Items: TList<TObject>);
 var
+  LItem: TObject;
   LNode: PVirtualNode;
-  LNodeData: PNodeData;
 begin
   if Assigned(Items) then
   begin
     LNode := FTreeView.GetFirst();
     while Assigned(LNode) do
     begin
-      LNodeData := FTreeView.GetNodeData(LNode);
-      if Assigned(LNodeData) and (Items.IndexOf(LNodeData.Item) > -1) then
+      LItem := GetNodeItem(FTreeView, LNode);
+      if Assigned(LItem) and (Items.IndexOf(LItem) > -1) then
       begin
         FTreeView.DeleteNode(LNode);
       end;
@@ -252,14 +252,14 @@ procedure TTreeViewPresenter.DoAfterCellPaint(Sender: TBaseVirtualTree;
   TargetCanvas: TCanvas; Node: PVirtualNode; Column: TColumnIndex;
   CellRect: TRect);
 var
-  LNodeData: PNodeData;
+  LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
-  LNodeData := Sender.GetNodeData(Node);
-  LItemTemplate := GetItemTemplate(LNodeData.Item);
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    LItemTemplate.CustomDraw(LNodeData.Item, Column, TargetCanvas, CellRect, FImageList, dmAfterCellPaint);
+    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, FImageList, dmAfterCellPaint);
   end;
 end;
 
@@ -267,14 +267,14 @@ procedure TTreeViewPresenter.DoBeforeCellPaint(Sender: TBaseVirtualTree;
   TargetCanvas: TCanvas; Node: PVirtualNode; Column: TColumnIndex;
   CellPaintMode: TVTCellPaintMode; CellRect: TRect; var ContentRect: TRect);
 var
-  LNodeData: PNodeData;
+  LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
-  LNodeData := Sender.GetNodeData(Node);
-  LItemTemplate := GetItemTemplate(LNodeData.Item);
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    LItemTemplate.CustomDraw(LNodeData.Item, Column, TargetCanvas, CellRect, FImageList, dmBeforeCellPaint);
+    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, FImageList, dmBeforeCellPaint);
   end;
 end;
 
@@ -297,25 +297,25 @@ end;
 procedure TTreeViewPresenter.DoCompareNodes(Sender: TBaseVirtualTree; Node1,
   Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
 var
-  LNodeData1, LNodeData2: PNodeData;
+  LItem1, LItem2: TObject;
   LItemTemplate1, LItemTemplate2: IDataTemplate;
 begin
-  LNodeData1 := Sender.GetNodeData(Node1);
-  LNodeData2 := Sender.GetNodeData(Node2);
-  LItemTemplate1 := GetItemTemplate(LNodeData1.Item);
-  LItemTemplate2 := GetItemTemplate(LNodeData2.Item);
+  LItem1 := GetNodeItem(Sender, Node1);
+  LItem2 := GetNodeItem(Sender, Node2);
+  LItemTemplate1 := GetItemTemplate(LItem1);
+  LItemTemplate2 := GetItemTemplate(LItem2);
 
   if Assigned(FOnCompare) then
   begin
-    FOnCompare(Self, LNodeData1.Item, LNodeData2.Item, Column, Result);
+    FOnCompare(Self, LItem1, LItem2, Column, Result);
   end
   else
   begin
     // Using item template to sort
     if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
     begin
-      Result := CompareStr(LItemTemplate1.GetText(LNodeData1.Item, Column),
-        LItemTemplate2.GetText(LNodeData2.Item, Column));
+      Result := CompareStr(LItemTemplate1.GetText(LItem1, Column),
+        LItemTemplate2.GetText(LItem2, Column));
     end;
   end;
 end;
@@ -373,23 +373,23 @@ procedure TTreeViewPresenter.DoDragDrop(Sender: TBaseVirtualTree;
   Shift: TShiftState; Pt: TPoint; var Effect: Integer; Mode: TDropMode);
 var
   i: Integer;
+  LItem: TObject;
   LNode: PVirtualNode;
-  LNodeData: PNodeData;
   LSelectedNodes: TNodeArray;
 begin
   LNode := Sender.DropTargetNode;
-  LNodeData := Sender.GetNodeData(LNode);
-  if Assigned(LNodeData) and Assigned(FOnDragDrop) then
+  LItem := GetNodeItem(Sender, LNode);
+  if Assigned(LItem) and Assigned(FOnDragDrop) then
   begin
     LSelectedNodes := Sender.GetSortedSelection(False);
     if ssCtrl in Shift then
     begin
-      FOnDragDrop(Sender, LNodeData.Item, doCopy);
+      FOnDragDrop(Sender, LItem, doCopy);
       Sender.ReinitNode(LNode, True);
     end
     else
     begin
-      FOnDragDrop(Sender, LNodeData.Item, doMove);
+      FOnDragDrop(Sender, LItem, doMove);
       for i := Low(LSelectedNodes) to High(LSelectedNodes) do
       begin
         FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
@@ -402,24 +402,24 @@ procedure TTreeViewPresenter.DoDragOver(Sender: TBaseVirtualTree;
   Source: TObject; Shift: TShiftState; State: TDragState; Pt: TPoint;
   Mode: TDropMode; var Effect: Integer; var Accept: Boolean);
 var
+  LItem: TObject;
   LNode: PVirtualNode;
-  LNodeData: PNodeData;
 begin
   LNode := Sender.GetNodeAt(Pt.X, Pt.Y);
-  LNodeData := Sender.GetNodeData(LNode);
-  if Assigned(LNodeData) and Assigned(FOnDragOver) then
+  LItem := GetNodeItem(Sender, LNode);
+  if Assigned(LItem) and Assigned(FOnDragOver) then
   begin
-    FOnDragOver(Sender, LNodeData.Item, Accept);
+    FOnDragOver(Sender, LItem, Accept);
   end;
 end;
 
 procedure TTreeViewPresenter.DoFocusChanged(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex);
 var
-  LNodeData: PNodeData;
+  LItem: TObject;
 begin
-  LNodeData := Sender.GetNodeData(Node);
-  if Assigned(LNodeData) then
+  LItem := GetNodeItem(Sender, Node);
+  if Assigned(LItem) then
   begin
     // nothing to do here yet
   end;
@@ -429,14 +429,14 @@ procedure TTreeViewPresenter.DoGetImageIndex(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Kind: TVTImageKind; Column: TColumnIndex;
   var Ghosted: Boolean; var ImageIndex: Integer);
 var
-  LNodeData: PNodeData;
+  LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
-  LNodeData := Sender.GetNodeData(Node);
-  LItemTemplate := GetItemTemplate(LNodeData.Item);
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    ImageIndex := LItemTemplate.GetImageIndex(LNodeData.Item, Column);
+    ImageIndex := LItemTemplate.GetImageIndex(LItem, Column);
   end;
 end;
 
@@ -444,14 +444,14 @@ procedure TTreeViewPresenter.DoGetText(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType;
   var CellText: string);
 var
-  LNodeData: PNodeData;
+  LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
-  LNodeData := Sender.GetNodeData(Node);
-  LItemTemplate := GetItemTemplate(LNodeData.Item);
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    CellText := LItemTemplate.GetText(LNodeData.Item, Column);
+    CellText := LItemTemplate.GetText(LItem, Column);
   end;
 end;
 
@@ -478,28 +478,29 @@ end;
 procedure TTreeViewPresenter.DoInitNode(Sender: TBaseVirtualTree; ParentNode,
   Node: PVirtualNode; var InitialStates: TVirtualNodeInitStates);
 var
-  LNodeData: PNodeData;
-  LParentNodeData: PNodeData;
+  LItem: TObject;
   LItemTemplate: IDataTemplate;
+  LParentItem: TObject;
 begin
   Node.CheckType := ctCheckBox;
-  LNodeData := Sender.GetNodeData(Node);
 
   if Assigned(ParentNode) then
   begin
-    LParentNodeData := Sender.GetNodeData(ParentNode);
-    LItemTemplate := GetItemTemplate(LParentNodeData.Item);
-    LNodeData.Item := LItemTemplate.GetItem(LParentNodeData.Item, Node.Index);
+    LParentItem := GetNodeItem(Sender, ParentNode);
+    LItemTemplate := GetItemTemplate(LParentItem);
+    LItem := LItemTemplate.GetItem(LParentItem, Node.Index);
   end
   else
   begin
-    LNodeData.Item := FItemsSource[Node.Index];
+    LItem := FItemsSource[Node.Index];
   end;
 
-  LItemTemplate := GetItemTemplate(LNodeData.Item);
+  SetNodeItem(Sender, Node, LItem);
+
+  LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    Sender.ChildCount[Node] := LItemTemplate.GetItemCount(LNodeData.Item);
+    Sender.ChildCount[Node] := LItemTemplate.GetItemCount(LItem);
   end
   else
   begin
@@ -508,7 +509,7 @@ begin
 
   if Assigned(FFilter) then
   begin
-    Sender.IsFiltered[Node] := not FFilter(LNodeData.Item);
+    Sender.IsFiltered[Node] := not FFilter(LItem);
   end;
 end;
 
@@ -533,14 +534,14 @@ procedure TTreeViewPresenter.DoPaintText(Sender: TBaseVirtualTree;
   const TargetCanvas: TCanvas; Node: PVirtualNode; Column: TColumnIndex;
   TextType: TVSTTextType);
 var
-  LNodeData: PNodeData;
+  LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
-  LNodeData := Sender.GetNodeData(Node);
-  LItemTemplate := GetItemTemplate(LNodeData.Item);
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    LItemTemplate.CustomDraw(LNodeData.Item, Column, TargetCanvas, CDefaultCellRect, FImageList, dmPaintText);
+    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CDefaultCellRect, FImageList, dmPaintText);
   end;
 end;
 
@@ -599,14 +600,19 @@ begin
   if Assigned(FItemTemplate) then
   begin
     Result := FItemTemplate.GetItemTemplate(Item);
+  end;
+end;
+
+function TTreeViewPresenter.GetNodeItem(Tree: TBaseVirtualTree;
+  Node: PVirtualNode): TObject;
+begin
+  if Assigned(Tree) then
+  begin
+    Result := PObject(Tree.GetNodeData(Node))^;
   end
   else
   begin
-    if FUseRtti then
-    begin
-      FItemTemplate := TRttiDataTemplate.Create(FColumnDefinitions);
-      Result := FItemTemplate;
-    end;
+    Result := nil;
   end;
 end;
 
@@ -781,16 +787,16 @@ end;
 
 procedure TTreeViewPresenter.SetExpandedItems(const Value: TList<TObject>);
 var
+  LItem: TObject;
   LNode: PVirtualNode;
-  LNodeData: PNodeData;
 begin
   if Assigned(Value) then
   begin
     LNode := FTreeView.GetFirst();
     while Assigned(LNode) do
     begin
-      LNodeData := FTreeView.GetNodeData(LNode);
-      if Assigned(LNodeData) and (Value.IndexOf(LNodeData.Item) > -1) then
+      LItem := GetNodeItem(FTreeView, LNode);
+      if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
       begin
         FTreeView.Expanded[LNode] := True;
       end;
@@ -856,6 +862,15 @@ begin
   InitTreeOptions();
 end;
 
+procedure TTreeViewPresenter.SetNodeItem(Tree: TBaseVirtualTree;
+  Node: PVirtualNode; Item: TObject);
+begin
+  if Assigned(Tree) and Assigned(Node) then
+  begin
+    PObject(Tree.GetNodeData(Node))^ := Item;
+  end;
+end;
+
 procedure TTreeViewPresenter.SetPopupMenu(const Value: TPopupMenu);
 begin
   FPopupMenu := Value;
@@ -871,8 +886,8 @@ end;
 
 procedure TTreeViewPresenter.SetSelectedItems(const Value: TList<TObject>);
 var
+  LItem: TObject;
   LNode: PVirtualNode;
-  LNodeData: PNodeData;
 begin
   FTreeView.BeginUpdate();
   FTreeView.ClearSelection();
@@ -881,8 +896,8 @@ begin
     LNode := FTreeView.GetFirst();
     while Assigned(LNode) do
     begin
-      LNodeData := FTreeView.GetNodeData(LNode);
-      if Assigned(LNodeData) and (Value.IndexOf(LNodeData.Item) > -1) then
+      LItem := GetNodeItem(FTreeView, LNode);
+      if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
       begin
         FTreeView.Selected[LNode] := True;
       end;
@@ -898,7 +913,7 @@ begin
   if Assigned(FTreeView) then
   begin
     FTreeView.Images := FImageList;
-    FTreeView.NodeDataSize := SizeOf(TNodeData);
+    FTreeView.NodeDataSize := SizeOf(TObject);
     FTreeView.PopupMenu := FPopupMenu;
 
     InitColumns();
@@ -910,17 +925,17 @@ end;
 
 procedure TTreeViewPresenter.UpdateCheckedItems;
 var
+  LItem: TObject;
   LNode: PVirtualNode;
-  LNodeData: PNodeData;
 begin
   FCheckedItems.Clear();
   LNode := FTreeView.GetFirstChecked();
   while Assigned(LNode) do
   begin
-    LNodeData := FTreeView.GetNodeData(LNode);
-    if Assigned(LNodeData) then
+    LItem := GetNodeItem(FTreeView, LNode);
+    if Assigned(LItem) then
     begin
-      FCheckedItems.Add(LNodeData.Item);
+      FCheckedItems.Add(LItem);
     end;
     LNode := FTreeView.GetNextChecked(LNode);
   end;
@@ -928,17 +943,17 @@ end;
 
 procedure TTreeViewPresenter.UpdateExpandedItems;
 var
+  LItem: TObject;
   LNode: PVirtualNode;
-  LNodeData: PNodeData;
 begin
   FExpandedItems.Clear();
   LNode := FTreeView.GetFirst();
   while Assigned(LNode) do
   begin
-    LNodeData := FTreeView.GetNodeData(LNode);
-    if Assigned(LNodeData) and FTreeView.Expanded[LNode] then
+    LItem := GetNodeItem(FTreeView, LNode);
+    if Assigned(LItem) and FTreeView.Expanded[LNode] then
     begin
-      FExpandedItems.Add(LNodeData.Item);
+      FExpandedItems.Add(LItem);
     end;
     LNode := FTreeView.GetNext(LNode);
   end;
@@ -947,11 +962,10 @@ end;
 procedure TTreeViewPresenter.UpdateSelectedItems;
 var
   i: Integer;
-  LNodeData: PNodeData;
-  LSelectedNodes: TNodeArray;
   LItem: TObject;
   LNotifyPropertyChanged: INotifyPropertyChanged;
   LPropertyChanged: TEvent<TPropertyChangedEvent>;
+  LSelectedNodes: TNodeArray;
 begin
   for LItem in FSelectedItems do
   begin
@@ -967,11 +981,11 @@ begin
 
   for i := Low(LSelectedNodes) to High(LSelectedNodes) do
   begin
-    LNodeData := FTreeView.GetNodeData(LSelectedNodes[i]);
-    if Assigned(LNodeData) then
+    LItem := GetNodeItem(FTreeView, LSelectedNodes[i]);
+    if Assigned(LItem) then
     begin
-      FSelectedItems.Add(LNodeData.Item);
-      if Supports(LNodeData.Item, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      FSelectedItems.Add(LItem);
+      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
       begin
         LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
         LPropertyChanged.Add(DoCurrentItemPropertyChanged);

@@ -1,6 +1,7 @@
 package dclTreeViewPresenter;
 
 {$R *.res}
+{$R '..\Resources\System.Windows.TreeViewPresenter.dcr'}
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}

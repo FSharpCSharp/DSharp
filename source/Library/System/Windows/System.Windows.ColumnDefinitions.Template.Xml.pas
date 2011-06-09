@@ -27,36 +27,60 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.Windows.ColumnDefinitions.Template;
+unit System.Windows.ColumnDefinitions.Template.Xml;
 
 interface
 
 uses
-  System.Data.Templates,
-  System.Windows.ColumnDefinitions;
+  Collections.Xml,
+  System.Windows.ColumnDefinitions.Template;
 
 type
-  TColumnDefinitionsDataTemplate = class(TDataTemplate)
-  protected
-    FColumnDefinitions: TColumnDefinitions;
+  TXmlDataTemplate = class(TColumnDefinitionsDataTemplate)
   public
-    constructor Create(AColumnDefinitions: TColumnDefinitions);
-
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
+
+    function GetItem(const Item: TObject; const Index: Integer): TObject; override;
+    function GetItemCount(const Item: TObject): Integer; override;
+
+    function GetTemplateDataClass: TClass; override;
   end;
 
 implementation
 
-{ TColumnDefinitionsDataTemplate }
+{ TXmlDataTemplate }
 
-constructor TColumnDefinitionsDataTemplate.Create(
-  AColumnDefinitions: TColumnDefinitions);
+function TXmlDataTemplate.GetItem(const Item: TObject;
+  const Index: Integer): TObject;
 begin
-  inherited Create;
-  FColumnDefinitions := AColumnDefinitions;
+  if Assigned(Item) then
+  begin
+    Result := TXNode(Item).ChildNodes[Index];
+  end
+  else
+  begin
+    Result := nil;
+  end;
 end;
 
-function TColumnDefinitionsDataTemplate.GetText(const Item: TObject;
+function TXmlDataTemplate.GetItemCount(const Item: TObject): Integer;
+begin
+  if Assigned(Item) then
+  begin
+    Result := TXNode(Item).ChildNodes.Count;
+  end
+  else
+  begin
+    Result := 0;
+  end;
+end;
+
+function TXmlDataTemplate.GetTemplateDataClass: TClass;
+begin
+  Result := TXNode;
+end;
+
+function TXmlDataTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
 begin
   if Assigned(Item) and Assigned(FColumnDefinitions)
@@ -70,22 +94,9 @@ begin
       end
       else
       begin
-        Source := Item;
-        if SourceProperty.IsReadable then
-        begin
-          Result := SourceProperty.GetValue(Item).ToString;
-        end
-        else
-        begin
-          Result := inherited;
-        end;
-        Source := nil;
+        Result := TXNode(Item).SelectValue(SourcePropertyName);
       end;
     end;
-  end
-  else
-  begin
-    Result := inherited;
   end;
 end;
 

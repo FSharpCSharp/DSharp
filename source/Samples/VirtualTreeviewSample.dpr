@@ -2,8 +2,7 @@ program VirtualTreeviewSample;
 
 uses
   Forms,
-  VirtualTreeviewSample.Main in 'VirtualTreeviewSample.Main.pas' {MainForm},
-  Sample5.Contact in 'Sample5.Contact.pas';
+  VirtualTreeviewSample.Main in 'VirtualTreeviewSample.Main.pas' {MainForm};
 
 {$R *.res}
 

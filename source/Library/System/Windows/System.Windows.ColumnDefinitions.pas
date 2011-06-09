@@ -12,18 +12,22 @@ const
   CDefaultWidth = 100;
 
 type
+  TGetTextEvent = function(const Item: TObject; const ColumnIndex: Integer): string of object;
+
   TColumnDefinition = class(TCollectionItem)
   private
     FBinding: TBinding;
     FCaption: string;
+    FOnGetText: TGetTextEvent;
     FWidth: Integer;
     procedure SetCaption(const Value: string);
   public
     constructor Create(Collection: TCollection); override;
     destructor Destroy; override;
   published
-    property Binding: TBinding read FBinding;
+    property Binding: TBinding read FBinding write FBinding;
     property Caption: string read FCaption write SetCaption;
+    property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;
 

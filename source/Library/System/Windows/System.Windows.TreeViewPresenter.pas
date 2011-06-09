@@ -847,6 +847,7 @@ begin
   if Assigned(FTreeView) then
   begin
     InitColumns();
+    ResetRootNodeCount();
   end;
 end;
 
@@ -992,6 +993,7 @@ begin
       end;
     end;
   end;
+
   FOnPropertyChanged.Invoke(Self, 'CurrentItem');
   FOnPropertyChanged.Invoke(Self, 'SelectedItem');
   FOnPropertyChanged.Invoke(Self, 'SelectedItems');

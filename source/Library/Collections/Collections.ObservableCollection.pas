@@ -32,9 +32,7 @@ unit Collections.ObservableCollection;
 interface
 
 uses
-  Collections.Generics,
   Generics.Collections,
-  Generics.Defaults,
   System.Bindings.Collections,
   System.Events;
 

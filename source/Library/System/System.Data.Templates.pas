@@ -146,7 +146,7 @@ begin
   Result := Self;
   for LTemplate in FTemplates do
   begin
-    if Item.InheritsFrom(LTemplate.GetTemplateDataClass) then
+    if Assigned(Item) and Item.InheritsFrom(LTemplate.GetTemplateDataClass) then
     begin
       Result := LTemplate;
       Break;

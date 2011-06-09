@@ -46,12 +46,11 @@ type
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
     function GetEnumerator: IEnumerator;
-    function GetEnumeratorGeneric: IEnumerator<T>; virtual;
     function IEnumerable<T>.GetEnumerator = GetEnumeratorGeneric;
   protected
     function DoGetEnumerator: TEnumerator<T>; override;
+    function GetEnumeratorGeneric: IEnumerator<T>; virtual;
   public
-    constructor Create; overload;
     constructor Create(AArray: array of T); overload;
     constructor Create(AEnumerable: TEnumerable<T>); overload;
     destructor Destroy; override;
@@ -91,11 +90,6 @@ uses
   Windows;
 
 { TEnumerableEx<T> }
-
-constructor TEnumerableEx<T>.Create;
-begin
-  ENotImplemented.Create('TEnumerableEx<T>.Create cannot be called with no parameters');
-end;
 
 constructor TEnumerableEx<T>.Create(AArray: array of T);
 begin

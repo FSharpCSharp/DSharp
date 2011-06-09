@@ -155,7 +155,7 @@ end;
 
 function TRttiCatalog.CanResolve(const Name: string): Boolean;
 begin
-  Result :=  FCatalog.ContainsKey(Name);
+  Result := FCatalog.ContainsKey(Name);
 end;
 
 // Check whether the class was marked abastract using the abstract attribute

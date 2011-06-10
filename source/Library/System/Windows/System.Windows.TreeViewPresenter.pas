@@ -55,10 +55,12 @@ type
   TDragDropEvent = procedure(Sender: TObject; TargetItem: TObject;
     DragOperation: TDragOperation) of object;
 
+  TCheckSupport = (csNone, csSimple, csTriState);
+
   TTreeViewPresenter = class(TComponent, ICollectionView, INotifyPropertyChanged)
   private
     FCheckedItems: TList<TObject>;
-    FCheckSupport: Boolean;
+    FCheckSupport: TCheckSupport;
     FColumnDefinitions: TColumnDefinitions;
     FExpandedItems: TList<TObject>;
     FFilter: TPredicate<TObject>;
@@ -136,7 +138,7 @@ type
 
     procedure ResetRootNodeCount;
 
-    procedure SetCheckSupport(const Value: Boolean);
+    procedure SetCheckSupport(const Value: TCheckSupport);
     procedure SetColumnDefinitions(const Value: TColumnDefinitions);
     procedure SetCurrentItem(const Value: TObject);
     procedure SetExpandedItems(const Value: TList<TObject>);
@@ -176,7 +178,7 @@ type
     property SelectedItem: TObject read GetSelectedItem write SetSelectedItem;
     property SelectedItems: TList<TObject> read GetSelectedItems write SetSelectedItems;
   published
-    property CheckSupport: Boolean read FCheckSupport write SetCheckSupport default False;
+    property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
     property ColumnDefinitions: TColumnDefinitions
       read FColumnDefinitions write SetColumnDefinitions;
     property ImageList: TImageList read FImageList write SetImageList;
@@ -482,7 +484,14 @@ var
   LItemTemplate: IDataTemplate;
   LParentItem: TObject;
 begin
-  Node.CheckType := ctCheckBox;
+  if FCheckSupport = csTriState then
+  begin
+    Node.CheckType := ctTriStateCheckbox;
+  end
+  else
+  begin
+    Node.CheckType := ctCheckBox;
+  end;
 
   if Assigned(ParentNode) then
   begin
@@ -692,7 +701,7 @@ procedure TTreeViewPresenter.InitTreeOptions;
 begin
   if Assigned(FTreeView) and not (csDesigning in ComponentState) then
   begin
-    if FCheckSupport then
+    if FCheckSupport <> csNone then
     begin
       FTreeView.TreeOptions.MiscOptions :=
         FTreeView.TreeOptions.MiscOptions + [toCheckSupport];
@@ -763,7 +772,7 @@ begin
   end;
 end;
 
-procedure TTreeViewPresenter.SetCheckSupport(const Value: Boolean);
+procedure TTreeViewPresenter.SetCheckSupport(const Value: TCheckSupport);
 begin
   FCheckSupport := Value;
   InitTreeOptions();

@@ -145,7 +145,7 @@ end;
 
 function TXNode.GetValue: string;
 begin
-  Result := GetTextNode(FDOMNode).nodeValue;
+  Result := Trim(GetTextNode(FDOMNode).nodeValue);
 end;
 
 function TXNode.SelectElement(const XPath: string): IDOMNode;
@@ -194,7 +194,7 @@ begin
   LNode := GetTextNode(LNode);
 
   if Assigned(LNode) then
-    Result := LNode.nodeValue;
+    Result := Trim(LNode.nodeValue);
 end;
 
 procedure TXNode.SetValue(const Value: string);

@@ -28,11 +28,15 @@ object MainForm: TMainForm
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'Contacts'
+      DesignSize = (
+        530
+        246)
       object Contacts: TVirtualStringTree
         Left = 16
         Top = 39
         Width = 329
         Height = 194
+        Anchors = [akLeft, akTop, akRight, akBottom]
         Header.AutoSizeIndex = 0
         Header.DefaultHeight = 17
         Header.Font.Charset = DEFAULT_CHARSET
@@ -50,6 +54,7 @@ object MainForm: TMainForm
         Top = 56
         Width = 121
         Height = 21
+        Anchors = [akTop, akRight]
         EditLabel.Width = 46
         EditLabel.Height = 13
         EditLabel.Caption = 'Lastname'
@@ -60,6 +65,7 @@ object MainForm: TMainForm
         Top = 112
         Width = 121
         Height = 21
+        Anchors = [akTop, akRight]
         EditLabel.Width = 47
         EditLabel.Height = 13
         EditLabel.Caption = 'Firstname'
@@ -113,6 +119,7 @@ object MainForm: TMainForm
         Top = 56
         Width = 121
         Height = 21
+        Anchors = [akTop, akRight]
         EditLabel.Width = 52
         EditLabel.Height = 13
         EditLabel.Caption = 'NodeName'
@@ -123,10 +130,20 @@ object MainForm: TMainForm
         Top = 112
         Width = 121
         Height = 21
+        Anchors = [akTop, akRight]
         EditLabel.Width = 51
         EditLabel.Height = 13
         EditLabel.Caption = 'NodeValue'
         TabOrder = 2
+      end
+      object SaveXml: TButton
+        Left = 376
+        Top = 152
+        Width = 121
+        Height = 25
+        Caption = 'Save Xml'
+        TabOrder = 3
+        OnClick = SaveXmlClick
       end
     end
   end
@@ -195,6 +212,7 @@ object MainForm: TMainForm
   end
   object XMLDocument1: TXMLDocument
     Active = True
+    Options = [doNodeAutoCreate, doNodeAutoIndent, doAttrNull, doAutoPrefix, doNamespaceDecl]
     ParseOptions = [poPreserveWhiteSpace]
     XML.Strings = (
       '<Inventory xmlns="">'
@@ -234,5 +252,11 @@ object MainForm: TMainForm
     Left = 192
     Top = 160
     DOMVendorDesc = 'MSXML'
+  end
+  object SaveDialog: TSaveDialog
+    DefaultExt = '*.xml'
+    Filter = 'XML Document (*.xml)|*.xml|Any file (*.*)|*.*'
+    Left = 288
+    Top = 160
   end
 end

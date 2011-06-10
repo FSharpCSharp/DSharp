@@ -92,6 +92,9 @@ type
 
 implementation
 
+uses
+  System.Reflection;
+
 { TDataTemplate }
 
 constructor TDataTemplate.Create;
@@ -123,9 +126,9 @@ function TDataTemplate.GetItem(const Item: TObject;
 begin
   Result := nil;
 
-  if Item is TObjectList<TObject> then
+  if IsClassCovariantTo(Item.ClassType, TList<TObject>) then
   begin
-    Result := TObjectList<TObject>(Item).Items[Index];
+    Result := TList<TObject>(Item).Items[Index];
   end;
 end;
 
@@ -133,9 +136,9 @@ function TDataTemplate.GetItemCount(const Item: TObject): Integer;
 begin
   Result := 0;
 
-  if Item is TObjectList<TObject> then
+  if IsClassCovariantTo(Item.ClassType, TList<TObject>) then
   begin
-    Result := TObjectList<TObject>(Item).Count;
+    Result := TList<TObject>(Item).Count;
   end;
 end;
 
@@ -146,7 +149,8 @@ begin
   Result := Self;
   for LTemplate in FTemplates do
   begin
-    if Assigned(Item) and Item.InheritsFrom(LTemplate.GetTemplateDataClass) then
+    if Assigned(Item) and (Item.InheritsFrom(LTemplate.GetTemplateDataClass)
+      or IsClassCovariantTo(Item.ClassType, LTemplate.GetTemplateDataClass)) then
     begin
       Result := LTemplate;
       Break;
@@ -156,7 +160,7 @@ end;
 
 function TDataTemplate.GetTemplateDataClass: TClass;
 begin
-  Result := TObjectList<TObject>;
+  Result := TList<TObject>;
 end;
 
 function TDataTemplate.GetText(const Item: TObject;

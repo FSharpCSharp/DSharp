@@ -25,12 +25,15 @@ type
     XMLDocument1: TXMLDocument;
     NodeName: TLabeledEdit;
     NodeValue: TLabeledEdit;
+    SaveXml: TButton;
+    SaveDialog: TSaveDialog;
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     function InventoryPresenterColumnDefinitions0GetText(const Item: TObject;
       const ColumnIndex: Integer): string;
+    procedure SaveXmlClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -87,6 +90,14 @@ function TMainForm.InventoryPresenterColumnDefinitions0GetText(
   const Item: TObject; const ColumnIndex: Integer): string;
 begin
   Result := TXNode(Item).SelectValue;
+end;
+
+procedure TMainForm.SaveXmlClick(Sender: TObject);
+begin
+  if SaveDialog.Execute() then
+  begin
+    XMLDocument1.SaveToFile(SaveDialog.FileName);
+  end;
 end;
 
 initialization

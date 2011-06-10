@@ -43,6 +43,7 @@ contains
   System.PropertyPath in '..\Library\System\System.PropertyPath.pas',
   System.Bindings.Controls.VCL.Extensions in '..\Library\System\System.Bindings.Controls.VCL.Extensions.pas',
   System.Bindings.Controls.VCL in '..\Library\System\System.Bindings.Controls.VCL.pas',
-  System.Data.Templates.Default in '..\Library\System\System.Data.Templates.Default.pas';
+  System.Data.Templates.Default in '..\Library\System\System.Data.Templates.Default.pas',
+  System.Reflection in '..\Library\System\System.Reflection.pas';
 
 end.

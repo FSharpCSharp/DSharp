@@ -47,6 +47,8 @@ type
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
   end;
 
+function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
+
 implementation
 
 uses
@@ -54,6 +56,15 @@ uses
   StrUtils,
   SysUtils,
   Types;
+
+function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
+var
+  LContext: TRttiContext;
+  LType: TRttiType;
+begin
+  LType := LContext.GetType(ThisClass);
+  Result := LType.IsCovariantTo(OtherClass.ClassInfo);
+end;
 
 function MergeStrings(Values: TStringDynArray; const Delimiter: string): string;
 var

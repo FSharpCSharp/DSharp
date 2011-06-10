@@ -65,6 +65,7 @@
 			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.Extensions.pas"/>
 			<DCCReference Include="..\Library\System\System.Bindings.Controls.VCL.pas"/>
 			<DCCReference Include="..\Library\System\System.Data.Templates.Default.pas"/>
+			<DCCReference Include="..\Library\System\System.Reflection.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -112,9 +113,7 @@
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclIntraweb_110_150.bpl">VCL for the Web 11.0 Design Package for Embarcadero RAD Studio XE</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k150.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclofficexp150.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+						<Excluded_Packages Name="D:\Documents and Settings\All Users\Documents\RAD Studio\8.0\Bpl\dclTreeViewPresenter.bpl">Treeview presenter designtime package</Excluded_Packages>
 					</Excluded_Packages>
 					<Source>
 						<Source Name="MainSource">DataBindings.dpk</Source>

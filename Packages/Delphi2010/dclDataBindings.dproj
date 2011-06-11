@@ -1,14 +1,15 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
-			<ProjectGuid>{A66CF88D-A1B5-4559-A045-419CD57690C1}</ProjectGuid>
-			<MainSource>dclTreeViewPresenter.dpk</MainSource>
+			<ProjectGuid>{C0E8F88B-AAB2-4931-8303-05D5D8B7E7EF}</ProjectGuid>
+			<MainSource>dclDataBindings.dpk</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
-			<Base>True</Base>
+			<Basis>True</Basis>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
 			<FrameworkType>None</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+			<Base>True</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
 			<Base>true</Base>
@@ -24,16 +25,21 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DllSuffix>150</DllSuffix>
+			<DCC_DependencyCheckOutputName>..\..\..\..\..\..\..\..\Public\Documents\RAD Studio\7.0\Bpl\dclDataBindings140.bpl</DCC_DependencyCheckOutputName>
+			<DllSuffix>140</DllSuffix>
 			<DesignOnlyPackage>true</DesignOnlyPackage>
-			<DCC_Description>DSharp treeview presenter designtime package</DCC_Description>
 			<GenPackage>true</GenPackage>
+			<DCC_DcuOutput>..\..\Library\Delphi2010</DCC_DcuOutput>
+			<DCC_ImageBase>00400000</DCC_ImageBase>
+			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
+			<DCC_Description>DSharp data binding designtime package</DCC_Description>
+			<DCC_S>false</DCC_S>
 			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
 			<GenDll>true</GenDll>
-			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<DCC_DcuOutput>..\..\Library\DelphiXE</DCC_DcuOutput>
-			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
+			<DCC_N>false</DCC_N>
+			<DCC_E>false</DCC_E>
+			<DCC_F>false</DCC_F>
+			<DCC_K>false</DCC_K>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -47,27 +53,26 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="dclTreeViewPresenter.dpk">
+			<DelphiCompile Include="dclDataBindings.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="..\..\Resources\DSharp.Windows.TreeViewPresenter.dcr"/>
+			<DCCReference Include="..\..\Resources\DSharp.Bindings.dcr"/>
 			<DCCReference Include="designide.dcp"/>
-			<DCCReference Include="TreeViewPresenter.dcp"/>
-			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.Designtime.pas"/>
+			<DCCReference Include="DataBindings.dcp"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Designtime.pas"/>
+			<BuildConfiguration Include="Base">
+				<Key>Base</Key>
+			</BuildConfiguration>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
-			</BuildConfiguration>
-			<BuildConfiguration Include="Base">
-				<Key>Base</Key>
 			</BuildConfiguration>
 			<BuildConfiguration Include="Debug">
 				<Key>Cfg_1</Key>
 				<CfgParent>Base</CfgParent>
 			</BuildConfiguration>
 		</ItemGroup>
-		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
-		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
+		<Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
 			<Borland.ProjectType>Package</Borland.ProjectType>
@@ -100,10 +105,14 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Excluded_Packages/>
 					<Source>
-						<Source Name="MainSource">dclTreeViewPresenter.dpk</Source>
+						<Source Name="MainSource">dclDataBindings.dpk</Source>
 					</Source>
+					<Parameters>
+						<Parameters Name="UseLauncher">False</Parameters>
+						<Parameters Name="LoadAllSymbols">True</Parameters>
+						<Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
+					</Parameters>
 				</Delphi.Personality>
 				<Platforms>
 					<Platform value="Win32">True</Platform>

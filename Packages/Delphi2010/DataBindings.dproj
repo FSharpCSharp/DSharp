@@ -1,13 +1,13 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
-			<ProjectGuid>{A66CF88D-A1B5-4559-A045-419CD57690C1}</ProjectGuid>
-			<MainSource>dclTreeViewPresenter.dpk</MainSource>
+			<ProjectGuid>{42AA9CF6-ECBC-4A29-903B-9C21946929EF}</ProjectGuid>
+			<MainSource>DataBindings.dpk</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>None</FrameworkType>
+			<FrameworkType>VCL</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -24,14 +24,16 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DllSuffix>150</DllSuffix>
-			<DesignOnlyPackage>true</DesignOnlyPackage>
-			<DCC_Description>DSharp treeview presenter designtime package</DCC_Description>
-			<GenPackage>true</GenPackage>
+			<DesignOnlyPackage>false</DesignOnlyPackage>
+			<DCC_DependencyCheckOutputName>..\..\..\..\..\..\..\..\Public\Documents\RAD Studio\7.0\Bpl\DataBindings140.bpl</DCC_DependencyCheckOutputName>
+			<DllSuffix>140</DllSuffix>
+			<DCC_Description>DSharp data binding runtime package</DCC_Description>
 			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
+			<RuntimeOnlyPackage>true</RuntimeOnlyPackage>
+			<GenPackage>true</GenPackage>
 			<GenDll>true</GenDll>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<DCC_DcuOutput>..\..\Library\DelphiXE</DCC_DcuOutput>
+			<DCC_DcuOutput>..\..\Library\Delphi2010</DCC_DcuOutput>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
 			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
 		</PropertyGroup>
@@ -47,27 +49,41 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="dclTreeViewPresenter.dpk">
+			<DelphiCompile Include="DataBindings.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="..\..\Resources\DSharp.Windows.TreeViewPresenter.dcr"/>
-			<DCCReference Include="designide.dcp"/>
-			<DCCReference Include="TreeViewPresenter.dcp"/>
-			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.Designtime.pas"/>
+			<DCCReference Include="rtl.dcp"/>
+			<DCCReference Include="vcl.dcp"/>
+			<DCCReference Include="xmlrtl.dcp"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Collections.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.Collections.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.Default.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.NotificationHandler.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyPath.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.XNode.pas"/>
+			<BuildConfiguration Include="Base">
+				<Key>Base</Key>
+			</BuildConfiguration>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
-			</BuildConfiguration>
-			<BuildConfiguration Include="Base">
-				<Key>Base</Key>
 			</BuildConfiguration>
 			<BuildConfiguration Include="Debug">
 				<Key>Cfg_1</Key>
 				<CfgParent>Base</CfgParent>
 			</BuildConfiguration>
 		</ItemGroup>
-		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
-		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
+		<Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
 			<Borland.ProjectType>Package</Borland.ProjectType>
@@ -100,10 +116,17 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Excluded_Packages/>
+					<Excluded_Packages>
+						<Excluded_Packages Name="C:\Users\Public\Documents\RAD Studio\7.0\Bpl\DataBindings.bpl">File C:\Users\Public\Documents\RAD Studio\7.0\Bpl\DataBindings.bpl not found</Excluded_Packages>
+					</Excluded_Packages>
 					<Source>
-						<Source Name="MainSource">dclTreeViewPresenter.dpk</Source>
+						<Source Name="MainSource">DataBindings.dpk</Source>
 					</Source>
+					<Parameters>
+						<Parameters Name="UseLauncher">False</Parameters>
+						<Parameters Name="LoadAllSymbols">True</Parameters>
+						<Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
+					</Parameters>
 				</Delphi.Personality>
 				<Platforms>
 					<Platform value="Win32">True</Platform>

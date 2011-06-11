@@ -31,7 +31,6 @@
 			<DCC_DcuOutput>..\..\Library\DelphiXE</DCC_DcuOutput>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_CBuilderOutput>All</DCC_CBuilderOutput>
 			<DCC_Description>DSharp data binding designtime package</DCC_Description>
 			<DCC_S>false</DCC_S>
 			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>

@@ -1,0 +1,144 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<PropertyGroup>
+			<ProjectGuid>{F65371BF-C61C-4F2C-BB82-E2602E6BF976}</ProjectGuid>
+		</PropertyGroup>
+		<ItemGroup>
+			<Projects Include="VirtualTreeviewSample.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample1.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample2.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample3.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample4.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample5.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample6.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample7.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample8.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="Sample9.dproj">
+				<Dependencies/>
+			</Projects>
+		</ItemGroup>
+		<ProjectExtensions>
+			<Borland.Personality>Default.Personality.12</Borland.Personality>
+			<Borland.ProjectType/>
+			<BorlandProject>
+				<Default.Personality/>
+			</BorlandProject>
+		</ProjectExtensions>
+		<Target Name="VirtualTreeviewSample">
+			<MSBuild Projects="VirtualTreeviewSample.dproj"/>
+		</Target>
+		<Target Name="VirtualTreeviewSample:Clean">
+			<MSBuild Projects="VirtualTreeviewSample.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="VirtualTreeviewSample:Make">
+			<MSBuild Projects="VirtualTreeviewSample.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample1">
+			<MSBuild Projects="Sample1.dproj"/>
+		</Target>
+		<Target Name="Sample1:Clean">
+			<MSBuild Projects="Sample1.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample1:Make">
+			<MSBuild Projects="Sample1.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample2">
+			<MSBuild Projects="Sample2.dproj"/>
+		</Target>
+		<Target Name="Sample2:Clean">
+			<MSBuild Projects="Sample2.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample2:Make">
+			<MSBuild Projects="Sample2.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample3">
+			<MSBuild Projects="Sample3.dproj"/>
+		</Target>
+		<Target Name="Sample3:Clean">
+			<MSBuild Projects="Sample3.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample3:Make">
+			<MSBuild Projects="Sample3.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample4">
+			<MSBuild Projects="Sample4.dproj"/>
+		</Target>
+		<Target Name="Sample4:Clean">
+			<MSBuild Projects="Sample4.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample4:Make">
+			<MSBuild Projects="Sample4.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample5">
+			<MSBuild Projects="Sample5.dproj"/>
+		</Target>
+		<Target Name="Sample5:Clean">
+			<MSBuild Projects="Sample5.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample5:Make">
+			<MSBuild Projects="Sample5.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample6">
+			<MSBuild Projects="Sample6.dproj"/>
+		</Target>
+		<Target Name="Sample6:Clean">
+			<MSBuild Projects="Sample6.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample6:Make">
+			<MSBuild Projects="Sample6.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample7">
+			<MSBuild Projects="Sample7.dproj"/>
+		</Target>
+		<Target Name="Sample7:Clean">
+			<MSBuild Projects="Sample7.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample7:Make">
+			<MSBuild Projects="Sample7.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample8">
+			<MSBuild Projects="Sample8.dproj"/>
+		</Target>
+		<Target Name="Sample8:Clean">
+			<MSBuild Projects="Sample8.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample8:Make">
+			<MSBuild Projects="Sample8.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Sample9">
+			<MSBuild Projects="Sample9.dproj"/>
+		</Target>
+		<Target Name="Sample9:Clean">
+			<MSBuild Projects="Sample9.dproj" Targets="Clean"/>
+		</Target>
+		<Target Name="Sample9:Make">
+			<MSBuild Projects="Sample9.dproj" Targets="Make"/>
+		</Target>
+		<Target Name="Build">
+			<CallTarget Targets="VirtualTreeviewSample;Sample1;Sample2;Sample3;Sample4;Sample5;Sample6;Sample7;Sample8;Sample9"/>
+		</Target>
+		<Target Name="Clean">
+			<CallTarget Targets="VirtualTreeviewSample:Clean;Sample1:Clean;Sample2:Clean;Sample3:Clean;Sample4:Clean;Sample5:Clean;Sample6:Clean;Sample7:Clean;Sample8:Clean;Sample9:Clean"/>
+		</Target>
+		<Target Name="Make">
+			<CallTarget Targets="VirtualTreeviewSample:Make;Sample1:Make;Sample2:Make;Sample3:Make;Sample4:Make;Sample5:Make;Sample6:Make;Sample7:Make;Sample8:Make;Sample9:Make"/>
+		</Target>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+	</Project>

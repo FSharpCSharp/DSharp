@@ -1,0 +1,53 @@
+package DataBindings;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'DSharp data binding runtime package'}
+{$LIBSUFFIX '150'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  vcl,
+  xmlrtl;
+
+contains
+  DSharp.Bindings in '..\..\Source\Bindings\DSharp.Bindings.pas',
+  DSharp.Bindings.Collections in '..\..\Source\Bindings\DSharp.Bindings.Collections.pas',
+  DSharp.Bindings.VCLControls in '..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas',
+  DSharp.Bindings.VCLControls.Extensions in '..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas',
+  DSharp.Core.Collections in '..\..\Source\Core\DSharp.Core.Collections.pas',
+  DSharp.Core.DataConversion in '..\..\Source\Core\DSharp.Core.DataConversion.pas',
+  DSharp.Core.DataConversion.Default in '..\..\Source\Core\DSharp.Core.DataConversion.Default.pas',
+  DSharp.Core.DataTemplates in '..\..\Source\Core\DSharp.Core.DataTemplates.pas',
+  DSharp.Core.DataTemplates.Default in '..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas',
+  DSharp.Core.Events in '..\..\Source\Core\DSharp.Core.Events.pas',
+  DSharp.Core.NotificationHandler in '..\..\Source\Core\DSharp.Core.NotificationHandler.pas',
+  DSharp.Core.PropertyChangedBase in '..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas',
+  DSharp.Core.PropertyPath in '..\..\Source\Core\DSharp.Core.PropertyPath.pas',
+  DSharp.Core.Reflection in '..\..\Source\Core\DSharp.Core.Reflection.pas',
+  DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
+  DSharp.Core.XNode in '..\..\Source\Core\DSharp.Core.XNode.pas';
+
+end.

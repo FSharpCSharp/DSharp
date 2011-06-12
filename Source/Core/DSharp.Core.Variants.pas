@@ -48,7 +48,7 @@ type
     VType: TVarType;
     Reserved1, Reserved2, Reserved3: Word;
     VExpressionInfo: TExpressionInfo;
-    Reserved4: LongWord;
+    Reserved4: NativeUInt;
   end;
 
 implementation

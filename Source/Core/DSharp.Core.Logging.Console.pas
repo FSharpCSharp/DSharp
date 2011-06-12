@@ -35,34 +35,57 @@ implementation
 
 uses
   DSharp.Core.Logging,
+  Rtti,
   StrUtils,
   Windows;
 
+resourcestring
+  REnterMethod = 'Enter: ';
+  RLeaveMethod = 'Leave: ';
+
 type
-  TConsoleLogging = class(TInterfacedObject, ILogging)
+  TConsoleLogging = class(TBaseLogging)
   public
-    procedure EnterMethod(const AName: string; AInstance: TObject = nil);
-    procedure LeaveMethod(const AName: string; AInstance: TObject = nil);
-    procedure LogMessage(const AMessage: string);
-    procedure LogValue(AValue: Variant; const AName: string = '');
+    procedure EnterMethod(const AName: string); overload; override;
+    procedure EnterMethod(const AName: string; AClass: TClass); overload; override;
+    procedure EnterMethod(const AName: string; AInstance: TObject); overload; override;
+    procedure LeaveMethod(const AName: string); overload; override;
+    procedure LeaveMethod(const AName: string; AClass: TClass); overload; override;
+    procedure LeaveMethod(const AName: string; AInstance: TObject = nil); overload; override;
+    procedure LogMessage(const AMessage: string); override;
+    procedure LogValue(AValue: Variant; const AName: string = ''); override;
   end;
 
 { TConsoleLogging }
 
+procedure TConsoleLogging.EnterMethod(const AName: string);
+begin
+  Writeln(REnterMethod + AName);
+end;
+
+procedure TConsoleLogging.EnterMethod(const AName: string; AClass: TClass);
+begin
+  Writeln(REnterMethod + AClass.ClassName + '.' + AName);
+end;
+
 procedure TConsoleLogging.EnterMethod(const AName: string; AInstance: TObject);
 begin
-  Write('Enter: ');
-  if Assigned(AInstance) then
-    Write(AInstance.ClassName + '.');
-  Writeln(AName);
+  Writeln(REnterMethod + AInstance.ClassName + '.' + AName);
+end;
+
+procedure TConsoleLogging.LeaveMethod(const AName: string);
+begin
+  Writeln(RLeaveMethod + AName);
+end;
+
+procedure TConsoleLogging.LeaveMethod(const AName: string; AClass: TClass);
+begin
+  Writeln(RLeaveMethod + AClass.ClassName + '.' + AName);
 end;
 
 procedure TConsoleLogging.LeaveMethod(const AName: string; AInstance: TObject);
 begin
-  Write('Leave: ');
-  if Assigned(AInstance) then
-    Write(AInstance.ClassName + '.');
-  Writeln(AName);
+  Writeln(RLeaveMethod + AInstance.ClassName + '.' + AName);
 end;
 
 procedure TConsoleLogging.LogMessage(const AMessage: string);
@@ -74,7 +97,7 @@ procedure TConsoleLogging.LogValue(AValue: Variant; const AName: string);
 begin
   if AName <> '' then
     Write(AName + ': ');
-  Writeln(AValue);
+  Writeln(TValue.FromVariant(AValue).ToString);
 end;
 
 initialization

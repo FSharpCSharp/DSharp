@@ -100,7 +100,7 @@ type
     procedure GetValues(Proc: TGetStrProc); override;
   end;
 
-  procedure Register;
+procedure Register;
 
 var
   SupportedClasses: TDictionary<TClass, string>;

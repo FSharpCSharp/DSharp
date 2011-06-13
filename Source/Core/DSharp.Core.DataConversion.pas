@@ -43,6 +43,24 @@ type
     function ConvertBack(Value: TValue): TValue;
   end;
 
+  TValueConverter = class(TInterfacedObject, IValueConverter)
+  public
+    function Convert(Value: TValue): TValue; virtual;
+    function ConvertBack(Value: TValue): TValue; virtual;
+  end;
+
 implementation
+
+{ TValueConverter }
+
+function TValueConverter.Convert(Value: TValue): TValue;
+begin
+  Result := Value;
+end;
+
+function TValueConverter.ConvertBack(Value: TValue): TValue;
+begin
+  Result := Value;
+end;
 
 end.

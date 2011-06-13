@@ -99,10 +99,9 @@ asm
   MOV EAX, FS:[$10]
 end;
 
-function GetFiberData: Pointer;
-asm
-  MOV EAX, FS:[$10]
-  MOV EAX, [EAX]
+function GetFiberData: Pointer; inline;
+begin
+  Result := PPointer(GetCurrentFiber()^);
 end;
 
 procedure GlobalStartFiber;

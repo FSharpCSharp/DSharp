@@ -47,6 +47,15 @@ type
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
   end;
 
+  TValueHelper = record helper for TValue
+  public
+    function IsFloat: Boolean;
+    function IsNumeric: Boolean;
+    function IsString: Boolean;
+
+    function TryCastEx(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
+  end;
+
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
 
 implementation
@@ -221,6 +230,131 @@ begin
   else
   begin
     Result := nil;
+  end;
+end;
+
+{ TValueHelper }
+
+function TValueHelper.IsFloat: Boolean;
+begin
+  Result := Self.Kind = tkFloat;
+end;
+
+function TValueHelper.IsNumeric: Boolean;
+const
+  tkNumeric = [tkInteger, tkChar, tkWChar, tkEnumeration, tkFloat, tkInt64];
+begin
+  Result := Self.Kind in tkNumeric;
+end;
+
+function TValueHelper.IsString: Boolean;
+begin
+  Result := Self.Kind in [tkString, tkLString, tkWString, tkUString];
+end;
+
+function TValueHelper.TryCastEx(ATypeInfo: PTypeInfo;
+  out AResult: TValue): Boolean;
+begin
+  Result := False;
+  if not Result then
+  begin
+    case Kind of
+      tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+      begin
+        case ATypeInfo.Kind of
+          tkUString:
+          begin
+            if TypeInfo = System.TypeInfo(Boolean) then
+            begin
+              AResult := TValue.From<string>(BoolToStr(AsBoolean, True));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.From<string>(IntToStr(AsOrdinal));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkFloat:
+      begin
+        case ATypeInfo.Kind of
+          tkUString:
+          begin
+            if TypeInfo = System.TypeInfo(TDate) then
+            begin
+              AResult := TValue.From<string>(DateToStr(AsExtended));
+              Result := True;
+            end
+            else
+            if TypeInfo = System.TypeInfo(TDateTime) then
+            begin
+              AResult := TValue.From<string>(DateTimeToStr(AsExtended));
+              Result := True;
+            end
+            else
+            if TypeInfo = System.TypeInfo(TTime) then
+            begin
+              AResult := TValue.From<string>(TimeToStr(AsExtended));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.From<string>(FloatToStr(AsExtended));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkUString:
+      begin
+        case ATypeInfo.Kind of
+          tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+          begin
+            if TypeInfo = System.TypeInfo(Boolean) then
+            begin
+              AResult := TValue.From<Boolean>(StrToBoolDef(AsString, False));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
+              Result := True;
+            end;
+          end;
+          tkFloat:
+          begin
+            if ATypeInfo = System.TypeInfo(TDate) then
+            begin
+              AResult := TValue.From<TDate>(StrToDateDef(AsString, 0));
+              Result := True;
+            end
+            else
+            if ATypeInfo = System.TypeInfo(TDateTime) then
+            begin
+              AResult := TValue.From<TDateTime>(StrToDateTimeDef(AsString, 0));
+              Result := True;
+            end
+            else
+            if ATypeInfo = System.TypeInfo(TTime) then
+            begin
+              AResult := TValue.From<TTime>(StrToTimeDef(AsString, 0));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.From<Extended>(StrToFloatDef(AsString, 0));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+  if not Result then
+  begin
+    Result := TryCast(ATypeInfo, AResult);
   end;
 end;
 

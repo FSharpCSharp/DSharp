@@ -115,9 +115,7 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Excluded_Packages>
-						<Excluded_Packages Name="D:\Documents and Settings\All Users\Documents\RAD Studio\8.0\Bpl\dclTreeViewPresenter.bpl">Treeview presenter designtime package</Excluded_Packages>
-					</Excluded_Packages>
+					<Excluded_Packages/>
 					<Source>
 						<Source Name="MainSource">DataBindings.dpk</Source>
 					</Source>

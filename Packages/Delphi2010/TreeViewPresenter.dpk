@@ -29,7 +29,9 @@ package TreeViewPresenter;
 
 requires
   DataBindings,
-  VirtualTreesR;
+  VirtualTreesR,
+  rtl,
+  vcl;
 
 contains
   DSharp.Windows.ColumnDefinitions in '..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.pas',

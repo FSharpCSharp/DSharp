@@ -30,7 +30,9 @@ package dclDataBindings;
 
 requires
   designide,
-  DataBindings;
+  DataBindings,
+  rtl,
+  vcl;
 
 contains
   DSharp.Bindings.Designtime in '..\..\Source\Bindings\DSharp.Bindings.Designtime.pas';

@@ -3,13 +3,12 @@
 			<ProjectGuid>{C0E8F88B-AAB2-4931-8303-05D5D8B7E7EF}</ProjectGuid>
 			<MainSource>dclDataBindings.dpk</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
-			<Basis>True</Basis>
+			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>None</FrameworkType>
+			<FrameworkType>VCL</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-			<Base>True</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
 			<Base>true</Base>
@@ -59,6 +58,8 @@
 			<DCCReference Include="..\..\Resources\DSharp.Bindings.dcr"/>
 			<DCCReference Include="designide.dcp"/>
 			<DCCReference Include="DataBindings.dcp"/>
+			<DCCReference Include="rtl.dcp"/>
+			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Designtime.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>

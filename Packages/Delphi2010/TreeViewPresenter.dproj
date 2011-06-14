@@ -7,7 +7,7 @@
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>None</FrameworkType>
+			<FrameworkType>VCL</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -54,6 +54,8 @@
 			</DelphiCompile>
 			<DCCReference Include="DataBindings.dcp"/>
 			<DCCReference Include="VirtualTreesR.dcp"/>
+			<DCCReference Include="rtl.dcp"/>
+			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.DataTemplate.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.RttiDataTemplate.pas"/>

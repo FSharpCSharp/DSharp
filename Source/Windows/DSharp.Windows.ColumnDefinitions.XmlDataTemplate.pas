@@ -90,7 +90,8 @@ begin
     begin
       if Assigned(FColumnDefinitions[ColumnIndex].OnGetText) then
       begin
-        Result := FColumnDefinitions[ColumnIndex].OnGetText(Item, ColumnIndex);
+        Result := FColumnDefinitions[ColumnIndex].OnGetText(
+          FColumnDefinitions.Owner, FColumnDefinitions[ColumnIndex], Item);
       end
       else
       begin

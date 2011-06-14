@@ -61,10 +61,16 @@ type
     function GetVerbCount: Integer; override;
   end;
 
+  TTreeViewPresenterSelectionEditor = class(TSelectionEditor)
+  public
+    procedure RequiresUnits(Proc: TGetStrProc); override;
+  end;
+
 procedure Register;
 begin
   RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
   RegisterComponentEditor(TTreeViewPresenter, TTreeViewPresenterComponentEditor);
+  RegisterSelectionEditor(TTreeViewPresenter, TTreeViewPresenterSelectionEditor);
   RegisterPropertyEditor(TypeInfo(TBinding), TColumnDefinition, 'Binding', TBindingProperty);
 end;
 
@@ -100,6 +106,14 @@ end;
 function TTreeViewPresenterComponentEditor.GetVerbCount: Integer;
 begin
   Result := 1;
+end;
+
+{ TTreeViewPresenterSelectionEditor }
+
+procedure TTreeViewPresenterSelectionEditor.RequiresUnits(Proc: TGetStrProc);
+begin
+  inherited;
+  Proc('DSharp.Windows.ColumnDefinitions');
 end;
 
 end.

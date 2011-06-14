@@ -4,9 +4,9 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, ComCtrls, DSharp.Bindings.VCLControls, xmldom,
-  XMLIntf, msxmldom, XMLDoc, DSharp.Bindings, DSharp.Windows.TreeViewPresenter,
-  VirtualTrees;
+  Dialogs, DSharp.Windows.ColumnDefinitions, ExtCtrls, StdCtrls, ComCtrls,
+  DSharp.Bindings.VCLControls, xmldom, XMLIntf, msxmldom, XMLDoc,
+  DSharp.Bindings, DSharp.Windows.TreeViewPresenter, VirtualTrees;
 
 type
   TMainForm = class(TForm)
@@ -31,8 +31,8 @@ type
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    function InventoryPresenterColumnDefinitions0GetText(const Item: TObject;
-      const ColumnIndex: Integer): string;
+    function InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
+      ColumnDefinition: TColumnDefinition; Item: TObject): string;
     procedure SaveXmlClick(Sender: TObject);
   private
     { Private declarations }
@@ -87,8 +87,8 @@ begin
   InventoryPresenter.ItemsSource.Free();
 end;
 
-function TMainForm.InventoryPresenterColumnDefinitions0GetText(
-  const Item: TObject; const ColumnIndex: Integer): string;
+function TMainForm.InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
+  ColumnDefinition: TColumnDefinition; Item: TObject): string;
 begin
   Result := TXNode(Item).SelectValue;
 end;

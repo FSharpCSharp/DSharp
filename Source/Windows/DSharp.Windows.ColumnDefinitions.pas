@@ -41,7 +41,10 @@ const
   CDefaultWidth = 100;
 
 type
-  TGetTextEvent = function(const Item: TObject; const ColumnIndex: Integer): string of object;
+  TColumnDefinition = class;
+
+  TGetTextEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
+    Item: TObject): string of object;
 
   TColumnDefinition = class(TCollectionItem)
   private

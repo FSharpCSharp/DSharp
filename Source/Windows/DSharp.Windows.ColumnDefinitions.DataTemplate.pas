@@ -42,6 +42,10 @@ type
   public
     constructor Create(AColumnDefinitions: TColumnDefinitions);
 
+    function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
+      TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
+      DrawMode: TDrawMode): Boolean; override;
+
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
   end;
 
@@ -54,6 +58,30 @@ constructor TColumnDefinitionsDataTemplate.Create(
 begin
   inherited Create;
   FColumnDefinitions := AColumnDefinitions;
+end;
+
+function TColumnDefinitionsDataTemplate.CustomDraw(const Item: TObject;
+  const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
+  ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
+begin
+  if Assigned(Item) and Assigned(FColumnDefinitions)
+    and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
+  begin
+    if Assigned(FColumnDefinitions[ColumnIndex].OnCustomDraw) then
+    begin
+      Result := FColumnDefinitions[ColumnIndex].OnCustomDraw(FColumnDefinitions.Owner,
+        FColumnDefinitions[ColumnIndex], Item,
+        TargetCanvas, CellRect, ImageList, DrawMode);
+    end
+    else
+    begin
+      Result := inherited;
+    end;
+  end
+  else
+  begin
+    Result := inherited;
+  end;
 end;
 
 function TColumnDefinitionsDataTemplate.GetText(const Item: TObject;

@@ -35,6 +35,7 @@ uses
   Classes,
   DSharp.Bindings,
   DSharp.Core.Collections,
+  DSharp.Core.DataTemplates,
   Generics.Collections;
 
 const
@@ -43,6 +44,9 @@ const
 type
   TColumnDefinition = class;
 
+  TCustomDrawEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
+    Item: TObject; TargetCanvas: TCanvas; CellRect: TRect;
+    ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean of object;
   TGetTextEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject): string of object;
 
@@ -50,6 +54,7 @@ type
   private
     FBinding: TBinding;
     FCaption: string;
+    FOnCustomDraw: TCustomDrawEvent;
     FOnGetText: TGetTextEvent;
     FWidth: Integer;
     procedure SetCaption(const Value: string);
@@ -59,6 +64,7 @@ type
   published
     property Binding: TBinding read FBinding write FBinding;
     property Caption: string read FCaption write SetCaption;
+    property OnCustomDraw: TCustomDrawEvent read FOnCustomDraw write FOnCustomDraw;
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;

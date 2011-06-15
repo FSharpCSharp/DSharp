@@ -37,11 +37,15 @@ uses
   xmldom;
 
 type
+  TXNodeList = class;
+
   TXNode = class(TPropertyChangedBase)
   private
-    FChildNodes: TList<TXNode>;
+    FAttributes: TXNodeList;
+    FChildNodes: TXNodeList;
     FDOMNode: IDOMNode;
-    function GetChildNodes: TList<TXNode>;
+    function GetAttributes: TXNodeList;
+    function GetChildNodes: TXNodeList;
     function GetName: string;
     function GetTextNode(ANode: IDOMNode): IDOMNode;
     function GetValue: string;
@@ -56,10 +60,18 @@ type
     class function SelectElements(Node: IDOMNode; const XPath: string): IDOMNodeList; overload;
     function SelectValue(const XPath: string = ''): string;
 
-    property ChildNodes: TList<TXNode> read GetChildNodes;
+    property Attributes: TXNodeList read GetAttributes;
+    property ChildNodes: TXNodeList read GetChildNodes;
     property DOMNode: IDOMNode read FDOMNode;
     property Name: string read GetName;
     property Value: string read GetValue write SetValue;
+  end;
+
+  TXNodeList = class(TObjectList<TXNode>)
+  private
+    FDOMNode: IDOMNode;
+  public
+    constructor Create(ANode: IDOMNode);
   end;
 
 implementation
@@ -71,22 +83,42 @@ uses
 
 constructor TXNode.Create(ANode: IDOMNode);
 begin
-  FChildNodes := TObjectList<TXNode>.Create();
   FDOMNode := ANode;
+  FAttributes := TXNodeList.Create(FDOMNode);
+  FChildNodes := TXNodeList.Create(FDOMNode);
 end;
 
 destructor TXNode.Destroy;
 begin
+  FAttributes.Free();
   FChildNodes.Free();
   inherited;
 end;
 
-function TXNode.GetChildNodes: TList<TXNode>;
+function TXNode.GetAttributes: TXNodeList;
+var
+  i: Integer;
+begin
+  if FAttributes.Count = 0 then
+  begin
+    for i := 0 to Pred(FDOMNode.attributes.length) do
+    begin
+      if FDOMNode.attributes[i].nodeType = ATTRIBUTE_NODE then
+      begin
+        FAttributes.Add(TXNode.Create(FDOMNode.attributes[i]));
+      end;
+    end;
+  end;
+
+  Result := FAttributes;
+end;
+
+function TXNode.GetChildNodes: TXNodeList;
 var
   i: Integer;
 begin
   // do it the easy way for now
-  if FChildNodes.Count = 0then
+  if FChildNodes.Count = 0 then
   begin
     for i := 0 to Pred(FDOMNode.childNodes.length) do
     begin
@@ -189,6 +221,14 @@ procedure TXNode.SetValue(const Value: string);
 begin
   GetTextNode(FDOMNode).nodeValue := Value;
   DoPropertyChanged('Value');
+end;
+
+{ TXNodeList }
+
+constructor TXNodeList.Create(ANode: IDOMNode);
+begin
+  inherited Create();
+  FDOMNode := ANode;
 end;
 
 end.

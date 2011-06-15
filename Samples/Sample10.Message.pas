@@ -3,7 +3,7 @@ unit Sample10.Message;
 interface
 
 uses
-  System.ComponentModel.Composition,
+  DSharp.ComponentModel.Composition,
   Sample10.Contracts;
 
 type

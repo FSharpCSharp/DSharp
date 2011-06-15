@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.ComponentModel.Composition.Container;
+unit DSharp.ComponentModel.Composition.Container;
 
 interface
 

@@ -89,8 +89,25 @@ end;
 
 function TMainForm.InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
   ColumnDefinition: TColumnDefinition; Item: TObject): string;
+var
+  LNode: TXNode;
+  LAttribute: TXNode;
 begin
-  Result := TXNode(Item).SelectValue;
+  LNode := TXNode(Item);
+
+  Result := '<' + LNode.Name;
+
+  for LAttribute in LNode.Attributes do
+  begin
+    Result := Result + ' ' + LAttribute.Name + '"' + LAttribute.Value + '"';
+  end;
+
+  Result := Result + '>';
+
+  if LNode.Value <> '' then
+  begin
+    Result := Result + LNode.Value +  '</' + LNode.Name + '>';
+  end;
 end;
 
 procedure TMainForm.SaveXmlClick(Sender: TObject);

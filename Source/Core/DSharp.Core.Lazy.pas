@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.Lazy;
+unit DSharp.Core.Lazy;
 
 interface
 

@@ -52,6 +52,8 @@ type
     class function Make<T1, T2, T3, T4, TResult>(
       Expression: Variant): TFunc<T1, T2, T3, T4, TResult>; overload; static;
 
+    class function Predicate<T>(Expression: Variant): TPredicate<T>; overload; static;
+
     class function Make<TResult>(
       Expression: IExpression): TFunc<TResult>; overload; static;
     class function Make<T, TResult>(
@@ -62,6 +64,8 @@ type
       Expression: IExpression): TFunc<T1, T2, T3, TResult>; overload; static;
     class function Make<T1, T2, T3, T4, TResult>(
       Expression: IExpression): TFunc<T1, T2, T3, T4, TResult>; overload; static;
+
+    class function Predicate<T>(Expression: IExpression): TPredicate<T>; overload; static;
 
     class function GetExpression(var AFunc): IExpression; static;
     class function SetExpression(var AFunc;
@@ -338,6 +342,28 @@ class function TLambda.Make<T1, T2, T3, T4, TResult>(
   Expression: Variant): TFunc<T1, T2, T3, T4, TResult>;
 begin
   Result := Make<T1, T2, T3, T4, TResult>(InitExpression(Expression));
+end;
+
+class function TLambda.Predicate<T>(Expression: IExpression): TPredicate<T>;
+var
+  expr: IExpression;
+  param: IParameter;
+begin
+  expr := InitExpression(Expression);
+
+  param := ParameterList[0];
+
+  Result :=
+    function(Arg1: T): Boolean
+    begin
+      param.Value := TValue.From<T>(Arg1);
+      Result := expr.Compile.AsBoolean;
+    end;
+end;
+
+class function TLambda.Predicate<T>(Expression: Variant): TPredicate<T>;
+begin
+  Result := Predicate<T>(InitExpression(Expression));
 end;
 
 { TArgument }

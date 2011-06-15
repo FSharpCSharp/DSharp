@@ -3,7 +3,7 @@ unit Sample10.Contracts;
 interface
 
 uses
-  System.ComponentModel.Composition;
+  DSharp.ComponentModel.Composition;
 
 type
   [InheritedExport]

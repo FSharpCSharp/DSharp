@@ -123,6 +123,7 @@ object MainForm: TMainForm
         EditLabel.Width = 52
         EditLabel.Height = 13
         EditLabel.Caption = 'NodeName'
+        ReadOnly = True
         TabOrder = 1
       end
       object NodeValue: TLabeledEdit
@@ -141,6 +142,7 @@ object MainForm: TMainForm
         Top = 152
         Width = 121
         Height = 25
+        Anchors = [akTop, akRight]
         Caption = 'Save Xml'
         TabOrder = 3
         OnClick = SaveXmlClick
@@ -201,8 +203,6 @@ object MainForm: TMainForm
       item
         Binding.BindingMode = bmOneWay
         Binding.TargetUpdateTrigger = utExplicit
-        Binding.SourcePropertyName = 'Title'
-        Caption = 'Title'
         OnGetText = InventoryPresenterColumnDefinitions0GetText
         Width = 300
       end>

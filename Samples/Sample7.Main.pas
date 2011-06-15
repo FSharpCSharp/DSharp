@@ -20,8 +20,8 @@ type
   private
     { Private declarations }
     customers: TObjectList<TCustomer>;
-    filter1: TFunc<TCustomer, Boolean>;
-    filter2: TFunc<TCustomer, Boolean>;
+    filter1: TPredicate<TCustomer>;
+    filter2: TPredicate<TCustomer>;
   public
     { Public declarations }
   end;
@@ -90,10 +90,10 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  filter1 := TLambda.Make<TCustomer, Boolean>(
+  filter1 := TLambda.Predicate<TCustomer>(
     Bool(Arg1.CompanyName = 'Alfreds Futterkiste')
       or Bool(Arg1.CompanyName = 'Around the Horn'));
-  filter2 := TLambda.Make<TCustomer, Boolean>(StartsText(Arg(Edit1).Text, Arg1.CompanyName));
+  filter2 := TLambda.Predicate<TCustomer>(StartsText(Arg(Edit1).Text, Arg1.CompanyName));
 
   customers := TObjectList<TCustomer>.Create();
   customers.OwnsObjects := True;

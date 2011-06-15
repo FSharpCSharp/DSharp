@@ -165,6 +165,8 @@ type
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure DoCurrentItemPropertyChanged(Sender: TObject;
+      PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
     function GetCurrentItem: TObject;
     function GetFilter: TPredicate<TObject>;
     function GetItemsSource: TList<TObject>;
@@ -466,16 +468,52 @@ end;
 { TListBox }
 
 procedure TListBox.Click;
+var
+  LItem: TObject;
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
+  // multiselect not supported yet
+
+  LItem := CurrentItem;
+  begin
+    if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+    begin
+      LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+      LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
+    end;
+  end;
+
   inherited;
   DoPropertyChanged('CurrentItem');
   DoPropertyChanged('ItemIndex');
+
+  LItem := CurrentItem;
+  begin
+    if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+    begin
+      LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+      LPropertyChanged.Add(DoCurrentItemPropertyChanged);
+    end;
+  end;
 end;
 
 constructor TListBox.Create(AOwner: TComponent);
 begin
   inherited;
   FOnCollectionChanged.Add(OnSourceCollectionChanged);
+end;
+
+procedure TListBox.DoCurrentItemPropertyChanged(Sender: TObject;
+  PropertyName: string; UpdateTrigger: TUpdateTrigger);
+var
+  LIndex: Integer;
+begin
+  LIndex := ItemIndex;
+  if (LIndex > -1) and Assigned(FItemTemplate) then
+  begin
+    Items[LIndex] := FItemTemplate.GetText(Items.Objects[LIndex], 0);
+  end;
 end;
 
 procedure TListBox.DoPropertyChanged(const APropertyName: string;

@@ -76,18 +76,53 @@ type
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
       DrawMode: TDrawMode): Boolean; virtual;
-    function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer; virtual;
-    function GetText(const Item: TObject; const ColumnIndex: Integer): string; virtual;
+    function GetImageIndex(const Item: TObject;
+      const ColumnIndex: Integer): Integer; virtual;
+    function GetText(const Item: TObject;
+      const ColumnIndex: Integer): string; virtual;
 
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
       const Value: string); virtual;
 
-    function GetItem(const Item: TObject; const Index: Integer): TObject; virtual;
+    function GetItem(const Item: TObject;
+      const Index: Integer): TObject; virtual;
     function GetItemCount(const Item: TObject): Integer; virtual;
     function GetItemTemplate(const Item: TObject): IDataTemplate;
 
     function GetTemplateDataClass: TClass; virtual;
     procedure RegisterDataTemplate(const DataTemplate: IDataTemplate);
+  end;
+
+  TDataTemplate<T: class> = class(TDataTemplate)
+  public
+    function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
+      TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
+      DrawMode: TDrawMode): Boolean; overload; override; final;
+    function CustomDraw(const Item: T; const ColumnIndex: Integer;
+      TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
+      DrawMode: TDrawMode): Boolean; reintroduce; overload; virtual;
+    function GetImageIndex(const Item: TObject;
+      const ColumnIndex: Integer): Integer; overload; override; final;
+    function GetImageIndex(const Item: T;
+      const ColumnIndex: Integer): Integer; reintroduce; overload; virtual;
+
+    procedure SetText(const Item: TObject; const ColumnIndex: Integer;
+      const Value: string); overload; override; final;
+    procedure SetText(const Item: T; const ColumnIndex: Integer;
+      const Value: string); reintroduce; overload; virtual;
+
+    function GetText(const Item: TObject;
+      const ColumnIndex: Integer): string; overload; override; final;
+    function GetText(const Item: T;
+      const ColumnIndex: Integer): string; reintroduce; overload; virtual;
+    function GetItem(const Item: TObject;
+      const Index: Integer): TObject; overload; override; final;
+    function GetItem(const Item: T;
+      const Index: Integer): TObject; reintroduce; overload; virtual;
+    function GetItemCount(const Item: TObject): Integer; overload; override; final;
+    function GetItemCount(const Item: T): Integer; reintroduce; overload; virtual;
+
+    function GetTemplateDataClass: TClass; override;
   end;
 
 implementation
@@ -178,6 +213,86 @@ procedure TDataTemplate.SetText(const Item: TObject; const ColumnIndex: Integer;
   const Value: string);
 begin
 
+end;
+
+{ TDataTemplate<T> }
+
+function TDataTemplate<T>.CustomDraw(const Item: TObject;
+  const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
+  ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
+begin
+  Result := CustomDraw(T(Item), ColumnIndex,
+    TargetCanvas, CellRect, ImageList, DrawMode);
+end;
+
+function TDataTemplate<T>.CustomDraw(const Item: T; const ColumnIndex: Integer;
+  TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
+  DrawMode: TDrawMode): Boolean;
+begin
+  Result := inherited CustomDraw(Item, ColumnIndex,
+    TargetCanvas, CellRect, ImageList, DrawMode);
+end;
+
+function TDataTemplate<T>.GetImageIndex(const Item: TObject;
+  const ColumnIndex: Integer): Integer;
+begin
+  Result := GetImageIndex(T(Item), ColumnIndex);
+end;
+
+function TDataTemplate<T>.GetImageIndex(const Item: T;
+  const ColumnIndex: Integer): Integer;
+begin
+  Result := inherited GetImageIndex(Item, ColumnIndex);
+end;
+
+function TDataTemplate<T>.GetItem(const Item: TObject;
+  const Index: Integer): TObject;
+begin
+  Result := GetItem(T(Item), Index);
+end;
+
+function TDataTemplate<T>.GetItem(const Item: T; const Index: Integer): TObject;
+begin
+  Result := inherited GetItem(Item, Index);
+end;
+
+function TDataTemplate<T>.GetItemCount(const Item: TObject): Integer;
+begin
+  Result := GetItemCount(T(Item));
+end;
+
+function TDataTemplate<T>.GetItemCount(const Item: T): Integer;
+begin
+  Result := inherited GetItemCount(Item);
+end;
+
+function TDataTemplate<T>.GetTemplateDataClass: TClass;
+begin
+  Result := T;
+end;
+
+function TDataTemplate<T>.GetText(const Item: TObject;
+  const ColumnIndex: Integer): string;
+begin
+  Result := GetText(T(Item), ColumnIndex);
+end;
+
+function TDataTemplate<T>.GetText(const Item: T;
+  const ColumnIndex: Integer): string;
+begin
+  Result := inherited GetText(Item, ColumnIndex);
+end;
+
+procedure TDataTemplate<T>.SetText(const Item: TObject;
+  const ColumnIndex: Integer; const Value: string);
+begin
+  SetText(T(Item), ColumnIndex, Value);
+end;
+
+procedure TDataTemplate<T>.SetText(const Item: T; const ColumnIndex: Integer;
+  const Value: string);
+begin
+  inherited SetText(Item, ColumnIndex, Value);
 end;
 
 end.

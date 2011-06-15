@@ -5,8 +5,8 @@ program Sample10;
 uses
   Sample10.Main,
   Sample10.Message,
-  System.ComponentModel.Composition.Catalog,
-  System.ComponentModel.Composition.Container,
+  DSharp.ComponentModel.Composition.Catalog,
+  DSharp.ComponentModel.Composition.Container,
   SysUtils;
 
 var

@@ -344,7 +344,8 @@ begin
   LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
   FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
 
-  if FListMode and (hiOnNormalIcon in LHitInfo.HitPositions) then
+  if not FListMode and ((hiOnNormalIcon in LHitInfo.HitPositions)
+    or not Assigned(FOnDoubleClick)) then
   begin
     FTreeView.ToggleNode(LHitInfo.HitNode);
   end

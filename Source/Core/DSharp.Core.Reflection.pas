@@ -350,6 +350,29 @@ begin
           end;
         end;
       end;
+{$IFDEF VER210}
+      // workaround for bug in RTTI.pas (fixed in XE)
+      tkUnknown:
+      begin
+        case ATypeInfo.Kind of
+          tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+          begin
+            AResult := TValue.FromOrdinal(ATypeInfo, 0);
+            Result := True;
+          end;
+          tkFloat:
+          begin
+            AResult := TValue.From<Extended>(0);
+            Result := True;
+          end;
+          tkUString:
+          begin
+            AResult := TValue.From<string>('');
+            Result := True;
+          end;
+        end;
+      end;
+{$ENDIF}
     end;
   end;
   if not Result then

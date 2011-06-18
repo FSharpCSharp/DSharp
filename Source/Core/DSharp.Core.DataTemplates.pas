@@ -59,6 +59,7 @@ type
     // methods to build the tree structure
     function GetItem(const Item: TObject; const Index: Integer): TObject;
     function GetItemCount(const Item: TObject): Integer;
+    function GetItems(const Item: TObject): TList<TObject>;
     function GetItemTemplate(const Item: TObject): IDataTemplate;
 
     // methods to manage the template "binding"
@@ -87,6 +88,7 @@ type
     function GetItem(const Item: TObject;
       const Index: Integer): TObject; virtual;
     function GetItemCount(const Item: TObject): Integer; virtual;
+    function GetItems(const Item: TObject): TList<TObject>; virtual;
     function GetItemTemplate(const Item: TObject): IDataTemplate;
 
     function GetTemplateDataClass: TClass; virtual;
@@ -175,6 +177,11 @@ begin
   begin
     Result := TList<TObject>(Item).Count;
   end;
+end;
+
+function TDataTemplate.GetItems(const Item: TObject): TList<TObject>;
+begin
+  Result := nil;
 end;
 
 function TDataTemplate.GetItemTemplate(const Item: TObject): IDataTemplate;

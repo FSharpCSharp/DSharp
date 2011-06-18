@@ -59,6 +59,7 @@ type
 
   TTreeViewPresenter = class(TComponent, ICollectionView, INotifyPropertyChanged)
   private
+    FAllowMove: Boolean;
     FCheckedItems: TList<TObject>;
     FCheckSupport: TCheckSupport;
     FColumnDefinitions: TColumnDefinitions;
@@ -112,8 +113,10 @@ type
     procedure DoHeaderClick(Sender: TVTHeader; HitInfo: TVTHeaderHitInfo);
     procedure DoInitNode(Sender: TBaseVirtualTree; ParentNode,
       Node: PVirtualNode; var InitialStates: TVirtualNodeInitStates);
+    procedure DoKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure DoMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure DoNodeMoved(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoPaintText(Sender: TBaseVirtualTree; const TargetCanvas: TCanvas;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType);
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
@@ -178,6 +181,7 @@ type
     property SelectedItem: TObject read GetSelectedItem write SetSelectedItem;
     property SelectedItems: TList<TObject> read GetSelectedItems write SetSelectedItems;
   published
+    property AllowMove: Boolean read FAllowMove write FAllowMove default True;
     property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
     property ColumnDefinitions: TColumnDefinitions
       read FColumnDefinitions write SetColumnDefinitions;
@@ -199,7 +203,8 @@ type
 implementation
 
 uses
-  DSharp.Windows.ColumnDefinitions.DataTemplate;
+  DSharp.Windows.ColumnDefinitions.DataTemplate,
+  Windows;
 
 const
   CDefaultCellRect: TRect = (Left: 0; Top: 0; Right: 0; Bottom: 0);
@@ -209,6 +214,7 @@ const
 constructor TTreeViewPresenter.Create(AOwner: TComponent);
 begin
   inherited;
+  FAllowMove := True;
   FCheckedItems := TList<TObject>.Create();
   FExpandedItems := TList<TObject>.Create();
   FSelectedItems := TList<TObject>.Create();
@@ -316,7 +322,7 @@ begin
     // Using item template to sort
     if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
     begin
-      Result := CompareStr(LItemTemplate1.GetText(LItem1, Column),
+      Result := CompareText(LItemTemplate1.GetText(LItem1, Column),
         LItemTemplate2.GetText(LItem2, Column));
     end;
   end;
@@ -332,6 +338,7 @@ begin
     for LNode in FTreeView.GetSortedSelection(True) do
     begin
       FTreeView.InvalidateNode(LNode);
+      FTreeView.SortTree(FTreeView.Header.SortColumn, FTreeView.Header.SortDirection, False);
     end;
   end;
 end;
@@ -365,6 +372,8 @@ end;
 procedure TTreeViewPresenter.DoDragAllowed(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex; var Allowed: Boolean);
 begin
+  Allowed := FAllowMove;
+
   if Assigned(FOnDragBegin) then
   begin
     FOnDragBegin(Self, Allowed);
@@ -382,20 +391,30 @@ var
 begin
   LNode := Sender.DropTargetNode;
   LItem := GetNodeItem(Sender, LNode);
-  if Assigned(LItem) and Assigned(FOnDragDrop) then
+  if Assigned(LItem) then
   begin
     LSelectedNodes := Sender.GetSortedSelection(False);
     if ssCtrl in Shift then
     begin
-      FOnDragDrop(Sender, LItem, doCopy);
+      if Assigned(FOnDragDrop) then
+      begin
+        FOnDragDrop(Sender, LItem, doCopy);
+      end;
       Sender.ReinitNode(LNode, True);
     end
     else
     begin
-      FOnDragDrop(Sender, LItem, doMove);
+      if Assigned(FOnDragDrop) then
+      begin
+        FOnDragDrop(Sender, LItem, doMove);
+      end;
       for i := Low(LSelectedNodes) to High(LSelectedNodes) do
       begin
-        FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+        case Mode of
+          dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
+          dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+          dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
+        end;
       end;
     end;
   end;
@@ -410,6 +429,9 @@ var
 begin
   LNode := Sender.GetNodeAt(Pt.X, Pt.Y);
   LItem := GetNodeItem(Sender, LNode);
+  case Mode of
+    dmAbove, dmBelow: Accept := FAllowMove;
+  end;
   if Assigned(LItem) and Assigned(FOnDragOver) then
   begin
     FOnDragOver(Sender, LItem, Accept);
@@ -523,6 +545,61 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.DoKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  i: Integer;
+  LAllowed: Boolean;
+  LNodes: TNodeArray;
+begin
+  // moving elements with Ctrl+Up and Ctrl+Down only when sorting is off
+  if (ssCtrl in Shift) and (FTreeView.Header.SortColumn = -1) then
+  begin
+    case Key of
+      VK_UP:
+      begin
+        LAllowed := True;
+        LNodes := FTreeView.GetSortedSelection(False);
+        for i := Low(LNodes) to High(LNodes) do
+        begin
+          if LNodes[i].PrevSibling = nil then
+          begin
+            LAllowed := False;
+            Break;
+          end;
+        end;
+        if LAllowed then
+        begin
+          for i := Low(LNodes) to High(LNodes) do
+          begin
+            FTreeView.MoveTo(LNodes[i], LNodes[i].PrevSibling, amInsertBefore, False);
+          end;
+        end;
+      end;
+      VK_DOWN:
+      begin
+        LAllowed := True;
+        LNodes := FTreeView.GetSortedSelection(False);
+        for i := High(LNodes) downto Low(LNodes) do
+        begin
+          if LNodes[i].NextSibling = nil then
+          begin
+            LAllowed := False;
+            Break;
+          end;
+        end;
+        if LAllowed then
+        begin
+          for i := High(LNodes) downto Low(LNodes) do
+          begin
+            FTreeView.MoveTo(LNodes[i], LNodes[i].NextSibling, amInsertAfter, False);
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
 procedure TTreeViewPresenter.DoMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
@@ -536,6 +613,34 @@ begin
     if not Assigned(LHitInfo.HitNode) and not FMultiSelect then
     begin
       FTreeView.ClearSelection();
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.DoNodeMoved(Sender: TBaseVirtualTree;
+  Node: PVirtualNode);
+var
+  LItem: TObject;
+  LItems: TList<TObject>;
+  LItemTemplate: IDataTemplate;
+begin
+  if Sender.GetNodeLevel(Node) = 0 then
+  begin
+    LItem := GetNodeItem(Sender, Node);
+    FItemsSource.Move(FItemsSource.IndexOf(LItem), Node.Index);
+  end
+  else
+  begin
+    LItem := GetNodeItem(Sender, Node.Parent);
+    LItemTemplate := GetItemTemplate(LItem);
+    if Assigned(LItemTemplate) then
+    begin
+      LItems := LItemTemplate.GetItems(LItem);
+      if Assigned(LItems) then
+      begin
+        LItem := GetNodeItem(Sender, Node);
+        LItems.Move(LItems.IndexOf(LItem), Node.Index);
+      end;
     end;
   end;
 end;
@@ -616,7 +721,7 @@ end;
 function TTreeViewPresenter.GetNodeItem(Tree: TBaseVirtualTree;
   Node: PVirtualNode): TObject;
 begin
-  if Assigned(Tree) then
+  if Assigned(Tree) and Assigned(Node) then
   begin
     Result := PObject(Tree.GetNodeData(Node))^;
   end
@@ -693,7 +798,9 @@ begin
     FTreeView.OnGetText := DoGetText;
     FTreeView.OnHeaderClick := DoHeaderClick;
     FTreeView.OnInitNode := DoInitNode;
+    FTreeView.OnKeyDown := DoKeyDown;
     FTreeView.OnMouseDown := DoMouseDown;
+    FTreeView.OnNodeMoved := DoNodeMoved;
     FTreeView.OnPaintText := DoPaintText;
   end;
 end;
@@ -702,6 +809,15 @@ procedure TTreeViewPresenter.InitTreeOptions;
 begin
   if Assigned(FTreeView) and not (csDesigning in ComponentState) then
   begin
+    if FAllowMove then
+    begin
+      FTreeView.DragMode := dmAutomatic;
+    end
+    else
+    begin
+      FTreeView.DragMode := dmManual;
+    end;
+
     if FCheckSupport <> csNone then
     begin
       FTreeView.TreeOptions.MiscOptions :=

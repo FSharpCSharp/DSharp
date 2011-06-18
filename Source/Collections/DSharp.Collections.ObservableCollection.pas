@@ -33,14 +33,18 @@ interface
 
 uses
   Generics.Collections,
+  DSharp.Bindings,
   DSharp.Bindings.Collections,
   DSharp.Core.Events;
 
 type
-  TObservableCollection<T: class> = class(TObjectList<T>, INotifyCollectionChanged)
+  TObservableCollection<T: class> = class(TObjectList<T>,
+    INotifyCollectionChanged, INotifyPropertyChanged)
   private
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
   protected
     procedure Notify(const Value: T; Action: TCollectionNotification); override;
 
@@ -49,6 +53,7 @@ type
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
   public
     property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
 implementation
@@ -60,11 +65,17 @@ begin
   Result := FOnCollectionChanged.EventHandler;
 end;
 
+function TObservableCollection<T>.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
 procedure TObservableCollection<T>.Notify(const Value: T;
   Action: TCollectionNotification);
 begin
   FOnCollectionChanged.Invoke(Self, Value, Action);
   inherited;
+  FOnPropertyChanged.Invoke(Self, 'Count');
 end;
 
 function TObservableCollection<T>.QueryInterface(const IID: TGUID;

@@ -33,7 +33,8 @@ interface
 
 uses
   DSharp.Core.XNode,
-  DSharp.Windows.ColumnDefinitions.DataTemplate;
+  DSharp.Windows.ColumnDefinitions.DataTemplate,
+  Generics.Collections;
 
 type
   TXmlDataTemplate = class(TColumnDefinitionsDataTemplate)
@@ -42,6 +43,7 @@ type
 
     function GetItem(const Item: TObject; const Index: Integer): TObject; override;
     function GetItemCount(const Item: TObject): Integer; override;
+    function GetItems(const Item: TObject): TList<TObject>; override;
 
     function GetTemplateDataClass: TClass; override;
   end;
@@ -72,6 +74,18 @@ begin
   else
   begin
     Result := 0;
+  end;
+end;
+
+function TXmlDataTemplate.GetItems(const Item: TObject): TList<TObject>;
+begin
+  if Assigned(Item) then
+  begin
+    Result := TList<TObject>(TXNode(Item).ChildNodes);
+  end
+  else
+  begin
+    Result := nil;
   end;
 end;
 

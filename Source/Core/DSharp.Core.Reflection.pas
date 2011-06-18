@@ -350,6 +350,24 @@ begin
           end;
         end;
       end;
+      tkClass:
+      begin
+        case ATypeInfo.Kind of
+          tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+          begin
+            if TypeInfo = System.TypeInfo(Boolean) then
+            begin
+              AResult := TValue.From<Boolean>(AsObject <> nil);
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.FromOrdinal(ATypeInfo, Int64(AsObject));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
 {$IFDEF VER210}
       // workaround for bug in RTTI.pas (fixed in XE)
       tkUnknown:

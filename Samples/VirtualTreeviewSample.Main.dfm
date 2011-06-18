@@ -23,7 +23,7 @@ object MainForm: TMainForm
     Top = 8
     Width = 538
     Height = 274
-    ActivePage = TabSheet2
+    ActivePage = TabSheet1
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
     object TabSheet1: TTabSheet
@@ -196,6 +196,13 @@ object MainForm: TMainForm
         TargetPropertyName = 'Text'
         Source = InventoryPresenter
         SourcePropertyName = 'CurrentItem.Value'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = DeleteContact
+        TargetPropertyName = 'Enabled'
+        Source = ContactsPresenter
+        SourcePropertyName = 'CurrentItem'
       end>
   end
   object InventoryPresenter: TTreeViewPresenter

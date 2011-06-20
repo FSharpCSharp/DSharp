@@ -32,8 +32,8 @@ unit DSharp.Core.XNode;
 interface
 
 uses
+  DSharp.Collections,
   DSharp.Core.PropertyChangedBase,
-  Generics.Collections,
   xmldom;
 
 type

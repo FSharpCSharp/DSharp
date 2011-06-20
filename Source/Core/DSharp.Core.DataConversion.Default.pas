@@ -33,9 +33,6 @@ interface
 
 uses
   DSharp.Core.DataConversion,
-  Generics.Collections,
-  Rtti,
-  SysUtils,
   TypInfo;
 
 type

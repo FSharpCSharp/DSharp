@@ -33,19 +33,20 @@ interface
 
 uses
   Classes,
+  DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.Events,
-  Generics.Collections,
   SysUtils;
 
 type
   TCollectionChangedEvent = procedure(Sender: TObject; Item: TObject;
-    Action: TCollectionNotification) of object;
+    Action: TCollectionChangedAction) of object;
 
   INotifyCollectionChanged = interface
     ['{FE0D3160-6BCE-46B6-B01D-1B3C23EA76F3}']
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
+    property OnCollectionChanged: TEvent<TCollectionChangedEvent>
+      read GetOnCollectionChanged;
   end;
 
   ICollectionView = interface(INotifyCollectionChanged)

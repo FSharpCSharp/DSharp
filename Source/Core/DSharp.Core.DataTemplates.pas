@@ -32,7 +32,7 @@ unit DSharp.Core.DataTemplates;
 interface
 
 uses
-  Generics.Collections,
+  DSharp.Collections,
   Graphics,
   ImgList,
   Types;

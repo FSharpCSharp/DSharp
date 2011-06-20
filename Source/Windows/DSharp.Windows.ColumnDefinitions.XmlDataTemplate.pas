@@ -32,9 +32,9 @@ unit DSharp.Windows.ColumnDefinitions.XmlDataTemplate;
 interface
 
 uses
+  DSharp.Collections,
   DSharp.Core.XNode,
-  DSharp.Windows.ColumnDefinitions.DataTemplate,
-  Generics.Collections;
+  DSharp.Windows.ColumnDefinitions.DataTemplate;
 
 type
   TXmlDataTemplate = class(TColumnDefinitionsDataTemplate)

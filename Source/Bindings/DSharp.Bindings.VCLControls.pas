@@ -38,12 +38,12 @@ uses
   Controls,
   DSharp.Bindings,
   DSharp.Bindings.Collections,
+  DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.DataTemplates.Default,
   DSharp.Core.Events,
   ExtCtrls,
   Forms,
-  Generics.Collections,
   Messages,
   StdCtrls,
   SysUtils;
@@ -182,7 +182,7 @@ type
   protected
     procedure Click; override;
     procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
-      Action: TCollectionNotification);
+      Action: TCollectionChangedAction);
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
   public
@@ -564,19 +564,19 @@ begin
 end;
 
 procedure TListBox.OnSourceCollectionChanged(Sender: TObject;
-  Item: TObject; Action: TCollectionNotification);
+  Item: TObject; Action: TCollectionChangedAction);
 var
   i: Integer;
 begin
   case Action of
-    cnAdded:
+    caAdd:
     begin
       if not Assigned(FFilter) or FFilter(Item) then
       begin
         Items.AddObject(ItemTemplate.GetText(Item, 0), Item);
       end;
     end;
-    cnRemoved:
+    caRemove:
     begin
       i := Items.IndexOfObject(Item);
       if i = ItemIndex then

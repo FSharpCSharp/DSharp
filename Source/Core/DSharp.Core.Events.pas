@@ -69,7 +69,7 @@ type
     property Invoke: T read GetInvoke;
   end;
 
-  TEventHandler<T> = class sealed(TEventHandler, IEventHandler<T>)
+  TEventHandler<T> = class(TEventHandler, IEventHandler<T>)
   strict private
     FInvoke: T;
     FNotificationHandler: TNotificationHandler<TEventHandler<T>>;

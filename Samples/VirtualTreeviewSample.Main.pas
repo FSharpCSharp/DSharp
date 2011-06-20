@@ -74,7 +74,7 @@ begin
   ContactsPresenter.ItemsSource.Add(TContact.Create('John', 'Doe'));
   ContactsPresenter.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
 
-  InventoryPresenter.ItemsSource := TObservableCollection<TObject>.Create(True);
+  InventoryPresenter.ItemsSource := TObservableCollection<TObject>.Create();
   InventoryPresenter.ItemsSource.AddRange(TArray<TObject>(
     XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]')));
 

@@ -61,6 +61,8 @@ type
     property ValidationStep: TValidationStep read FValidationStep write FValidationStep;
   end;
 
+  TValidationRuleClass = class of TValidationRule;
+
   TValidationEvent = procedure(Sender: TObject;
     AValidationRule: TValidationRule; AValidationResult: TValidationResult) of object;
 

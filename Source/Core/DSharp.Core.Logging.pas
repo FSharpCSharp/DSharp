@@ -81,10 +81,10 @@ function LoggingRegistration: ILoggingRegistration;
 implementation
 
 uses
+  DSharp.Collections,
 {$IFDEF DEBUG}
   DSharp.Core.Logging.Console,
 {$ENDIF}
-  Generics.Collections,
   Rtti,
   SysUtils;
 

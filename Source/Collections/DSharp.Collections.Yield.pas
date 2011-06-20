@@ -38,8 +38,7 @@ uses
 {$IFDEF USE_COLLECTIONS}
   Collections.Base,
 {$ELSE}
-  DSharp.Collections.Generics,
-  Generics.Collections,
+  DSharp.Collections,
 {$ENDIF}
 {$IFDEF USE_FIBERS}
   DSharp.Collections.Fibers,
@@ -54,7 +53,7 @@ type
 {$IFDEF USE_COLLECTIONS}
   TDelegateEnumerable<T> = class(TEnexCollection<T>)
 {$ELSE}
-  TDelegateEnumerable<T> = class(TEnumerableEx<T>)
+  TDelegateEnumerable<T> = class(TEnumerable<T>)
 {$ENDIF}
   strict private
     FEnumeration: TProc;
@@ -63,7 +62,7 @@ type
 {$IFDEF USE_COLLECTIONS}
       TEnumerator = class(TInterfacedObject, IEnumerator<T>)
 {$ELSE}
-      TEnumerator = class(TEnumeratorEx<T>)
+      TEnumerator = class(TEnumerator<T>)
 {$ENDIF}
       private
 {$IFDEF USE_FIBERS}
@@ -73,27 +72,23 @@ type
 {$ENDIF}
 {$IFNDEF USE_COLLECTIONS}
       protected
-        function DoGetCurrent: T; override;
-        function DoMoveNext: Boolean; override;
+        function GetCurrent: T; override;
+      public
+        function MoveNext: Boolean; override;
 {$ENDIF}
       public
         constructor Create(const AEnumeration: TProc);
         destructor Destroy; override;
 {$IFDEF USE_COLLECTIONS}
-        function GetCurrent(): T;
-        function MoveNext(): Boolean;
+        function GetCurrent: T;
+        function MoveNext: Boolean;
 {$ENDIF}
       end;
   protected
     class procedure Yield(const AValue: T);
   public
     constructor Create(const AEnumeration: TProc);
-{$IFDEF USE_COLLECTIONS}
     function GetEnumerator: IEnumerator<T>; override;
-{$ELSE}
-  protected
-    function DoGetEnumerator: TEnumerator<T>; override;
-{$ENDIF}
   end;
 
   Yield<T> = record
@@ -114,19 +109,11 @@ end;
 
 constructor TDelegateEnumerable<T>.Create(const AEnumeration: TProc);
 begin
-{$IFDEF USE_COLLECTIONS}
   inherited Create();
-{$ELSE}
-  inherited Create(nil);
-{$ENDIF}
   FEnumeration := AEnumeration;
 end;
 
-{$IFDEF USE_COLLECTIONS}
 function TDelegateEnumerable<T>.GetEnumerator: IEnumerator<T>;
-{$ELSE}
-function TDelegateEnumerable<T>.DoGetEnumerator: TEnumerator<T>;
-{$ENDIF}
 begin
   Result := TEnumerator.Create(FEnumeration);
 end;
@@ -161,11 +148,7 @@ begin
   inherited;
 end;
 
-{$IFDEF USE_COLLECTIONS}
 function TDelegateEnumerable<T>.TEnumerator.GetCurrent: T;
-{$ELSE}
-function TDelegateEnumerable<T>.TEnumerator.DoGetCurrent: T;
-{$ENDIF}
 begin
 {$IFDEF USE_FIBERS}
   Result := FFiber.Result;
@@ -174,11 +157,7 @@ begin
 {$ENDIF}
 end;
 
-{$IFDEF USE_COLLECTIONS}
 function TDelegateEnumerable<T>.TEnumerator.MoveNext: Boolean;
-{$ELSE}
-function TDelegateEnumerable<T>.TEnumerator.DoMoveNext: Boolean;
-{$ENDIF}
 begin
 {$IFDEF USE_FIBERS}
   FFiber.Resume();

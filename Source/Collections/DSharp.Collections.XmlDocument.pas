@@ -32,8 +32,8 @@ unit DSharp.Collections.XmlDocument;
 interface
 
 uses
+  DSharp.Collections,
   DSharp.Core.XNode,
-  Generics.Collections,
   XMLDoc,
   xmldom,
   XMLIntf,

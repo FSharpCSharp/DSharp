@@ -37,6 +37,7 @@ contains
   DSharp.Bindings.Collections in '..\..\Source\Bindings\DSharp.Bindings.Collections.pas',
   DSharp.Bindings.VCLControls in '..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas',
   DSharp.Bindings.VCLControls.Extensions in '..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas',
+  DSharp.Collections in '..\..\Source\Collections\DSharp.Collections.pas',
   DSharp.Core.Collections in '..\..\Source\Core\DSharp.Core.Collections.pas',
   DSharp.Core.DataConversion in '..\..\Source\Core\DSharp.Core.DataConversion.pas',
   DSharp.Core.DataConversion.Default in '..\..\Source\Core\DSharp.Core.DataConversion.Default.pas',

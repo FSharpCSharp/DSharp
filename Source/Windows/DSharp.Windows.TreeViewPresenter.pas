@@ -37,10 +37,10 @@ uses
   Controls,
   DSharp.Bindings,
   DSharp.Bindings.Collections,
+  DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.Events,
   DSharp.Windows.ColumnDefinitions,
-  Generics.Collections,
   Menus,
   SysUtils,
   Types,
@@ -120,7 +120,7 @@ type
     procedure DoPaintText(Sender: TBaseVirtualTree; const TargetCanvas: TCanvas;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType);
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
-      Action: TCollectionNotification);
+      Action: TCollectionChangedAction);
 
     function GetCheckedItems: TList<TObject>;
     function GetCurrentItem: TObject;
@@ -208,6 +208,9 @@ uses
 
 const
   CDefaultCellRect: TRect = (Left: 0; Top: 0; Right: 0; Bottom: 0);
+
+type
+  PObject = ^TObject;
 
 { TTreeViewPresenter }
 
@@ -661,9 +664,12 @@ begin
 end;
 
 procedure TTreeViewPresenter.DoSourceCollectionChanged(Sender: TObject;
-  Item: TObject; Action: TCollectionNotification);
+  Item: TObject; Action: TCollectionChangedAction);
 begin
-  ResetRootNodeCount();
+  if Action in [caAdd, caRemove] then
+  begin
+    ResetRootNodeCount();
+  end;
 end;
 
 procedure TTreeViewPresenter.FullCollapse;

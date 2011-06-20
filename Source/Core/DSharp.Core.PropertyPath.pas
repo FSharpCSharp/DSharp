@@ -32,7 +32,7 @@ unit DSharp.Core.PropertyPath;
 interface
 
 uses
-  Generics.Collections,
+  DSharp.Collections,
   Rtti;
 
 type

@@ -32,7 +32,7 @@ unit DSharp.Collections.ObservableCollection;
 interface
 
 uses
-  Generics.Collections,
+  DSharp.Collections,
   DSharp.Bindings,
   DSharp.Bindings.Collections,
   DSharp.Core.Events;
@@ -46,12 +46,10 @@ type
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
   protected
-    procedure Notify(const Value: T; Action: TCollectionNotification); override;
-
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    procedure Notify(Value: T; Action: TCollectionChangedAction); override;
   public
+    procedure AfterConstruction; override;
+    procedure BeforeDestruction; override;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
@@ -59,6 +57,16 @@ type
 implementation
 
 { TObservableCollection<T> }
+
+procedure TObservableCollection<T>.AfterConstruction;
+begin
+
+end;
+
+procedure TObservableCollection<T>.BeforeDestruction;
+begin
+
+end;
 
 function TObservableCollection<T>.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
@@ -70,28 +78,11 @@ begin
   Result := FOnPropertyChanged.EventHandler;
 end;
 
-procedure TObservableCollection<T>.Notify(const Value: T;
-  Action: TCollectionNotification);
+procedure TObservableCollection<T>.Notify(Value: T; Action: TCollectionChangedAction);
 begin
   FOnCollectionChanged.Invoke(Self, Value, Action);
   inherited;
   FOnPropertyChanged.Invoke(Self, 'Count');
-end;
-
-function TObservableCollection<T>.QueryInterface(const IID: TGUID;
-  out Obj): HResult;
-begin
-  if GetInterface(IID, Obj) then Result := 0 else Result := E_NOINTERFACE;
-end;
-
-function TObservableCollection<T>._AddRef: Integer;
-begin
-  Result := -1;
-end;
-
-function TObservableCollection<T>._Release: Integer;
-begin
-  Result := -1;
 end;
 
 end.

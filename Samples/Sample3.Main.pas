@@ -31,6 +31,8 @@ implementation
 uses
 {$IFDEF USE_COLLECTIONS}
   Collections.Base,
+{$ELSE}
+  DSharp.Collections,
 {$ENDIF}
   DSharp.Collections.Yield;
 

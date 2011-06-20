@@ -34,13 +34,13 @@ interface
 uses
   Classes,
   DSharp.Bindings.Collections,
+  DSharp.Collections,
   DSharp.Core.Collections,
   DSharp.Core.DataConversion,
   DSharp.Core.Events,
   DSharp.Core.NotificationHandler,
   DSharp.Core.PropertyPath,
   DSharp.Core.Validations,
-  Generics.Collections,
   Rtti,
   SysUtils;
 
@@ -119,7 +119,7 @@ type
     FSourcePropertyName: string;
     FSourceUpdateTrigger: TUpdateTrigger;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
-      Action: TCollectionNotification);
+      Action: TCollectionChangedAction);
     procedure DoSourcePropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger);
     procedure DoTargetPropertyChanged(ASender: TObject;
@@ -414,7 +414,7 @@ begin
 end;
 
 procedure TBinding.DoSourceCollectionChanged(Sender: TObject;
-  Item: TObject; Action: TCollectionNotification);
+  Item: TObject; Action: TCollectionChangedAction);
 var
   LCollectionView: ICollectionView;
   LEvent: TEvent<TCollectionChangedEvent>;

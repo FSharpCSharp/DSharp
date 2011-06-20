@@ -34,9 +34,9 @@ interface
 uses
   Classes,
   DSharp.Bindings,
+  DSharp.Collections,
   DSharp.Core.Collections,
-  DSharp.Core.DataTemplates,
-  Generics.Collections;
+  DSharp.Core.DataTemplates;
 
 const
   CDefaultWidth = 100;

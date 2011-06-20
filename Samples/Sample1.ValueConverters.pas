@@ -3,8 +3,8 @@ unit Sample1.ValueConverters;
 interface
 
 uses
-  Rtti,
-  System.Bindings;
+  DSharp.Bindings,
+  Rtti;
 
 type
   TIntToStr = class(TInterfacedObject, IValueConverter)

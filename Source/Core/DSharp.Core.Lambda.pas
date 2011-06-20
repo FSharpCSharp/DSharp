@@ -32,14 +32,14 @@ unit DSharp.Core.Lambda;
 interface
 
 uses
-  SysUtils,
-  DSharp.Core.Expressions;
+  DSharp.Core.Expressions,
+  SysUtils;
 
 type
   TLambda = record
   public
-    class function InitExpression(Expression: IExpression): IExpression; overload; static; inline;
-    class function InitExpression(Expression: Variant): IExpression; overload; static; inline;
+    class function InitExpression(Expression: IExpression): IExpression; overload; static;
+    class function InitExpression(Expression: Variant): IExpression; overload; static;
 
     class function Make<TResult>(
       Expression: Variant): TFunc<TResult>; overload; static;
@@ -85,8 +85,8 @@ function Bool(Expression: Variant): Variant;
 implementation
 
 uses
-  Rtti,
-  DSharp.Core.Variants;
+  DSharp.Core.Variants,
+  Rtti;
 
 type
   TArgument = class(TObject)

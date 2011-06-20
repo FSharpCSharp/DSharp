@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.Windows.Forms;
+unit DSharp.Windows.Forms;
 
 interface
 

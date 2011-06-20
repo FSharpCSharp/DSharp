@@ -32,7 +32,7 @@ unit DSharp.Collections.Queryable;
 interface
 
 uses
-  DSharp.Collections.Generics,
+  DSharp.Collections,
   DSharp.Core.Expressions,
   DSharp.Linq.QueryProvider;
 
@@ -45,7 +45,7 @@ type
     property Provider: IQueryProvider read GetProvider;
   end;
 
-  TQueryable<T> = class(TEnumerableEx<T>, IQueryable<T>)
+  TQueryable<T> = class(TEnumerable<T>, IQueryable<T>)
   private
     FExpression: IExpression;
     FProvider: IQueryProvider;
@@ -55,9 +55,21 @@ type
   public
     constructor Create(Provider: IQueryProvider);
 
-    function GetEnumerator: IEnumerator<T>;
+    function GetEnumerator: IEnumerator<T>; override;
 
     function Where(predicate: Variant): IQueryable<T>;
+
+    type
+      TEnumerator = class(TEnumerator<T>)
+      private
+        FEnumerable: IEnumerable<T>;
+        FEnumerator: IEnumerator<T>;
+      protected
+        function GetCurrent: T; override;
+      public
+        constructor Create(Enumerable: IEnumerable<T>);
+        function MoveNext: Boolean; override;
+      end;
 
     property Expression: IExpression read GetExpression;
     property Provider: IQueryProvider read GetProvider;
@@ -66,7 +78,7 @@ type
 implementation
 
 uses
-  System.Lambda;
+  DSharp.Core.Lambda;
 
 { TQueryable<T> }
 
@@ -77,7 +89,7 @@ end;
 
 function TQueryable<T>.GetEnumerator: IEnumerator<T>;
 begin
-  Result := IEnumerable<T>(Provider.Execute(Expression) as TEnumerableEx<T>).GetEnumerator();
+  Result := TEnumerator.Create(Provider.Execute(Expression) as TEnumerable<T>);
 end;
 
 function TQueryable<T>.GetExpression: IExpression;
@@ -96,6 +108,24 @@ begin
   FExpression := TLambda.InitExpression(predicate);
 
   Result := Self;
+end;
+
+{ TQueryable<T>.TEnumerator }
+
+constructor TQueryable<T>.TEnumerator.Create(Enumerable: IEnumerable<T>);
+begin
+  FEnumerable := Enumerable;
+  FEnumerator := FEnumerable.GetEnumerator();
+end;
+
+function TQueryable<T>.TEnumerator.GetCurrent: T;
+begin
+  Result := FEnumerator.Current;
+end;
+
+function TQueryable<T>.TEnumerator.MoveNext: Boolean;
+begin
+  Result := FEnumerator.MoveNext();
 end;
 
 end.

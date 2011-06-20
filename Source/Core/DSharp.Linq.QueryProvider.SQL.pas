@@ -27,13 +27,13 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.Data.Linq.QueryProvider.SQL;
+unit DSharp.Linq.QueryProvider.SQL;
 
 interface
 
 uses
-  System.Data.Linq.QueryProvider,
-  System.Expressions;
+  DSharp.Core.Expressions,
+  DSharp.Linq.QueryProvider;
 
 type
   TSQLQueryProvider<T> = class(TQueryProvider<T>)
@@ -49,7 +49,7 @@ type
 implementation
 
 uses
-  Collections.Generics,
+  DSharp.Collections,
   SysUtils;
 
 { TExpressionHelper }
@@ -94,7 +94,7 @@ var
 begin
   s := TExpression(Expression).ToSQL;
 
-  Result := TEnumerableEx<T>.Create([]);
+  Result := TEnumerable<T>.Create();
 end;
 
 

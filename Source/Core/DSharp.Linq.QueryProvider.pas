@@ -27,12 +27,12 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit System.Data.Linq.QueryProvider;
+unit DSharp.Linq.QueryProvider;
 
 interface
 
 uses
-  System.Expressions;
+  DSharp.Core.Expressions;
 
 type
   IQueryProvider = interface

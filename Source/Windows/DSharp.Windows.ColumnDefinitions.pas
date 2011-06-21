@@ -36,7 +36,8 @@ uses
   DSharp.Bindings,
   DSharp.Collections,
   DSharp.Core.Collections,
-  DSharp.Core.DataTemplates;
+  DSharp.Core.DataTemplates,
+  SysUtils;
 
 const
   CDefaultWidth = 100;
@@ -54,16 +55,21 @@ type
   private
     FBinding: TBinding;
     FCaption: string;
+    FCustomFilter: string;
+    FFilter: TPredicate<TObject>;
     FOnCustomDraw: TCustomDrawEvent;
     FOnGetText: TGetTextEvent;
     FWidth: Integer;
     procedure SetCaption(const Value: string);
+    procedure SetCustomFilter(const Value: string);
   public
     constructor Create(Collection: TCollection); override;
     destructor Destroy; override;
   published
     property Binding: TBinding read FBinding write FBinding;
     property Caption: string read FCaption write SetCaption;
+    property CustomFilter: string read FCustomFilter write SetCustomFilter;
+    property Filter: TPredicate<TObject> read FFilter;
     property OnCustomDraw: TCustomDrawEvent read FOnCustomDraw write FOnCustomDraw;
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
@@ -77,6 +83,10 @@ type
   end;
 
 implementation
+
+uses
+  DSharp.Bindings.Collections,
+  StrUtils;
 
 { TColumnDefinition }
 
@@ -102,6 +112,37 @@ begin
     FBinding.SourcePropertyName := Value;
   end;
   FCaption := Value;
+end;
+
+procedure TColumnDefinition.SetCustomFilter(const Value: string);
+var
+  LCollectionView: ICollectionView;
+begin
+  if FCustomFilter <> Value then
+  begin
+    FCustomFilter := Value;
+
+    if FCustomFilter <> '' then
+    begin
+      FFilter :=
+        function(Item: TObject): Boolean
+        begin
+          Binding.Source := Item;
+          Result := ContainsText(Binding.SourceProperty.GetValue(Item).ToString, FCustomFilter);
+          Binding.Source := nil;
+        end;
+    end
+    else
+    begin
+      FFilter := nil;
+    end;
+
+    if Supports(Collection.Owner, ICollectionView, LCollectionView) then
+    begin
+      // trigger filtering
+      LCollectionView.Filter := LCollectionView.Filter;
+    end;
+  end;
 end;
 
 { TColumnDefinitions }

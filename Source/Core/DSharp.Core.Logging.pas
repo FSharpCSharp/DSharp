@@ -83,7 +83,8 @@ implementation
 uses
   DSharp.Collections,
 {$IFDEF DEBUG}
-  DSharp.Core.Logging.Console,
+//  DSharp.Core.Logging.Console,
+//  DSharp.Core.Logging.SmartInspect,
 {$ENDIF}
   Rtti,
   SysUtils;

@@ -180,27 +180,34 @@ var
   args, otherArgs: TArray<TRttiType>;
   i: Integer;
 begin
-  Result := True;
+  Result := False;
   t := ctx.GetType(OtherType);
-  if Assigned(t) and (SameText(GetGenericTypeDefinition, t.GetGenericTypeDefinition)) then
+  if Assigned(t) then
   begin
-    args := GetGenericArguments;
-    otherArgs := t.GetGenericArguments;
-    for i := Low(args) to High(args) do
+    if SameText(GetGenericTypeDefinition, t.GetGenericTypeDefinition) then
     begin
-      // only check for class types
-      if not args[i].IsInstance or not otherArgs[i].IsInstance
-        or not args[i].AsInstance.MetaclassType.InheritsFrom(
-        otherArgs[i].AsInstance.MetaclassType) then
+      Result := True;
+      args := GetGenericArguments;
+      otherArgs := t.GetGenericArguments;
+      for i := Low(args) to High(args) do
       begin
-        Result := False;
-        Break;
+        // only check for class types
+        if not args[i].IsInstance or not otherArgs[i].IsInstance
+          or not args[i].AsInstance.MetaclassType.InheritsFrom(
+          otherArgs[i].AsInstance.MetaclassType) then
+        begin
+          Result := False;
+          Break;
+        end;
+      end
+    end
+    else
+    begin
+      if Assigned(BaseType) then
+      begin
+        Result := BaseType.IsCovariantTo(OtherType);
       end;
     end;
-  end
-  else
-  begin
-    Result := False;
   end;
 end;
 
@@ -262,6 +269,11 @@ begin
       tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
       begin
         case ATypeInfo.Kind of
+          tkEnumeration:
+          begin
+            TValue.Make(AsOrdinal, ATypeInfo, AResult);
+            Result := True;
+          end;
           tkUString:
           begin
             if TypeInfo = System.TypeInfo(Boolean) then
@@ -363,6 +375,19 @@ begin
             else
             begin
               AResult := TValue.FromOrdinal(ATypeInfo, Int64(AsObject));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkRecord:
+      begin
+        case ATypeInfo.Kind of
+          tkMethod:
+          begin
+            if TypeInfo = System.TypeInfo(System.TMethod) then
+            begin
+              TValue.Make(GetReferenceToRawData, ATypeInfo, AResult);
               Result := True;
             end;
           end;

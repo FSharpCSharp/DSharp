@@ -577,7 +577,7 @@ begin
 
   FSource := AObject;
 
-  if Assigned(FSource) then
+  if Assigned(FSource) and FActive then
   begin
     FSourceProperty := TPropertyPath.Create(FSource, FSourcePropertyName);
   end

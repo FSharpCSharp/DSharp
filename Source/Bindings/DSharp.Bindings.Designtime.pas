@@ -189,7 +189,10 @@ begin
         LProperty := TBindingProperty.Create(Designer, 0);
         LProperty.BindingGroup := LBindingGroup;
         LProperty.Binding := LBindingGroup.GetBindingForTarget(ASelection[0] as TObject);
-        LProperty.Binding.TargetPropertyName := GetTargetPropertyName(ASelection[0]);
+        if LProperty.Binding.TargetPropertyName = '' then
+        begin
+          LProperty.Binding.TargetPropertyName := GetTargetPropertyName(ASelection[0]);
+        end;
         for i := 0 to ASelectionProperties.Count - 1 do
         begin
           if Supports(ASelectionProperties[i], IProperty)

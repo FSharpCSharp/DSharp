@@ -102,6 +102,7 @@ type
     procedure DoDragOver(Sender: TBaseVirtualTree; Source: TObject;
       Shift: TShiftState; State: TDragState; Pt: TPoint; Mode: TDropMode;
       var Effect: Integer; var Accept: Boolean);
+    procedure DoFilterNode(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoFocusChanged(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex);
     procedure DoGetImageIndex(Sender: TBaseVirtualTree; Node: PVirtualNode;
@@ -126,6 +127,8 @@ type
     function GetCurrentItem: TObject;
     function GetExpandedItems: TList<TObject>;
     function GetFilter: TPredicate<TObject>;
+    procedure GetItemNode(Sender: TBaseVirtualTree; Node: PVirtualNode;
+      Data: Pointer; var Abort: Boolean);
     function GetItemsSource: TList<TObject>;
     function GetItemTemplate: IDataTemplate; overload;
     function GetItemTemplate(const Item: TObject): IDataTemplate; overload;
@@ -161,6 +164,8 @@ type
     procedure UpdateExpandedItems;
     procedure UpdateSelectedItems;
   protected
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure Loaded; override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -334,6 +339,7 @@ end;
 procedure TTreeViewPresenter.DoCurrentItemPropertyChanged(Sender: TObject;
   PropertyName: string; UpdateTrigger: TUpdateTrigger);
 var
+  LItem: TObject;
   LNode: PVirtualNode;
 begin
   if Assigned(FTreeView) and (FTreeView.SelectedCount > 0) then
@@ -342,6 +348,9 @@ begin
     begin
       FTreeView.InvalidateNode(LNode);
       FTreeView.SortTree(FTreeView.Header.SortColumn, FTreeView.Header.SortDirection, False);
+      DoFilterNode(FTreeView, LNode);
+      LItem := GetNodeItem(FTreeView, LNode);
+      DoSourceCollectionChanged(Sender, LItem, caReplace);
     end;
   end;
 end;
@@ -438,6 +447,41 @@ begin
   if Assigned(LItem) and Assigned(FOnDragOver) then
   begin
     FOnDragOver(Sender, LItem, Accept);
+  end;
+end;
+
+procedure TTreeViewPresenter.DoFilterNode(Sender: TBaseVirtualTree;
+  Node: PVirtualNode);
+var
+  i: Integer;
+  LItem: TObject;
+begin
+  LItem := GetNodeItem(Sender, Node);
+
+  if Assigned(FFilter) then
+  begin
+    Sender.IsFiltered[Node] := not FFilter(LItem);
+  end
+  else
+  begin
+    Sender.IsFiltered[Node] := False;
+  end;
+
+  if Assigned(FColumnDefinitions) then
+  begin
+    for i := 0 to Pred(FColumnDefinitions.Count) do
+    begin
+      if Assigned(FColumnDefinitions[i].Filter) then
+      begin
+        Sender.IsFiltered[Node] := Sender.IsFiltered[Node]
+          or not FColumnDefinitions[i].Filter(LItem);
+      end;
+    end;
+  end;
+
+  if Sender.IsFiltered[Node] and Sender.Selected[Node] then
+  begin
+    Sender.Selected[Node] := False;
   end;
 end;
 
@@ -542,10 +586,7 @@ begin
     Sender.ChildCount[Node] := 0;
   end;
 
-  if Assigned(FFilter) then
-  begin
-    Sender.IsFiltered[Node] := not FFilter(LItem);
-  end;
+  DoFilterNode(Sender, Node);
 end;
 
 procedure TTreeViewPresenter.DoKeyDown(Sender: TObject; var Key: Word;
@@ -663,13 +704,32 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+end;
+
 procedure TTreeViewPresenter.DoSourceCollectionChanged(Sender: TObject;
   Item: TObject; Action: TCollectionChangedAction);
+var
+  LNode: PVirtualNode;
 begin
-  if Action in [caAdd, caRemove] then
+  if Assigned(FTreeView) then
   begin
-    ResetRootNodeCount();
+    LNode := FTreeView.IterateSubtree(nil, GetItemNode, Pointer(Item));
+    case Action of
+      caAdd: ResetRootNodeCount;
+      caRemove: ResetRootNodeCount;
+      caReplace:
+      begin
+        FTreeView.ReinitNode(LNode, True);
+        FTreeView.InvalidateNode(LNode);
+      end;
+    end;
   end;
+
+  DoPropertyChanged('ItemsSource');
 end;
 
 procedure TTreeViewPresenter.FullCollapse;
@@ -702,6 +762,12 @@ end;
 function TTreeViewPresenter.GetFilter: TPredicate<TObject>;
 begin
   Result := FFilter;
+end;
+
+procedure TTreeViewPresenter.GetItemNode(Sender: TBaseVirtualTree;
+  Node: PVirtualNode; Data: Pointer; var Abort: Boolean);
+begin
+  Abort := GetNodeItem(Sender, Node) = TObject(Data);
 end;
 
 function TTreeViewPresenter.GetItemsSource: TList<TObject>;
@@ -970,6 +1036,8 @@ begin
       LCollectionChanged.Add(DoSourceCollectionChanged)
     end;
     ResetRootNodeCount();
+
+    DoPropertyChanged('ItemsSource');
   end;
 end;
 
@@ -1126,9 +1194,9 @@ begin
     end;
   end;
 
-  FOnPropertyChanged.Invoke(Self, 'CurrentItem');
-  FOnPropertyChanged.Invoke(Self, 'SelectedItem');
-  FOnPropertyChanged.Invoke(Self, 'SelectedItems');
+  DoPropertyChanged('CurrentItem');
+  DoPropertyChanged('SelectedItem');
+  DoPropertyChanged('SelectedItems');
 end;
 
 end.

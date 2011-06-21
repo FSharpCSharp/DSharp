@@ -46,6 +46,11 @@ type
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
   protected
+    procedure DoCollectionChanged(Value: T; Action: TCollectionChangedAction);
+    procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure Notify(Value: T; Action: TCollectionChangedAction); override;
   public
     procedure AfterConstruction; override;
@@ -56,7 +61,28 @@ type
 
 implementation
 
+uses
+  SysUtils;
+
 { TObservableCollection<T> }
+
+procedure TObservableCollection<T>.DoCollectionChanged(Value: T;
+  Action: TCollectionChangedAction);
+begin
+  FOnCollectionChanged.Invoke(Self, Value, Action);
+end;
+
+procedure TObservableCollection<T>.DoItemPropertyChanged(ASender: TObject;
+  APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+begin
+  DoCollectionChanged(T(ASender), caReplace);
+end;
+
+procedure TObservableCollection<T>.DoPropertyChanged(
+  const APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Self, 'Count');
+end;
 
 procedure TObservableCollection<T>.AfterConstruction;
 begin
@@ -79,10 +105,23 @@ begin
 end;
 
 procedure TObservableCollection<T>.Notify(Value: T; Action: TCollectionChangedAction);
+var
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
-  FOnCollectionChanged.Invoke(Self, Value, Action);
+  DoCollectionChanged(Value, TCollectionChangedAction(Action));
+
+  if Supports(Value, INotifyPropertyChanged, LNotifyPropertyChanged) then
+  begin
+    LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+    case Action of
+      caAdd: LPropertyChanged.Add(DoItemPropertyChanged);
+      caRemove: LPropertyChanged.Remove(DoItemPropertyChanged);
+    end;
+  end;
+
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Count');
+  DoPropertyChanged('Count');
 end;
 
 end.

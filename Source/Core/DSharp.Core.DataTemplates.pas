@@ -163,7 +163,8 @@ function TDataTemplate.GetItem(const Item: TObject;
 begin
   Result := nil;
 
-  if IsClassCovariantTo(Item.ClassType, TList<TObject>) then
+  if IsClassCovariantTo(Item.ClassType, TList<TObject>)
+    and (TList<TObject>(Item).Count > Index) then
   begin
     Result := TList<TObject>(Item).Items[Index];
   end;

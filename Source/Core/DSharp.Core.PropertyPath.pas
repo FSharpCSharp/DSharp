@@ -51,11 +51,31 @@ type
     property Root: string read GetRoot;
   end;
 
+  // cannot inherit from TRttiProperty because virtual methods are private
+  TProperty = class
+  private
+    FIndex: Integer;
+    FMethod: TRttiMethod;
+    FProperty: TRttiProperty;
+    function GetIsReadable: Boolean;
+    function GetIsWritable: Boolean;
+    function GetPropertyType: TRttiType;
+  public
+    constructor Create(AType: TRttiType; const AName: string);
+    class function Lookup(AType: TRttiType; const AName: string): TProperty;
+
+    function GetValue(Instance: Pointer): TValue;
+    procedure SetValue(Instance: Pointer; const AValue: TValue);
+    property IsReadable: Boolean read GetIsReadable;
+    property IsWritable: Boolean read GetIsWritable;
+    property PropertyType: TRttiType read GetPropertyType;
+  end;
+
   TPropertyPath = class(TInterfacedObject, IPropertyPath)
   private
     FInstance: TObject;
     FPath: string;
-    FProperties: TList<TRttiProperty>;
+    FProperties: TObjectList<TProperty>;
   protected
     function DoGetValue(Instance: Pointer): TValue; virtual;
     procedure DoSetValue(Instance: Pointer; const AValue: TValue); virtual;
@@ -80,12 +100,125 @@ type
 implementation
 
 uses
+  Classes,
+  DSharp.Core.Reflection,
   RTLConsts,
   StrUtils,
   SysUtils;
 
 var
   Context: TRttiContext;
+  MethodType: TRttiType;
+
+{ TProperty }
+
+constructor TProperty.Create(AType: TRttiType; const AName: string);
+var
+  LName: string;
+  LPos: Integer;
+begin
+  FIndex := -1;
+  LName := AName;
+  LPos := Pos('[', LName);
+  if LPos > 0 then
+  begin
+    FIndex := StrToIntDef(Copy(LName, Succ(LPos),
+      Pos(']', LName) - Succ(LPos)), -1);
+    LName := LeftStr(LName, Pred(LPos));
+  end;
+
+  FProperty := AType.GetProperty(LName);
+  if not Assigned(FProperty) then
+  begin
+    FMethod := AType.GetMethod(LName);
+  end;
+end;
+
+function TProperty.GetIsReadable: Boolean;
+begin
+  Result := (Assigned(FProperty) and FProperty.IsReadable) or Assigned(FMethod);
+end;
+
+function TProperty.GetIsWritable: Boolean;
+begin
+  Result := Assigned(FProperty) and FProperty.IsWritable;
+end;
+
+function TProperty.GetPropertyType: TRttiType;
+begin
+  if Assigned(FProperty) then
+    Result := FProperty.PropertyType
+  else if Assigned(FMethod) then
+    Result := MethodType
+  else
+    Result := nil;
+end;
+
+function TProperty.GetValue(Instance: Pointer): TValue;
+var
+  LList: TObject;
+  LMethod: TMethod;
+  LObject: TObject;
+begin
+  if Assigned(FProperty) then
+  begin
+    Result := FProperty.GetValue(Instance)
+  end
+  else
+  begin
+    LMethod.Code := FMethod.CodeAddress;
+    LMethod.Data := Instance;
+    Result := TValue.From(LMethod);
+  end;
+
+  if FIndex > -1 then
+  begin
+    if Result.IsObject then
+    begin
+      LList := Result.AsObject;
+      Result := TValue.Empty;
+      LObject := nil;
+
+      if Assigned(LList) then
+      begin
+        if LList.InheritsFrom(TCollection) and (TCollection(LList).Count > FIndex) then
+        begin
+          LObject := TCollection(LList).Items[FIndex];
+        end else
+        if LList.InheritsFrom(TList) and (TList(LList).Count > FIndex) then
+        begin
+          LObject := TList(LList).Items[FIndex];
+        end else
+        if IsClassCovariantTo(LList.ClassType, TList<TObject>) and (TList<TObject>(LList).Count > 0) then
+        begin
+          LObject := TList<TObject>(LList).Items[FIndex];
+        end;
+        if Assigned(LObject) then
+        begin
+          Result := TValue.From(LObject);
+        end;
+      end
+    end;
+  end;
+end;
+
+class function TProperty.Lookup(AType: TRttiType;
+  const AName: string): TProperty;
+begin
+  Result := TProperty.Create(AType, AName);
+  if not Assigned(Result.FProperty) and not Assigned(Result.FMethod) then
+  begin
+    FreeAndNil(Result);
+  end;
+end;
+
+procedure TProperty.SetValue(Instance: Pointer; const AValue: TValue);
+begin
+  if FIndex = -1 then
+  begin
+    FProperty.SetValue(Instance, AValue);
+  end;
+end;
 
 { TPropertyPath }
 
@@ -93,7 +226,7 @@ constructor TPropertyPath.Create(AInstance: TObject; APath: string);
 begin
   FInstance := AInstance;
   FPath := APath;
-  FProperties := TList<TRttiProperty>.Create();
+  FProperties := TObjectList<TProperty>.Create();
 
   InitProperties();
 end;
@@ -200,13 +333,15 @@ end;
 
 function TPropertyPath.GetRoot: string;
 begin
-  if ContainsText(FPath, '.') then
+  Result := FPath;
+
+  if ContainsText(Result, '.') then
   begin
-    Result := LeftStr(FPath, Pred(Pos('.', FPath)));
-  end
-  else
+    Result := LeftStr(Result, Pred(Pos('.', Result)));
+  end;
+  if ContainsText(Result, '[') then
   begin
-    Result := FPath;
+    Result := LeftStr(Result, Pred(Pos('[', Result)));
   end;
 end;
 
@@ -221,7 +356,7 @@ procedure TPropertyPath.InitProperties;
 var
   LObject: TObject;
   LObjectName: string;
-  LProperty: TRttiProperty;
+  LProperty: TProperty;
   LPropertyName: string;
   LType: TRttiType;
 begin
@@ -238,7 +373,8 @@ begin
   while ContainsText(LPropertyName, '.') do
   begin
     LObjectName := LeftStr(LPropertyName, Pred(Pos('.', LPropertyName)));
-    LProperty := LType.GetProperty(LObjectName);
+
+    LProperty := TProperty.Lookup(LType, LObjectName);
     if Assigned(LProperty) then
     begin
       FProperties.Add(LProperty);
@@ -259,7 +395,7 @@ begin
 //      raise EArgumentException.CreateResFmt(@SUnknownProperty, [LObjectName]);
     end;
   end;
-  LProperty := LType.GetProperty(LPropertyName);
+  LProperty := TProperty.Lookup(LType, LPropertyName);
   if Assigned(LProperty) then
   begin
     FProperties.Add(LProperty);
@@ -272,5 +408,8 @@ begin
     raise EPropReadOnly.Create(Path);
   DoSetValue(Instance, AValue);
 end;
+
+initialization
+  MethodType := Context.GetType(TypeInfo(TMethod));
 
 end.

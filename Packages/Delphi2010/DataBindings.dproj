@@ -55,21 +55,12 @@
 			<DCCReference Include="rtl.dcp"/>
 			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="xmlrtl.dcp"/>
+			<DCCReference Include="DSharp.Core.dcp"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Collections.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Collections.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.Default.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.NotificationHandler.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyPath.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.XNode.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>

@@ -70,6 +70,8 @@ type
   TDataTemplate = class(TInterfacedObject, IDataTemplate)
   private
     FTemplates: TList<IDataTemplate>;
+  protected
+    property Templates: TList<IDataTemplate> read FTemplates;
   public
     constructor Create;
     destructor Destroy; override;
@@ -89,7 +91,7 @@ type
       const Index: Integer): TObject; virtual;
     function GetItemCount(const Item: TObject): Integer; virtual;
     function GetItems(const Item: TObject): TList<TObject>; virtual;
-    function GetItemTemplate(const Item: TObject): IDataTemplate;
+    function GetItemTemplate(const Item: TObject): IDataTemplate; virtual;
 
     function GetTemplateDataClass: TClass; virtual;
     procedure RegisterDataTemplate(const DataTemplate: IDataTemplate);
@@ -174,7 +176,7 @@ function TDataTemplate.GetItemCount(const Item: TObject): Integer;
 begin
   Result := 0;
 
-  if IsClassCovariantTo(Item.ClassType, TList<TObject>) then
+  if Assigned(Item) and IsClassCovariantTo(Item.ClassType, TList<TObject>) then
   begin
     Result := TList<TObject>(Item).Count;
   end;

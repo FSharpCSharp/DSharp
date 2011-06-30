@@ -59,18 +59,21 @@ type
   INotifyPropertyChanged = interface
     ['{6627279B-8112-4A92-BBD3-795185A41966}']
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent>
+      read GetOnPropertyChanged;
   end;
 
   TBindingGroup = class;
 
   TBindingBase = class abstract(TCollectionItem)
-  strict protected
+  protected
     FActive: Boolean;
     FBindingGroup: TBindingGroup;
     FBindingMode: TBindingMode;
     FConverter: IValueConverter;
     FNotificationHandler: TNotificationHandler<TBindingBase>;
+    FNotifyOnTargetUpdated: Boolean;
+    FOnTargetUpdated: TPropertyChangedEvent;
     FOnValidation: TEvent<TValidationEvent>;
     FTarget: TObject;
     FTargetProperty: IPropertyPath;
@@ -80,6 +83,8 @@ type
     FValidationRules: TObjectList<TValidationRule>;
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); virtual; abstract;
+    procedure DoTargetUpdated(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger);
     function GetOnValidation: TEvent<TValidationEvent>;
     procedure InitConverter; virtual; abstract;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
@@ -96,6 +101,10 @@ type
     procedure UpdateTarget; virtual; abstract;
     function Validate: Boolean; virtual; abstract;
 
+    procedure BeginEdit; virtual; abstract;
+    procedure CancelEdit; virtual; abstract;
+    procedure EndEdit; virtual; abstract;
+
     property Active: Boolean read FActive write SetActive;
     property BindingGroup: TBindingGroup read FBindingGroup write SetBindingGroup;
     property Converter: IValueConverter read FConverter write SetConverter;
@@ -103,16 +112,23 @@ type
     property TargetProperty: IPropertyPath read FTargetProperty;
     property ValidationRules: TObjectList<TValidationRule> read FValidationRules;
   published
-    property BindingMode: TBindingMode read FBindingMode write FBindingMode default BindingModeDefault;
+    property BindingMode: TBindingMode read FBindingMode write FBindingMode
+      default BindingModeDefault;
+    property NotifyOnTargetUpdated: Boolean read FNotifyOnTargetUpdated
+      write FNotifyOnTargetUpdated default False;
+    property OnTargetUpdated: TPropertyChangedEvent read FOnTargetUpdated
+      write FOnTargetUpdated;
     property Target: TObject read FTarget write SetTarget;
     property TargetPropertyName: string read FTargetPropertyName
       write SetTargetPropertyName;
-    property TargetUpdateTrigger: TUpdateTrigger
-      read FTargetUpdateTrigger write FTargetUpdateTrigger default UpdateTriggerDefault;
+    property TargetUpdateTrigger: TUpdateTrigger read FTargetUpdateTrigger
+      write FTargetUpdateTrigger default UpdateTriggerDefault;
   end;
 
   TBinding = class(TBindingBase)
-  strict protected
+  protected
+    FNotifyOnSourceUpdated: Boolean;
+    FOnSourceUpdated: TPropertyChangedEvent;
     FSource: TObject;
     FSourceCollectionChanged: INotifyCollectionChanged;
     FSourceProperty: IPropertyPath;
@@ -122,6 +138,8 @@ type
       Action: TCollectionChangedAction);
     procedure DoSourcePropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+    procedure DoSourceUpdated(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger);
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); override;
     function GetDisplayName: string; override;
@@ -142,18 +160,33 @@ type
     procedure UpdateTarget; override;
     function Validate: Boolean; override;
 
+    procedure BeginEdit; override;
+    procedure CancelEdit; override;
+    procedure EndEdit; override;
+
     property SourceProperty: IPropertyPath read FSourceProperty;
   published
+    property NotifyOnSourceUpdated: Boolean read FNotifyOnSourceUpdated
+      write FNotifyOnSourceUpdated default False;
+    property OnSourceUpdated: TPropertyChangedEvent read FOnSourceUpdated
+      write FOnSourceUpdated;
     property Source: TObject read FSource write SetSource;
     property SourcePropertyName: string read FSourcePropertyName
       write SetSourcePropertyName;
-    property SourceUpdateTrigger: TUpdateTrigger
-      read FSourceUpdateTrigger write FSourceUpdateTrigger default UpdateTriggerDefault;
+    property SourceUpdateTrigger: TUpdateTrigger read FSourceUpdateTrigger
+      write FSourceUpdateTrigger default UpdateTriggerDefault;
   end;
 
   IBindable = interface
     function GetBinding: TBinding;
     property Binding: TBinding read GetBinding;
+  end;
+
+  IEditable = interface
+  ['{070C6A4B-854D-49C3-910E-31963010D68F}']
+    procedure BeginEdit;
+    procedure CancelEdit;
+    procedure EndEdit;
   end;
 
   TBindingCollection = class(TOwnedCollection<TBinding>)
@@ -171,6 +204,11 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     function GetBindingForTarget(ATarget: TObject): TBinding;
+
+    procedure BeginEdit;
+    procedure CancelEdit;
+    procedure EndEdit;
+  published
     property Bindings: TBindingCollection read FBindings write SetBindings;
   end;
 
@@ -263,6 +301,15 @@ begin
   FValidationRules.Free();
 
   inherited;
+end;
+
+procedure TBindingBase.DoTargetUpdated(ASender: TObject; APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  if Assigned(FOnTargetUpdated) then
+  begin
+    FOnTargetUpdated(ASender, APropertyName, AUpdateTrigger);
+  end;
 end;
 
 function TBindingBase.GetOnValidation: TEvent<TValidationEvent>;
@@ -383,6 +430,28 @@ begin
   end;
 end;
 
+procedure TBinding.BeginEdit;
+var
+  LEditable: IEditable;
+begin
+  if FActive and Assigned(FSource)
+    and Supports(FSource, IEditable, LEditable) then
+  begin
+    LEditable.BeginEdit();
+  end;
+end;
+
+procedure TBinding.CancelEdit;
+var
+  LEditable: IEditable;
+begin
+  if FActive and Assigned(FSource)
+    and Supports(FSource, IEditable, LEditable) then
+  begin
+    LEditable.CancelEdit();
+  end;
+end;
+
 constructor TBinding.Create(ASource: TObject; ASourcePropertyName: string;
   ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
   AConverter: IValueConverter);
@@ -435,10 +504,21 @@ begin
   begin
     FUpdating := True;
     try
+      DoTargetUpdated(ASender, APropertyName, AUpdateTrigger);
+
       UpdateTarget();
     finally
       FUpdating := False;
     end;
+  end;
+end;
+
+procedure TBinding.DoSourceUpdated(ASender: TObject; APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  if Assigned(FOnSourceUpdated) then
+  begin
+    FOnSourceUpdated(ASender, APropertyName, AUpdateTrigger);
   end;
 end;
 
@@ -453,11 +533,24 @@ begin
     try
       if Validate() then
       begin
+        DoSourceUpdated(ASender, APropertyName, AUpdateTrigger);
+
         UpdateSource();
       end;
     finally
       FUpdating := False;
     end;
+  end;
+end;
+
+procedure TBinding.EndEdit;
+var
+  LEditable: IEditable;
+begin
+  if FActive and Assigned(FSource)
+    and Supports(FSource, IEditable, LEditable) then
+  begin
+    LEditable.EndEdit();
   end;
 end;
 
@@ -723,6 +816,26 @@ end;
 
 { TBindingGroup }
 
+procedure TBindingGroup.BeginEdit;
+var
+  LBinding: TBinding;
+begin
+  for LBinding in FBindings do
+  begin
+    LBinding.BeginEdit();
+  end;
+end;
+
+procedure TBindingGroup.CancelEdit;
+var
+  LBinding: TBinding;
+begin
+  for LBinding in FBindings do
+  begin
+    LBinding.CancelEdit();
+  end;
+end;
+
 constructor TBindingGroup.Create(AOwner: TComponent);
 var
   i: Integer;
@@ -745,6 +858,16 @@ destructor TBindingGroup.Destroy;
 begin
   FBindings.Free();
   inherited;
+end;
+
+procedure TBindingGroup.EndEdit;
+var
+  LBinding: TBinding;
+begin
+  for LBinding in FBindings do
+  begin
+    LBinding.EndEdit();
+  end;
 end;
 
 function TBindingGroup.GetBindingForTarget(ATarget: TObject): TBinding;

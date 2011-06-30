@@ -33,8 +33,8 @@ interface
 
 uses
   Classes,
-  DesignIntf,
   DesignEditors,
+  DesignIntf,
   DSharp.Bindings,
   Generics.Collections,
   TypInfo;
@@ -130,6 +130,7 @@ begin
   begin
     RegisterSelectionEditor(LClass, TBindingSelectionEditor);
   end;
+
   RegisterComponents('Data binding', [TBindingGroup]);
   RegisterComponentEditor(TBindingGroup, TBindingGroupComponentEditor);
   RegisterPropertyEditor(TypeInfo(TObject), TBinding, 'Source', TSourceProperty);
@@ -173,7 +174,8 @@ end;
 { TBindingSelectionEditor }
 
 procedure TBindingSelectionEditor.FilterProperties(
-  const ASelection: IDesignerSelections; const ASelectionProperties: IInterfaceList);
+  const ASelection: IDesignerSelections;
+  const ASelectionProperties: IInterfaceList);
 var
   i: Integer;
   LBindingGroup: TBindingGroup;

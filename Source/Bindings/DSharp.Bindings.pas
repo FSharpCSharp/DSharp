@@ -103,7 +103,7 @@ type
 
     procedure BeginEdit; virtual; abstract;
     procedure CancelEdit; virtual; abstract;
-    procedure EndEdit; virtual; abstract;
+    procedure CommitEdit; virtual; abstract;
 
     property Active: Boolean read FActive write SetActive;
     property BindingGroup: TBindingGroup read FBindingGroup write SetBindingGroup;
@@ -162,7 +162,7 @@ type
 
     procedure BeginEdit; override;
     procedure CancelEdit; override;
-    procedure EndEdit; override;
+    procedure CommitEdit; override;
 
     property SourceProperty: IPropertyPath read FSourceProperty;
   published
@@ -192,11 +192,18 @@ type
   TBindingCollection = class(TOwnedCollection<TBinding>)
   end;
 
-  TBindingGroup = class(TComponent)
+  TBindingGroup = class(TComponent, INotifyPropertyChanged)
   private
     FBindings: TBindingCollection;
+    FEditing: Boolean;
+    FItems: TList<TObject>;
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure SetBindings(const Value: TBindingCollection);
+    procedure SetEditing(const Value: Boolean);
   protected
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DefineProperties(Filer: TFiler); override;
     procedure ReadBindings(AReader: TReader);
     procedure WriteBindings(AWriter: TWriter);
@@ -207,7 +214,21 @@ type
 
     procedure BeginEdit;
     procedure CancelEdit;
-    procedure EndEdit;
+    procedure CommitEdit;
+
+    function TryGetValue(AItem: TObject; APropertyName: string;
+      out AValue: TValue): Boolean;
+    procedure UpdateSources;
+    procedure UpdateTargets;
+    function Validate: Boolean;
+
+    property Editing: Boolean read FEditing;
+
+    // not used yet
+    //property Items: TList<TObject> read FItems;
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent>
+      read GetOnPropertyChanged;
+
   published
     property Bindings: TBindingCollection read FBindings write SetBindings;
   end;
@@ -356,6 +377,8 @@ begin
   if FConverter <> Value then
   begin
     FConverter := Value;
+
+    UpdateTarget();
   end;
   InitConverter();
 end;
@@ -452,6 +475,17 @@ begin
   end;
 end;
 
+procedure TBinding.CommitEdit;
+var
+  LEditable: IEditable;
+begin
+  if FActive and Assigned(FSource)
+    and Supports(FSource, IEditable, LEditable) then
+  begin
+    LEditable.EndEdit();
+  end;
+end;
+
 constructor TBinding.Create(ASource: TObject; ASourcePropertyName: string;
   ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
   AConverter: IValueConverter);
@@ -540,17 +574,6 @@ begin
     finally
       FUpdating := False;
     end;
-  end;
-end;
-
-procedure TBinding.EndEdit;
-var
-  LEditable: IEditable;
-begin
-  if FActive and Assigned(FSource)
-    and Supports(FSource, IEditable, LEditable) then
-  begin
-    LEditable.EndEdit();
   end;
 end;
 
@@ -820,9 +843,14 @@ procedure TBindingGroup.BeginEdit;
 var
   LBinding: TBinding;
 begin
-  for LBinding in FBindings do
+  if not FEditing then
   begin
-    LBinding.BeginEdit();
+    for LBinding in FBindings do
+    begin
+      LBinding.BeginEdit();
+    end;
+
+    SetEditing(True);
   end;
 end;
 
@@ -830,9 +858,29 @@ procedure TBindingGroup.CancelEdit;
 var
   LBinding: TBinding;
 begin
-  for LBinding in FBindings do
+  if FEditing then
   begin
-    LBinding.CancelEdit();
+    for LBinding in FBindings do
+    begin
+      LBinding.CancelEdit();
+    end;
+
+    SetEditing(False);
+  end;
+end;
+
+procedure TBindingGroup.CommitEdit;
+var
+  LBinding: TBinding;
+begin
+  if FEditing then
+  begin
+    for LBinding in FBindings do
+    begin
+      LBinding.CommitEdit();
+    end;
+
+    SetEditing(False);
   end;
 end;
 
@@ -852,22 +900,20 @@ begin
   end;
   inherited;
   FBindings := TBindingCollection.Create(Self);
+  FItems := TList<TObject>.Create();
 end;
 
 destructor TBindingGroup.Destroy;
 begin
   FBindings.Free();
+  FItems.Free();
   inherited;
 end;
 
-procedure TBindingGroup.EndEdit;
-var
-  LBinding: TBinding;
+procedure TBindingGroup.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
 begin
-  for LBinding in FBindings do
-  begin
-    LBinding.EndEdit();
-  end;
+  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
 function TBindingGroup.GetBindingForTarget(ATarget: TObject): TBinding;
@@ -892,6 +938,11 @@ begin
   end;
 end;
 
+function TBindingGroup.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
 procedure TBindingGroup.DefineProperties(Filer: TFiler);
 begin
   inherited;
@@ -907,6 +958,65 @@ end;
 procedure TBindingGroup.SetBindings(const Value: TBindingCollection);
 begin
   FBindings.Assign(Value);
+end;
+
+procedure TBindingGroup.SetEditing(const Value: Boolean);
+begin
+  FEditing := Value;
+  DoPropertyChanged('Editing');
+end;
+
+function TBindingGroup.TryGetValue(AItem: TObject; APropertyName: string;
+  out AValue: TValue): Boolean;
+var
+  LBinding: TBinding;
+begin
+  Result := False;
+
+  for LBinding in FBindings do
+  begin
+    if (LBinding.Source = AItem)
+      and SameText(LBinding.SourcePropertyName, APropertyName) then
+    begin
+      AValue := LBinding.SourceProperty.GetValue(AItem);
+      Result := True;
+      Break;
+    end;
+  end;
+end;
+
+procedure TBindingGroup.UpdateSources;
+var
+  LBinding: TBinding;
+begin
+  if Validate() then
+  begin
+    for LBinding in FBindings do
+    begin
+      LBinding.UpdateSource();
+    end;
+  end;
+end;
+
+procedure TBindingGroup.UpdateTargets;
+var
+  LBinding: TBinding;
+begin
+  for LBinding in FBindings do
+  begin
+    LBinding.UpdateTarget();
+  end;
+end;
+
+function TBindingGroup.Validate: Boolean;
+var
+  LBinding: TBinding;
+begin
+  Result := True;
+  for LBinding in FBindings do
+  begin
+    Result := Result and LBinding.Validate();
+  end;
 end;
 
 procedure TBindingGroup.WriteBindings(AWriter: TWriter);

@@ -197,7 +197,7 @@ begin
     if Assigned(Item) and (Item.InheritsFrom(LTemplate.GetTemplateDataClass)
       or IsClassCovariantTo(Item.ClassType, LTemplate.GetTemplateDataClass)) then
     begin
-      Result := LTemplate;
+      Result := LTemplate.GetItemTemplate(Item);
       Break;
     end;
   end;

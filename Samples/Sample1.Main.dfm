@@ -78,7 +78,80 @@ object MainForm: TMainForm
     Height = 21
     TabOrder = 6
   end
+  object btnEdit: TButton
+    Left = 16
+    Top = 240
+    Width = 75
+    Height = 25
+    Caption = 'Edit'
+    TabOrder = 7
+    OnClick = btnEditClick
+  end
+  object btnCancel: TButton
+    Left = 112
+    Top = 240
+    Width = 75
+    Height = 25
+    Caption = 'Cancel'
+    TabOrder = 8
+    OnClick = btnCancelClick
+  end
+  object btnSave: TButton
+    Left = 208
+    Top = 240
+    Width = 75
+    Height = 25
+    Caption = 'Save'
+    TabOrder = 9
+    OnClick = btnSaveClick
+  end
   object BindingGroup1: TBindingGroup
+    Bindings = <
+      item
+        Target = ComboBox1
+        TargetPropertyName = 'Text'
+        Source = Owner
+        SourcePropertyName = 'Font.Size'
+      end
+      item
+        Target = CheckBox1
+        TargetPropertyName = 'Checked'
+        Source = ColorBox1
+        SourcePropertyName = 'Enabled'
+      end
+      item
+        Target = ColorBox1
+        TargetPropertyName = 'Selected'
+        NotifyOnSourceUpdated = True
+        Source = Owner
+        SourcePropertyName = 'Color'
+      end
+      item
+        Target = Edit2
+        TargetPropertyName = 'Text'
+        Source = Edit1
+        SourcePropertyName = 'Text'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = btnCancel
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = btnSave
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        Target = btnEdit
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end>
     Left = 272
     Top = 152
     Bindings = <
@@ -97,6 +170,7 @@ object MainForm: TMainForm
       item
         Target = ColorBox1
         TargetPropertyName = 'Selected'
+        NotifyOnSourceUpdated = True
         Source = Owner
         SourcePropertyName = 'Color'
       end
@@ -105,6 +179,26 @@ object MainForm: TMainForm
         TargetPropertyName = 'Text'
         Source = Edit1
         SourcePropertyName = 'Text'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = btnCancel
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = btnSave
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        Target = btnEdit
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
       end>
   end
 end

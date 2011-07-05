@@ -2,23 +2,17 @@ unit DSharp.Core.Reflection.Testing;
 
 interface
 
-uses
-  Classes,
-  TestFramework;
-
 implementation
 
 uses
-//  DSharp.Collections,
+  Classes,
   DateUtils,
   DSharp.Core.Reflection,
   Generics.Collections,
   Messages,
   Rtti,
-  SysUtils;
-
-var
-  Context: TRttiContext;
+  SysUtils,
+  TestFramework;
 
 type
   TRttiTypeHelperTestCase = class(TTestCase)
@@ -111,6 +105,9 @@ type
 
     procedure TryCastEx_ValueIsObject_TypeIsBoolean_True;
   end;
+
+var
+  Context: TRttiContext;
 
 { TRttiTypeHelperTestCase }
 

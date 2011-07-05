@@ -8,7 +8,7 @@
 			<AppType>Application</AppType>
 			<FrameworkType>VCL</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-			<MainSource>CoreTests.dpr</MainSource>
+			<MainSource>Tests.dpr</MainSource>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
 			<Base>true</Base>
@@ -44,7 +44,7 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="CoreTests.dpr">
+			<DelphiCompile Include="Tests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="DSharp.Core.Reflection.Testing.pas"/>
@@ -96,7 +96,7 @@
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Source>
-						<Source Name="MainSource">CoreTests.dpr</Source>
+						<Source Name="MainSource">Tests.dpr</Source>
 					</Source>
 				</Delphi.Personality>
 				<Platforms>

@@ -1,4 +1,4 @@
-program CoreTests;
+program Tests;
 
 {$IFDEF CONSOLE_TESTRUNNER}
 {$APPTYPE CONSOLE}

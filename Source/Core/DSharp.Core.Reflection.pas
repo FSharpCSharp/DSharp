@@ -39,15 +39,20 @@ type
   TRttiTypeHelper = class helper for TRttiType
   private
     function ExtractGenericArguments: string;
+    function InheritsFrom(OtherType: PTypeInfo): Boolean;
   public
     function GetGenericArguments: TArray<TRttiType>;
     function GetGenericTypeDefinition: string;
-    function IsCovariantTo(OtherType: PTypeInfo): Boolean;
+    function IsCovariantTo(OtherClass: TClass): Boolean; overload;
+    function IsCovariantTo(OtherType: PTypeInfo): Boolean; overload;
+    function IsGenericTypeDefinition: Boolean;
     function IsGenericTypeOf(const BaseTypeName: string): Boolean;
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
   end;
 
   TValueHelper = record helper for TValue
+  private
+    class function FromFloat(ATypeInfo: PTypeInfo; AValue: Extended): TValue; static;
   public
     function IsFloat: Boolean;
     function IsNumeric: Boolean;
@@ -173,6 +178,23 @@ begin
   end;
 end;
 
+function TRttiTypeHelper.InheritsFrom(OtherType: PTypeInfo): Boolean;
+var
+  LType: TRttiType;
+begin
+  Result := Handle = OtherType;
+
+  if not Result then
+  begin
+    LType := BaseType;
+    while Assigned(LType) and not Result do
+    begin
+      Result := LType.Handle = OtherType;
+      LType := LType.BaseType;
+    end;
+  end;
+end;
+
 function TRttiTypeHelper.IsCovariantTo(OtherType: PTypeInfo): Boolean;
 var
   ctx: TRttiContext;
@@ -182,7 +204,7 @@ var
 begin
   Result := False;
   t := ctx.GetType(OtherType);
-  if Assigned(t) then
+  if Assigned(t) and IsGenericTypeDefinition then
   begin
     if SameText(GetGenericTypeDefinition, t.GetGenericTypeDefinition) then
     begin
@@ -208,7 +230,21 @@ begin
         Result := BaseType.IsCovariantTo(OtherType);
       end;
     end;
+  end
+  else
+  begin
+   Result := InheritsFrom(OtherType);
   end;
+end;
+
+function TRttiTypeHelper.IsCovariantTo(OtherClass: TClass): Boolean;
+begin
+  Result := Assigned(OtherClass) and IsCovariantTo(OtherClass.ClassInfo);
+end;
+
+function TRttiTypeHelper.IsGenericTypeDefinition: Boolean;
+begin
+  Result := Length(GetGenericArguments) > 0;
 end;
 
 function TRttiTypeHelper.IsGenericTypeOf(const BaseTypeName: string): Boolean;
@@ -242,21 +278,31 @@ end;
 
 { TValueHelper }
 
+class function TValueHelper.FromFloat(ATypeInfo: PTypeInfo;
+  AValue: Extended): TValue;
+begin
+  case GetTypeData(ATypeInfo).FloatType of
+    ftSingle: Result := TValue.From<Single>(AValue);
+    ftDouble: Result := TValue.From<Double>(AValue);
+    ftExtended: Result := TValue.From<Extended>(AValue);
+    ftComp: Result := TValue.From<Comp>(AValue);
+    ftCurr: Result := TValue.From<Currency>(AValue);
+  end;
+end;
+
 function TValueHelper.IsFloat: Boolean;
 begin
-  Result := Self.Kind = tkFloat;
+  Result := Kind = tkFloat;
 end;
 
 function TValueHelper.IsNumeric: Boolean;
-const
-  tkNumeric = [tkInteger, tkChar, tkWChar, tkEnumeration, tkFloat, tkInt64];
 begin
-  Result := Self.Kind in tkNumeric;
+  Result := Kind in [tkInteger, tkChar, tkEnumeration, tkFloat, tkWChar, tkInt64];
 end;
 
 function TValueHelper.IsString: Boolean;
 begin
-  Result := Self.Kind in [tkString, tkLString, tkWString, tkUString];
+  Result := Kind in [tkChar, tkString, tkWChar, tkLString, tkWString, tkUString];
 end;
 
 function TValueHelper.TryCastEx(ATypeInfo: PTypeInfo;
@@ -269,9 +315,14 @@ begin
       tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
       begin
         case ATypeInfo.Kind of
-          tkEnumeration:
+          tkInteger, tkEnumeration, tkChar, tkInt64:
           begin
-            TValue.Make(AsOrdinal, ATypeInfo, AResult);
+            AResult := TValue.FromOrdinal(ATypeInfo, AsOrdinal);
+            Result := True;
+          end;
+          tkFloat:
+          begin
+            AResult := TValue.FromFloat(ATypeInfo, AsOrdinal);
             Result := True;
           end;
           tkUString:
@@ -292,6 +343,14 @@ begin
       tkFloat:
       begin
         case ATypeInfo.Kind of
+          tkInteger, tkInt64:
+          begin
+            Result := Frac(AsExtended) = 0;
+            if Result then
+            begin
+              AResult := TValue.FromOrdinal(ATypeInfo, Trunc(AsExtended));
+            end;
+          end;
           tkUString:
           begin
             if TypeInfo = System.TypeInfo(TDate) then
@@ -322,9 +381,9 @@ begin
       tkUString:
       begin
         case ATypeInfo.Kind of
-          tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+          tkInteger, tkEnumeration, tkChar, tkInt64:
           begin
-            if TypeInfo = System.TypeInfo(Boolean) then
+            if ATypeInfo = System.TypeInfo(Boolean) then
             begin
               AResult := TValue.From<Boolean>(StrToBoolDef(AsString, False));
               Result := True;
@@ -333,6 +392,14 @@ begin
             begin
               AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
               Result := True;
+            end;
+          end;
+          tkWChar:
+          begin
+            Result := Length(AsString) = 1;
+            if Result then
+            begin
+              AResult := TValue.From<Char>(AsString[1]);
             end;
           end;
           tkFloat:
@@ -356,7 +423,7 @@ begin
             end
             else
             begin
-              AResult := TValue.From<Extended>(StrToFloatDef(AsString, 0));
+              AResult := TValue.FromFloat(ATypeInfo, StrToFloatDef(AsString, 0));
               Result := True;
             end;
           end;
@@ -367,7 +434,7 @@ begin
         case ATypeInfo.Kind of
           tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
           begin
-            if TypeInfo = System.TypeInfo(Boolean) then
+            if ATypeInfo = System.TypeInfo(Boolean) then
             begin
               AResult := TValue.From<Boolean>(AsObject <> nil);
               Result := True;

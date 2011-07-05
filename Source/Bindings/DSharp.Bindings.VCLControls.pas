@@ -314,6 +314,7 @@ procedure TComboBox.CMExit(var Message: TCMExit);
 begin
   inherited;
   FOnPropertyChanged.Invoke(Self, 'ItemIndex', utLostFocus);
+  FOnPropertyChanged.Invoke(Self, 'Text', utLostFocus);
 end;
 
 function TComboBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;

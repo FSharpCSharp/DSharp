@@ -79,8 +79,10 @@ type
     FTargetProperty: IPropertyPath;
     FTargetPropertyName: string;
     FTargetUpdateTrigger: TUpdateTrigger;
-    FUpdating: Boolean;
+    FUpdateCount: Integer;
     FValidationRules: TObjectList<TValidationRule>;
+    procedure BeginUpdate;
+    procedure EndUpdate;
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); virtual; abstract;
     procedure DoTargetUpdated(ASender: TObject; APropertyName: string;
@@ -239,7 +241,8 @@ function GetBindingForComponent(AComponent: TComponent): TBinding;
 implementation
 
 uses
-  DSharp.Core.DataConversion.Default;
+  DSharp.Core.DataConversion.Default,
+  Forms;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 var
@@ -255,6 +258,11 @@ begin
   if AComponent is TCollection then
   begin
     LOwner := GetUltimateOwner(TCollection(AComponent));
+  end
+  else
+  if (AComponent is TForm) or (AComponent is TFrame) or (AComponent is TDataModule) then
+  begin
+    LOwner := AComponent;
   end
   else
   begin
@@ -300,6 +308,11 @@ begin
   end;
 end;
 
+procedure TBindingBase.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+end;
+
 constructor TBindingBase.Create(Collection: TCollection);
 begin
   inherited;
@@ -331,6 +344,11 @@ begin
   begin
     FOnTargetUpdated(ASender, APropertyName, AUpdateTrigger);
   end;
+end;
+
+procedure TBindingBase.EndUpdate;
+begin
+  Dec(FUpdateCount);
 end;
 
 function TBindingBase.GetOnValidation: TEvent<TValidationEvent>;
@@ -532,17 +550,17 @@ end;
 procedure TBinding.DoSourcePropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  if not FUpdating and (FBindingMode in [bmOneWay..bmTwoWay])
+  if (FUpdateCount = 0) and (FBindingMode in [bmOneWay..bmTwoWay])
     and (AUpdateTrigger = FTargetUpdateTrigger)
     and (SameText(APropertyName, FSourceProperty.Root)) then
   begin
-    FUpdating := True;
+    BeginUpdate();
     try
       DoTargetUpdated(ASender, APropertyName, AUpdateTrigger);
 
       UpdateTarget();
     finally
-      FUpdating := False;
+      EndUpdate();
     end;
   end;
 end;
@@ -559,11 +577,11 @@ end;
 procedure TBinding.DoTargetPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  if not FUpdating and (FBindingMode in [bmTwoWay..bmOneWayToSource])
+  if (FUpdateCount = 0) and (FBindingMode in [bmTwoWay..bmOneWayToSource])
     and (AUpdateTrigger = FSourceUpdateTrigger)
     and SameText(APropertyName, FTargetProperty.Root) then
   begin
-    FUpdating := True;
+    BeginUpdate();
     try
       if Validate() then
       begin
@@ -572,7 +590,7 @@ begin
         UpdateSource();
       end;
     finally
-      FUpdating := False;
+      EndUpdate();
     end;
   end;
 end;
@@ -736,12 +754,17 @@ begin
     and Assigned(FSource) and Assigned(FSourceProperty)
     and FTargetProperty.IsReadable and FSourceProperty.IsWritable then
   begin
-    LTargetValue := FTargetProperty.GetValue(FTarget);
+    BeginUpdate();
+    try
+      LTargetValue := FTargetProperty.GetValue(FTarget);
 
-    InitConverter();
-    LSourceValue := FConverter.ConvertBack(LTargetValue);
+      InitConverter();
+      LSourceValue := FConverter.ConvertBack(LTargetValue);
 
-    FSourceProperty.SetValue(FSource, LSourceValue);
+      FSourceProperty.SetValue(FSource, LSourceValue);
+    finally
+      EndUpdate();
+    end;
   end;
 end;
 
@@ -811,7 +834,10 @@ begin
       if Result then
       begin
         InitConverter();
-        LSourceValue := FConverter.ConvertBack(LTargetValue);
+        if Assigned(FConverter) then
+        begin
+          LSourceValue := FConverter.ConvertBack(LTargetValue);
+        end;
 
         for LValidationRule in FValidationRules do
         begin

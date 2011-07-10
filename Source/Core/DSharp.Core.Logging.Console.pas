@@ -37,6 +37,7 @@ uses
   DSharp.Core.Logging,
   Rtti,
   StrUtils,
+  SysUtils,
   Windows;
 
 resourcestring
@@ -45,63 +46,56 @@ resourcestring
 
 type
   TConsoleLogging = class(TBaseLogging)
-  public
-    procedure EnterMethod(const AName: string); overload; override;
-    procedure EnterMethod(const AName: string; AClass: TClass); overload; override;
-    procedure EnterMethod(const AName: string; AInstance: TObject); overload; override;
-    procedure LeaveMethod(const AName: string); overload; override;
-    procedure LeaveMethod(const AName: string; AClass: TClass); overload; override;
-    procedure LeaveMethod(const AName: string; AInstance: TObject = nil); overload; override;
-    procedure LogMessage(const AMessage: string); override;
-    procedure LogValue(AValue: Variant; const AName: string = ''); override;
+  protected
+    procedure LogEntry(const ALogEntry: TLogEntry); override;
   end;
 
 { TConsoleLogging }
 
-procedure TConsoleLogging.EnterMethod(const AName: string);
+procedure TConsoleLogging.LogEntry(const ALogEntry: TLogEntry);
+var
+  LMessage: string;
 begin
-  Writeln(REnterMethod + AName);
-end;
+  case ALogEntry.LogKind of
+    lkEnterMethod:
+    begin
+      LMessage := REnterMethod;
+      if ALogEntry.Value.IsClass then
+        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName
+      else if ALogEntry.Value.IsObject then
+        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName;
+      LMessage := LMessage + ALogEntry.Name;
+    end;
+    lkLeaveMethod:
+    begin
+      LMessage := RLeaveMethod;
+      if ALogEntry.Value.IsClass then
+        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName
+      else if ALogEntry.Value.IsObject then
+        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName;
+      LMessage := LMessage + ALogEntry.Name;
+    end;
+    lkMessage:
+    begin
+      LMessage := ALogEntry.Name;
+    end;
+    lkException:
+    begin
+      LMessage := ALogEntry.Value.AsType<Exception>.Message;
+    end;
+    lkValue:
+    begin
+      if ALogEntry.Name <> '' then
+        LMessage := ALogEntry.Name + ': ';
+      LMessage := LMessage + ALogEntry.Value.ToString;
+    end;
+  end;
 
-procedure TConsoleLogging.EnterMethod(const AName: string; AClass: TClass);
-begin
-  Writeln(REnterMethod + AClass.ClassName + '.' + AName);
-end;
-
-procedure TConsoleLogging.EnterMethod(const AName: string; AInstance: TObject);
-begin
-  Writeln(REnterMethod + AInstance.ClassName + '.' + AName);
-end;
-
-procedure TConsoleLogging.LeaveMethod(const AName: string);
-begin
-  Writeln(RLeaveMethod + AName);
-end;
-
-procedure TConsoleLogging.LeaveMethod(const AName: string; AClass: TClass);
-begin
-  Writeln(RLeaveMethod + AClass.ClassName + '.' + AName);
-end;
-
-procedure TConsoleLogging.LeaveMethod(const AName: string; AInstance: TObject);
-begin
-  Writeln(RLeaveMethod + AInstance.ClassName + '.' + AName);
-end;
-
-procedure TConsoleLogging.LogMessage(const AMessage: string);
-begin
-  Writeln(AMessage);
-end;
-
-procedure TConsoleLogging.LogValue(AValue: Variant; const AName: string);
-begin
-  if AName <> '' then
-    Write(AName + ': ');
-  Writeln(TValue.FromVariant(AValue).ToString);
+  Writeln(LMessage);
 end;
 
 initialization
   AllocConsole;
-  LoggingRegistration.RegisterLogging(TConsoleLogging.Create);
+  RegisterLogging(TConsoleLogging.Create);
 
 end.

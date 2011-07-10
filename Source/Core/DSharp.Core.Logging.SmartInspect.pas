@@ -36,90 +36,59 @@ uses
 
 type
   TSmartInspectLogging = class abstract(TBaseLogging)
-  public
-    procedure EnterMethod(const AName: string); overload; override;
-    procedure EnterMethod(const AName: string; AClass: TClass); overload; override;
-    procedure EnterMethod(const AName: string; AInstance: TObject); overload; override;
-    procedure LeaveMethod(const AName: string); overload; override;
-    procedure LeaveMethod(const AName: string; AClass: TClass); overload; override;
-    procedure LeaveMethod(const AName: string; AInstance: TObject); overload; override;
-    procedure LogMessage(const AMessage: string); overload;
-    procedure LogValue(AValue: Variant; const AName: string = '');overload;
+  protected
+    procedure LogEntry(const ALogEntry: TLogEntry); override;
   end;
-
 
 implementation
 
 uses
+  DSharp.Core.Logging.SmartInspect.Helper,
+  Rtti,
   SiAuto,
+  SysUtils,
   Variants;
 
 { TSmartInspectLogging }
 
-procedure TSmartInspectLogging.EnterMethod(const AName: string);
+procedure TSmartInspectLogging.LogEntry(const ALogEntry: TLogEntry);
 begin
-  SiMain.EnterMethod(AName);
-end;
-
-procedure TSmartInspectLogging.EnterMethod(const AName: string;
-  AInstance: TObject);
-begin
-  SiMain.EnterMethod(AInstance, AName);
-end;
-
-procedure TSmartInspectLogging.EnterMethod(const AName: string; AClass: TClass);
-begin
-  if Assigned(AClass) then
-    SiMain.EnterMethod(AClass.ClassName + '.' + AName)
-  else
-    SiMain.EnterMethod(AName);
-end;
-
-procedure TSmartInspectLogging.LeaveMethod(const AName: string;
-  AInstance: TObject);
-begin
-  SiMain.LeaveMethod(AInstance, AName);
-end;
-
-procedure TSmartInspectLogging.LeaveMethod(const AName: string; AClass: TClass);
-begin
-  if Assigned(AClass) then
-    SiMain.LeaveMethod(AClass.ClassName + '.' + AName)
-  else
-    SiMain.LeaveMethod(AName);
-end;
-
-procedure TSmartInspectLogging.LeaveMethod(const AName: string);
-begin
-  SiMain.LeaveMethod(AName);
-end;
-
-procedure TSmartInspectLogging.LogMessage(const AMessage: string);
-begin
-  SiMain.LogMessage(AMessage);
-end;
-
-procedure TSmartInspectLogging.LogValue(AValue: Variant; const AName: string);
-begin
-  case VarType(AValue) of
-    varSmallint: SiMain.LogSmallint(AName, AValue);
-    varInteger: SiMain.LogInteger(AName, AValue);
-    varSingle: SiMain.LogSingle(AName, AValue);
-    varDouble: SiMain.LogDouble(AName, AValue);
-    varCurrency: SiMain.LogCurrency(AName, AValue);
-    varDate: SiMain.LogDateTime(AName, AValue);
-    varBoolean: SiMain.LogBoolean(AName, AValue);
-    varShortInt: SiMain.LogShortint(AName, AValue);
-    varByte: SiMain.LogByte(AName, AValue);
-    varWord: SiMain.LogWord(AName, AValue);
-    varLongWord: SiMain.LogCardinal(AName, AValue);
-    varInt64: SiMain.LogInt64(AName, AValue);
-//    varUInt64:
-    varString, varUString: SiMain.LogString(AName, AValue);
+  case ALogEntry.LogKind of
+    lkEnterMethod:
+    begin
+      if ALogEntry.Value.IsClass then
+        SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+      else if ALogEntry.Value.IsObject then
+        SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      else
+        SiMain.EnterMethod(ALogEntry.Name);
+    end;
+    lkLeaveMethod:
+    begin
+      if ALogEntry.Value.IsClass then
+        SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+      else if ALogEntry.Value.IsObject then
+        SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      else
+        SiMain.LeaveMethod(ALogEntry.Name);
+    end;
+    lkMessage:
+    begin
+       SiMain.LogMessage(ALogEntry.Name);
+    end;
+    lkException:
+    begin
+      SiMain.LogException(ALogEntry.Value.AsType<Exception>, ALogEntry.Name);
+    end;
+    lkValue:
+    begin
+      SiMain.LogValue(ALogEntry.Name, ALogEntry.Value);
+    end;
   end;
 end;
 
 initialization
-  LoggingRegistration.RegisterLogging(TSmartInspectLogging.Create);
+  Si.Enabled := True;
+  RegisterLogging(TSmartInspectLogging.Create);
 
 end.

@@ -31,112 +31,133 @@ unit DSharp.Core.Logging;
 
 interface
 
-type
-  ILogging = interface;
-
-  TGenericsLogging = record
-  private
-    FLogging: ILogging;
-  public
-    procedure LogValue<T>(AValue: T; const AName: string = '');
-  end;
-
-  ILogging = interface
-    ['{F518C1FC-9BB2-4614-AAD4-BBA64B7DE70B}']
-    procedure EnterMethod(const AName: string); overload;
-    procedure EnterMethod(const AName: string; AClass: TClass); overload;
-    procedure EnterMethod(const AName: string; AInstance: TObject); overload;
-    procedure LeaveMethod(const AName: string); overload;
-    procedure LeaveMethod(const AName: string; AClass: TClass); overload;
-    procedure LeaveMethod(const AName: string; AInstance: TObject); overload;
-    procedure LogMessage(const AMessage: string);
-    procedure LogValue(AValue: Variant; const AName: string = '');  // to keep it simple for now
-
-    function Generics: TGenericsLogging;
-  end;
-
-  ILoggingRegistration = interface
-    ['{CB9F53B0-0485-4D15-916E-D3F1ECC7B03A}']
-    procedure RegisterLogging(ALogging: ILogging);
-    procedure UnregisterLogging(ALogging: ILogging);
-  end;
-
-  TBaseLogging = class abstract(TInterfacedObject, ILogging)
-  public
-    procedure EnterMethod(const AName: string); overload; virtual; abstract;
-    procedure EnterMethod(const AName: string; AClass: TClass); overload; virtual; abstract;
-    procedure EnterMethod(const AName: string; AInstance: TObject); overload; virtual; abstract;
-    procedure LeaveMethod(const AName: string); overload; virtual; abstract;
-    procedure LeaveMethod(const AName: string; AClass: TClass); overload; virtual; abstract;
-    procedure LeaveMethod(const AName: string; AInstance: TObject); overload; virtual; abstract;
-    procedure LogMessage(const AMessage: string); virtual; abstract;
-    procedure LogValue(AValue: Variant; const AName: string = ''); virtual; abstract; // to keep it simple for now
-
-    function Generics: TGenericsLogging;
-  end;
-
-function Logging: ILogging;
-function LoggingRegistration: ILoggingRegistration;
-
-implementation
-
 uses
   DSharp.Collections,
-{$IFDEF DEBUG}
-//  DSharp.Core.Logging.Console,
-//  DSharp.Core.Logging.SmartInspect,
-{$ENDIF}
   Rtti,
   SysUtils;
 
-var
-  GLogging: ILogging;
+type
+  TLogKind = (lkEnterMethod, lkLeaveMethod, lkMessage, lkException, lkValue);
+
+  TLogEntry = record
+    LogKind: TLogKind;
+    Name: string;
+    Value: TValue;
+    constructor Create(const AName: string; const AValue: TValue;
+      const ALogKind: TLogKind);
+  end;
+
+  TBaseLogging = class abstract
+  protected
+    procedure LogEntry(const ALogEntry: TLogEntry); virtual; abstract;
+  public
+    procedure EnterMethod(const AName: string); overload;
+    procedure EnterMethod(const AClass: TClass; const AName: string); overload;
+    procedure EnterMethod(const AInstance: TObject; const AName: string); overload;
+    procedure LeaveMethod(const AName: string); overload;
+    procedure LeaveMethod(const AClass: TClass; const AName: string); overload;
+    procedure LeaveMethod(const AInstance: TObject; const AName: string); overload;
+    procedure LogException(const AException: Exception; const ATitle: string = '');
+    procedure LogMessage(const AMessage: string);
+    procedure LogValue<T>(const AName: string; const AValue: T);
+  end;
+
+function Logging: TBaseLogging;
+procedure RegisterLogging(ALogging: TBaseLogging);
+procedure UnregisterLogging(ALogging: TBaseLogging);
+
+implementation
+
+{$IFDEF DEBUG}
+uses
+//  DSharp.Core.Logging.Console,
+  DSharp.Core.Logging.SmartInspect;
+{$ENDIF}
 
 type
-  TLogging = class(TBaseLogging, ILoggingRegistration)
+  TLogging = class(TBaseLogging)
   private
-    FLoggings: TList<ILogging>;
+    FLoggings: TList<TBaseLogging>;
+  protected
+    procedure LogEntry(const ALogEntry: TLogEntry); override;
+    property Loggings: TList<TBaseLogging> read FLoggings;
   public
     constructor Create;
     destructor Destroy; override;
-
-    procedure EnterMethod(const AName: string); overload; override;
-    procedure EnterMethod(const AName: string; AClass: TClass); overload; override;
-    procedure EnterMethod(const AName: string; AInstance: TObject); overload; override;
-    procedure LeaveMethod(const AName: string); overload; override;
-    procedure LeaveMethod(const AName: string; AClass: TClass); overload; override;
-    procedure LeaveMethod(const AName: string; AInstance: TObject); overload; override;
-    procedure LogMessage(const AMessage: string); override;
-    procedure LogValue(AValue: Variant; const AName: string = ''); override;
-
-    procedure RegisterLogging(ALogging: ILogging);
-    procedure UnregisterLogging(ALogging: ILogging);
   end;
 
-function Logging: ILogging;
+var
+  GLogging: TLogging;
+
+function Logging: TBaseLogging;
 begin
-  if GLogging = nil then
+  if not Assigned(GLogging) then
     GLogging := TLogging.Create;
   Result := GLogging;
 end;
 
-function LoggingRegistration: ILoggingRegistration;
+procedure RegisterLogging(ALogging: TBaseLogging);
 begin
-  Supports(Logging(), ILoggingRegistration, Result);
+  TLogging(Logging).Loggings.Add(ALogging);
+end;
+
+procedure UnregisterLogging(ALogging: TBaseLogging);
+begin
+  TLogging(Logging).Loggings.Remove(ALogging);
 end;
 
 { TBaseLogging }
 
-function TBaseLogging.Generics: TGenericsLogging;
+procedure TBaseLogging.EnterMethod(const AName: string);
 begin
-  Result.FLogging := Self;
+  LogEntry(TLogEntry.Create(AName, TValue.Empty, lkEnterMethod));
+end;
+
+procedure TBaseLogging.EnterMethod(const AClass: TClass; const AName: string);
+begin
+  LogEntry(TLogEntry.Create(AName, TValue.From<TClass>(AClass), lkEnterMethod));
+end;
+
+procedure TBaseLogging.EnterMethod(const AInstance: TObject; const AName: string);
+begin
+  LogEntry(TLogEntry.Create(AName, TValue.From<TObject>(AInstance), lkEnterMethod));
+end;
+
+procedure TBaseLogging.LeaveMethod(const AName: string);
+begin
+  LogEntry(TLogEntry.Create(AName, TValue.Empty, lkLeaveMethod));
+end;
+
+procedure TBaseLogging.LeaveMethod(const AClass: TClass; const AName: string);
+begin
+  LogEntry(TLogEntry.Create(AName, TValue.From<TClass>(AClass), lkLeaveMethod));
+end;
+
+procedure TBaseLogging.LeaveMethod(const AInstance: TObject; const AName: string);
+begin
+  LogEntry(TLogEntry.Create(AName, TValue.From<TObject>(AInstance), lkLeaveMethod));
+end;
+
+procedure TBaseLogging.LogException(const AException: Exception; const ATitle: string);
+begin
+  LogEntry(TLogEntry.Create(ATitle, TValue.From<Exception>(AException), lkException));
+end;
+
+procedure TBaseLogging.LogMessage(const AMessage: string);
+begin
+  LogEntry(TLogEntry.Create(AMessage, TValue.Empty, lkMessage));
+end;
+
+procedure TBaseLogging.LogValue<T>(const AName: string; const AValue: T);
+begin
+  LogEntry(TLogEntry.Create(AName, TValue.From<T>(AValue), lkValue));
 end;
 
 { TLogging }
 
 constructor TLogging.Create;
 begin
-  FLoggings := TList<ILogging>.Create();
+  FLoggings := TObjectList<TBaseLogging>.Create();
 end;
 
 destructor TLogging.Destroy;
@@ -145,86 +166,28 @@ begin
   inherited;
 end;
 
-procedure TLogging.EnterMethod(const AName: string);
+procedure TLogging.LogEntry(const ALogEntry: TLogEntry);
 var
-  LLogging: ILogging;
+  LLogging: TBaseLogging;
 begin
   for LLogging in FLoggings do
-    LLogging.EnterMethod(AName);
+    LLogging.LogEntry(ALogEntry);
 end;
 
-procedure TLogging.EnterMethod(const AName: string; AClass: TClass);
-var
-  LLogging: ILogging;
+{ TLogEntry }
+
+constructor TLogEntry.Create(const AName: string; const AValue: TValue;
+  const ALogKind: TLogKind);
 begin
-  for LLogging in FLoggings do
-    LLogging.EnterMethod(AName, AClass);
+  Name := AName;
+  Value := AValue;
+  LogKind := ALogKind;
 end;
 
-procedure TLogging.EnterMethod(const AName: string; AInstance: TObject);
-var
-  LLogging: ILogging;
-begin
-  for LLogging in FLoggings do
-    LLogging.EnterMethod(AName, AInstance);
-end;
+initialization
 
-procedure TLogging.LeaveMethod(const AName: string);
-var
-  LLogging: ILogging;
-begin
-  for LLogging in FLoggings do
-    LLogging.LeaveMethod(AName);
-end;
-
-procedure TLogging.LeaveMethod(const AName: string; AClass: TClass);
-var
-  LLogging: ILogging;
-begin
-  for LLogging in FLoggings do
-    LLogging.LeaveMethod(AName, AClass);
-end;
-
-procedure TLogging.LeaveMethod(const AName: string; AInstance: TObject);
-var
-  LLogging: ILogging;
-begin
-  for LLogging in FLoggings do
-    LLogging.LeaveMethod(AName, AInstance);
-end;
-
-procedure TLogging.LogMessage(const AMessage: string);
-var
-  LLogging: ILogging;
-begin
-  for LLogging in FLoggings do
-    LLogging.LogMessage(AMessage);
-end;
-
-procedure TLogging.LogValue(AValue: Variant; const AName: string);
-var
-  LLogging: ILogging;
-begin
-  for LLogging in FLoggings do
-    LLogging.LogValue(AValue, AName);
-end;
-
-procedure TLogging.RegisterLogging(ALogging: ILogging);
-begin
-  FLoggings.Add(ALogging);
-end;
-
-procedure TLogging.UnregisterLogging(ALogging: ILogging);
-begin
-  FLoggings.Remove(ALogging);
-end;
-
-{ TGenericsLogging }
-
-procedure TGenericsLogging.LogValue<T>(AValue: T; const AName: string);
-begin
-  (FLogging as TBaseLogging).LogValue(TValue.From<T>(AValue).AsVariant, AName);
-end;
+finalization
+  FreeAndNil(GLogging);
 
 end.
 

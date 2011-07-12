@@ -34,6 +34,7 @@ interface
 uses
   Classes,
   DSharp.Bindings,
+  DSharp.Collections,
   DSharp.Core.PropertyChangedBase,
   DSharp.Core.Validations;
 
@@ -43,8 +44,8 @@ type
   private
     FCache: T;
     FItem: T;
-    FValidationErrors: TArray<TValidationResult>;
-    function GetValidationErrors: TArray<TValidationResult>;
+    FValidationErrors: TList<IValidationResult>;
+    function GetValidationErrors: TList<IValidationResult>;
     procedure SetItem(const Value: T);
   protected
     procedure BeginEdit;
@@ -53,13 +54,14 @@ type
 
     property Item: T read FItem write SetItem;
   public
+    constructor Create; virtual;
     destructor Destroy; override;
 
     procedure Cancel; virtual;
     procedure Save; virtual;
 
     function Validate: Boolean;
-    property ValidationErrors: TArray<TValidationResult> read GetValidationErrors;
+    property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
   end;
 
 implementation
@@ -95,8 +97,14 @@ begin
   end;
 end;
 
+constructor TEditableViewModelBase<T>.Create;
+begin
+  FValidationErrors := TList<IValidationResult>.Create();
+end;
+
 destructor TEditableViewModelBase<T>.Destroy;
 begin
+  FValidationErrors.Clear();
   FreeAndNil(FCache);
   inherited;
 end;
@@ -106,7 +114,7 @@ begin
   FreeAndNil(FCache);
 end;
 
-function TEditableViewModelBase<T>.GetValidationErrors: TArray<TValidationResult>;
+function TEditableViewModelBase<T>.GetValidationErrors: TList<IValidationResult>;
 begin
   Result := FValidationErrors;
 end;
@@ -125,7 +133,7 @@ end;
 
 function TEditableViewModelBase<T>.Validate: Boolean;
 begin
-
+  FValidationErrors.Clear;
 end;
 
 end.

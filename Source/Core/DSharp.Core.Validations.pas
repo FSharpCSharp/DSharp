@@ -63,7 +63,7 @@ type
   IValidationRule = interface
     function GetValidationStep: TValidationStep;
     procedure SetValidationStep(const AValue: TValidationStep);
-    function Validate(AValue: TValue): TValidationResult;
+    function Validate(AValue: TValue): IValidationResult;
     property ValidationStep: TValidationStep
       read GetValidationStep write SetValidationStep;
   end;
@@ -75,7 +75,7 @@ type
     function GetValidationStep: TValidationStep;
     procedure SetValidationStep(const Value: TValidationStep);
   public
-    function Validate(AValue: TValue): TValidationResult; virtual;
+    function Validate(AValue: TValue): IValidationResult; virtual;
 
     property ValidatesOnTargetUpdated: Boolean read FValidatesOnTargetUpdated
       write FValidatesOnTargetUpdated;
@@ -90,10 +90,10 @@ type
 
   IValidatable = interface
     function GetValidationErrors: TList<IValidationResult>;
-    function GetValidationRules: TList<IValidationRule>;
+//    function GetValidationRules: TList<IValidationRule>;
     function Validate: Boolean;
     property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
-    property ValidationRules: TList<IValidationRule> read GetValidationRules;
+//    property ValidationRules: TList<IValidationRule> read GetValidationRules;
   end;
 
 implementation
@@ -133,7 +133,7 @@ begin
   FValidationStep := Value;
 end;
 
-function TValidationRule.Validate(AValue: TValue): TValidationResult;
+function TValidationRule.Validate(AValue: TValue): IValidationResult;
 begin
   Result := TValidationResult.ValidResult();
 end;

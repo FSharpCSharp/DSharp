@@ -36,18 +36,37 @@ uses
   TypInfo;
 
 type
+  TObjectHelper = class helper for TObject
+  public
+    function GetProperty(const AName: string): TRttiProperty;
+    function GetType: TRttiType;
+  end;
+
+  TRttiPropertyHelper = class helper for TRttiProperty
+  public
+    function GetAttributeOfType<T: TCustomAttribute>: T;
+    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
+  end;
+
   TRttiTypeHelper = class helper for TRttiType
   private
     function ExtractGenericArguments: string;
+    function GetAsInterface: TRttiInterfaceType;
+    function GetIsInterface: Boolean;
     function InheritsFrom(OtherType: PTypeInfo): Boolean;
   public
+    function GetAttributeOfType<T: TCustomAttribute>: T;
+    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
     function GetGenericArguments: TArray<TRttiType>;
-    function GetGenericTypeDefinition: string;
+    function GetGenericTypeDefinition(const AIncludeUnitName: Boolean = True): string;
     function IsCovariantTo(OtherClass: TClass): Boolean; overload;
     function IsCovariantTo(OtherType: PTypeInfo): Boolean; overload;
     function IsGenericTypeDefinition: Boolean;
     function IsGenericTypeOf(const BaseTypeName: string): Boolean;
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
+
+    property AsInterface: TRttiInterfaceType read GetAsInterface;
+    property IsInterface: Boolean read GetIsInterface;
   end;
 
   TValueHelper = record helper for TValue
@@ -71,12 +90,14 @@ uses
   SysUtils,
   Types;
 
+var
+  Context: TRttiContext;
+
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
 var
-  LContext: TRttiContext;
   LType: TRttiType;
 begin
-  LType := LContext.GetType(ThisClass);
+  LType := Context.GetType(ThisClass);
   Result := LType.IsCovariantTo(OtherClass.ClassInfo);
 end;
 
@@ -119,6 +140,32 @@ begin
 end;
 {$ENDIF}
 
+{ TObjectHelper }
+
+function TObjectHelper.GetProperty(const AName: string): TRttiProperty;
+var
+  LType: TRttiType;
+begin
+  Result := nil;
+  if Assigned(Self) then
+  begin
+    LType := GetType;
+    if Assigned(LType) then
+    begin
+      Result := LType.GetProperty(AName);
+    end;
+  end;
+end;
+
+function TObjectHelper.GetType: TRttiType;
+begin
+  Result := nil;
+  if Assigned(Self) then
+  begin
+    Result := Context.GetType(ClassInfo);
+  end;
+end;
+
 { TRttiTypeHelper }
 
 function TRttiTypeHelper.ExtractGenericArguments: string;
@@ -136,21 +183,55 @@ begin
   end;
 end;
 
+function TRttiTypeHelper.GetAsInterface: TRttiInterfaceType;
+begin
+  Result := Self as TRttiInterfaceType;
+end;
+
+function TRttiTypeHelper.GetAttributeOfType<T>: T;
+var
+  LAttribute: TCustomAttribute;
+begin
+  Result := nil;
+  for LAttribute in GetAttributes do
+  begin
+    if LAttribute.InheritsFrom(T) then
+    begin
+      Result := T(LAttribute);
+      Break;
+    end;
+  end;end;
+
+function TRttiTypeHelper.GetAttributesOfType<T>: TArray<T>;
+var
+  LAttribute: TCustomAttribute;
+begin
+  SetLength(Result, 0);
+  for LAttribute in GetAttributes do
+  begin
+    if LAttribute.InheritsFrom(T) then
+    begin
+      SetLength(Result, Length(Result) + 1);
+      Result[High(Result)] := T(LAttribute);
+    end;
+  end;
+end;
+
 function TRttiTypeHelper.GetGenericArguments: TArray<TRttiType>;
 var
   i: Integer;
   args: TStringDynArray;
-  ctx: TRttiContext;
 begin
   args := SplitString(ExtractGenericArguments, ',');
   SetLength(Result, Length(args));
   for i := 0 to Pred(Length(args)) do
   begin
-    Result[i] := ctx.FindType(args[i]);
+    Result[i] := Context.FindType(args[i]);
   end;
 end;
 
-function TRttiTypeHelper.GetGenericTypeDefinition: string;
+function TRttiTypeHelper.GetGenericTypeDefinition(
+  const AIncludeUnitName: Boolean = True): string;
 var
   i: Integer;
   args: TStringDynArray;
@@ -168,7 +249,7 @@ begin
       args[i] := 'T' + IntToStr(Succ(i));
     end;
   end;
-  if IsPublicType then
+  if IsPublicType and AIncludeUnitName then
   begin
     Result := Copy(QualifiedName, 1, Pos('<', QualifiedName)) + MergeStrings(args, ',') + '>';
   end
@@ -176,6 +257,11 @@ begin
   begin
     Result := Copy(Name, 1, Pos('<', Name)) + MergeStrings(args, ',') + '>';
   end;
+end;
+
+function TRttiTypeHelper.GetIsInterface: Boolean;
+begin
+  Result := Self is TRttiInterfaceType;
 end;
 
 function TRttiTypeHelper.InheritsFrom(OtherType: PTypeInfo): Boolean;
@@ -197,31 +283,37 @@ end;
 
 function TRttiTypeHelper.IsCovariantTo(OtherType: PTypeInfo): Boolean;
 var
-  ctx: TRttiContext;
   t: TRttiType;
   args, otherArgs: TArray<TRttiType>;
   i: Integer;
 begin
   Result := False;
-  t := ctx.GetType(OtherType);
+  t := Context.GetType(OtherType);
   if Assigned(t) and IsGenericTypeDefinition then
   begin
-    if SameText(GetGenericTypeDefinition, t.GetGenericTypeDefinition) then
+    if SameText(GetGenericTypeDefinition, t.GetGenericTypeDefinition)
+      or SameText(GetGenericTypeDefinition(False), t.GetGenericTypeDefinition(False)) then
     begin
       Result := True;
       args := GetGenericArguments;
       otherArgs := t.GetGenericArguments;
       for i := Low(args) to High(args) do
       begin
-        // only check for class types
-        if not args[i].IsInstance or not otherArgs[i].IsInstance
-          or not args[i].AsInstance.MetaclassType.InheritsFrom(
-          otherArgs[i].AsInstance.MetaclassType) then
+        if args[i].IsInterface and args[i].IsInterface
+          and args[i].InheritsFrom(otherArgs[i].Handle) then
         begin
-          Result := False;
-          Break;
+          Continue;
         end;
-      end
+
+        if args[i].IsInstance and otherArgs[i].IsInstance
+          and args[i].InheritsFrom(otherArgs[i].Handle) then
+        begin
+          Continue;
+        end;
+
+        Result := False;
+        Break;
+      end;
     end
     else
     begin
@@ -233,7 +325,7 @@ begin
   end
   else
   begin
-   Result := InheritsFrom(OtherType);
+    Result := InheritsFrom(OtherType);
   end;
 end;
 
@@ -257,7 +349,6 @@ function TRttiTypeHelper.MakeGenericType(TypeArguments: array of PTypeInfo): TRt
 var
   i: Integer;
   args: TStringDynArray;
-  ctx: TRttiContext;
   s: string;
 begin
   if IsPublicType then
@@ -265,10 +356,10 @@ begin
     args := SplitString(ExtractGenericArguments, ',');
     for i := Low(args) to High(args) do
     begin
-      args[i] := ctx.GetType(TypeArguments[i]).QualifiedName;
+      args[i] := Context.GetType(TypeArguments[i]).QualifiedName;
     end;
     s := Copy(QualifiedName, 1, Pos('<', QualifiedName)) + MergeStrings(args, ',') + '>';
-    Result := ctx.FindType(s);
+    Result := Context.FindType(s);
   end
   else
   begin
@@ -488,6 +579,38 @@ begin
   if not Result then
   begin
     Result := TryCast(ATypeInfo, AResult);
+  end;
+end;
+
+{ TRttiPropertyHelper }
+
+function TRttiPropertyHelper.GetAttributeOfType<T>: T;
+var
+  LAttribute: TCustomAttribute;
+begin
+  Result := nil;
+  for LAttribute in GetAttributes do
+  begin
+    if LAttribute.InheritsFrom(T) then
+    begin
+      Result := T(LAttribute);
+      Break;
+    end;
+  end;
+end;
+
+function TRttiPropertyHelper.GetAttributesOfType<T>: TArray<T>;
+var
+  LAttribute: TCustomAttribute;
+begin
+  SetLength(Result, 0);
+  for LAttribute in GetAttributes do
+  begin
+    if LAttribute.InheritsFrom(T) then
+    begin
+      SetLength(Result, Length(Result) + 1);
+      Result[High(Result)] := T(LAttribute);
+    end;
   end;
 end;
 

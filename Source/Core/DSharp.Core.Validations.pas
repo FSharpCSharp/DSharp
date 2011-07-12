@@ -32,39 +32,69 @@ unit DSharp.Core.Validations;
 interface
 
 uses
+  DSharp.Collections,
   Rtti,
   SysUtils;
 
 type
   TValidationStep = (vsRawProposedValue, vsConvertedProposedValue);//, vsUpdatedValue, vsCommittedValue);
 
-  TValidationResult = record
+  IValidationResult = interface
+    function GetErrorContent: string;
+    function GetIsValid: Boolean;
+    property ErrorContent: string read GetErrorContent;
+    property IsValid: Boolean read GetIsValid;
+  end;
+
+  TValidationResult = class(TInterfacedObject, IValidationResult)
   strict private
   	FErrorContent: string;
     FIsValid: Boolean;
+  private
+    function GetErrorContent: string;
+    function GetIsValid: Boolean;
   public
     constructor Create(AIsValid: Boolean; AErrorContent: string);
     class function ValidResult: TValidationResult; static;
-    property ErrorContent: string read FErrorContent;
-    property IsValid: Boolean read FIsValid;
+    property ErrorContent: string read GetErrorContent;
+    property IsValid: Boolean read GetIsValid;
   end;
 
-  TValidationRule = class abstract
+  IValidationRule = interface
+    function GetValidationStep: TValidationStep;
+    procedure SetValidationStep(const AValue: TValidationStep);
+    function Validate(AValue: TValue): TValidationResult;
+    property ValidationStep: TValidationStep
+      read GetValidationStep write SetValidationStep;
+  end;
+
+  TValidationRule = class abstract(TInterfacedObject, IValidationRule)
   private
     FValidatesOnTargetUpdated: Boolean;
     FValidationStep: TValidationStep;
+    function GetValidationStep: TValidationStep;
+    procedure SetValidationStep(const Value: TValidationStep);
   public
     function Validate(AValue: TValue): TValidationResult; virtual;
 
     property ValidatesOnTargetUpdated: Boolean read FValidatesOnTargetUpdated
       write FValidatesOnTargetUpdated;
-    property ValidationStep: TValidationStep read FValidationStep write FValidationStep;
+    property ValidationStep: TValidationStep
+      read GetValidationStep write SetValidationStep;
   end;
 
   TValidationRuleClass = class of TValidationRule;
 
-  TValidationEvent = procedure(Sender: TObject;
-    AValidationRule: TValidationRule; AValidationResult: TValidationResult) of object;
+  TValidationEvent = procedure(Sender: TObject; AValidationRule: IValidationRule;
+    AValidationResult: IValidationResult) of object;
+
+  IValidatable = interface
+    function GetValidationErrors: TList<IValidationResult>;
+    function GetValidationRules: TList<IValidationRule>;
+    function Validate: Boolean;
+    property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
+    property ValidationRules: TList<IValidationRule> read GetValidationRules;
+  end;
 
 implementation
 
@@ -76,12 +106,32 @@ begin
   FErrorContent := AErrorContent;
 end;
 
+function TValidationResult.GetErrorContent: string;
+begin
+  Result := FErrorContent;
+end;
+
+function TValidationResult.GetIsValid: Boolean;
+begin
+  Result := FIsValid;
+end;
+
 class function TValidationResult.ValidResult: TValidationResult;
 begin
   Result := TValidationResult.Create(True, '');
 end;
 
 { TValidationRule }
+
+function TValidationRule.GetValidationStep: TValidationStep;
+begin
+  Result := FValidationStep;
+end;
+
+procedure TValidationRule.SetValidationStep(const Value: TValidationStep);
+begin
+  FValidationStep := Value;
+end;
 
 function TValidationRule.Validate(AValue: TValue): TValidationResult;
 begin

@@ -11,11 +11,13 @@ type
   private
     FCaption: string;
     FColor: TColor;
+    FDate: TDate;
     procedure SetCaption(const Value: string);
     procedure SetColor(const Value: TColor);
   public
     property Caption: string read FCaption write SetCaption;
     property Color: TColor read FColor write SetColor;
+    property Date: TDate read FDate write FDate;
   end;
 
 implementation

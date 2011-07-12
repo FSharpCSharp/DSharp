@@ -12,8 +12,22 @@ object MainForm: TMainForm
   Font.Style = []
   OldCreateOrder = False
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
+  object Label1: TLabel
+    Left = 352
+    Top = 179
+    Width = 37
+    Height = 13
+    Caption = 'Label1'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
   object Edit1: TEdit
     Left = 16
     Top = 16
@@ -105,6 +119,26 @@ object MainForm: TMainForm
     TabOrder = 9
     OnClick = btnSaveClick
   end
+  object Button2: TButton
+    Left = 384
+    Top = 240
+    Width = 75
+    Height = 25
+    Caption = 'Validate'
+    TabOrder = 10
+    OnClick = Button2Click
+  end
+  object DateTimePicker1: TDateTimePicker
+    Left = 352
+    Top = 152
+    Width = 121
+    Height = 21
+    Date = 40735.997751724540000000
+    Time = 40735.997751724540000000
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 11
+  end
   object BindingGroup1: TBindingGroup
     Bindings = <
       item
@@ -147,12 +181,41 @@ object MainForm: TMainForm
         SourcePropertyName = 'Editing'
       end
       item
+        BindingMode = bmOneWay
         Target = btnEdit
         TargetPropertyName = 'Enabled'
         Source = BindingGroup1
         SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = ColorBox1
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = ComboBox1
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = Edit3
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = CheckBox1
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
       end>
-    Left = 272
+    Left = 200
     Top = 152
     Bindings = <
       item
@@ -195,7 +258,36 @@ object MainForm: TMainForm
         SourcePropertyName = 'Editing'
       end
       item
+        BindingMode = bmOneWay
         Target = btnEdit
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = ColorBox1
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = ComboBox1
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = Edit3
+        TargetPropertyName = 'Enabled'
+        Source = BindingGroup1
+        SourcePropertyName = 'Editing'
+      end
+      item
+        BindingMode = bmOneWay
+        Target = CheckBox1
         TargetPropertyName = 'Enabled'
         Source = BindingGroup1
         SourcePropertyName = 'Editing'

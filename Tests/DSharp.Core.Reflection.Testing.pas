@@ -2,13 +2,19 @@ unit DSharp.Core.Reflection.Testing;
 
 interface
 
+uses
+  Generics.Collections,
+  DSharp.Collections;
+
+type
+  TInvokableList = TList<IInvokable>;
+
 implementation
 
 uses
   Classes,
   DateUtils,
   DSharp.Core.Reflection,
-  Generics.Collections,
   Messages,
   Rtti,
   SysUtils,
@@ -33,6 +39,17 @@ type
     procedure IsCovariantTo_TListOfTObject_TObject_True;
     procedure IsCovariantTo_TListOfTObject_TPersistent_False;
     procedure IsCovariantTo_TListOfTObject_TListOfTObject_True;
+
+    procedure IsCovariantTo_TListOfIInterface_TObject_True;
+    procedure IsCovariantTo_TListOfIInterface_TPersistent_False;
+    procedure IsCovariantTo_TListOfIInterface_TListOfIInterface_True;
+    procedure IsCovariantTo_TListOfIInvokable_TListOfIInterface_True;
+
+    procedure IsCovariantTo_IListOfTObject_IInterface_True;
+    procedure IsCovariantTo_IListOfTObject_IInvokable_False;
+    procedure IsCovariantTo_IListOfTObject_IListOfTObject_True;
+    procedure IsCovariantTo_IListOfTObject_IEnumerableOfTObject_True;
+    procedure IsCovariantTo_IListOfTPersistent_IListOfTObject_True;
 
     procedure IsCovariantTo_TListOfTPersistent_TListOfTObject_True;
 
@@ -152,6 +169,51 @@ end;
 procedure TRttiTypeHelperTestCase.GetGenericTypeDefinition_TObjectListOfTObject;
 begin
   CheckEquals('TObjectList<T>', Context.GetType(TObjectList<TObject>).GetGenericTypeDefinition);
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_IListOfTObject_IEnumerableOfTObject_True;
+begin
+  CheckTrue(Context.GetType(TypeInfo(IList<TObject>)).IsCovariantTo(TypeInfo(IEnumerable<TObject>)));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_IListOfTObject_IInterface_True;
+begin
+  CheckTrue(Context.GetType(TypeInfo(IList<TObject>)).IsCovariantTo(TypeInfo(IInterface)));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_IListOfTObject_IInvokable_False;
+begin
+  CheckFalse(Context.GetType(TypeInfo(IList<TObject>)).IsCovariantTo(TypeInfo(IInvokable)));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_IListOfTObject_IListOfTObject_True;
+begin
+  CheckTrue(Context.GetType(TypeInfo(IList<TObject>)).IsCovariantTo(TypeInfo(IList<TObject>)));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_IListOfTPersistent_IListOfTObject_True;
+begin
+  CheckTrue(Context.GetType(TypeInfo(IList<TPersistent>)).IsCovariantTo(TypeInfo(IList<TObject>)));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_TListOfIInterface_TListOfIInterface_True;
+begin
+  CheckTrue(Context.GetType(TList<IInterface>).IsCovariantTo(TList<IInterface>));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_TListOfIInterface_TObject_True;
+begin
+  CheckTrue(Context.GetType(TList<IInterface>).IsCovariantTo(TObject));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_TListOfIInterface_TPersistent_False;
+begin
+  CheckFalse(Context.GetType(TList<IInterface>).IsCovariantTo(TPersistent));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_TListOfIInvokable_TListOfIInterface_True;
+begin
+  CheckTrue(Context.GetType(TInvokableList).IsCovariantTo(TList<IInterface>));
 end;
 
 procedure TRttiTypeHelperTestCase.IsCovariantTo_TListOfTObject_TListOfTObject_True;

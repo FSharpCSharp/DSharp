@@ -104,7 +104,8 @@ uses
   DSharp.Core.Reflection,
   RTLConsts,
   StrUtils,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 var
   Context: TRttiContext;
@@ -117,20 +118,23 @@ var
   LName: string;
   LPos: Integer;
 begin
-  FIndex := -1;
-  LName := AName;
-  LPos := Pos('[', LName);
-  if LPos > 0 then
+  if AName <> '' then
   begin
-    FIndex := StrToIntDef(Copy(LName, Succ(LPos),
-      Pos(']', LName) - Succ(LPos)), -1);
-    LName := LeftStr(LName, Pred(LPos));
-  end;
+    FIndex := -1;
+    LName := AName;
+    LPos := Pos('[', LName);
+    if LPos > 0 then
+    begin
+      FIndex := StrToIntDef(Copy(LName, Succ(LPos),
+        Pos(']', LName) - Succ(LPos)), -1);
+      LName := LeftStr(LName, Pred(LPos));
+    end;
 
-  FProperty := AType.GetProperty(LName);
-  if not Assigned(FProperty) then
-  begin
-    FMethod := AType.GetMethod(LName);
+    FProperty := AType.GetProperty(LName);
+    if not Assigned(FProperty) then
+    begin
+      FMethod := AType.GetMethod(LName);
+    end;
   end;
 end;
 
@@ -192,6 +196,11 @@ begin
         if IsClassCovariantTo(LList.ClassType, TList<TObject>) and (TList<TObject>(LList).Count > 0) then
         begin
           LObject := TList<TObject>(LList).Items[FIndex];
+        end else
+        // hack to put the interface into an object reference to carry it around
+        if IsClassCovariantTo(LList.ClassType, TList<IInterface>) and (TList<TObject>(LList).Count > 0) then
+        begin
+          LObject := TList<IInterface>(LList).Items[FIndex] as TObject;
         end;
         if Assigned(LObject) then
         begin

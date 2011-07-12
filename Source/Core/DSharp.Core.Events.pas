@@ -102,6 +102,7 @@ type
   TEvent<T> = record
   strict private
     FEventHandler: IEventHandler<T>;
+    FInitialized: Boolean;
     function GetInvoke: T;
     function GetEventHandler: IEventHandler<T>;
   public
@@ -452,27 +453,46 @@ begin
 end;
 
 procedure TEvent<T>.Add(AEvent: T);
+var
+  LEventHandler: IEventHandler<T>;
 begin
-  EventHandler.Add(AEvent);
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    LEventHandler.Add(AEvent);
+  end;
 end;
 
 function TEvent<T>.GetEventHandler: IEventHandler<T>;
 begin
-  if not Assigned(FEventHandler) then
+  if not FInitialized then
   begin
     FEventHandler := TEventHandler<T>.Create(nil);
+    FInitialized := True;
   end;
   Result := FEventHandler;
 end;
 
 function TEvent<T>.GetInvoke: T;
+var
+  LEventHandler: IEventHandler<T>;
 begin
-  Result := EventHandler.Invoke;
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    Result := LEventHandler.Invoke;
+  end;
 end;
 
 procedure TEvent<T>.Remove(AEvent: T);
+var
+  LEventHandler: IEventHandler<T>;
 begin
-  EventHandler.Remove(AEvent);
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    LEventHandler.Remove(AEvent);
+  end;
 end;
 
 class operator TEvent<T>.Implicit(const AValue: TEvent<T>): T;

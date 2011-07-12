@@ -65,7 +65,12 @@ type
 
   TBindingGroup = class;
 
-  TBindingBase = class abstract(TCollectionItem)
+  TBindingBase = class abstract(TCollectionItem,
+    INotifyPropertyChanged, IValidatable)
+  private
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   protected
     FActive: Boolean;
     FBindingGroup: TBindingGroup;
@@ -73,6 +78,7 @@ type
     FConverter: IValueConverter;
     FNotificationHandler: TNotificationHandler<TBindingBase>;
     FNotifyOnTargetUpdated: Boolean;
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     FOnTargetUpdated: TPropertyChangedEvent;
     FOnValidation: TEvent<TValidationEvent>;
     FTarget: TObject;
@@ -80,14 +86,24 @@ type
     FTargetPropertyName: string;
     FTargetUpdateTrigger: TUpdateTrigger;
     FUpdateCount: Integer;
-    FValidationRules: TObjectList<TValidationRule>;
+    FValidationErrors: TList<IValidationResult>;
+    FValidationRules: TList<IValidationRule>;
     procedure BeginUpdate;
     procedure EndUpdate;
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); virtual; abstract;
     procedure DoTargetUpdated(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger);
+    procedure DoValidationErrorsChanged(Sender: TObject;
+      Item: IValidationResult; Action: TCollectionChangedAction);
+    procedure DoValidationRulesChanged(Sender: TObject;
+      Item: IValidationRule; Action: TCollectionChangedAction);
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetOnValidation: TEvent<TValidationEvent>;
+    function GetValidationErrors: TList<IValidationResult>;
+    function GetValidationRules: TList<IValidationRule>;
     procedure InitConverter; virtual; abstract;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
     procedure SetActive(const Value: Boolean);
@@ -110,9 +126,12 @@ type
     property Active: Boolean read FActive write SetActive;
     property BindingGroup: TBindingGroup read FBindingGroup write SetBindingGroup;
     property Converter: IValueConverter read FConverter write SetConverter;
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent>
+      read GetOnPropertyChanged;
     property OnValidation: TEvent<TValidationEvent> read GetOnValidation;
     property TargetProperty: IPropertyPath read FTargetProperty;
-    property ValidationRules: TObjectList<TValidationRule> read FValidationRules;
+    property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
+    property ValidationRules: TList<IValidationRule> read GetValidationRules;
   published
     property BindingMode: TBindingMode read FBindingMode write FBindingMode
       default BindingModeDefault;
@@ -194,18 +213,27 @@ type
   TBindingCollection = class(TOwnedCollection<TBinding>)
   end;
 
-  TBindingGroup = class(TComponent, INotifyPropertyChanged)
+  TBindingGroup = class(TComponent, INotifyPropertyChanged, IValidatable)
   private
     FBindings: TBindingCollection;
     FEditing: Boolean;
     FItems: TList<TObject>;
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FValidationErrors: TList<IValidationResult>;
+    FValidationRules: TList<IValidationRule>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure SetBindings(const Value: TBindingCollection);
     procedure SetEditing(const Value: Boolean);
+    function GetItems: TList<TObject>;
+    function GetValidationErrors: TList<IValidationResult>;
+    function GetValidationRules: TList<IValidationRule>;
   protected
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure DoValidationErrorsChanged(Sender: TObject;
+      Item: IValidationResult; Action: TCollectionChangedAction);
+    procedure DoValidationRulesChanged(Sender: TObject;
+      Item: IValidationRule; Action: TCollectionChangedAction);
     procedure DefineProperties(Filer: TFiler); override;
     procedure ReadBindings(AReader: TReader);
     procedure WriteBindings(AWriter: TWriter);
@@ -226,11 +254,11 @@ type
 
     property Editing: Boolean read FEditing;
 
-    // not used yet
-    //property Items: TList<TObject> read FItems;
+    property Items: TList<TObject> read GetItems;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent>
       read GetOnPropertyChanged;
-
+    property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
+    property ValidationRules: TList<IValidationRule> read GetValidationRules;
   published
     property Bindings: TBindingCollection read FBindings write SetBindings;
   end;
@@ -318,7 +346,10 @@ begin
   inherited;
 
   FNotificationHandler := TNotificationHandler<TBindingBase>.Create(Self, Notification);
-  FValidationRules := TObjectList<TValidationRule>.Create();
+  FValidationErrors := TList<IValidationResult>.Create();
+  FValidationErrors.OnCollectionChanged.Add(DoValidationErrorsChanged);
+  FValidationRules := TList<IValidationRule>.Create();
+  FValidationRules.OnCollectionChanged.Add(DoValidationRulesChanged);
 
   FBindingMode := BindingModeDefault;
 
@@ -332,9 +363,18 @@ begin
   SetTarget(nil);
 
   FNotificationHandler.Free();
+  FValidationErrors.OnCollectionChanged.Remove(DoValidationErrorsChanged);
+  FValidationErrors.Free();
+  FValidationRules.OnCollectionChanged.Remove(DoValidationRulesChanged);
   FValidationRules.Free();
 
   inherited;
+end;
+
+procedure TBindingBase.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
 procedure TBindingBase.DoTargetUpdated(ASender: TObject; APropertyName: string;
@@ -346,14 +386,42 @@ begin
   end;
 end;
 
+procedure TBindingBase.DoValidationErrorsChanged(Sender: TObject;
+  Item: IValidationResult; Action: TCollectionChangedAction);
+begin
+  DoPropertyChanged('ValidationErrors');
+end;
+
+procedure TBindingBase.DoValidationRulesChanged(Sender: TObject;
+  Item: IValidationRule; Action: TCollectionChangedAction);
+begin
+  Validate();
+  DoPropertyChanged('ValidationRules');
+end;
+
 procedure TBindingBase.EndUpdate;
 begin
   Dec(FUpdateCount);
 end;
 
+function TBindingBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
 function TBindingBase.GetOnValidation: TEvent<TValidationEvent>;
 begin
   Result := FOnValidation.EventHandler;
+end;
+
+function TBindingBase.GetValidationErrors: TList<IValidationResult>;
+begin
+  Result := FValidationErrors;
+end;
+
+function TBindingBase.GetValidationRules: TList<IValidationRule>;
+begin
+  Result := FValidationRules;
 end;
 
 procedure TBindingBase.Notification(AComponent: TComponent;
@@ -367,6 +435,14 @@ begin
       Free;
     end;
   end;
+end;
+
+function TBindingBase.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
 end;
 
 procedure TBindingBase.SetActive(const Value: Boolean);
@@ -456,6 +532,16 @@ begin
       UpdateTarget();
     end;
   end;
+end;
+
+function TBindingBase._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function TBindingBase._Release: Integer;
+begin
+  Result := -1;
 end;
 
 { TBinding }
@@ -807,10 +893,12 @@ function TBinding.Validate: Boolean;
 var
   LSourceValue: TValue;
   LTargetValue: TValue;
-  LValidationResult: TValidationResult;
-  LValidationRule: TValidationRule;
+  LValidationResult: IValidationResult;
+  LValidationRule: IValidationRule;
 begin
+  FValidationErrors.Clear();
   Result := True;
+
   LValidationRule := nil;
   try
     if Assigned(FTarget) and Assigned(FTargetProperty) and FTargetProperty.IsReadable then
@@ -825,6 +913,7 @@ begin
           FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
           if not LValidationResult.IsValid then
           begin
+            FValidationErrors.Add(LValidationResult);
             Result := False;
             Break;
           end;
@@ -847,6 +936,7 @@ begin
             FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
             if not LValidationResult.IsValid then
             begin
+              FValidationErrors.Add(LValidationResult);
               Result := False;
               Break;
             end;
@@ -927,12 +1017,20 @@ begin
   inherited;
   FBindings := TBindingCollection.Create(Self);
   FItems := TList<TObject>.Create();
+  FValidationErrors := TList<IValidationResult>.Create();
+  FValidationErrors.OnCollectionChanged.Add(DoValidationErrorsChanged);
+  FValidationRules := TList<IValidationRule>.Create();
+  FValidationRules.OnCollectionChanged.Add(DoValidationRulesChanged);
 end;
 
 destructor TBindingGroup.Destroy;
 begin
   FBindings.Free();
   FItems.Free();
+  FValidationErrors.OnCollectionChanged.Remove(DoValidationErrorsChanged);
+  FValidationErrors.Free();
+  FValidationRules.OnCollectionChanged.Remove(DoValidationRulesChanged);
+  FValidationRules.Free();
   inherited;
 end;
 
@@ -940,6 +1038,19 @@ procedure TBindingGroup.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
   FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+end;
+
+procedure TBindingGroup.DoValidationErrorsChanged(Sender: TObject;
+  Item: IValidationResult; Action: TCollectionChangedAction);
+begin
+  DoPropertyChanged('ValidationErrors');
+end;
+
+procedure TBindingGroup.DoValidationRulesChanged(Sender: TObject;
+  Item: IValidationRule; Action: TCollectionChangedAction);
+begin
+  Validate();
+  DoPropertyChanged('ValidationRules');
 end;
 
 function TBindingGroup.GetBindingForTarget(ATarget: TObject): TBinding;
@@ -964,9 +1075,37 @@ begin
   end;
 end;
 
+function TBindingGroup.GetItems: TList<TObject>;
+var
+  LBinding: TBinding;
+begin
+  // TODO: trigger this when bindings change
+  FItems.Clear();
+
+  for LBinding in FBindings do
+  begin
+    if Assigned(LBinding.Source) and not FItems.Contains(LBinding.Source) then
+    begin
+      FItems.Add(LBinding.Source);
+    end;
+  end;
+
+  Result := FItems;
+end;
+
 function TBindingGroup.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   Result := FOnPropertyChanged.EventHandler;
+end;
+
+function TBindingGroup.GetValidationErrors: TList<IValidationResult>;
+begin
+  Result := FValidationErrors;
+end;
+
+function TBindingGroup.GetValidationRules: TList<IValidationRule>;
+begin
+  Result := FValidationRules;
 end;
 
 procedure TBindingGroup.DefineProperties(Filer: TFiler);
@@ -1037,11 +1176,27 @@ end;
 function TBindingGroup.Validate: Boolean;
 var
   LBinding: TBinding;
+  LValidationResult: IValidationResult;
+  LValidationRule: IValidationRule;
 begin
+  FValidationErrors.Clear();
   Result := True;
+
+  for LValidationRule in FValidationRules do
+  begin
+    LValidationResult := LValidationRule.Validate(Self);
+    if not LValidationResult.IsValid then
+    begin
+      FValidationErrors.Add(LValidationResult);
+      Result := False;
+    end;
+  end;
+
   for LBinding in FBindings do
   begin
     Result := Result and LBinding.Validate();
+
+    FValidationErrors.AddRange(LBinding.ValidationErrors.ToArray);
   end;
 end;
 

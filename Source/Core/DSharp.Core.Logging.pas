@@ -190,4 +190,3 @@ finalization
   FreeAndNil(GLogging);
 
 end.
-

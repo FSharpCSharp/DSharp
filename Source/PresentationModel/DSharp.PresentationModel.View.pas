@@ -27,50 +27,61 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ElementConvention;
+unit DSharp.PresentationModel.View;
 
 interface
 
 uses
   Classes,
   DSharp.Bindings,
-  SysUtils;
+  DSharp.Bindings.VCLControls,
+  DSharp.ComponentModel.Composition;
 
 type
-  TBindingType = (btProperty, btEvent);
+  [InheritedExport]
+  IControl = interface
+    ['{B2F5ACD3-B7CB-4F4B-B7EF-F71A7092E785}']
+  end;
 
-  TElementConvention = class;
-
-  TApplyBindingProc = reference to procedure(AViewModel: TObject;
-    APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
-    AConvention: TElementConvention);
-
-  TElementConvention = class
-  private
-    FApplyBinding: TApplyBindingProc;
-    FEventName: string;
-    FPropertyName: string;
+  TFrame = class(DSharp.Bindings.VCLControls.TFrame, IControl)
+  protected
+    FRefCount: Integer;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; override; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
-    constructor Create(APropertyName: string; AEventName: string);
-
-    property ApplyBinding: TApplyBindingProc
-      read FApplyBinding write FApplyBinding;
-    property EventName: string read FEventName;
-    property PropertyName: string read FPropertyName;
+    constructor Create; reintroduce; overload; virtual;
   end;
 
 implementation
 
-uses
-  DSharp.PresentationModel.ConventionManager;
+{ TFrame }
 
-{ TElementConvention }
-
-constructor TElementConvention.Create(APropertyName, AEventName: string);
+constructor TFrame.Create;
 begin
-  FApplyBinding := ConventionManager.SetBinding;
-  FPropertyName := APropertyName;
-  FEventName := AEventName;
+  inherited Create(nil);
+end;
+
+function TFrame.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TFrame._AddRef: Integer;
+begin
+  Inc(FRefCount);
+  Result := FRefCount;
+end;
+
+function TFrame._Release: Integer;
+begin
+  Dec(FRefCount);
+  Result := FRefCount;
+  if Result = 0 then
+    Destroy;
 end;
 
 end.

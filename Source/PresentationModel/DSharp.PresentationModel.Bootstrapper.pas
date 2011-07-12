@@ -27,50 +27,58 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ElementConvention;
+unit DSharp.PresentationModel.Bootstrapper;
 
 interface
 
 uses
-  Classes,
-  DSharp.Bindings,
-  SysUtils;
+  DSharp.ComponentModel.Composition.Container,
+  DSharp.PresentationModel.ViewModelBinder,
+  DSharp.PresentationModel.WindowManager,
+  Rtti;
 
 type
-  TBindingType = (btProperty, btEvent);
-
-  TElementConvention = class;
-
-  TApplyBindingProc = reference to procedure(AViewModel: TObject;
-    APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
-    AConvention: TElementConvention);
-
-  TElementConvention = class
+  TBootstrapper<T: class> = class
   private
-    FApplyBinding: TApplyBindingProc;
-    FEventName: string;
-    FPropertyName: string;
+    FContainer: TCompositionContainer;
+    FViewModel: T;
+    FWindowManager: IWindowManager;
+  protected
+    function GetInstance(AService: TRttiType; AKey: string): TValue;
+    procedure StartRuntime;
   public
-    constructor Create(APropertyName: string; AEventName: string);
-
-    property ApplyBinding: TApplyBindingProc
-      read FApplyBinding write FApplyBinding;
-    property EventName: string read FEventName;
-    property PropertyName: string read FPropertyName;
+    constructor Create(AContainer: TCompositionContainer);
   end;
 
 implementation
 
 uses
-  DSharp.PresentationModel.ConventionManager;
+  DSharp.PresentationModel.Composition;
 
-{ TElementConvention }
+{ TBootstrapper<T> }
 
-constructor TElementConvention.Create(APropertyName, AEventName: string);
+constructor TBootstrapper<T>.Create(AContainer: TCompositionContainer);
 begin
-  FApplyBinding := ConventionManager.SetBinding;
-  FPropertyName := APropertyName;
-  FEventName := AEventName;
+  StartRuntime();
+
+  FContainer := AContainer;
+  FViewModel := FContainer.GetExport<T>;
+
+  FWindowManager := Composition.Get<IWindowManager>;
+
+  FWindowManager.ShowWindow(FViewModel);
+end;
+
+// TODO: Inject container into window manager?
+function TBootstrapper<T>.GetInstance(AService: TRttiType; AKey: string): TValue;
+begin
+  Result := FContainer.GetExport(AKey, AService.Handle);
+end;
+
+procedure TBootstrapper<T>.StartRuntime;
+begin
+  Composition.GetInstance := GetInstance;
 end;
 
 end.
+

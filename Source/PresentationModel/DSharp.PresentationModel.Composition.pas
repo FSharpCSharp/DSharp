@@ -27,50 +27,51 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ElementConvention;
+unit DSharp.PresentationModel.Composition;
 
 interface
 
 uses
-  Classes,
-  DSharp.Bindings,
+  Rtti,
   SysUtils;
 
 type
-  TBindingType = (btProperty, btEvent);
-
-  TElementConvention = class;
-
-  TApplyBindingProc = reference to procedure(AViewModel: TObject;
-    APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
-    AConvention: TElementConvention);
-
-  TElementConvention = class
+  Composition = record
   private
-    FApplyBinding: TApplyBindingProc;
-    FEventName: string;
-    FPropertyName: string;
+    class var FGetInstance: TFunc<TRttiType, string, TValue>;
   public
-    constructor Create(APropertyName: string; AEventName: string);
+    class function Get<T>: T; overload; static;
+    class function Get<T>(AKey: string): T; overload; static;
 
-    property ApplyBinding: TApplyBindingProc
-      read FApplyBinding write FApplyBinding;
-    property EventName: string read FEventName;
-    property PropertyName: string read FPropertyName;
+    class property GetInstance: TFunc<TRttiType, string, TValue>
+      read FGetInstance write FGetInstance;
   end;
 
 implementation
 
-uses
-  DSharp.PresentationModel.ConventionManager;
+{ Composition }
 
-{ TElementConvention }
-
-constructor TElementConvention.Create(APropertyName, AEventName: string);
+class function Composition.Get<T>: T;
 begin
-  FApplyBinding := ConventionManager.SetBinding;
-  FPropertyName := APropertyName;
-  FEventName := AEventName;
+  Result := Get<T>('');
+end;
+
+class function Composition.Get<T>(AKey: string): T;
+var
+  LContext: TRttiContext;
+  LType: TRttiType;
+  LValue: TValue;
+begin
+  LType := LContext.GetType(TypeInfo(T));
+  if Assigned(FGetInstance) then
+  begin
+    LValue := FGetInstance(LType, AKey);
+    Result := LValue.AsType<T>;
+  end
+  else
+  begin
+    Result := Default(T);
+  end;
 end;
 
 end.

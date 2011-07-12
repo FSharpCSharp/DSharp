@@ -27,50 +27,31 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ElementConvention;
+unit DSharp.PresentationModel.ViewLocator;
 
 interface
 
 uses
-  Classes,
-  DSharp.Bindings,
-  SysUtils;
+  DSharp.PresentationModel.View;
 
 type
-  TBindingType = (btProperty, btEvent);
-
-  TElementConvention = class;
-
-  TApplyBindingProc = reference to procedure(AViewModel: TObject;
-    APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
-    AConvention: TElementConvention);
-
-  TElementConvention = class
-  private
-    FApplyBinding: TApplyBindingProc;
-    FEventName: string;
-    FPropertyName: string;
+  ViewLocator = record
   public
-    constructor Create(APropertyName: string; AEventName: string);
-
-    property ApplyBinding: TApplyBindingProc
-      read FApplyBinding write FApplyBinding;
-    property EventName: string read FEventName;
-    property PropertyName: string read FPropertyName;
+    class function GetOrCreateViewType(AModelType: TClass): IControl; static;
   end;
 
 implementation
 
 uses
-  DSharp.PresentationModel.ConventionManager;
+  DSharp.PresentationModel.Composition,
+  StrUtils;
 
-{ TElementConvention }
+{ ViewLocator }
 
-constructor TElementConvention.Create(APropertyName, AEventName: string);
+class function ViewLocator.GetOrCreateViewType(AModelType: TClass): IControl;
 begin
-  FApplyBinding := ConventionManager.SetBinding;
-  FPropertyName := APropertyName;
-  FEventName := AEventName;
+  Result := Composition.Get<IControl>(
+    ReplaceText(AModelType.UnitName + '.' + AModelType.ClassName, 'Model', ''));
 end;
 
 end.

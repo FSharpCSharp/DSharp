@@ -45,8 +45,11 @@ type
 implementation
 
 uses
+  DSharp.Bindings,
+  DSharp.Core.Reflection,
   DSharp.PresentationModel.ConventionManager,
   DSharp.PresentationModel.ElementConvention,
+  DSharp.PresentationModel.Validations,
   Rtti,
   StrUtils,
   Types;
@@ -88,15 +91,17 @@ begin
     end;
 
     LPropertyName := LComponent.Name;
-    LConvention.ApplyBinding(AViewModel, LPropertyName, LComponent, btEvent);
+    LConvention.ApplyBinding(
+      AViewModel, LPropertyName, LComponent, btEvent, LConvention);
 
     LPropertyName := 'Can' + LPropertyName;
     LProperty := LType.GetProperty(LPropertyName);
     if Assigned(LProperty) then
     begin
       LConvention := TElementConvention.Create('Enabled', '');
-      LConvention.ApplyBinding(AViewModel, LPropertyName, LComponent, btProperty);
-      LConvention.Free
+      LConvention.ApplyBinding(
+        AViewModel, LPropertyName, LComponent, btProperty, LConvention);
+      LConvention.Free;
     end;
   end;
 end;
@@ -113,11 +118,30 @@ var
   LProperty: TRttiProperty;
   LPropertyType: TRttiType;
   LConvention: TElementConvention;
+
+  LAttribute: ValidationAttribute;
+  LBindingGroup: TBindingGroup;
 begin
   LType := LContext.GetType(AViewModel.ClassInfo);
 
+  // TODO: refactor quick and dirty implementation
+  LBindingGroup := FindBindingGroup(AView);
+  if not Assigned(LBindingGroup) then
+  begin
+    LBindingGroup := TBindingGroup.Create(AView);
+  end;
+  for LAttribute in LType.GetAttributesOfType<ValidationAttribute> do
+  begin
+    LBindingGroup.ValidationRules.Add(LAttribute.ValidationRuleClass.Create);
+  end;
+
   for LComponent in AView do
   begin
+    if LComponent.Name = '' then
+    begin
+      Continue;
+    end;
+
     LParts := SplitString(LComponent.Name, '_');
     LPropertyName := LParts[0];
 
@@ -143,7 +167,8 @@ begin
     end;
 
     LPropertyName := ReplaceText(LComponent.Name, '_', '.');
-    LConvention.ApplyBinding(AViewModel, LPropertyName, LComponent, btProperty);
+    LConvention.ApplyBinding(
+      AViewModel, LPropertyName, LComponent, btProperty, LConvention);
   end;
 end;
 

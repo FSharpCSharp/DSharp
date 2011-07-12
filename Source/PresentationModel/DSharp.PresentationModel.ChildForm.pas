@@ -27,50 +27,55 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ElementConvention;
+unit DSharp.PresentationModel.ChildForm;
 
 interface
 
 uses
-  Classes,
-  DSharp.Bindings,
-  SysUtils;
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, DSharp.PresentationModel.View;
 
 type
-  TBindingType = (btProperty, btEvent);
-
-  TElementConvention = class;
-
-  TApplyBindingProc = reference to procedure(AViewModel: TObject;
-    APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
-    AConvention: TElementConvention);
-
-  TElementConvention = class
+  TChildForm = class(TForm)
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
-    FApplyBinding: TApplyBindingProc;
-    FEventName: string;
-    FPropertyName: string;
+    FContent: IControl;
+  protected
+    procedure DoClose(var Action: TCloseAction); override;
+    procedure DoShow; override;
   public
-    constructor Create(APropertyName: string; AEventName: string);
-
-    property ApplyBinding: TApplyBindingProc
-      read FApplyBinding write FApplyBinding;
-    property EventName: string read FEventName;
-    property PropertyName: string read FPropertyName;
+    property Content: IControl read FContent write FContent;
   end;
 
 implementation
 
-uses
-  DSharp.PresentationModel.ConventionManager;
+{$R *.dfm}
 
-{ TElementConvention }
+{ TChildForm }
 
-constructor TElementConvention.Create(APropertyName, AEventName: string);
+procedure TChildForm.DoClose(var Action: TCloseAction);
 begin
-  FApplyBinding := ConventionManager.SetBinding;
-  FPropertyName := APropertyName;
-  FEventName := AEventName;
+  inherited;
+  (FContent as TControl).Parent := nil;
+  Action := caFree;
+end;
+
+procedure TChildForm.DoShow;
+begin
+  inherited;
+  ClientHeight := (FContent as TControl).Height;
+  ClientWidth := (FContent as TControl).Width;
+  (FContent as TControl).Parent := Self;
+
+//  FContent.BindingGroup.Validate();
+end;
+
+procedure TChildForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  if ModalResult = mrOk then
+  begin
+//    CanClose := not FContent.Validation.HasError;
+  end;
 end;
 
 end.

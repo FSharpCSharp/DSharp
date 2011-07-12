@@ -27,50 +27,29 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ElementConvention;
+unit DSharp.PresentationModel.Validations;
 
 interface
 
 uses
-  Classes,
-  DSharp.Bindings,
-  SysUtils;
+  DSharp.Core.Validations;
 
 type
-  TBindingType = (btProperty, btEvent);
-
-  TElementConvention = class;
-
-  TApplyBindingProc = reference to procedure(AViewModel: TObject;
-    APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
-    AConvention: TElementConvention);
-
-  TElementConvention = class
+  ValidationAttribute = class(TCustomAttribute)
   private
-    FApplyBinding: TApplyBindingProc;
-    FEventName: string;
-    FPropertyName: string;
+    FValidationRuleClass: TValidationRuleClass;
   public
-    constructor Create(APropertyName: string; AEventName: string);
-
-    property ApplyBinding: TApplyBindingProc
-      read FApplyBinding write FApplyBinding;
-    property EventName: string read FEventName;
-    property PropertyName: string read FPropertyName;
+    constructor Create(AValidationRuleClass: TValidationRuleClass);
+    property ValidationRuleClass: TValidationRuleClass read FValidationRuleClass;
   end;
 
 implementation
 
-uses
-  DSharp.PresentationModel.ConventionManager;
+{ ValidationAttribute }
 
-{ TElementConvention }
-
-constructor TElementConvention.Create(APropertyName, AEventName: string);
+constructor ValidationAttribute.Create(AValidationRuleClass: TValidationRuleClass);
 begin
-  FApplyBinding := ConventionManager.SetBinding;
-  FPropertyName := APropertyName;
-  FEventName := AEventName;
+  FValidationRuleClass := AValidationRuleClass;
 end;
 
 end.

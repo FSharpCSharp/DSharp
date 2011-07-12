@@ -32,8 +32,11 @@ unit DSharp.PresentationModel.ConventionManager;
 interface
 
 uses
+  Classes,
+  DSharp.Bindings,
   DSharp.PresentationModel.ElementConvention,
-  Generics.Collections;
+  Generics.Collections,
+  Rtti;
 
 type
   ConventionManager = record
@@ -45,8 +48,16 @@ type
 
     class function AddElementConvention<T: class>(APropertyName: string;
       AEventName: string): TElementConvention; static;
+    class procedure ApplyValidation(ABinding: TBinding;
+      AViewModel: TObject; APropertyName: string); static;
+    class procedure ConfigureSelectedItem(AViewModel: TObject;
+      APropertyName: string; AViewElement: TComponent;
+      ASelectedItemPropertyName: string); static;
     class function GetElementConvention(
       AElementType: TClass): TElementConvention; static;
+    class procedure SetBinding(AViewModel: TObject; APropertyName: string;
+      AViewElement: TComponent; ABindingType: TBindingType;
+      AConvention: TElementConvention); static;
   end;
 
 implementation
@@ -54,8 +65,33 @@ implementation
 uses
   ActnList,
   ComCtrls,
+  DSharp.Core.Reflection,
+  DSharp.PresentationModel.Validations,
+  DSharp.Windows.TreeViewPresenter,
   ExtCtrls,
-  StdCtrls;
+  StdCtrls,
+  StrUtils;
+
+function Singularize(const s: string): string;
+begin
+  if EndsText('ies', s) then
+    Result := LeftStr(s, Length(s) - 3) + 'y'
+  else if EndsText('s', s) then
+    Result := LeftStr(s, Length(s) - 1)
+  else
+    Result := s;
+end;
+
+function DerivePotentialSelectionNames(const AName: string): TArray<string>;
+var
+  LSingular: string;
+begin
+  LSingular := Singularize(AName);
+  Result := TArray<string>.Create(
+    'Active' + LSingular,
+    'Selected' + LSingular,
+    'Current' + LSingular);
+end;
 
 { TConventionManager }
 
@@ -64,6 +100,47 @@ class function ConventionManager.AddElementConvention<T>(APropertyName,
 begin
   Result := TElementConvention.Create(APropertyName, AEventName);
   FConventions.AddOrSetValue(T, Result);
+end;
+
+class procedure ConventionManager.ApplyValidation(ABinding: TBinding;
+  AViewModel: TObject; APropertyName: string);
+var
+  LProperty: TRttiProperty;
+  LAttribute: ValidationAttribute;
+begin
+
+  LProperty := AViewModel.GetProperty(APropertyName);
+  if Assigned(LProperty) then
+  begin
+    for LAttribute in LProperty.GetAttributesOfType<ValidationAttribute> do
+    begin
+      ABinding.ValidationRules.Add(LAttribute.ValidationRuleClass.Create);
+    end;
+  end;
+end;
+
+class procedure ConventionManager.ConfigureSelectedItem(AViewModel: TObject;
+  APropertyName: string; AViewElement: TComponent; ASelectedItemPropertyName: string);
+var
+  LBindingGroup: TBindingGroup;
+  LBinding: TBinding;
+  LProperty: TRttiProperty;
+  LPotentialName: string;
+begin
+  LBindingGroup := FindBindingGroup(AViewElement);
+
+  for LPotentialName in DerivePotentialSelectionNames(AViewElement.Name) do
+  begin
+    LProperty := AViewModel.GetProperty(LPotentialName);
+    if Assigned(LProperty) then
+    begin
+      LBinding := LBindingGroup.Bindings.Add();
+      LBinding.Source := AViewModel;
+      LBinding.SourcePropertyName := LPotentialName;
+      LBinding.Target := AViewElement;
+      LBinding.TargetPropertyName := ASelectedItemPropertyName;
+    end;
+  end;
 end;
 
 class constructor ConventionManager.Create;
@@ -83,6 +160,16 @@ begin
   AddElementConvention<TRadioButton>('Checked', 'OnClick');
   AddElementConvention<TRadioGroup>('ItemIndex', 'OnClick');
   AddElementConvention<TTrackBar>('Position', 'OnChange');
+
+  AddElementConvention<TTreeViewPresenter>('ItemsSource', 'OnSelectionChanged')
+    .ApplyBinding :=
+    procedure(AViewModel: TObject; APropertyName: string;
+      AViewElement: TComponent; ABindingType: TBindingType;
+      AConvention: TElementConvention)
+    begin
+      SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
+      ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'SelectedItem');
+    end;
 end;
 
 class destructor ConventionManager.Destroy;
@@ -98,6 +185,40 @@ begin
   begin
     Result := GetElementConvention(AElementType.ClassParent);
   end;
+end;
+
+class procedure ConventionManager.SetBinding(AViewModel: TObject;
+  APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
+  AConvention: TElementConvention);
+var
+  LBindingGroup: TBindingGroup;
+  LBinding: TBinding;
+begin
+  LBindingGroup := FindBindingGroup(AViewElement);
+  if not Assigned(LBindingGroup) then
+  begin
+    LBindingGroup := TBindingGroup.Create(AViewElement.Owner);
+  end;
+
+  LBinding := LBindingGroup.Bindings.Add();
+
+  ApplyValidation(LBinding, AViewModel, APropertyName);
+
+  LBinding.Source := AViewModel;
+  LBinding.SourcePropertyName := APropertyName;
+  LBinding.Target := AViewElement;
+
+  case ABindingType of
+    btProperty:
+    begin
+      LBinding.TargetPropertyName := AConvention.PropertyName;
+    end;
+    btEvent:
+    begin
+      LBinding.TargetPropertyName := AConvention.EventName;
+    end;
+  end;
+
 end;
 
 end.

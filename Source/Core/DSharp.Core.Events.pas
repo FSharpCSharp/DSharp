@@ -450,6 +450,7 @@ end;
 constructor TEvent<T>.Create(AEventHandler: IEventHandler<T>);
 begin
   FEventHandler := AEventHandler;
+  FInitialized := Assigned(FEventHandler);
 end;
 
 procedure TEvent<T>.Add(AEvent: T);

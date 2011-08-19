@@ -32,7 +32,8 @@ unit DSharp.Core.DataConversion;
 interface
 
 uses
-  Rtti;
+  Rtti,
+  TypInfo;
 
 type
   TValue = Rtti.TValue;
@@ -49,6 +50,16 @@ type
     function ConvertBack(Value: TValue): TValue; virtual;
   end;
 
+  ValueConversionAttribute = class(TCustomAttribute)
+  private
+    FSourceType: PTypeInfo;
+    FTargetType: PTypeInfo;
+  public
+    constructor Create(ASourceType, ATargetType: PTypeInfo);
+    property SourceType: PTypeInfo read FSourceType;
+    property TargetType: PTypeInfo read FTargetType;
+  end;
+
 implementation
 
 { TValueConverter }
@@ -61,6 +72,15 @@ end;
 function TValueConverter.ConvertBack(Value: TValue): TValue;
 begin
   Result := Value;
+end;
+
+{ ValueConversionAttribute }
+
+constructor ValueConversionAttribute.Create(ASourceType,
+  ATargetType: PTypeInfo);
+begin
+  FSourceType := ASourceType;
+  FTargetType := ATargetType;
 end;
 
 end.

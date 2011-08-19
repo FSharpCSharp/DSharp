@@ -28,6 +28,7 @@ implementation
 uses
   DSharp.Core.Properties;
 
+{$IF COMPILERVERSION < 22}{$Message Warn 'Feature in this sample is not supported in Delphi 2010'}{$IFEND}
 type
   TFoo = class
   private

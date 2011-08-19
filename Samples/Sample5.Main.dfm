@@ -55,6 +55,14 @@ object MainForm: TMainForm
       Height = 21
       TabOrder = 1
     end
+    object ComboBox1: TComboBox
+      Left = 16
+      Top = 80
+      Width = 145
+      Height = 21
+      TabOrder = 2
+      Text = 'ComboBox1'
+    end
   end
   object Button1: TButton
     Left = 199
@@ -74,13 +82,22 @@ object MainForm: TMainForm
     TabOrder = 3
     OnClick = Button2Click
   end
+  object Button3: TButton
+    Left = 439
+    Top = 8
+    Width = 107
+    Height = 25
+    Caption = 'Select first'
+    TabOrder = 4
+    OnClick = Button3Click
+  end
   object BindingGroup1: TBindingGroup
     Left = 272
     Top = 152
     Bindings = <
       item
         Target = ListBox1
-        TargetPropertyName = 'ItemsSource'
+        TargetPropertyName = 'View.ItemsSource'
         Source = Owner
         SourcePropertyName = 'Contacts'
       end
@@ -88,7 +105,7 @@ object MainForm: TMainForm
         Target = Panel1
         TargetPropertyName = 'BindingSource'
         Source = ListBox1
-        SourcePropertyName = 'CurrentItem'
+        SourcePropertyName = 'View.CurrentItem'
       end
       item
         Target = Edit1
@@ -101,6 +118,12 @@ object MainForm: TMainForm
         TargetPropertyName = 'Text'
         Source = Panel1
         SourcePropertyName = 'BindingSource.Lastname'
+      end
+      item
+        Target = ComboBox1
+        TargetPropertyName = 'View.ItemsSource'
+        Source = Owner
+        SourcePropertyName = 'Contacts'
       end>
   end
 end

@@ -34,7 +34,8 @@ uses
 {$ELSE}
   DSharp.Collections,
 {$ENDIF}
-  DSharp.Collections.Yield;
+  DSharp.Collections.Yield,
+  Rtti;
 
 procedure Enumerate;
 var
@@ -79,6 +80,7 @@ end;
 procedure TForm1.Button1Click(Sender: TObject);
 var
   i: UInt64;
+//  i: TValue;
 begin
   Memo1.Clear();
   Memo1.Lines.BeginUpdate();
@@ -86,6 +88,7 @@ begin
     for i in Fibonacci() do
     begin
       Memo1.Lines.Add(UIntToStr(i));
+//      Memo1.Lines.Add(i.ToString);
     end;
   finally
     Memo1.Lines.EndUpdate();

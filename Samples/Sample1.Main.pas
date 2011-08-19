@@ -64,7 +64,7 @@ type
 
   TFutureDateRule = class(TValidationRule)
   public
-    function Validate(AValue: TValue): TValidationResult; override;
+    function Validate(AValue: TValue): IValidationResult; override;
   end;
 
 procedure TMainForm.BeginEdit;
@@ -168,7 +168,7 @@ end;
 
 { TFutureDateRule }
 
-function TFutureDateRule.Validate(AValue: TValue): TValidationResult;
+function TFutureDateRule.Validate(AValue: TValue): IValidationResult;
 begin
   if not AValue.IsType<TDate> then
   begin

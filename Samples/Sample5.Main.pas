@@ -19,8 +19,11 @@ type
     Label1: TLabel;
     Edit2: TEdit;
     Label2: TLabel;
+    Button3: TButton;
+    ComboBox1: TComboBox;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
   private
     { Private declarations }
     FContacts: TList<TObject>;
@@ -50,12 +53,17 @@ var
 begin
   LContact := TContact.Create('FirstName', 'LastName');
   FContacts.Add(LContact);
-  ListBox1.CurrentItem := LContact;
+  ListBox1.View.CurrentItem := LContact;
 end;
 
 procedure TMainForm.Button2Click(Sender: TObject);
 begin
-  FContacts.Remove(ListBox1.CurrentItem);
+  FContacts.Remove(ListBox1.View.CurrentItem);
+end;
+
+procedure TMainForm.Button3Click(Sender: TObject);
+begin
+  ListBox1.ItemIndex := 0;
 end;
 
 constructor TMainForm.Create(AOwner: TComponent);
@@ -65,7 +73,8 @@ begin
   FContacts.Add(TContact.Create('Jane', 'Doe'));
   FContacts.Add(TContact.Create('Baby', 'Doe'));
   inherited;
-  ListBox1.ItemTemplate := TContactTemplate.Create;
+  ListBox1.View.ItemTemplate := TContactTemplate.Create;
+  ComboBox1.View.ItemTemplate := TContactTemplate.Create;
 end;
 
 destructor TMainForm.Destroy;

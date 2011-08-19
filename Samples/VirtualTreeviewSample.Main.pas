@@ -27,6 +27,12 @@ type
     NodeValue: TLabeledEdit;
     SaveXml: TButton;
     SaveDialog: TSaveDialog;
+    TabSheet3: TTabSheet;
+    TreeView1: TTreeView;
+    LabeledEdit1: TLabeledEdit;
+    LabeledEdit2: TLabeledEdit;
+    ComboBox1: TComboBox;
+    Edit1: TEdit;
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
@@ -48,11 +54,30 @@ implementation
 {$R *.dfm}
 
 uses
+  DSharp.Collections,
   DSharp.Collections.ObservableCollection,
   DSharp.Collections.XmlDocument,
   DSharp.Core.XNode,
+  DSharp.Core.DataTemplates,
+  DSharp.Core.Reflection,
   DSharp.Windows.ColumnDefinitions.XmlDataTemplate,
   Sample5.Contact;
+
+type
+  TColumnsDataTemplate = class(TDataTemplate)
+  private
+    FColumns: array of string;
+  public
+    constructor Create(const AColumns: array of string);
+
+    function GetText(const Item: TObject;
+      const ColumnIndex: Integer): string; override;
+  end;
+
+function DataTemplate(const AColumns: array of string): IDataTemplate;
+begin
+  Result := TColumnsDataTemplate.Create(AColumns);
+end;
 
 procedure TMainForm.AddContactClick(Sender: TObject);
 var
@@ -69,16 +94,26 @@ begin
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
+var
+  xmlItems: TList<TXNode>;
 begin
   ContactsPresenter.ItemsSource := TObservableCollection<TObject>.Create();
   ContactsPresenter.ItemsSource.Add(TContact.Create('John', 'Doe'));
   ContactsPresenter.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
 
-  InventoryPresenter.ItemsSource := TObservableCollection<TObject>.Create();
-  InventoryPresenter.ItemsSource.AddRange(TArray<TObject>(
-    XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]')));
+  xmlItems := TObservableCollection<TXNode>.Create();
+  xmlItems.AddRange(
+    XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
 
+  InventoryPresenter.ItemsSource := TList<TObject>(xmlItems);
   InventoryPresenter.ItemTemplate := TXmlDataTemplate.Create(InventoryPresenter.ColumnDefinitions);
+
+  TreeView1.ItemsSource := TList<TObject>(xmlItems);
+  TreeView1.ItemTemplate := TXmlDataTemplate.Create(nil);
+
+  ComboBox1.View.ItemsSource := ContactsPresenter.ItemsSource;
+  ComboBox1.View.ItemTemplate := DataTemplate(['Firstname']);
+  ComboBox1.View.ItemsSource.Add(TContact.Create('Baby', 'Doe'));
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -99,7 +134,7 @@ begin
 
   for LAttribute in LNode.Attributes do
   begin
-    Result := Result + ' ' + LAttribute.Name + '"' + LAttribute.Value + '"';
+    Result := Result + ' ' + LAttribute.Name + '="' + LAttribute.Value + '"';
   end;
 
   Result := Result + '>';
@@ -116,6 +151,28 @@ begin
   begin
     XMLDocument1.SaveToFile(SaveDialog.FileName);
   end;
+end;
+
+{ TColumnsDataTemplate }
+
+constructor TColumnsDataTemplate.Create(const AColumns: array of string);
+var
+  i: Integer;
+begin
+  SetLength(FColumns, Length(AColumns));
+  for i := Low(FColumns) to High(FColumns) do
+  begin
+    FColumns[i] := AColumns[i];
+  end;
+end;
+
+function TColumnsDataTemplate.GetText(const Item: TObject;
+  const ColumnIndex: Integer): string;
+begin
+  if ColumnIndex = -1 then
+    Result := Item.GetProperty(FColumns[0]).GetValue(Item).ToString
+  else
+    Result := Item.GetProperty(FColumns[ColumnIndex]).GetValue(Item).ToString;
 end;
 
 initialization

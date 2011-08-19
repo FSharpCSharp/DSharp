@@ -89,6 +89,22 @@ object MainForm: TMainForm
         TabOrder = 1
         OnClick = DeleteContactClick
       end
+      object ComboBox1: TComboBox
+        Left = 376
+        Top = 168
+        Width = 121
+        Height = 21
+        Style = csDropDownList
+        TabOrder = 5
+      end
+      object Edit1: TEdit
+        Left = 376
+        Top = 195
+        Width = 121
+        Height = 21
+        TabOrder = 6
+        Text = 'Edit1'
+      end
     end
     object TabSheet2: TTabSheet
       Caption = 'Inventory'
@@ -148,6 +164,44 @@ object MainForm: TMainForm
         OnClick = SaveXmlClick
       end
     end
+    object TabSheet3: TTabSheet
+      Caption = 'VCL Treeview'
+      ImageIndex = 2
+      DesignSize = (
+        530
+        246)
+      object TreeView1: TTreeView
+        Left = 16
+        Top = 16
+        Width = 329
+        Height = 217
+        Indent = 19
+        TabOrder = 0
+      end
+      object LabeledEdit1: TLabeledEdit
+        Left = 376
+        Top = 56
+        Width = 121
+        Height = 21
+        Anchors = [akTop, akRight]
+        EditLabel.Width = 52
+        EditLabel.Height = 13
+        EditLabel.Caption = 'NodeName'
+        ReadOnly = True
+        TabOrder = 1
+      end
+      object LabeledEdit2: TLabeledEdit
+        Left = 376
+        Top = 112
+        Width = 121
+        Height = 21
+        Anchors = [akTop, akRight]
+        EditLabel.Width = 51
+        EditLabel.Height = 13
+        EditLabel.Caption = 'NodeValue'
+        TabOrder = 2
+      end
+    end
   end
   object ContactsPresenter: TTreeViewPresenter
     ColumnDefinitions = <
@@ -203,6 +257,24 @@ object MainForm: TMainForm
         TargetPropertyName = 'Enabled'
         Source = ContactsPresenter
         SourcePropertyName = 'CurrentItem'
+      end
+      item
+        Target = LabeledEdit1
+        TargetPropertyName = 'Text'
+        Source = TreeView1
+        SourcePropertyName = 'CurrentItem.Name'
+      end
+      item
+        Target = LabeledEdit2
+        TargetPropertyName = 'Text'
+        Source = TreeView1
+        SourcePropertyName = 'CurrentItem.Value'
+      end
+      item
+        Target = Edit1
+        TargetPropertyName = 'Text'
+        Source = ComboBox1
+        SourcePropertyName = 'Text'
       end>
   end
   object InventoryPresenter: TTreeViewPresenter

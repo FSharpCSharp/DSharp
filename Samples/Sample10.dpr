@@ -1,6 +1,7 @@
 program Sample10;
 
 {$APPTYPE CONSOLE}
+//{$STRONGLINKTYPES ON}
 
 uses
   Sample10.Main,

@@ -31,7 +31,9 @@ var
 begin
   LItem := Item as TContact;
   case ColumnIndex of
-    0: Result := LItem.Lastname + ', ' + LItem.Firstname;
+    -1: Result := LItem.Lastname + ', ' + LItem.Firstname;
+    0: Result := LItem.Lastname;
+    1: Result := LItem.Firstname;
   end;
 end;
 

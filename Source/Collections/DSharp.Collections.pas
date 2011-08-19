@@ -34,20 +34,30 @@ interface
 uses
   Classes,
   DSharp.Core.Events,
-  Generics.Defaults;
+  Generics.Defaults,
+  Rtti;
 
 type
   TCollectionChangedAction = (caAdd, caRemove, caReplace, caMove);
   TCollectionChangedEvent<T> = procedure(Sender: TObject; Item: T;
     Action: TCollectionChangedAction) of object;
 
-  IEnumerator<T> = interface
-    function GetCurrent: T;
+  IEnumerator = interface
+    function GetCurrent: TValue;
     function MoveNext: Boolean;
+    property Current: TValue read GetCurrent;
+  end;
+
+  IEnumerator<T> = interface(IEnumerator)
+    function GetCurrent: T;
     property Current: T read GetCurrent;
   end;
 
-  IEnumerable<T> = interface
+  IEnumerable = interface
+    function GetEnumerator: IEnumerator;
+  end;
+
+  IEnumerable<T> = interface(IEnumerable)
     function GetEnumerator: IEnumerator<T>;
   end;
 
@@ -79,17 +89,35 @@ type
     property Items[Index: NativeInt]: T read GetItem write SetItem; default;
   end;
 
-  TEnumerator<T> = class(TInterfacedObject, IEnumerator<T>)
+  TEnumerator = class(TInterfacedObject, IEnumerator)
+  private
+    function GetCurrentBase: TValue; virtual;
+    function IEnumerator.GetCurrent = GetCurrentBase;
+  public
+    function MoveNext: Boolean; virtual;
+    property Current: TValue read GetCurrentBase;
+  end;
+
+  TEnumerator<T> = class(TEnumerator, IEnumerator<T>)
+  private
+    function GetCurrentBase: TValue; override;
   protected
     function GetCurrent: T; virtual;
   public
-    function MoveNext: Boolean; virtual;
     property Current: T read GetCurrent;
   end;
 
-  TEnumerable<T> = class(TInterfacedObject, IEnumerable<T>)
+  TEnumerable = class(TInterfacedObject, IEnumerable)
+  private
+    function GetEnumeratorBase: IEnumerator; virtual;
+    function IEnumerable.GetEnumerator = GetEnumeratorBase;
+  end;
+
+  TEnumerable<T> = class(TEnumerable, IEnumerable<T>, IEnumerable)
+  private
+    function GetEnumeratorBase: IEnumerator; override;
   public
-    function GetEnumerator: IEnumerator<T>; virtual;
+    function GetEnumerator: IEnumerator<T>; reintroduce; virtual;
   end;
 
   TList<T> = class(TEnumerable<T>, IList<T>)
@@ -165,6 +193,18 @@ uses
   RTLConsts,
   SysUtils;
 
+{ TEnumerator }
+
+function TEnumerator.GetCurrentBase: TValue;
+begin
+  Result := TValue.Empty;
+end;
+
+function TEnumerator.MoveNext: Boolean;
+begin
+  Result := False;
+end;
+
 { TEnumerator<T> }
 
 function TEnumerator<T>.GetCurrent: T;
@@ -172,9 +212,16 @@ begin
   Result := Default(T);
 end;
 
-function TEnumerator<T>.MoveNext: Boolean;
+function TEnumerator<T>.GetCurrentBase: TValue;
 begin
-  Result := False;
+  Result := TValue.From<T>(GetCurrent());
+end;
+
+{ TEnumerable }
+
+function TEnumerable.GetEnumeratorBase: IEnumerator;
+begin
+  Result := TEnumerator.Create();
 end;
 
 { TEnumerable<T> }
@@ -182,6 +229,11 @@ end;
 function TEnumerable<T>.GetEnumerator: IEnumerator<T>;
 begin
   Result := TEnumerator<T>.Create();
+end;
+
+function TEnumerable<T>.GetEnumeratorBase: IEnumerator;
+begin
+  Result := GetEnumerator();
 end;
 
 { TList<T> }

@@ -37,7 +37,12 @@ uses
   SysUtils;
 
 type
-  TValidationStep = (vsRawProposedValue, vsConvertedProposedValue);//, vsUpdatedValue, vsCommittedValue);
+  TValidationStep = (
+    vsRawProposedValue,
+    vsConvertedProposedValue,
+    vsUpdatedValue,
+    vsCommittedValue
+  );
 
   IValidationResult = interface
     function GetErrorContent: string;
@@ -75,6 +80,7 @@ type
     function GetValidationStep: TValidationStep;
     procedure SetValidationStep(const Value: TValidationStep);
   public
+    constructor Create; virtual;
     function Validate(AValue: TValue): IValidationResult; virtual;
 
     property ValidatesOnTargetUpdated: Boolean read FValidatesOnTargetUpdated
@@ -90,10 +96,16 @@ type
 
   IValidatable = interface
     function GetValidationErrors: TList<IValidationResult>;
-//    function GetValidationRules: TList<IValidationRule>;
     function Validate: Boolean;
     property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
-//    property ValidationRules: TList<IValidationRule> read GetValidationRules;
+  end;
+
+  IDataErrorInfo = interface
+    ['{E8216DF2-CFF7-4C61-9A82-20AAB177D204}']
+    function GetError: string;
+    function GetItem(const AName: string): string;
+    property Error: string read GetError;
+    property Item[const AName: string]: string read GetItem; default;
   end;
 
 implementation
@@ -122,6 +134,11 @@ begin
 end;
 
 { TValidationRule }
+
+constructor TValidationRule.Create;
+begin
+
+end;
 
 function TValidationRule.GetValidationStep: TValidationStep;
 begin

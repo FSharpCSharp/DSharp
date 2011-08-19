@@ -235,6 +235,7 @@ type
     procedure DoValidationRulesChanged(Sender: TObject;
       Item: IValidationRule; Action: TCollectionChangedAction);
     procedure DefineProperties(Filer: TFiler); override;
+    procedure Loaded; override;
     procedure ReadBindings(AReader: TReader);
     procedure WriteBindings(AWriter: TWriter);
   public
@@ -252,23 +253,24 @@ type
     procedure UpdateTargets;
     function Validate: Boolean;
 
+    property Bindings: TBindingCollection read FBindings write SetBindings;
     property Editing: Boolean read FEditing;
-
     property Items: TList<TObject> read GetItems;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent>
       read GetOnPropertyChanged;
     property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
     property ValidationRules: TList<IValidationRule> read GetValidationRules;
-  published
-    property Bindings: TBindingCollection read FBindings write SetBindings;
   end;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
-function GetBindingForComponent(AComponent: TComponent): TBinding;
+function GetBindingForComponent(AComponent: TPersistent): TBinding;
+procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
 
 implementation
 
 uses
+  DSharp.Core.Logging,
   DSharp.Core.DataConversion.Default,
   Forms;
 
@@ -309,7 +311,7 @@ begin
   end
 end;
 
-function GetBindingForComponent(AComponent: TComponent): TBinding;
+function GetBindingForComponent(AComponent: TPersistent): TBinding;
 var
   LBindingGroup: TBindingGroup;
 begin
@@ -318,6 +320,19 @@ begin
   if Assigned(LBindingGroup) then
   begin
     Result := LBindingGroup.GetBindingForTarget(AComponent);
+  end;
+end;
+
+procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+var
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  if Supports(AObject, INotifyPropertyChanged, LNotifyPropertyChanged) then
+  begin
+    LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+    LPropertyChanged.Invoke(ASender, APropertyName, AUpdateTrigger);
   end;
 end;
 
@@ -353,8 +368,11 @@ begin
 
   FBindingMode := BindingModeDefault;
 
-  FActive := Assigned(Collection) and not (csDesigning in TBindingGroup(TBindingCollection(
-    Collection).Owner).ComponentState);
+  if Assigned(Collection) then
+  begin
+    FBindingGroup := TBindingGroup(Collection.Owner);
+    FActive := Assigned(FBindingGroup) and not (csDesigning in FBindingGroup.ComponentState);
+  end;
 end;
 
 destructor TBindingBase.Destroy;
@@ -432,7 +450,10 @@ begin
     if AComponent = FTarget then
     begin
       FTarget := nil;
-      Free;
+      if not Assigned(FBindingGroup) then
+      begin
+        Free;
+      end;
     end;
   end;
 end;
@@ -722,7 +743,10 @@ begin
     if AComponent = FSource then
     begin
       FSource := nil;
-      Free;
+      if not Assigned(FBindingGroup) then
+      begin
+        Free;
+      end;
     end;
   end;
 end;
@@ -860,32 +884,38 @@ var
   LTargetValue: TValue;
   LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
-  if FActive
+  if FActive and (not Assigned(FBindingGroup)
+    or not (csLoading in FBindingGroup.ComponentState))
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
     and FTargetProperty.IsWritable and FSourceProperty.IsReadable then
   begin
-    LSourceValue := FSourceProperty.GetValue(FSource);
+    BeginUpdate();
+    try
+      LSourceValue := FSourceProperty.GetValue(FSource);
 
-    if Assigned(FSourceCollectionChanged) then
-    begin
-      LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
-      LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
+      if Assigned(FSourceCollectionChanged) then
+      begin
+        LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+        LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
+      end;
+
+      FSourceCollectionChanged := nil;
+
+      if LSourceValue.IsObject and Supports(LSourceValue.AsObject,
+        INotifyCollectionChanged, FSourceCollectionChanged) then
+      begin
+        LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+        LSourceCollectionChanged.Add(DoSourceCollectionChanged);
+      end;
+
+      InitConverter();
+      LTargetValue := FConverter.Convert(LSourceValue);
+
+      FTargetProperty.SetValue(FTarget, LTargetValue);
+    finally
+      EndUpdate();
     end;
-
-    FSourceCollectionChanged := nil;
-
-    if LSourceValue.IsObject and Supports(LSourceValue.AsObject,
-      INotifyCollectionChanged, FSourceCollectionChanged) then
-    begin
-      LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
-      LSourceCollectionChanged.Add(DoSourceCollectionChanged);
-    end;
-
-    InitConverter();
-    LTargetValue := FConverter.Convert(LSourceValue);
-
-    FTargetProperty.SetValue(FTarget, LTargetValue);
   end;
 end;
 
@@ -1108,6 +1138,21 @@ begin
   Result := FValidationRules;
 end;
 
+procedure TBindingGroup.Loaded;
+var
+  LBinding: TBinding;
+begin
+  inherited;
+
+  for LBinding in FBindings do
+  begin
+    if LBinding.Active then
+    begin
+      LBinding.UpdateTarget;
+    end;
+  end;
+end;
+
 procedure TBindingGroup.DefineProperties(Filer: TFiler);
 begin
   inherited;
@@ -1184,11 +1229,14 @@ begin
 
   for LValidationRule in FValidationRules do
   begin
-    LValidationResult := LValidationRule.Validate(Self);
-    if not LValidationResult.IsValid then
+    if LValidationRule.ValidationStep in [vsRawProposedValue, vsConvertedProposedValue] then
     begin
-      FValidationErrors.Add(LValidationResult);
-      Result := False;
+      LValidationResult := LValidationRule.Validate(Self);
+      if not LValidationResult.IsValid then
+      begin
+        FValidationErrors.Add(LValidationResult);
+        Result := False;
+      end;
     end;
   end;
 

@@ -145,7 +145,7 @@ var
 begin
   if SupportedClasses.ContainsKey(AComponent.ClassType) then
   begin
-    Result := AComponent.ClassType
+    Result := AComponent.ClassType;
   end
   else
   begin

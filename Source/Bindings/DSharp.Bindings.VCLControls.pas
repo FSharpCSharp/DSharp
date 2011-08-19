@@ -38,6 +38,7 @@ uses
   Controls,
   DSharp.Bindings,
   DSharp.Bindings.Collections,
+  DSharp.Bindings.CollectionView.Adapters,
   DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.DataTemplates.Default,
@@ -71,20 +72,25 @@ type
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
-  TComboBox = class(StdCtrls.TComboBox, INotifyPropertyChanged)
+  TComboBox = class(StdCtrls.TComboBox, INotifyPropertyChanged, ICollectionView)
   private
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FView: TCollectionViewStringsAdapter;
     procedure CMExit(var Message: TCMExit); message CM_EXIT;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetText: TCaption;
     procedure SetText(const Value: TCaption);
   protected
     procedure Change; override;
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure Select; override;
-
     procedure SetItemIndex(const Value: Integer); override;
   public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    property View: TCollectionViewStringsAdapter read FView implements ICollectionView;
   published
     property Text: TCaption read GetText write SetText;
   end;
@@ -160,11 +166,29 @@ type
 
   TListBox = class(StdCtrls.TListBox, INotifyPropertyChanged, ICollectionView)
   private
+    FView: TCollectionViewStringsAdapter;
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+  protected
+    procedure CMChanged(var Message: TCMChanged); message CM_CHANGED;
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure SetItemIndex(const Value: Integer); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    property View: TCollectionViewStringsAdapter read FView implements ICollectionView;
+  end;
+
+  TListView = class(ComCtrls.TListView, INotifyPropertyChanged, ICollectionView)
+  private
     FFilter: TPredicate<TObject>;
     FItemsSource: TList<TObject>;
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure CNNotify(var Message: TWMNotifyLV); message CN_NOTIFY;
     procedure DoCurrentItemPropertyChanged(Sender: TObject;
       PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
     function GetCurrentItem: TObject;
@@ -177,14 +201,13 @@ type
     procedure SetFilter(const Value: TPredicate<TObject>);
     procedure SetItemsSource(const Value: TList<TObject>);
     procedure SetItemTemplate(const Value: IDataTemplate);
-
     procedure UpdateItems(AClearItems: Boolean = False);
   protected
-    procedure Click; override;
-    procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
-      Action: TCollectionChangedAction);
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure Edit(const Item: TLVItem); override;
+    procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
+      Action: TCollectionChangedAction);
   public
     constructor Create(AOwner: TComponent); override;
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
@@ -260,6 +283,42 @@ type
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
+  TTreeView = class(ComCtrls.TTreeView, INotifyPropertyChanged, ICollectionView)
+  private
+    FFilter: TPredicate<TObject>;
+    FItemsSource: TList<TObject>;
+    FItemTemplate: IDataTemplate;
+    FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure CNNotify(var Message: TWMNotifyTV); message CN_NOTIFY;
+    procedure DoCurrentItemPropertyChanged(Sender: TObject;
+      PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    function GetCurrentItem: TObject;
+    function GetFilter: TPredicate<TObject>;
+    function GetItemsSource: TList<TObject>;
+    function GetItemTemplate: IDataTemplate;
+    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    procedure SetCurrentItem(const Value: TObject);
+    procedure SetFilter(const Value: TPredicate<TObject>);
+    procedure SetItemsSource(const Value: TList<TObject>);
+    procedure SetItemTemplate(const Value: IDataTemplate);
+    procedure UpdateItems(AClearItems: Boolean = False);
+  protected
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
+      Action: TCollectionChangedAction);
+  public
+    constructor Create(AOwner: TComponent); override;
+    property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
+    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
+    property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
+    property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
+    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read FOnCollectionChanged;
+  end;
+
 implementation
 
 { TCheckBox }
@@ -307,14 +366,32 @@ end;
 procedure TComboBox.Change;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Text', utPropertyChanged);
+  DoPropertyChanged('Text');
 end;
 
 procedure TComboBox.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'ItemIndex', utLostFocus);
-  FOnPropertyChanged.Invoke(Self, 'Text', utLostFocus);
+  DoPropertyChanged('ItemIndex', utLostFocus);
+  DoPropertyChanged('Text', utLostFocus);
+end;
+
+constructor TComboBox.Create(AOwner: TComponent);
+begin
+  inherited;
+  FView := TCollectionViewStringsAdapter.Create(Self, Items);
+end;
+
+destructor TComboBox.Destroy;
+begin
+  FView.Free();
+  inherited;
+end;
+
+procedure TComboBox.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
 function TComboBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
@@ -330,13 +407,13 @@ end;
 procedure TComboBox.Select;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'ItemIndex', utPropertyChanged);
+  DoPropertyChanged('ItemIndex');
 end;
 
 procedure TComboBox.SetItemIndex(const Value: Integer);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'ItemIndex', utPropertyChanged);
+  DoPropertyChanged('ItemIndex');
 end;
 
 procedure TComboBox.SetText(const Value: TCaption);
@@ -468,52 +545,49 @@ end;
 
 { TListBox }
 
-procedure TListBox.Click;
+constructor TListBox.Create(AOwner: TComponent);
+begin
+  inherited;
+  FView := TCollectionViewStringsAdapter.Create(Self, Items);
+end;
+
+destructor TListBox.Destroy;
+begin
+  FView.Free();
+  inherited;
+end;
+
+procedure TListBox.CMChanged(var Message: TCMChanged);
 var
   LItem: TObject;
   LNotifyPropertyChanged: INotifyPropertyChanged;
   LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
+  inherited;
+
   // multiselect not supported yet
-
-  LItem := CurrentItem;
+  if FView.ItemIndex <> ItemIndex then
   begin
-    if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+    LItem := FView.CurrentItem;
     begin
-      LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-      LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
+      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      begin
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Remove(FView.DoCurrentItemPropertyChanged);
+      end;
     end;
-  end;
 
-  inherited;
-  DoPropertyChanged('CurrentItem');
-  DoPropertyChanged('ItemIndex');
-
-  LItem := CurrentItem;
-  begin
-    if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+    FView.ItemIndex := ItemIndex;
+    LItem := FView.CurrentItem;
     begin
-      LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-      LPropertyChanged.Add(DoCurrentItemPropertyChanged);
+      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      begin
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Add(FView.DoCurrentItemPropertyChanged);
+      end;
     end;
-  end;
-end;
 
-constructor TListBox.Create(AOwner: TComponent);
-begin
-  inherited;
-  FOnCollectionChanged.Add(OnSourceCollectionChanged);
-end;
-
-procedure TListBox.DoCurrentItemPropertyChanged(Sender: TObject;
-  PropertyName: string; UpdateTrigger: TUpdateTrigger);
-var
-  LIndex: Integer;
-begin
-  LIndex := ItemIndex;
-  if (LIndex > -1) and Assigned(FItemTemplate) then
-  begin
-    Items[LIndex] := FItemTemplate.GetText(Items.Objects[LIndex], 0);
+    DoPropertyChanged('View');
   end;
 end;
 
@@ -523,11 +597,115 @@ begin
   FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
-function TListBox.GetCurrentItem: TObject;
+function TListBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
+procedure TListBox.SetItemIndex(const Value: Integer);
+begin
+  inherited;
+  Changed;
+end;
+
+{ TListView }
+
+procedure TListView.CNNotify(var Message: TWMNotifyLV);
+var
+  LListItem: TListItem;
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  inherited;
+  case Message.NMHdr.code of
+    LVN_ITEMCHANGED:
+    begin
+      if {$IF COMPILERVERSION > 21}not Reading and{$IFEND} (Message.NMListView.uChanged = LVIF_STATE) then
+      begin
+        if (Message.NMListView.uOldState and LVIS_SELECTED <> 0)
+          and (Message.NMListView.uNewState and LVIS_SELECTED = 0) then
+        begin
+          LListItem := Items[Message.NMListView.iItem];
+          begin
+            if Supports(LListItem.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
+            begin
+              LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+              LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
+            end;
+          end;
+
+          DoPropertyChanged('CurrentItem');
+          DoPropertyChanged('ItemIndex');
+        end else
+        if (Message.NMListView.uOldState and LVIS_SELECTED = 0)
+          and (Message.NMListView.uNewState and LVIS_SELECTED <> 0) then
+        begin
+          LListItem := Items[Message.NMListView.iItem];
+          begin
+            if Supports(LListItem.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
+            begin
+              LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+              LPropertyChanged.Add(DoCurrentItemPropertyChanged);
+            end;
+          end;
+
+          DoPropertyChanged('CurrentItem');
+          DoPropertyChanged('ItemIndex');
+        end;
+      end;
+    end;
+  end;
+end;
+
+constructor TListView.Create(AOwner: TComponent);
+begin
+  inherited;
+  FOnCollectionChanged.Add(OnSourceCollectionChanged);
+end;
+
+procedure TListView.DoCurrentItemPropertyChanged(Sender: TObject;
+  PropertyName: string; UpdateTrigger: TUpdateTrigger);
+var
+  i: Integer;
+  LIndex: Integer;
+  LListItem: TListItem;
+begin
+  LIndex := ItemIndex;
+  if (LIndex > -1) and Assigned(FItemTemplate) then
+  begin
+    LListItem := Items[LIndex];
+    for i := 0 to Pred(Columns.Count) do
+    begin
+      if i = 0 then
+      begin
+        LListItem.Caption := ItemTemplate.GetText(LListItem.Data, i);
+      end
+      else
+      begin
+        LListItem.SubItems[i - 1] := ItemTemplate.GetText(LListItem.Data, i);
+      end;
+    end;
+  end;
+end;
+
+procedure TListView.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+end;
+
+procedure TListView.Edit(const Item: TLVItem);
+begin
+  inherited;
+  // editing not supported yet
+//  ItemTemplate.SetText(CurrentItem, 0, Selected.Caption);
+end;
+
+function TListView.GetCurrentItem: TObject;
 begin
   if ItemIndex > -1 then
   begin
-    Result := Items.Objects[ItemIndex];
+    Result := Items[ItemIndex].Data;
   end
   else
   begin
@@ -535,17 +713,17 @@ begin
   end;
 end;
 
-function TListBox.GetFilter: TPredicate<TObject>;
+function TListView.GetFilter: TPredicate<TObject>;
 begin
   Result := FFilter;
 end;
 
-function TListBox.GetItemsSource: TList<TObject>;
+function TListView.GetItemsSource: TList<TObject>;
 begin
   Result := FItemsSource;
 end;
 
-function TListBox.GetItemTemplate: IDataTemplate;
+function TListView.GetItemTemplate: IDataTemplate;
 begin
   if not Assigned(FItemTemplate) then
   begin
@@ -554,58 +732,64 @@ begin
   Result := FItemTemplate;
 end;
 
-function TListBox.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+function TListView.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   Result := FOnCollectionChanged.EventHandler;
 end;
 
-function TListBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TListView.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   Result := FOnPropertyChanged.EventHandler;
 end;
 
-procedure TListBox.OnSourceCollectionChanged(Sender: TObject;
-  Item: TObject; Action: TCollectionChangedAction);
+procedure TListView.OnSourceCollectionChanged(Sender, Item: TObject;
+  Action: TCollectionChangedAction);
 var
   i: Integer;
 begin
+  // not fully implemented yet
   case Action of
     caAdd:
     begin
       if not Assigned(FFilter) or FFilter(Item) then
       begin
-        Items.AddObject(ItemTemplate.GetText(Item, 0), Item);
+        Items.Add.Data := Item;
       end;
     end;
     caRemove:
     begin
-      i := Items.IndexOfObject(Item);
-      if i = ItemIndex then
+      for i := 0 to Pred(Items.Count) do
       begin
-        Items.Delete(i);
-        DoPropertyChanged('CurrentItem');
-      end
-      else
-      begin
-        Items.Delete(i);
+        if Items[i].Data = Item then
+        begin
+          if i = ItemIndex then
+          begin
+            Items.Delete(i);
+            DoPropertyChanged('CurrentItem');
+          end
+          else
+          begin
+            Items.Delete(i);
+          end;
+        end;
       end;
     end;
   end;
 end;
 
-procedure TListBox.SetCurrentItem(const Value: TObject);
+procedure TListView.SetCurrentItem(const Value: TObject);
 begin
   // not implemented yet
 end;
 
-procedure TListBox.SetFilter(const Value: TPredicate<TObject>);
+procedure TListView.SetFilter(const Value: TPredicate<TObject>);
 begin
   FFilter := Value;
 
   UpdateItems(True);
 end;
 
-procedure TListBox.SetItemsSource(const Value: TList<TObject>);
+procedure TListView.SetItemsSource(const Value: TList<TObject>);
 begin
   if FItemsSource <> Value then
   begin
@@ -615,7 +799,7 @@ begin
   end;
 end;
 
-procedure TListBox.SetItemTemplate(const Value: IDataTemplate);
+procedure TListView.SetItemTemplate(const Value: IDataTemplate);
 begin
   if FItemTemplate <> Value then
   begin
@@ -625,9 +809,11 @@ begin
   end;
 end;
 
-procedure TListBox.UpdateItems(AClearItems: Boolean);
+procedure TListView.UpdateItems(AClearItems: Boolean);
 var
+  i: Integer;
   LItem: TObject;
+  LListItem: TListItem;
 begin
   if AClearItems then
   begin
@@ -640,13 +826,37 @@ begin
     begin
       if not Assigned(FFilter) or FFilter(LItem) then
       begin
+        LListItem := nil;
         if AClearItems then
         begin
-          Items.AddObject(ItemTemplate.GetText(LItem, 0), LItem);
+          LListItem := Items.Add;
+          LListItem.Data := LItem;
         end
         else
         begin
-          Items[Items.IndexOfObject(LItem)] := ItemTemplate.GetText(LItem, 0);
+          for i := 0 to Pred(Items.Count) do
+          begin
+            if Items[i].Data = LItem then
+            begin
+              LListItem := Items[i];
+              LListItem.SubItems.Clear;
+              Break;
+            end;
+          end;
+        end;
+        if Assigned(LListItem) then
+        begin
+          for i := 0 to Pred(Columns.Count) do
+          begin
+            if i = 0 then
+            begin
+              LListItem.Caption := ItemTemplate.GetText(LListItem.Data, i);
+            end
+            else
+            begin
+              LListItem.SubItems.Add(ItemTemplate.GetText(LListItem.Data, i));
+            end;
+          end;
         end;
       end;
     end;
@@ -762,6 +972,224 @@ end;
 function TTrackBar.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   Result := FOnPropertyChanged.EventHandler;
+end;
+
+{ TTreeView }
+
+procedure TTreeView.CNNotify(var Message: TWMNotifyTV);
+var
+  LTreeNode: TTreeNode;
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  inherited;
+  case Message.NMHdr.code of
+    TVN_SELCHANGEDA, TVN_SELCHANGEDW:
+    begin
+      LTreeNode := Items.GetNode(Message.NMTreeView.itemOld.hItem);
+      if Assigned(LTreeNode)
+        and Supports(LTreeNode.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      begin
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
+      end;
+
+      DoPropertyChanged('CurrentItem');
+      DoPropertyChanged('Selected');
+
+      LTreeNode := Items.GetNode(Message.NMTreeView.itemNew.hItem);
+      if Assigned(LTreeNode)
+        and Supports(LTreeNode.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      begin
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Add(DoCurrentItemPropertyChanged);
+      end;
+    end;
+  end;
+end;
+
+constructor TTreeView.Create(AOwner: TComponent);
+begin
+  inherited;
+  FOnCollectionChanged.Add(OnSourceCollectionChanged);
+end;
+
+procedure TTreeView.DoCurrentItemPropertyChanged(Sender: TObject;
+  PropertyName: string; UpdateTrigger: TUpdateTrigger);
+begin
+
+end;
+
+procedure TTreeView.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+end;
+
+function TTreeView.GetCurrentItem: TObject;
+begin
+  if SelectionCount > 0 then
+  begin
+    Result := Selections[0].Data;
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TTreeView.GetFilter: TPredicate<TObject>;
+begin
+  Result := FFilter;
+end;
+
+function TTreeView.GetItemsSource: TList<TObject>;
+begin
+  Result := FItemsSource;
+end;
+
+function TTreeView.GetItemTemplate: IDataTemplate;
+begin
+  if not Assigned(FItemTemplate) then
+  begin
+    FItemTemplate := TDefaultDataTemplate.Create();
+  end;
+  Result := FItemTemplate;
+end;
+
+function TTreeView.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+begin
+  Result := FOnCollectionChanged.EventHandler;
+end;
+
+function TTreeView.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged.EventHandler;
+end;
+
+procedure TTreeView.OnSourceCollectionChanged(Sender, Item: TObject;
+  Action: TCollectionChangedAction);
+var
+  i: Integer;
+begin
+  // not fully implemented yet
+  case Action of
+    caAdd:
+    begin
+      if not Assigned(FFilter) or FFilter(Item) then
+      begin
+        Items.AddObject(CreateNode(), '', Item);
+      end;
+    end;
+    caRemove:
+    begin
+      for i := 0 to Pred(Items.Count) do
+      begin
+        if Items[i].Data = Item then
+        begin
+          if Items[i].Selected then
+          begin
+            Items.Delete(Items[i]);
+            DoPropertyChanged('CurrentItem');
+          end
+          else
+          begin
+            Items.Delete(Items[i]);
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure TTreeView.SetCurrentItem(const Value: TObject);
+begin
+  // not implemented yet
+end;
+
+procedure TTreeView.SetFilter(const Value: TPredicate<TObject>);
+begin
+  FFilter := Value;
+
+  UpdateItems(True);
+end;
+
+procedure TTreeView.SetItemsSource(const Value: TList<TObject>);
+begin
+  if FItemsSource <> Value then
+  begin
+    FItemsSource := Value;
+
+    UpdateItems(True);
+  end;
+end;
+
+procedure TTreeView.SetItemTemplate(const Value: IDataTemplate);
+begin
+  if FItemTemplate <> Value then
+  begin
+    FItemTemplate := Value;
+
+    UpdateItems(False);
+  end;
+end;
+
+procedure TTreeView.UpdateItems(AClearItems: Boolean);
+var
+  i: Integer;
+  LItem: TObject;
+  LTreeNode: TTreeNode;
+
+  procedure CreateNodes(ANode: TTreeNode; AItemTemplate: IDataTemplate);
+  var
+    LItem: TObject;
+    LItemTemplate: IDataTemplate;
+    LTreeNode: TTreeNode;
+  begin
+    if Assigned(AItemTemplate) and (AItemTemplate.GetItemCount(ANode.Data) > 0) then
+    begin
+      for LItem in AItemTemplate.GetItems(ANode.Data) do
+      begin
+        LItemTemplate := AItemTemplate.GetItemTemplate(LItem);
+        LTreeNode := Items.AddChildObject(ANode, LItemTemplate.GetText(LItem, -1), LItem);
+        CreateNodes(LTreeNode, LItemTemplate);
+      end;
+    end;
+  end;
+
+begin
+  if AClearItems then
+  begin
+    Items.Clear;
+  end;
+
+  if Assigned(FItemsSource) then
+  begin
+    for LItem in FItemsSource do
+    begin
+      if not Assigned(FFilter) or FFilter(LItem) then
+      begin
+        if AClearItems then
+        begin
+          Items.AddChildObject(nil, ItemTemplate.GetText(LItem, -1), LItem);
+        end
+        else
+        begin
+          for i := 0 to Pred(Items.Count) do
+          begin
+            if Items[i].Data = LItem then
+            begin
+              LTreeNode := Items[i];
+              LTreeNode.Text := ItemTemplate.GetText(LItem, -1);
+              LTreeNode.DeleteChildren;
+              CreateNodes(LTreeNode, ItemTemplate);
+              Break;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
 end;
 
 end.

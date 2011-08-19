@@ -111,7 +111,7 @@ var
 begin
   DoCollectionChanged(Value, TCollectionChangedAction(Action));
 
-  if Supports(Value, INotifyPropertyChanged, LNotifyPropertyChanged) then
+  if Supports(TObject(Value), INotifyPropertyChanged, LNotifyPropertyChanged) then
   begin
     LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
     case Action of

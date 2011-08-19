@@ -33,21 +33,24 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, DSharp.PresentationModel.View;
+  Dialogs;
 
 type
   TChildForm = class(TForm)
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
-    FContent: IControl;
+    FContent: TControl;
+    procedure SetContent(const Value: TControl);
   protected
     procedure DoClose(var Action: TCloseAction); override;
     procedure DoShow; override;
   public
-    property Content: IControl read FContent write FContent;
+    property Content: TControl read FContent write SetContent;
   end;
 
 implementation
+
+uses
+  DSharp.Bindings;
 
 {$R *.dfm}
 
@@ -56,26 +59,22 @@ implementation
 procedure TChildForm.DoClose(var Action: TCloseAction);
 begin
   inherited;
-  (FContent as TControl).Parent := nil;
+  FContent.Parent := nil;
   Action := caFree;
 end;
 
 procedure TChildForm.DoShow;
 begin
   inherited;
-  ClientHeight := (FContent as TControl).Height;
-  ClientWidth := (FContent as TControl).Width;
-  (FContent as TControl).Parent := Self;
-
-//  FContent.BindingGroup.Validate();
+  ClientHeight := FContent.Height;
+  ClientWidth := FContent.Width;
+  FContent.Parent := Self;
 end;
 
-procedure TChildForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+procedure TChildForm.SetContent(const Value: TControl);
 begin
-  if ModalResult = mrOk then
-  begin
-//    CanClose := not FContent.Validation.HasError;
-  end;
+  FContent := Value;
+  InsertComponent(FContent);
 end;
 
 end.

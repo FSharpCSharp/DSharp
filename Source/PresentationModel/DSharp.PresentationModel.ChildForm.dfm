@@ -11,7 +11,6 @@ object ChildForm: TChildForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  OnCloseQuery = FormCloseQuery
   PixelsPerInch = 96
   TextHeight = 13
 end

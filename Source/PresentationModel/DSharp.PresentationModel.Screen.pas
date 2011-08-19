@@ -27,32 +27,27 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.View;
+unit DSharp.PresentationModel.Screen;
 
 interface
 
-uses
-  DSharp.Bindings.VCLControls,
-  DSharp.ComponentModel.Composition;
-
 type
-  [InheritedExport]
-  IControl = interface
-    ['{B2F5ACD3-B7CB-4F4B-B7EF-F71A7092E785}']
+  ICanClose = interface
+    ['{6307BEB0-4ABD-45DF-98F0-4105209329E9}']
+    function CanClose: Boolean;
   end;
 
-  TFrame = class(DSharp.Bindings.VCLControls.TFrame, IControl)
-  public
-    constructor Create; reintroduce; overload; virtual;
+  IClose = interface
+    ['{A85ED5FA-32B4-457A-B3DE-E6280B6DB8F9}']
+    procedure Close;
+  end;
+
+  IHaveDisplayName = interface
+    ['{AEF9C09C-B0C1-4A8C-893E-58E28D40FEB9}']
+    function GetDisplayName: string;
+    property DisplayName: string read GetDisplayName;
   end;
 
 implementation
-
-{ TFrame }
-
-constructor TFrame.Create;
-begin
-  inherited Create(nil);
-end;
 
 end.

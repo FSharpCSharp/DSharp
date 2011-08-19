@@ -218,7 +218,6 @@ begin
       LBinding.TargetPropertyName := AConvention.EventName;
     end;
   end;
-
 end;
 
 end.

@@ -34,40 +34,38 @@ interface
 uses
   Classes,
   DSharp.Bindings,
-  DSharp.Collections,
-  DSharp.Core.PropertyChangedBase,
-  DSharp.Core.Validations;
+  DSharp.PresentationModel.ViewModelBase;
 
 type
-  TEditableViewModelBase<T: TPersistent, constructor> = class(TPropertyChangedBase,
-    IEditable, IValidatable)
+  TEditAction = (eaCancel, eaSave);
+
+  TEditableViewModelBase<T: TPersistent, constructor> = class(TViewModelBase,
+    IEditable)
   private
     FCache: T;
+    FEditAction: TEditAction;
     FItem: T;
-    FValidationErrors: TList<IValidationResult>;
-    function GetValidationErrors: TList<IValidationResult>;
     procedure SetItem(const Value: T);
   protected
+    // IEditable
     procedure BeginEdit;
     procedure CancelEdit;
     procedure EndEdit;
 
+    procedure Close; override;
+
+    property EditAction: TEditAction read FEditAction write FEditAction;
     property Item: T read FItem write SetItem;
   public
-    constructor Create; virtual;
     destructor Destroy; override;
 
     procedure Cancel; virtual;
     procedure Save; virtual;
 
-    function Validate: Boolean;
-    property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
+    property Item[const AName: string]: string read GetItem; default;
   end;
 
 implementation
-
-uses
-  SysUtils;
 
 { TEditableViewModelBase<T> }
 
@@ -77,51 +75,56 @@ begin
   begin
     if not Assigned(FCache) then
     begin
-      FCache := T.Create();
+      FCache := FItem;
+      FItem := T.Create();
     end;
-    FCache.Assign(FItem);
+    FItem.Assign(FCache);
   end;
 end;
 
 procedure TEditableViewModelBase<T>.Cancel;
 begin
-  CancelEdit;
+  FEditAction := eaCancel;
 end;
 
 procedure TEditableViewModelBase<T>.CancelEdit;
 begin
   if Assigned(FCache) and Assigned(FItem) then
   begin
-    FItem.Assign(FCache);
-    FreeAndNil(FCache);
+    FItem.Free();
+    FItem := FCache;
+    FCache := nil;
   end;
 end;
 
-constructor TEditableViewModelBase<T>.Create;
+procedure TEditableViewModelBase<T>.Close;
 begin
-  FValidationErrors := TList<IValidationResult>.Create();
+  case FEditAction of
+    eaCancel: CancelEdit();
+    eaSave: EndEdit();
+  end;
 end;
 
 destructor TEditableViewModelBase<T>.Destroy;
 begin
-  FValidationErrors.Clear();
-  FreeAndNil(FCache);
+  CancelEdit();
   inherited;
 end;
 
 procedure TEditableViewModelBase<T>.EndEdit;
 begin
-  FreeAndNil(FCache);
-end;
-
-function TEditableViewModelBase<T>.GetValidationErrors: TList<IValidationResult>;
-begin
-  Result := FValidationErrors;
+  FCache.Assign(FItem);
+  FItem.Free();
+  FItem := FCache;
+  FCache := nil;
 end;
 
 procedure TEditableViewModelBase<T>.Save;
 begin
-  EndEdit();
+  if Validate then
+  begin
+    FEditAction := eaSave;
+  end;
 end;
 
 procedure TEditableViewModelBase<T>.SetItem(const Value: T);
@@ -129,11 +132,6 @@ begin
   CancelEdit();
   FItem := Value;
   BeginEdit();
-end;
-
-function TEditableViewModelBase<T>.Validate: Boolean;
-begin
-  FValidationErrors.Clear;
 end;
 
 end.

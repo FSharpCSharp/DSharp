@@ -35,7 +35,6 @@ uses
   Classes,
   Controls,
   DSharp.ComponentModel.Composition,
-  DSharp.PresentationModel.View,
   Forms;
 
 type
@@ -52,7 +51,7 @@ type
     FRunning: Boolean;
   protected
     function CreateWindow(ARootModel: TObject; AIsDialog: Boolean): TForm;
-    function EnsureWindow(AModel: TObject; AView: IControl): TForm;
+    function EnsureWindow(AModel: TObject; AView: TControl): TForm;
   public
     constructor Create;
 
@@ -65,8 +64,11 @@ implementation
 uses
   DSharp.Bindings,
   DSharp.PresentationModel.ChildForm,
+  DSharp.PresentationModel.Screen,
   DSharp.PresentationModel.ViewLocator,
-  DSharp.PresentationModel.ViewModelBinder;
+  DSharp.PresentationModel.ViewModelBinder,
+  DSharp.PresentationModel.WindowConductor,
+  SysUtils;
 
 { TWindowManager }
 
@@ -80,19 +82,23 @@ end;
 
 function TWindowManager.CreateWindow(ARootModel: TObject; AIsDialog: Boolean): TForm;
 var
-  LView: IControl;
+  LView: TControl;
   LWindow: TForm;
 begin
   LView := ViewLocator.GetOrCreateViewType(ARootModel.ClassType);
   LWindow := EnsureWindow(ARootModel, LView);
-  ViewModelBinder.Bind(ARootModel, LView as TComponent);
-  LWindow.Name := (LView as TObject).ClassName + 'Form';
-//  TBinding.Create(ARootModel, 'DisplayName', LWindow, 'Caption', bmTwoWay);
+  TWindowConductor.Create(ARootModel, LWindow);
+  ViewModelBinder.Bind(ARootModel, LView);
+
+  if Supports(ARootModel, IHaveDisplayName) then
+  begin
+    TBinding.Create(ARootModel, 'DisplayName', LWindow, 'Caption', bmOneWay);
+  end;
 
   Result := LWindow;
 end;
 
-function TWindowManager.EnsureWindow(AModel: TObject; AView: IControl): TForm;
+function TWindowManager.EnsureWindow(AModel: TObject; AView: TControl): TForm;
 var
   LForm: TChildForm;
 begin

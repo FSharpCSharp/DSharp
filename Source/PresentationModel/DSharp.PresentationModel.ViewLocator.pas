@@ -32,12 +32,12 @@ unit DSharp.PresentationModel.ViewLocator;
 interface
 
 uses
-  DSharp.PresentationModel.View;
+  Controls;
 
 type
   ViewLocator = record
   public
-    class function GetOrCreateViewType(AModelType: TClass): IControl; static;
+    class function GetOrCreateViewType(AModelType: TClass): TControl; static;
   end;
 
 implementation
@@ -48,10 +48,11 @@ uses
 
 { ViewLocator }
 
-class function ViewLocator.GetOrCreateViewType(AModelType: TClass): IControl;
+class function ViewLocator.GetOrCreateViewType(AModelType: TClass): TControl;
 begin
-  Result := Composition.Get<IControl>(
-    ReplaceText(AModelType.UnitName + '.' + AModelType.ClassName, 'Model', ''));
+  // get it as interface so container does not manage lifecycle
+  Result := Composition.Get<IInterface>(
+    ReplaceText(AModelType.UnitName + '.' + AModelType.ClassName, 'Model', '')) as TControl;
 end;
 
 end.

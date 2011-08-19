@@ -27,32 +27,74 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.View;
+unit DSharp.PresentationModel.WindowConductor;
 
 interface
 
 uses
-  DSharp.Bindings.VCLControls,
-  DSharp.ComponentModel.Composition;
+  Classes,
+  Forms;
 
 type
-  [InheritedExport]
-  IControl = interface
-    ['{B2F5ACD3-B7CB-4F4B-B7EF-F71A7092E785}']
-  end;
-
-  TFrame = class(DSharp.Bindings.VCLControls.TFrame, IControl)
+  TWindowConductor = class(TComponent)
+  private
+    FModel: TObject;
+    FView: TForm;
+    procedure Close(Sender: TObject; var CloseAction: TCloseAction);
+    procedure CloseQuery(Sender: TObject; var CanClose: Boolean);
   public
-    constructor Create; reintroduce; overload; virtual;
+    constructor Create(AModel: TObject; AView: TForm); reintroduce;
   end;
 
 implementation
 
-{ TFrame }
+uses
+  Controls,
+  DSharp.PresentationModel.Screen,
+  SysUtils;
 
-constructor TFrame.Create;
+{ TWindowConductor }
+
+procedure TWindowConductor.Close(Sender: TObject;
+  var CloseAction: TCloseAction);
+var
+  LClose: IClose;
 begin
-  inherited Create(nil);
+  if Supports(FModel, IClose, LClose) then
+  begin
+    LClose.Close();
+  end;
+end;
+
+procedure TWindowConductor.CloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  LCanClose: ICanClose;
+begin
+  if (FView.ModalResult = mrOk) and Supports(FModel, ICanClose, LCanClose) then
+  begin
+    CanClose := LCanClose.CanClose();
+  end;
+end;
+
+constructor TWindowConductor.Create(AModel: TObject; AView: TForm);
+var
+  LCanClose: ICanClose;
+  LClose: IClose;
+begin
+  inherited Create(AView);
+
+  FModel := AModel;
+  FView := AView;
+
+  if Supports(FModel, ICanClose, LCanClose) then
+  begin
+    FView.OnCloseQuery := CloseQuery;
+  end;
+
+  if Supports(FModel, IClose, LClose) then
+  begin
+    FView.OnClose := Close;
+  end;
 end;
 
 end.

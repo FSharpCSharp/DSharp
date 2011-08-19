@@ -132,8 +132,10 @@ begin
 
     FProperty := AType.GetProperty(LName);
     if not Assigned(FProperty) then
-    begin
+    try
       FMethod := AType.GetMethod(LName);
+    except
+      FMethod := nil;
     end;
   end;
 end;
@@ -321,7 +323,14 @@ begin
   Result := FProperties.Count > 0;
   for i := 0 to Pred(FProperties.Count) do
   begin
-    Result := Result and FProperties[i].IsWritable;
+    if i = Pred(FProperties.Count) then
+    begin
+      Result := Result and FProperties[i].IsWritable;
+    end
+    else
+    begin
+      Result := Result and FProperties[i].IsReadable;
+    end;
   end;
 end;
 

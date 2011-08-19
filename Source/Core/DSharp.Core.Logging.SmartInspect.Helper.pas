@@ -69,6 +69,7 @@ type
 implementation
 
 uses
+  DSharp.Core.Reflection,
   TypInfo,
   Variants;
 
@@ -92,8 +93,35 @@ begin
   case AValue.Kind of
     tkInteger:
     begin
-//      case LValue.TypeData.
-      LogInteger(ALevel, AName, AValue.AsInteger, AIncludeHex);
+      if AValue.IsInteger then
+      begin
+        LogByte(ALevel, AName, AValue.AsInteger, AIncludeHex);
+      end
+      else
+      if AValue.IsCardinal then
+      begin
+        LogCardinal(ALevel, AName, AValue.AsCardinal, AIncludeHex);
+      end
+      else
+      if AValue.IsSmallInt then
+      begin
+        LogSmallint(ALevel, AName, AValue.AsSmallInt, AIncludeHex);
+      end
+      else
+      if AValue.IsWord then
+      begin
+        LogWord(ALevel, AName, AValue.AsWord, AIncludeHex);
+      end
+      else
+      if AValue.IsShortInt then
+      begin
+        LogShortint(ALevel, AName, AValue.AsShortInt, AIncludeHex);
+      end
+      else
+      if AValue.IsByte then
+      begin
+        LogByte(ALevel, AName, AValue.AsByte, AIncludeHex);
+      end;
     end;
     tkEnumeration:
     begin

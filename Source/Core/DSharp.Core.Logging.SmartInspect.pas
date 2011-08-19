@@ -35,7 +35,7 @@ uses
   DSharp.Core.Logging;
 
 type
-  TSmartInspectLogging = class abstract(TBaseLogging)
+  TSmartInspectLogging = class(TBaseLogging)
   protected
     procedure LogEntry(const ALogEntry: TLogEntry); override;
   end;

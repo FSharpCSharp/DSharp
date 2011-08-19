@@ -868,8 +868,46 @@ begin
             end
             else
             begin
-              AResult := TValue.FromString(IntToStr(AsOrdinal));
-              Result := True;
+              if IsInt64 then
+              begin
+                AResult := TValue.FromString(IntToStr(AsInt64));
+                Result := True;
+              end else
+              if IsInteger then
+              begin
+                AResult := TValue.FromString(IntToStr(AsInteger));
+                Result := True;
+              end else
+              if IsSmallInt then
+              begin
+                AResult := TValue.FromString(IntToStr(AsSmallInt));
+                Result := True;
+              end else
+              if IsShortInt then
+              begin
+                AResult := TValue.FromString(IntToStr(AsShortInt));
+                Result := True;
+              end else
+              if IsUInt64 then
+              begin
+                AResult := TValue.FromString(UIntToStr(AsUInt64));
+                Result := True;
+              end else
+              if IsCardinal then
+              begin
+                AResult := TValue.FromString(UIntToStr(AsCardinal));
+                Result := True;
+              end else
+              if IsWord then
+              begin
+                AResult := TValue.FromString(UIntToStr(AsWord));
+                Result := True;
+              end else
+              if IsByte then
+              begin
+                AResult := TValue.FromString(UIntToStr(AsByte));
+                Result := True;
+              end;
             end;
           end;
         end;

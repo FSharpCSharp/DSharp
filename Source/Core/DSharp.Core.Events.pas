@@ -36,6 +36,7 @@ uses
   DSharp.Core.NotificationHandler,
   Generics.Collections,
   ObjAuto,
+  Rtti,
   TypInfo;
 
 type
@@ -120,6 +121,9 @@ type
 function IsValid(AObject: TObject): Boolean;
 procedure MethodReferenceToMethodPointer(const AMethodReference; var AMethodPointer);
 
+var
+  Context: TRttiContext;
+
 implementation
 
 function IsValid(AObject: TObject): Boolean;
@@ -162,7 +166,7 @@ end;
 
 procedure TEventHandler.InternalInvoke(Params: PParameters; StackSize: Integer);
 const
-  PtrSize = SizeOf(Pointer);
+  PointerSize = SizeOf(Pointer);
 var
   LMethod: TMethod;
 begin
@@ -174,8 +178,8 @@ begin
       // Put StackSize as third parameter
       MOV ECX,StackSize
       // stack address alignment
-      ADD ECX,PtrSize-1
-      AND ECX,NOT(PtrSize-1)
+      ADD ECX,PointerSize-1
+      AND ECX,NOT(PointerSize-1)
       AND ECX,$FFFF
       SUB ESP,ECX
       // Put Stack Address as second parameter
@@ -258,9 +262,9 @@ begin
   i := IndexOf(AEvent);
   if i > -1 then
   begin
-    FMethods.Delete(i)
+    FMethods.Delete(i);
   end;
-  MethodAdded(TMethod(AEvent));
+  MethodRemoved(TMethod(AEvent));
 end;
 
 procedure TEventHandler.RemoveInstanceReferences(const AInstance: TObject);
@@ -361,7 +365,6 @@ var
   LEvent: T;
   LTypeInfo: PTypeInfo;
   LTypeData: PTypeData;
-//  LContext: TRttiContext;
 //  LMethod: TRttiMethod;
 //  LParams: TArray<TRttiParameter>;
 begin
@@ -371,7 +374,7 @@ begin
   LTypeData := GetTypeData(LTypeInfo);
 
 //  Does not work right now because method references are missing RTTI
-//  LMethod := LContext.GetType(TypeInfo(TDelegate)).GetMethod('Invoke');
+//  LMethod := Context.GetType(TypeInfo(TDelegate)).GetMethod('Invoke');
 //  Assert(LMethod.MethodKind = LTypeData.MethodKind, 'MethodKind does not match');
 //  LParams := LMethod.GetParameters();
 //  Assert(Length(LParams) = LTypeData.ParamCount, 'ParamCount does not match');

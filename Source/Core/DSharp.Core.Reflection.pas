@@ -38,14 +38,51 @@ uses
 type
   TObjectHelper = class helper for TObject
   public
+    function GetFields: TArray<TRttiField>;
+    function GetField(const AName: string): TRttiField;
+    function GetMethods: TArray<TRttiMethod>;
+    function GetMethod(ACodeAddress: Pointer): TRttiMethod; overload;
+    function GetMethod(const AName: string): TRttiMethod; overload;
+    function GetProperties: TArray<TRttiProperty>;
     function GetProperty(const AName: string): TRttiProperty;
     function GetType: TRttiType;
+
+    function HasField(const AName: string): Boolean;
+    function HasMethod(const AName: string): Boolean;
+    function HasProperty(const AName: string): Boolean;
+
+    function TryGetField(const AName: string; out AField: TRttiField): Boolean;
+    function TryGetMethod(ACodeAddress: Pointer; out AMethod: TRttiMethod): Boolean; overload;
+    function TryGetMethod(const AName: string; out AMethod: TRttiMethod): Boolean; overload;
+    function TryGetProperty(const AName: string; out AProperty: TRttiProperty): Boolean;
+    function TryGetType(out AType: TRttiType): Boolean;
+  end;
+
+  TRttiFieldHelper = class helper for TRttiField
+  public
+    function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
+  end;
+
+  TRttiMethodHelper = class helper for TRttiMethod
+  private
+    function GetParamCount: Integer;
+  public
+    property ParamCount: Integer read GetParamCount;
+  end;
+
+  TRttiObjectHelper = class helper for TRttiObject
+  public
+    function GetAttributeOfType<T: TCustomAttribute>: T;
+    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
+
+    function HasAttributeOfType<T: TCustomAttribute>: Boolean;
+
+    function TryGetAttributeOfType<T: TCustomAttribute>(out AAttribute: T): Boolean;
   end;
 
   TRttiPropertyHelper = class helper for TRttiProperty
   public
-    function GetAttributeOfType<T: TCustomAttribute>: T;
-    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
+    function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
   end;
 
   TRttiTypeHelper = class helper for TRttiType
@@ -55,15 +92,21 @@ type
     function GetIsInterface: Boolean;
     function InheritsFrom(OtherType: PTypeInfo): Boolean;
   public
-    function GetAttributeOfType<T: TCustomAttribute>: T;
     function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
     function GetGenericArguments: TArray<TRttiType>;
     function GetGenericTypeDefinition(const AIncludeUnitName: Boolean = True): string;
+    function GetMethod(ACodeAddress: Pointer): TRttiMethod; overload;
+
     function IsCovariantTo(OtherClass: TClass): Boolean; overload;
     function IsCovariantTo(OtherType: PTypeInfo): Boolean; overload;
     function IsGenericTypeDefinition: Boolean;
     function IsGenericTypeOf(const BaseTypeName: string): Boolean;
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
+
+    function TryGetField(const AName: string; out AField: TRttiField): Boolean;
+    function TryGetMethod(ACodeAddress: Pointer; out AMethod: TRttiMethod): Boolean; overload;
+    function TryGetMethod(const AName: string; out AMethod: TRttiMethod): Boolean; overload;
+    function TryGetProperty(const AName: string; out AProperty: TRttiProperty): Boolean;
 
     property AsInterface: TRttiInterfaceType read GetAsInterface;
     property IsInterface: Boolean read GetIsInterface;
@@ -73,14 +116,46 @@ type
   private
     class function FromFloat(ATypeInfo: PTypeInfo; AValue: Extended): TValue; static;
   public
+    function GetType: TRttiType;
+
     function IsFloat: Boolean;
     function IsNumeric: Boolean;
     function IsString: Boolean;
 
-    function TryCastEx(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
+    // conversion for almost all standard types
+    function TryConvert(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
+
+    function AsByte: Byte;
+    function AsCardinal: Cardinal;
+    function AsDate: TDate;
+    function AsDateTime: TDateTime;
+    function AsShortInt: ShortInt;
+    function AsSmallInt: SmallInt;
+    function AsTime: TTime;
+    function AsUInt64: UInt64;
+    function AsWord: Word;
+
+    class function FromBoolean(const Value: Boolean): TValue; static;
+    class function FromString(const Value: string): TValue; static;
+
+    function IsBoolean: Boolean;
+    function IsByte: Boolean;
+    function IsCardinal: Boolean;
+    function IsDate: Boolean;
+    function IsDateTime: Boolean;
+    function IsInteger: Boolean;
+    function IsInt64: Boolean;
+    function IsShortInt: Boolean;
+    function IsSmallInt: Boolean;
+    function IsTime: Boolean;
+    function IsUInt64: Boolean;
+    function IsWord: Boolean;
   end;
 
+
+function FindType(const AName: string; out AType: TRttiType): Boolean;
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
+function IsTypeCovariantTo(ThisType, OtherType: PTypeInfo): Boolean;
 
 implementation
 
@@ -93,12 +168,35 @@ uses
 var
   Context: TRttiContext;
 
+function FindType(const AName: string; out AType: TRttiType): Boolean;
+var
+  LType: TRttiType;
+begin
+  for LType in Context.GetTypes do
+  begin
+    if LType.Name = AName then
+    begin
+      AType := LType;
+      Break;
+    end;
+  end;
+  Result := Assigned(AType);
+end;
+
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
 var
   LType: TRttiType;
 begin
   LType := Context.GetType(ThisClass);
   Result := LType.IsCovariantTo(OtherClass.ClassInfo);
+end;
+
+function IsTypeCovariantTo(ThisType, OtherType: PTypeInfo): Boolean;
+var
+  LType: TRttiType;
+begin
+  LType := Context.GetType(ThisType);
+  Result := LType.IsCovariantTo(OtherType);
 end;
 
 function MergeStrings(Values: TStringDynArray; const Delimiter: string): string;
@@ -142,27 +240,209 @@ end;
 
 { TObjectHelper }
 
+function TObjectHelper.GetField(const AName: string): TRttiField;
+var
+  LType: TRttiType;
+begin
+  Result := nil;
+  if TryGetType(LType) then
+    Result := LType.GetField(AName);
+end;
+
+function TObjectHelper.GetFields: TArray<TRttiField>;
+var
+  LType: TRttiType;
+begin
+  Result := nil;
+  if TryGetType(LType) then
+    Result := LType.GetFields();
+end;
+
+function TObjectHelper.GetMethod(const AName: string): TRttiMethod;
+var
+  LType: TRttiType;
+begin
+  Result := nil;
+  if TryGetType(LType) then
+    Result := LType.GetMethod(AName);
+end;
+
+function TObjectHelper.GetMethod(ACodeAddress: Pointer): TRttiMethod;
+var
+  LType: TRttiType;
+begin
+  Result := nil;
+  if TryGetType(LType) then
+    Result := LType.GetMethod(ACodeAddress);
+end;
+
+function TObjectHelper.GetMethods: TArray<TRttiMethod>;
+var
+  LType: TRttiType;
+begin
+  Result := nil;
+  if TryGetType(LType) then
+    Result := LType.GetMethods();
+end;
+
+function TObjectHelper.GetProperties: TArray<TRttiProperty>;
+var
+  LType: TRttiType;
+begin
+  Result := nil;
+  if TryGetType(LType) then
+    Result := LType.GetProperties();
+end;
+
 function TObjectHelper.GetProperty(const AName: string): TRttiProperty;
 var
   LType: TRttiType;
 begin
   Result := nil;
-  if Assigned(Self) then
-  begin
-    LType := GetType;
-    if Assigned(LType) then
-    begin
-      Result := LType.GetProperty(AName);
-    end;
-  end;
+  if TryGetType(LType) then
+    Result := LType.GetProperty(AName);
 end;
 
 function TObjectHelper.GetType: TRttiType;
 begin
-  Result := nil;
+  TryGetType(Result);
+end;
+
+function TObjectHelper.HasField(const AName: string): Boolean;
+begin
+  Result := GetField(AName) <> nil;
+end;
+
+function TObjectHelper.HasMethod(const AName: string): Boolean;
+begin
+  Result := GetMethod(AName) <> nil;
+end;
+
+function TObjectHelper.HasProperty(const AName: string): Boolean;
+begin
+  Result := GetProperty(AName) <> nil;
+end;
+
+function TObjectHelper.TryGetField(const AName: string;
+  out AField: TRttiField): Boolean;
+begin
+  AField := GetField(AName);
+  Result := Assigned(AField);
+end;
+
+function TObjectHelper.TryGetMethod(ACodeAddress: Pointer;
+  out AMethod: TRttiMethod): Boolean;
+begin
+  AMethod := GetMethod(ACodeAddress);
+  Result := Assigned(AMethod);
+end;
+
+function TObjectHelper.TryGetMethod(const AName: string;
+  out AMethod: TRttiMethod): Boolean;
+begin
+  AMethod := GetMethod(AName);
+  Result := Assigned(AMethod);
+end;
+
+function TObjectHelper.TryGetProperty(const AName: string;
+  out AProperty: TRttiProperty): Boolean;
+begin
+  AProperty := GetProperty(AName);
+  Result := Assigned(AProperty);
+end;
+
+function TObjectHelper.TryGetType(out AType: TRttiType): Boolean;
+begin
+  Result := False;
   if Assigned(Self) then
   begin
-    Result := Context.GetType(ClassInfo);
+    AType := Context.GetType(ClassInfo);
+    Result := Assigned(AType);
+  end;
+end;
+
+{ TRttiFieldHelper }
+
+function TRttiFieldHelper.TryGetValue(Instance: Pointer;
+  out Value: TValue): Boolean;
+begin
+  try
+    Value := GetValue(Instance);
+    Result := True;
+  except
+    Value := TValue.Empty;
+    Result := False;
+  end;
+end;
+
+{ TRttiMethodHelper }
+
+function TRttiMethodHelper.GetParamCount: Integer;
+begin
+  Result := Length(GetParameters);
+end;
+
+{ TRttiObjectHelper }
+
+function TRttiObjectHelper.GetAttributeOfType<T>: T;
+var
+  LAttribute: TCustomAttribute;
+begin
+  Result := Default(T);
+  for LAttribute in GetAttributes do
+  begin
+    if LAttribute.InheritsFrom(T) then
+    begin
+      Result := T(LAttribute);
+      Break;
+    end;
+  end;
+end;
+
+function TRttiObjectHelper.GetAttributesOfType<T>: TArray<T>;
+var
+  LAttribute: TCustomAttribute;
+begin
+  SetLength(Result, 0);
+  for LAttribute in GetAttributes do
+  begin
+    if LAttribute.InheritsFrom(T) then
+    begin
+      SetLength(Result, Length(Result) + 1);
+      Result[High(Result)] := T(LAttribute);
+    end;
+  end;
+end;
+
+function TRttiObjectHelper.HasAttributeOfType<T>: Boolean;
+begin
+  Result := GetAttributeOfType<T> <> nil;
+end;
+
+function TRttiObjectHelper.TryGetAttributeOfType<T>(out AAttribute: T): Boolean;
+begin
+  AAttribute := GetAttributeOfType<T>;
+  Result := Assigned(AAttribute);
+end;
+
+{ TRttiPropertyHelper }
+
+function TRttiPropertyHelper.TryGetValue(Instance: Pointer;
+  out Value: TValue): Boolean;
+begin
+  try
+    if IsReadable then
+    begin
+      Value := GetValue(Instance);
+      Result := True;
+    end
+    else
+    begin
+      Result := False;
+    end;
+  except
+    Value := TValue.Empty;
+    Result := False;
   end;
 end;
 
@@ -188,23 +468,11 @@ begin
   Result := Self as TRttiInterfaceType;
 end;
 
-function TRttiTypeHelper.GetAttributeOfType<T>: T;
-var
-  LAttribute: TCustomAttribute;
-begin
-  Result := nil;
-  for LAttribute in GetAttributes do
-  begin
-    if LAttribute.InheritsFrom(T) then
-    begin
-      Result := T(LAttribute);
-      Break;
-    end;
-  end;end;
-
 function TRttiTypeHelper.GetAttributesOfType<T>: TArray<T>;
 var
   LAttribute: TCustomAttribute;
+  LAttributes: TArray<T>;
+  i: Integer;
 begin
   SetLength(Result, 0);
   for LAttribute in GetAttributes do
@@ -213,6 +481,18 @@ begin
     begin
       SetLength(Result, Length(Result) + 1);
       Result[High(Result)] := T(LAttribute);
+    end;
+  end;
+
+  if Assigned(BaseType) then
+  begin
+    for LAttribute in BaseType.GetAttributesOfType<T> do
+    begin
+      if LAttribute.InheritsFrom(T) then
+      begin
+        SetLength(Result, Length(Result) + 1);
+        Result[High(Result)] := T(LAttribute);
+      end;
     end;
   end;
 end;
@@ -262,6 +542,21 @@ end;
 function TRttiTypeHelper.GetIsInterface: Boolean;
 begin
   Result := Self is TRttiInterfaceType;
+end;
+
+function TRttiTypeHelper.GetMethod(ACodeAddress: Pointer): TRttiMethod;
+var
+  LMethod: TRttiMethod;
+begin
+  Result := nil;
+  for LMethod in GetMethods() do
+  begin
+    if LMethod.CodeAddress = ACodeAddress then
+    begin
+      Result := LMethod;
+      Break;
+    end;
+  end;
 end;
 
 function TRttiTypeHelper.InheritsFrom(OtherType: PTypeInfo): Boolean;
@@ -367,7 +662,85 @@ begin
   end;
 end;
 
+function TRttiTypeHelper.TryGetField(const AName: string;
+  out AField: TRttiField): Boolean;
+begin
+  AField := GetField(AName);
+  Result := Assigned(AField);
+end;
+
+function TRttiTypeHelper.TryGetMethod(ACodeAddress: Pointer;
+  out AMethod: TRttiMethod): Boolean;
+begin
+  AMethod := GetMethod(ACodeAddress);
+  Result := Assigned(AMethod);
+end;
+
+function TRttiTypeHelper.TryGetMethod(const AName: string;
+  out AMethod: TRttiMethod): Boolean;
+begin
+  AMethod := GetMethod(AName);
+  Result := Assigned(AMethod);
+end;
+
+function TRttiTypeHelper.TryGetProperty(const AName: string;
+  out AProperty: TRttiProperty): Boolean;
+begin
+  AProperty := GetProperty(AName);
+  Result := Assigned(AProperty);
+end;
+
 { TValueHelper }
+
+function TValueHelper.AsByte: Byte;
+begin
+  Result := AsType<Byte>;
+end;
+
+function TValueHelper.AsCardinal: Cardinal;
+begin
+  Result := AsType<Cardinal>;
+end;
+
+function TValueHelper.AsDate: TDate;
+begin
+  Result := AsType<TDate>;
+end;
+
+function TValueHelper.AsDateTime: TDateTime;
+begin
+  Result := AsType<TDateTime>;
+end;
+
+function TValueHelper.AsShortInt: ShortInt;
+begin
+  Result := AsType<ShortInt>;
+end;
+
+function TValueHelper.AsSmallInt: SmallInt;
+begin
+  Result := AsType<SmallInt>;
+end;
+
+function TValueHelper.AsTime: TTime;
+begin
+  Result := AsType<TTime>;
+end;
+
+function TValueHelper.AsUInt64: UInt64;
+begin
+  Result := AsType<UInt64>;
+end;
+
+function TValueHelper.AsWord: Word;
+begin
+  Result := AsType<Word>;
+end;
+
+class function TValueHelper.FromBoolean(const Value: Boolean): TValue;
+begin
+  Result := TValue.From<Boolean>(Value);
+end;
 
 class function TValueHelper.FromFloat(ATypeInfo: PTypeInfo;
   AValue: Extended): TValue;
@@ -381,9 +754,54 @@ begin
   end;
 end;
 
+class function TValueHelper.FromString(const Value: string): TValue;
+begin
+  Result := TValue.From<string>(Value);
+end;
+
+function TValueHelper.GetType: TRttiType;
+begin
+  Result := Context.GetType(TypeInfo);
+end;
+
+function TValueHelper.IsBoolean: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Boolean);
+end;
+
+function TValueHelper.IsByte: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Byte);
+end;
+
+function TValueHelper.IsCardinal: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Cardinal);
+end;
+
+function TValueHelper.IsDate: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(TDate);
+end;
+
+function TValueHelper.IsDateTime: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(TDateTime);
+end;
+
 function TValueHelper.IsFloat: Boolean;
 begin
   Result := Kind = tkFloat;
+end;
+
+function TValueHelper.IsInt64: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Int64);
+end;
+
+function TValueHelper.IsInteger: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Integer);
 end;
 
 function TValueHelper.IsNumeric: Boolean;
@@ -391,12 +809,37 @@ begin
   Result := Kind in [tkInteger, tkChar, tkEnumeration, tkFloat, tkWChar, tkInt64];
 end;
 
+function TValueHelper.IsShortInt: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(ShortInt);
+end;
+
+function TValueHelper.IsSmallInt: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(SmallInt);
+end;
+
 function TValueHelper.IsString: Boolean;
 begin
   Result := Kind in [tkChar, tkString, tkWChar, tkLString, tkWString, tkUString];
 end;
 
-function TValueHelper.TryCastEx(ATypeInfo: PTypeInfo;
+function TValueHelper.IsTime: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(TTime);
+end;
+
+function TValueHelper.IsUInt64: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(UInt64);
+end;
+
+function TValueHelper.IsWord: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Word);
+end;
+
+function TValueHelper.TryConvert(ATypeInfo: PTypeInfo;
   out AResult: TValue): Boolean;
 begin
   Result := False;
@@ -418,14 +861,14 @@ begin
           end;
           tkUString:
           begin
-            if TypeInfo = System.TypeInfo(Boolean) then
+            if IsBoolean then
             begin
-              AResult := TValue.From<string>(BoolToStr(AsBoolean, True));
+              AResult := TValue.FromString(BoolToStr(AsBoolean, True));
               Result := True;
             end
             else
             begin
-              AResult := TValue.From<string>(IntToStr(AsOrdinal));
+              AResult := TValue.FromString(IntToStr(AsOrdinal));
               Result := True;
             end;
           end;
@@ -444,26 +887,26 @@ begin
           end;
           tkUString:
           begin
-            if TypeInfo = System.TypeInfo(TDate) then
+            if IsDate then
             begin
-              AResult := TValue.From<string>(DateToStr(AsExtended));
+              AResult := TValue.FromString(DateToStr(AsDate));
               Result := True;
             end
             else
-            if TypeInfo = System.TypeInfo(TDateTime) then
+            if IsDateTime then
             begin
-              AResult := TValue.From<string>(DateTimeToStr(AsExtended));
+              AResult := TValue.FromString(DateTimeToStr(AsDateTime));
               Result := True;
             end
             else
-            if TypeInfo = System.TypeInfo(TTime) then
+            if IsTime then
             begin
-              AResult := TValue.From<string>(TimeToStr(AsExtended));
+              AResult := TValue.FromString(TimeToStr(AsTime));
               Result := True;
             end
             else
             begin
-              AResult := TValue.From<string>(FloatToStr(AsExtended));
+              AResult := TValue.FromString(FloatToStr(AsExtended));
               Result := True;
             end;
           end;
@@ -476,7 +919,7 @@ begin
           begin
             if ATypeInfo = System.TypeInfo(Boolean) then
             begin
-              AResult := TValue.From<Boolean>(StrToBoolDef(AsString, False));
+              AResult := TValue.FromBoolean(StrToBoolDef(AsString, False));
               Result := True;
             end
             else
@@ -527,7 +970,7 @@ begin
           begin
             if ATypeInfo = System.TypeInfo(Boolean) then
             begin
-              AResult := TValue.From<Boolean>(AsObject <> nil);
+              AResult := TValue.FromBoolean(AsObject <> nil);
               Result := True;
             end
             else
@@ -568,7 +1011,7 @@ begin
           end;
           tkUString:
           begin
-            AResult := TValue.From<string>('');
+            AResult := TValue.FromString('');
             Result := True;
           end;
         end;
@@ -579,38 +1022,6 @@ begin
   if not Result then
   begin
     Result := TryCast(ATypeInfo, AResult);
-  end;
-end;
-
-{ TRttiPropertyHelper }
-
-function TRttiPropertyHelper.GetAttributeOfType<T>: T;
-var
-  LAttribute: TCustomAttribute;
-begin
-  Result := nil;
-  for LAttribute in GetAttributes do
-  begin
-    if LAttribute.InheritsFrom(T) then
-    begin
-      Result := T(LAttribute);
-      Break;
-    end;
-  end;
-end;
-
-function TRttiPropertyHelper.GetAttributesOfType<T>: TArray<T>;
-var
-  LAttribute: TCustomAttribute;
-begin
-  SetLength(Result, 0);
-  for LAttribute in GetAttributes do
-  begin
-    if LAttribute.InheritsFrom(T) then
-    begin
-      SetLength(Result, Length(Result) + 1);
-      Result[High(Result)] := T(LAttribute);
-    end;
   end;
 end;
 

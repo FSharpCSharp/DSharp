@@ -76,6 +76,17 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure AsUInt64_ValueIsHighUInt64;
+    procedure AsUInt64_ValueIsHighInt64;
+
+    procedure IsByte_ValueIsByte_True;
+    procedure IsByte_ValueIsWord_False;
+    procedure IsByte_ValueIsShortInt_False;
+
+    procedure IsCardinal_ValueIsCardinal_True;
+    procedure IsCardinal_ValueIsInteger_False;
+    procedure IsCardinal_ValueIsInt64_False;
+
     procedure IsFloat_ValueIsString_False;
     procedure IsFloat_ValueIsInteger_False;
     procedure IsFloat_ValueIsDouble_True;
@@ -86,41 +97,52 @@ type
     procedure IsNumeric_ValueIsBoolean_True;
     procedure IsNumeric_ValueIsChar_True;
 
+    procedure IsShortInt_ValueIsShortInt_True;
+    procedure IsShortInt_ValueIsByte_False;
+    procedure IsShortInt_ValueIsSmallInt_False;
+
+    procedure IsSmallInt_ValueIsSmallInt_True;
+    procedure IsSmallInt_ValueIsWord_False;
+    procedure IsSmallInt_ValueIsCardinal_False;
+
     procedure IsString_ValueIsString_True;
     procedure IsString_ValueIsInteger_False;
     procedure IsString_ValueIsDouble_False;
     procedure IsString_ValueIsChar_True;
 
-    procedure TryCastEx_ValueIsString_TypeIsString_True;
-    procedure TryCastEx_ValueIsString_TypeIsInteger_True;
-    procedure TryCastEx_ValueIsString_TypeIsDouble_True;
-    procedure TryCastEx_ValueIsString_TypeIsChar_True;
-    procedure TryCastEx_ValueIsString_TypeIsBoolean_True;
-    procedure TryCastEx_ValueIsString_TypeIsDateTime_True;
+    procedure IsUInt64_ValueIsUInt64_True;
+    procedure IsUInt64_ValueIsInt64_False;
 
-    procedure TryCastEx_ValueIsInteger_TypeIsString_True;
-    procedure TryCastEx_ValueIsInteger_TypeIsInteger_True;
-    procedure TryCastEx_ValueIsInteger_TypeIsDouble_True;
-//    procedure TryCastEx_ValueIsInteger_TypeIsChar_True;
-//    procedure TryCastEx_ValueIsInteger_TypeIsBoolean_True;
-//    procedure TryCastEx_ValueIsInteger_TypeIsDateTime_True;
+    procedure TryConvert_ValueIsString_TypeIsString_True;
+    procedure TryConvert_ValueIsString_TypeIsInteger_True;
+    procedure TryConvert_ValueIsString_TypeIsDouble_True;
+    procedure TryConvert_ValueIsString_TypeIsChar_True;
+    procedure TryConvert_ValueIsString_TypeIsBoolean_True;
+    procedure TryConvert_ValueIsString_TypeIsDateTime_True;
 
-    procedure TryCastEx_ValueIsDouble_TypeIsString_True;
-    procedure TryCastEx_ValueIsDouble_TypeIsInteger_True;
-    procedure TryCastEx_ValueIsDouble_TypeIsDouble_True;
+    procedure TryConvert_ValueIsInteger_TypeIsString_True;
+    procedure TryConvert_ValueIsInteger_TypeIsInteger_True;
+    procedure TryConvert_ValueIsInteger_TypeIsDouble_True;
+//    procedure TryConvert_ValueIsInteger_TypeIsChar_True;
+//    procedure TryConvert_ValueIsInteger_TypeIsBoolean_True;
+//    procedure TryConvert_ValueIsInteger_TypeIsDateTime_True;
 
-    procedure TryCastEx_ValueIsBoolean_TypeIsString_True;
-    procedure TryCastEx_ValueIsBoolean_TypeIsInteger_True;
-    procedure TryCastEx_ValueIsBoolean_TypeIsDouble_True;
-    procedure TryCastEx_ValueIsBoolean_TypeIsBoolean_True;
+    procedure TryConvert_ValueIsDouble_TypeIsString_True;
+    procedure TryConvert_ValueIsDouble_TypeIsInteger_True;
+    procedure TryConvert_ValueIsDouble_TypeIsDouble_True;
 
-    procedure TryCastEx_ValueIsDateTime_TypeIsString_True;
-    procedure TryCastEx_ValueIsDateTime_TypeIsDouble_True;
-    procedure TryCastEx_ValueIsDateTime_TypeIsDateTime_True;
+    procedure TryConvert_ValueIsBoolean_TypeIsString_True;
+    procedure TryConvert_ValueIsBoolean_TypeIsInteger_True;
+    procedure TryConvert_ValueIsBoolean_TypeIsDouble_True;
+    procedure TryConvert_ValueIsBoolean_TypeIsBoolean_True;
 
-    procedure TryCastEx_ValueIsEvent_TypeIsMethod_True;
+    procedure TryConvert_ValueIsDateTime_TypeIsString_True;
+    procedure TryConvert_ValueIsDateTime_TypeIsDouble_True;
+    procedure TryConvert_ValueIsDateTime_TypeIsDateTime_True;
 
-    procedure TryCastEx_ValueIsObject_TypeIsBoolean_True;
+    procedure TryConvert_ValueIsEvent_TypeIsMethod_True;
+
+    procedure TryConvert_ValueIsObject_TypeIsBoolean_True;
   end;
 
 var
@@ -303,6 +325,46 @@ end;
 
 { TValueHelperTestCase }
 
+procedure TValueHelperTestCase.AsUInt64_ValueIsHighInt64;
+begin
+  Check(High(Int64) = TValue.From<UInt64>(High(Int64)).AsUInt64);
+end;
+
+procedure TValueHelperTestCase.AsUInt64_ValueIsHighUInt64;
+begin
+  Check(High(UInt64) = TValue.From<UInt64>(High(UInt64)).AsUInt64);
+end;
+
+procedure TValueHelperTestCase.IsByte_ValueIsByte_True;
+begin
+  CheckTrue(TValue.From<Byte>(42).IsByte);
+end;
+
+procedure TValueHelperTestCase.IsByte_ValueIsShortInt_False;
+begin
+  CheckFalse(TValue.From<ShortInt>(42).IsByte);
+end;
+
+procedure TValueHelperTestCase.IsByte_ValueIsWord_False;
+begin
+  CheckFalse(TValue.From<Word>(42).IsByte);
+end;
+
+procedure TValueHelperTestCase.IsCardinal_ValueIsCardinal_True;
+begin
+  CheckTrue(TValue.From<Cardinal>(42).IsCardinal);
+end;
+
+procedure TValueHelperTestCase.IsCardinal_ValueIsInt64_False;
+begin
+  CheckFalse(TValue.From<Int64>(42).IsCardinal);
+end;
+
+procedure TValueHelperTestCase.IsCardinal_ValueIsInteger_False;
+begin
+  CheckFalse(TValue.From<Integer>(42).IsCardinal);
+end;
+
 procedure TValueHelperTestCase.IsFloat_ValueIsDouble_True;
 begin
   CheckTrue(TValue.From<Double>(42.0).IsFloat);
@@ -343,6 +405,36 @@ begin
   CheckFalse(TValue.From<string>('42').IsNumeric);
 end;
 
+procedure TValueHelperTestCase.IsShortInt_ValueIsByte_False;
+begin
+  CheckFalse(TValue.From<Byte>(42).IsShortInt);
+end;
+
+procedure TValueHelperTestCase.IsShortInt_ValueIsShortInt_True;
+begin
+  CheckTrue(TValue.From<ShortInt>(42).IsShortInt);
+end;
+
+procedure TValueHelperTestCase.IsShortInt_ValueIsSmallInt_False;
+begin
+  CheckFalse(TValue.From<SmallInt>(42).IsShortInt);
+end;
+
+procedure TValueHelperTestCase.IsSmallInt_ValueIsCardinal_False;
+begin
+  CheckFalse(TValue.From<Cardinal>(42).IsSmallInt);
+end;
+
+procedure TValueHelperTestCase.IsSmallInt_ValueIsSmallInt_True;
+begin
+  CheckTrue(TValue.From<SmallInt>(42).IsSmallInt);
+end;
+
+procedure TValueHelperTestCase.IsSmallInt_ValueIsWord_False;
+begin
+  CheckFalse(TValue.From<Word>(42).IsSmallInt);
+end;
+
 procedure TValueHelperTestCase.IsString_ValueIsChar_True;
 begin
   CheckTrue(TValue.From<Char>('4').IsString);
@@ -363,17 +455,27 @@ begin
   CheckTrue(TValue.From<string>('42').IsString);
 end;
 
+procedure TValueHelperTestCase.IsUInt64_ValueIsInt64_False;
+begin
+  CheckFalse(TValue.From<Int64>(42).IsUInt64);
+end;
+
+procedure TValueHelperTestCase.IsUInt64_ValueIsUInt64_True;
+begin
+  CheckTrue(TValue.From<UInt64>(42).IsUInt64);
+end;
+
 procedure TValueHelperTestCase.SetUp;
 begin
   inherited;
   FEventCallCount := 0;
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsString_TypeIsString_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsString_TypeIsString_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<string>('42').TryCastEx(TypeInfo(string), value));
+  CheckTrue(TValue.From<string>('42').TryConvert(TypeInfo(string), value));
   Check(value.TypeInfo = TypeInfo(string));
   CheckEquals('42', value.AsString);
 end;
@@ -389,103 +491,103 @@ begin
   Inc(FEventCallCount);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsBoolean_TypeIsBoolean_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsBoolean_TypeIsBoolean_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Boolean>(True).TryCastEx(TypeInfo(Boolean), value));
+  CheckTrue(TValue.From<Boolean>(True).TryConvert(TypeInfo(Boolean), value));
   Check(value.TypeInfo = TypeInfo(Boolean));
   CheckEquals(True, value.AsBoolean);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsBoolean_TypeIsDouble_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsBoolean_TypeIsDouble_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Boolean>(True).TryCastEx(TypeInfo(Double), value));
+  CheckTrue(TValue.From<Boolean>(True).TryConvert(TypeInfo(Double), value));
   Check(value.TypeInfo = TypeInfo(Double));
   CheckEquals(1.0, value.AsExtended);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsBoolean_TypeIsInteger_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsBoolean_TypeIsInteger_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Boolean>(True).TryCastEx(TypeInfo(Integer), value));
+  CheckTrue(TValue.From<Boolean>(True).TryConvert(TypeInfo(Integer), value));
   Check(value.TypeInfo = TypeInfo(Integer));
   CheckEquals(1, value.AsInteger);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsBoolean_TypeIsString_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsBoolean_TypeIsString_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Boolean>(True).TryCastEx(TypeInfo(string), value));
+  CheckTrue(TValue.From<Boolean>(True).TryConvert(TypeInfo(string), value));
   Check(value.TypeInfo = TypeInfo(string));
   CheckEquals(BoolToStr(True), value.AsString);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsDateTime_TypeIsDateTime_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsDateTime_TypeIsDateTime_True;
 var
   value: TValue;
   datetime: TDateTime;
 begin
   datetime := EncodeDateTime(2011, 7, 5, 15, 48, 0, 0);
-  CheckTrue(TValue.From<TDateTime>(datetime).TryCastEx(TypeInfo(TDateTime), value));
+  CheckTrue(TValue.From<TDateTime>(datetime).TryConvert(TypeInfo(TDateTime), value));
   Check(value.TypeInfo = TypeInfo(TDateTime));
   CheckEquals(datetime, value.AsType<TDateTime>);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsDateTime_TypeIsDouble_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsDateTime_TypeIsDouble_True;
 var
   value: TValue;
   datetime: TDateTime;
 begin
   datetime := EncodeDateTime(2011, 7, 5, 15, 48, 0, 0);
-  CheckTrue(TValue.From<TDateTime>(datetime).TryCastEx(TypeInfo(Double), value));
+  CheckTrue(TValue.From<TDateTime>(datetime).TryConvert(TypeInfo(Double), value));
   Check(value.TypeInfo = TypeInfo(Double));
   CheckEquals(datetime, value.AsExtended);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsDateTime_TypeIsString_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsDateTime_TypeIsString_True;
 var
   value: TValue;
   datetime: TDateTime;
 begin
   datetime := EncodeDateTime(2011, 7, 5, 15, 48, 0, 0);
-  CheckTrue(TValue.From<TDateTime>(datetime).TryCastEx(TypeInfo(string), value));
+  CheckTrue(TValue.From<TDateTime>(datetime).TryConvert(TypeInfo(string), value));
   Check(value.TypeInfo = TypeInfo(string));
   CheckEquals(DateTimeToStr(datetime), value.AsType<string>);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsDouble_TypeIsDouble_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsDouble_TypeIsDouble_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Double>(42.0).TryCastEx(TypeInfo(Double), value));
+  CheckTrue(TValue.From<Double>(42.0).TryConvert(TypeInfo(Double), value));
   Check(value.TypeInfo = TypeInfo(Double));
   CheckEquals(42.0, value.AsExtended);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsDouble_TypeIsInteger_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsDouble_TypeIsInteger_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Double>(42).TryCastEx(TypeInfo(Integer), value));
+  CheckTrue(TValue.From<Double>(42).TryConvert(TypeInfo(Integer), value));
   Check(value.TypeInfo = TypeInfo(Integer));
   CheckEquals(42, value.AsInteger);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsDouble_TypeIsString_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsDouble_TypeIsString_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Double>(42).TryCastEx(TypeInfo(string), value));
+  CheckTrue(TValue.From<Double>(42).TryConvert(TypeInfo(string), value));
   Check(value.TypeInfo = TypeInfo(string));
   CheckEquals('42', value.AsString);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsEvent_TypeIsMethod_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsEvent_TypeIsMethod_True;
 var
   value: TValue;
   method: TMethod;
@@ -493,7 +595,7 @@ var
 begin
   method.Code := @TValueHelperTestCase.TestEvent;
   method.Data := Self;
-  CheckTrue(TValue.From<TMethod>(method).TryCastEx(TypeInfo(TNotifyEvent), value));
+  CheckTrue(TValue.From<TMethod>(method).TryConvert(TypeInfo(TNotifyEvent), value));
   Check(value.TypeInfo = TypeInfo(TNotifyEvent));
   event := value.AsType<TNotifyEvent>();
   Check(TMethod(event).Code = method.Code);
@@ -501,85 +603,85 @@ begin
   CheckEquals(1, FEventCallCount);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsInteger_TypeIsDouble_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsInteger_TypeIsDouble_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Integer>(42).TryCastEx(TypeInfo(Double), value));
+  CheckTrue(TValue.From<Integer>(42).TryConvert(TypeInfo(Double), value));
   Check(value.TypeInfo = TypeInfo(Double));
   CheckEquals(42.0, value.AsExtended);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsInteger_TypeIsInteger_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsInteger_TypeIsInteger_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Integer>(42).TryCastEx(TypeInfo(Integer), value));
+  CheckTrue(TValue.From<Integer>(42).TryConvert(TypeInfo(Integer), value));
   Check(value.TypeInfo = TypeInfo(Integer));
   CheckEquals(42.0, value.AsInteger);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsInteger_TypeIsString_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsInteger_TypeIsString_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<Integer>(42).TryCastEx(TypeInfo(string), value));
+  CheckTrue(TValue.From<Integer>(42).TryConvert(TypeInfo(string), value));
   Check(value.TypeInfo = TypeInfo(string));
   CheckEquals('42', value.AsString);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsObject_TypeIsBoolean_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsObject_TypeIsBoolean_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<TObject>(Self).TryCastEx(TypeInfo(Boolean), value));
+  CheckTrue(TValue.From<TObject>(Self).TryConvert(TypeInfo(Boolean), value));
   Check(value.TypeInfo = TypeInfo(Boolean));
   CheckEquals(True, value.AsBoolean);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsString_TypeIsBoolean_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsString_TypeIsBoolean_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<string>(BoolToStr(True)).TryCastEx(TypeInfo(Boolean), value));
+  CheckTrue(TValue.From<string>(BoolToStr(True)).TryConvert(TypeInfo(Boolean), value));
   Check(value.TypeInfo = TypeInfo(Boolean));
   CheckEquals(True, value.AsBoolean);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsString_TypeIsChar_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsString_TypeIsChar_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<string>('4').TryCastEx(TypeInfo(Char), value));
+  CheckTrue(TValue.From<string>('4').TryConvert(TypeInfo(Char), value));
   Check(value.TypeInfo = TypeInfo(Char));
   CheckEquals('4', value.AsType<Char>);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsString_TypeIsDateTime_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsString_TypeIsDateTime_True;
 var
   value: TValue;
   datetime: TDateTime;
 begin
   datetime := EncodeDateTime(2011, 7, 5, 15, 48, 0, 0);
-  CheckTrue(TValue.From<string>(DateTimeToStr(datetime)).TryCastEx(TypeInfo(TDateTime), value));
+  CheckTrue(TValue.From<string>(DateTimeToStr(datetime)).TryConvert(TypeInfo(TDateTime), value));
   Check(value.TypeInfo = TypeInfo(TDateTime));
   CheckEquals(datetime, value.AsType<TDateTime>);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsString_TypeIsDouble_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsString_TypeIsDouble_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<string>(FloatToStr(42.0)).TryCastEx(TypeInfo(Double), value));
+  CheckTrue(TValue.From<string>(FloatToStr(42.0)).TryConvert(TypeInfo(Double), value));
   Check(value.TypeInfo = TypeInfo(Double));
   CheckEquals(42.0, value.AsExtended);
 end;
 
-procedure TValueHelperTestCase.TryCastEx_ValueIsString_TypeIsInteger_True;
+procedure TValueHelperTestCase.TryConvert_ValueIsString_TypeIsInteger_True;
 var
   value: TValue;
 begin
-  CheckTrue(TValue.From<string>('42').TryCastEx(TypeInfo(Integer), value));
+  CheckTrue(TValue.From<string>('42').TryConvert(TypeInfo(Integer), value));
   Check(value.TypeInfo = TypeInfo(Integer));
   CheckEquals(42, value.AsInteger);
 end;

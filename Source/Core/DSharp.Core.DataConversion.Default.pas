@@ -61,12 +61,12 @@ end;
 
 function TDefaultConverter.Convert(Value: TValue): TValue;
 begin
-  Value.TryCastEx(FTargetType, Result);
+  Value.TryConvert(FTargetType, Result);
 end;
 
 function TDefaultConverter.ConvertBack(Value: TValue): TValue;
 begin
-  Value.TryCastEx(FSourceType, Result);
+  Value.TryConvert(FSourceType, Result);
 end;
 
 end.

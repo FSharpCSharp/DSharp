@@ -78,7 +78,7 @@ end;
 
 function TBindingProperty.FilterFunc(const ATestEditor: IProperty): Boolean;
 begin
-  Result := SameText(ATestEditor.GetName(), 'SourcePropertyName')
+  Result := SameText(ATestEditor.GetName(), 'SourcePropertyName');
 end;
 
 procedure TBindingProperty.GetProperties(Proc: TGetPropProc);

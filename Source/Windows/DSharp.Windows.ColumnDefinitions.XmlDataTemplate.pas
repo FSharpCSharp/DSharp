@@ -96,20 +96,43 @@ end;
 
 function TXmlDataTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
+var
+  LAttribute: TXNode;
+  LNode: TXNode;
 begin
-  if Assigned(Item) and Assigned(FColumnDefinitions)
-    and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
+  if Assigned(Item) then
   begin
-    with FColumnDefinitions[ColumnIndex].Binding do
+    if Assigned(FColumnDefinitions)
+      and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
     begin
-      if Assigned(FColumnDefinitions[ColumnIndex].OnGetText) then
+      with FColumnDefinitions[ColumnIndex].Binding do
       begin
-        Result := FColumnDefinitions[ColumnIndex].OnGetText(
-          FColumnDefinitions.Owner, FColumnDefinitions[ColumnIndex], Item);
-      end
-      else
+        if Assigned(FColumnDefinitions[ColumnIndex].OnGetText) then
+        begin
+          Result := FColumnDefinitions[ColumnIndex].OnGetText(
+            FColumnDefinitions.Owner, FColumnDefinitions[ColumnIndex], Item);
+        end
+        else
+        begin
+          Result := TXNode(Item).SelectValue(SourcePropertyName);
+        end;
+      end;
+    end
+    else
+    begin
+      LNode := TXNode(Item);
+      Result := '<' + LNode.Name;
+
+      for LAttribute in LNode.Attributes do
       begin
-        Result := TXNode(Item).SelectValue(SourcePropertyName);
+        Result := Result + ' ' + LAttribute.Name + '="' + LAttribute.Value + '"';
+      end;
+
+      Result := Result + '>';
+
+      if LNode.Value <> '' then
+      begin
+        Result := Result + LNode.Value +  '</' + LNode.Name + '>';
       end;
     end;
   end;

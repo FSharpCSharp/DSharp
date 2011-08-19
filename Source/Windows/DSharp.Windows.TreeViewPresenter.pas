@@ -1030,7 +1030,8 @@ begin
 
     FItemsSource := Value;
 
-    if Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
+    if Assigned(FItemsSource)
+      and Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
     begin
       LCollectionChanged := LNotifyCollectionChanged.OnCollectionChanged;
       LCollectionChanged.Add(DoSourceCollectionChanged)

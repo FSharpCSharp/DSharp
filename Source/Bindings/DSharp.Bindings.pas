@@ -34,6 +34,7 @@ interface
 uses
   Classes,
   DSharp.Bindings.Collections,
+  DSharp.Bindings.Notifications,
   DSharp.Collections,
   DSharp.Core.Collections,
   DSharp.Core.DataConversion,
@@ -46,23 +47,11 @@ uses
 
 type
   TBindingMode = (bmOneWay, bmTwoWay, bmOneWayToSource);
-  TUpdateTrigger = (utPropertyChanged, utLostFocus, utExplicit);
 
 const
   BindingModeDefault = bmTwoWay;
-  UpdateTriggerDefault = utPropertyChanged;
 
 type
-  TPropertyChangedEvent = procedure(ASender: TObject;
-    APropertyName: string; AUpdateTrigger: TUpdateTrigger = utPropertyChanged) of object;
-
-  INotifyPropertyChanged = interface
-    ['{6627279B-8112-4A92-BBD3-795185A41966}']
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent>
-      read GetOnPropertyChanged;
-  end;
-
   TBindingGroup = class;
 
   TBindingBase = class abstract(TCollectionItem,
@@ -264,8 +253,6 @@ type
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 function GetBindingForComponent(AComponent: TPersistent): TBinding;
-procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
 
 implementation
 
@@ -320,19 +307,6 @@ begin
   if Assigned(LBindingGroup) then
   begin
     Result := LBindingGroup.GetBindingForTarget(AComponent);
-  end;
-end;
-
-procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-var
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  if Supports(AObject, INotifyPropertyChanged, LNotifyPropertyChanged) then
-  begin
-    LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-    LPropertyChanged.Invoke(ASender, APropertyName, AUpdateTrigger);
   end;
 end;
 

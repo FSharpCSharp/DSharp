@@ -33,20 +33,21 @@ interface
 
 uses
   Classes,
-  DSharp.Bindings,
+  DSharp.Bindings.Notifications,
   DSharp.Collections,
   DSharp.Bindings.CollectionView;
 
 type
   TCollectionViewStringsAdapter = class(TCollectionView)
   private
-    FItemIndex: Integer;
+    FItems: TStrings;
     FOwner: TPersistent;
   protected
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction); override;
     function GetCurrentItem: TObject; override;
     function GetOwner: TPersistent; override;
+    procedure SetItemIndex(const Value: Integer); override;
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
     constructor Create(AOwner: TPersistent; AItems: TStrings);
@@ -54,18 +55,19 @@ type
 
     procedure DoCurrentItemPropertyChanged(Sender: TObject;
       PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
-
-    property ItemIndex: Integer read FItemIndex write FItemIndex;
   end;
 
 implementation
+
+uses
+  DSharp.Core.Reflection,
+  Rtti;
 
 { TCollectionViewStringsAdapter }
 
 constructor TCollectionViewStringsAdapter.Create(AOwner: TPersistent; AItems: TStrings);
 begin
   inherited Create();
-  FItemIndex := -1;
   FItems := AItems;
   FOwner := AOwner;
 end;
@@ -134,6 +136,20 @@ end;
 function TCollectionViewStringsAdapter.GetOwner: TPersistent;
 begin
   Result := FOwner;
+end;
+
+procedure TCollectionViewStringsAdapter.SetItemIndex(const Value: Integer);
+var
+  LProperty: TRttiProperty;
+begin
+  inherited;
+
+  if FOwner.TryGetProperty('ItemIndex', LProperty) then
+  begin
+    LProperty.SetValue(FOwner, Value);
+  end;
+
+  NotifyPropertyChanged(FOwner, Self, 'View');
 end;
 
 procedure TCollectionViewStringsAdapter.UpdateItems(AClearItems: Boolean);

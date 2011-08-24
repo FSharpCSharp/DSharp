@@ -36,9 +36,9 @@ uses
   ComCtrls,
   CommCtrl,
   Controls,
-  DSharp.Bindings,
   DSharp.Bindings.Collections,
   DSharp.Bindings.CollectionView.Adapters,
+  DSharp.Bindings.Notifications,
   DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.DataTemplates.Default,
@@ -52,44 +52,44 @@ uses
 type
   TCheckBox = class(StdCtrls.TCheckBox, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Click; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TColorBox = class(ExtCtrls.TColorBox, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Change; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TComboBox = class(StdCtrls.TComboBox, INotifyPropertyChanged, ICollectionView)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
     FView: TCollectionViewStringsAdapter;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetText: TCaption;
     procedure SetText(const Value: TCaption);
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Change; override;
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
     procedure Select; override;
     procedure SetItemIndex(const Value: Integer); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
     property View: TCollectionViewStringsAdapter read FView implements ICollectionView;
   published
     property Text: TCaption read GetText write SetText;
@@ -97,87 +97,91 @@ type
 
   TDateTimePicker = class(ComCtrls.TDateTimePicker, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Change; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TEdit = class(StdCtrls.TEdit, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Change; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TForm = class(Forms.TForm, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TFrame = class(Forms.TFrame, INotifyPropertyChanged)
   private
     FBindingSource: TObject;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
     procedure SetBindingSource(const Value: TObject);
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
   public
+    constructor Create(AOwner: TComponent); override;
     property BindingSource: TObject read FBindingSource write SetBindingSource;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
   TGroupBox = class(StdCtrls.TGroupBox, INotifyPropertyChanged)
   private
     FBindingSource: TObject;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
     procedure SetBindingSource(const Value: TObject);
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   public
+    constructor Create(AOwner: TComponent); override;
     property BindingSource: TObject read FBindingSource write SetBindingSource;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
   TLabeledEdit = class(ExtCtrls.TLabeledEdit, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Change; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TListBox = class(StdCtrls.TListBox, INotifyPropertyChanged, ICollectionView)
   private
+    FNotifyPropertyChanged: INotifyPropertyChanged;
     FView: TCollectionViewStringsAdapter;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure CMChanged(var Message: TCMChanged); message CM_CHANGED;
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure SetItemIndex(const Value: Integer); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
     property View: TCollectionViewStringsAdapter read FView implements ICollectionView;
   end;
 
@@ -186,8 +190,8 @@ type
     FFilter: TPredicate<TObject>;
     FItemsSource: TList<TObject>;
     FItemTemplate: IDataTemplate;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure CNNotify(var Message: TWMNotifyLV); message CN_NOTIFY;
     procedure DoCurrentItemPropertyChanged(Sender: TObject;
       PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
@@ -196,15 +200,14 @@ type
     function GetItemsSource: TList<TObject>;
     function GetItemTemplate: IDataTemplate;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure SetCurrentItem(const Value: TObject);
     procedure SetFilter(const Value: TPredicate<TObject>);
     procedure SetItemsSource(const Value: TList<TObject>);
     procedure SetItemTemplate(const Value: IDataTemplate);
     procedure UpdateItems(AClearItems: Boolean = False);
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure Edit(const Item: TLVItem); override;
     procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction);
@@ -214,73 +217,79 @@ type
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
     property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent> read FOnCollectionChanged;
   end;
 
   TMemo = class(StdCtrls.TMemo, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Change; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TMonthCalendar = class(ComCtrls.TMonthCalendar, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
+  protected
     procedure CMExit(var Message: TCMExit); message CM_EXIT;
     procedure CNNotify(var Message: TWMNotifyMC); message CN_NOTIFY;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TPanel = class(ExtCtrls.TPanel, INotifyPropertyChanged)
   private
     FBindingSource: TObject;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
     procedure SetBindingSource(const Value: TObject);
   public
+    constructor Create(AOwner: TComponent); override;
     property BindingSource: TObject read FBindingSource write SetBindingSource;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
   TRadioButton = class(StdCtrls.TRadioButton, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
     procedure SetChecked(Value: Boolean); override;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TRadioGroup = class(ExtCtrls.TRadioGroup, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Click; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TTrackBar = class(ComCtrls.TTrackBar, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    procedure CMExit(var Message: TCMExit); message CM_EXIT;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure Changed; override;
+    procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    constructor Create(AOwner: TComponent); override;
   end;
 
   TTreeView = class(ComCtrls.TTreeView, INotifyPropertyChanged, ICollectionView)
@@ -288,8 +297,8 @@ type
     FFilter: TPredicate<TObject>;
     FItemsSource: TList<TObject>;
     FItemTemplate: IDataTemplate;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure CNNotify(var Message: TWMNotifyTV); message CN_NOTIFY;
     procedure DoCurrentItemPropertyChanged(Sender: TObject;
       PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
@@ -298,15 +307,14 @@ type
     function GetItemsSource: TList<TObject>;
     function GetItemTemplate: IDataTemplate;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     procedure SetCurrentItem(const Value: TObject);
     procedure SetFilter(const Value: TPredicate<TObject>);
     procedure SetItemsSource(const Value: TList<TObject>);
     procedure SetItemTemplate(const Value: IDataTemplate);
     procedure UpdateItems(AClearItems: Boolean = False);
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction);
   public
@@ -315,7 +323,6 @@ type
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
     property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent> read FOnCollectionChanged;
   end;
 
@@ -323,62 +330,52 @@ implementation
 
 { TCheckBox }
 
+constructor TCheckBox.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TCheckBox.Click;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Checked', utPropertyChanged);
-  FOnPropertyChanged.Invoke(Self, 'State', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('Checked');
+  NotifyPropertyChanged.DoPropertyChanged('State');
 end;
 
 procedure TCheckBox.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Checked', utLostFocus);
-  FOnPropertyChanged.Invoke(Self, 'State', utLostFocus);
-end;
-
-function TCheckBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('Checked', utLostFocus);
+  NotifyPropertyChanged.DoPropertyChanged('State', utLostFocus);
 end;
 
 { TColorBox }
 
+constructor TColorBox.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TColorBox.Change;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Selected', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('Selected')
 end;
 
 procedure TColorBox.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Selected', utLostFocus);
-end;
-
-function TColorBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('Selected', utLostFocus);
 end;
 
 { TComboBox }
 
-procedure TComboBox.Change;
-begin
-  inherited;
-  DoPropertyChanged('Text');
-end;
-
-procedure TComboBox.CMExit(var Message: TCMExit);
-begin
-  inherited;
-  DoPropertyChanged('ItemIndex', utLostFocus);
-  DoPropertyChanged('Text', utLostFocus);
-end;
-
 constructor TComboBox.Create(AOwner: TComponent);
 begin
   inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
   FView := TCollectionViewStringsAdapter.Create(Self, Items);
 end;
 
@@ -388,15 +385,17 @@ begin
   inherited;
 end;
 
-procedure TComboBox.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
+procedure TComboBox.Change;
 begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+  inherited;
+  NotifyPropertyChanged.DoPropertyChanged('Text');
 end;
 
-function TComboBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+procedure TComboBox.CMExit(var Message: TCMExit);
 begin
-  Result := FOnPropertyChanged.EventHandler;
+  inherited;
+  NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
+  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
 end;
 
 function TComboBox.GetText: TCaption;
@@ -407,13 +406,13 @@ end;
 procedure TComboBox.Select;
 begin
   inherited;
-  DoPropertyChanged('ItemIndex');
+  NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
 end;
 
 procedure TComboBox.SetItemIndex(const Value: Integer);
 begin
   inherited;
-  DoPropertyChanged('ItemIndex');
+  NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
 end;
 
 procedure TComboBox.SetText(const Value: TCaption);
@@ -433,14 +432,20 @@ end;
 
 { TDateTimePicker }
 
+constructor TDateTimePicker.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TDateTimePicker.Change;
 begin
   inherited;
   case Kind of
     dtkDate:
-      FOnPropertyChanged.Invoke(Self, 'Date', utPropertyChanged);
+      NotifyPropertyChanged.DoPropertyChanged('Date');
     dtkTime:
-      FOnPropertyChanged.Invoke(Self, 'Time', utPropertyChanged);
+      NotifyPropertyChanged.DoPropertyChanged('Time');
   end;
 end;
 
@@ -449,98 +454,98 @@ begin
   inherited;
   case Kind of
     dtkDate:
-      FOnPropertyChanged.Invoke(Self, 'Date', utLostFocus);
+      NotifyPropertyChanged.DoPropertyChanged('Date', utLostFocus);
     dtkTime:
-      FOnPropertyChanged.Invoke(Self, 'Time', utLostFocus);
+      NotifyPropertyChanged.DoPropertyChanged('Time', utLostFocus);
   end;
-end;
-
-function TDateTimePicker.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
 end;
 
 { TEdit }
 
+constructor TEdit.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TEdit.Change;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Text', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('Text');
 end;
 
 procedure TEdit.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Text', utLostFocus);
-end;
-
-function TEdit.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
 end;
 
 { TForm }
 
+constructor TForm.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TForm.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
-end;
-
-function TForm.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged(APropertyName, AUpdateTrigger);
 end;
 
 { TFrame }
 
+constructor TFrame.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TFrame.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
-end;
-
-function TFrame.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged(APropertyName, AUpdateTrigger);
 end;
 
 procedure TFrame.SetBindingSource(const Value: TObject);
 begin
   FBindingSource := Value;
-  FOnPropertyChanged.Invoke(Self, 'BindingSource', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('BindingSource');
 end;
 
 { TGroupBox }
 
-function TGroupBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+constructor TGroupBox.Create(AOwner: TComponent);
 begin
-  Result := FOnPropertyChanged.EventHandler;
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
 end;
 
 procedure TGroupBox.SetBindingSource(const Value: TObject);
 begin
   FBindingSource := Value;
-  FOnPropertyChanged.Invoke(Self, 'BindingSource', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('BindingSource');
 end;
 
 { TLabeledEdit }
 
+constructor TLabeledEdit.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TLabeledEdit.Change;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Text', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('Text');
 end;
 
 procedure TLabeledEdit.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Text', utLostFocus);
-end;
-
-function TLabeledEdit.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
 end;
 
 { TListBox }
@@ -548,6 +553,7 @@ end;
 constructor TListBox.Create(AOwner: TComponent);
 begin
   inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
   FView := TCollectionViewStringsAdapter.Create(Self, Items);
 end;
 
@@ -558,48 +564,37 @@ begin
 end;
 
 procedure TListBox.CMChanged(var Message: TCMChanged);
-var
-  LItem: TObject;
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+//var
+//  LItem: TObject;
+//  LNotifyPropertyChanged: INotifyPropertyChanged;
+//  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   inherited;
 
   // multiselect not supported yet
   if FView.ItemIndex <> ItemIndex then
   begin
-    LItem := FView.CurrentItem;
-    begin
-      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-      begin
-        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Remove(FView.DoCurrentItemPropertyChanged);
-      end;
-    end;
+//    LItem := FView.CurrentItem;
+//    begin
+//      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+//      begin
+//        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+//        LPropertyChanged.Remove(FView.DoCurrentItemPropertyChanged);
+//      end;
+//    end;
 
     FView.ItemIndex := ItemIndex;
-    LItem := FView.CurrentItem;
-    begin
-      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-      begin
-        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Add(FView.DoCurrentItemPropertyChanged);
-      end;
-    end;
+//    LItem := FView.CurrentItem;
+//    begin
+//      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+//      begin
+//        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+//        LPropertyChanged.Add(FView.DoCurrentItemPropertyChanged);
+//      end;
+//    end;
 
-    DoPropertyChanged('View');
+    NotifyPropertyChanged.DoPropertyChanged('View');
   end;
-end;
-
-procedure TListBox.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
-end;
-
-function TListBox.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
 end;
 
 procedure TListBox.SetItemIndex(const Value: Integer);
@@ -609,6 +604,13 @@ begin
 end;
 
 { TListView }
+
+constructor TListView.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FOnCollectionChanged.Add(OnSourceCollectionChanged);
+end;
 
 procedure TListView.CNNotify(var Message: TWMNotifyLV);
 var
@@ -634,8 +636,8 @@ begin
             end;
           end;
 
-          DoPropertyChanged('CurrentItem');
-          DoPropertyChanged('ItemIndex');
+          NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
+          NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
         end else
         if (Message.NMListView.uOldState and LVIS_SELECTED = 0)
           and (Message.NMListView.uNewState and LVIS_SELECTED <> 0) then
@@ -649,18 +651,12 @@ begin
             end;
           end;
 
-          DoPropertyChanged('CurrentItem');
-          DoPropertyChanged('ItemIndex');
+          NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
+          NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
         end;
       end;
     end;
   end;
-end;
-
-constructor TListView.Create(AOwner: TComponent);
-begin
-  inherited;
-  FOnCollectionChanged.Add(OnSourceCollectionChanged);
 end;
 
 procedure TListView.DoCurrentItemPropertyChanged(Sender: TObject;
@@ -686,12 +682,6 @@ begin
       end;
     end;
   end;
-end;
-
-procedure TListView.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
 procedure TListView.Edit(const Item: TLVItem);
@@ -737,11 +727,6 @@ begin
   Result := FOnCollectionChanged.EventHandler;
 end;
 
-function TListView.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
-end;
-
 procedure TListView.OnSourceCollectionChanged(Sender, Item: TObject;
   Action: TCollectionChangedAction);
 var
@@ -765,7 +750,7 @@ begin
           if i = ItemIndex then
           begin
             Items.Delete(i);
-            DoPropertyChanged('CurrentItem');
+            NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
           end
           else
           begin
@@ -865,29 +850,36 @@ end;
 
 { TMemo }
 
+constructor TMemo.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TMemo.Change;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Text', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('Text');
 end;
 
 procedure TMemo.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Text', utLostFocus);
-end;
-
-function TMemo.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
 end;
 
 { TMonthCalendar }
 
+constructor TMonthCalendar.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TMonthCalendar.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Date', utLostFocus);
+  NotifyPropertyChanged.DoPropertyChanged('Date', utLostFocus);
 end;
 
 procedure TMonthCalendar.CNNotify(var Message: TWMNotifyMC);
@@ -895,86 +887,92 @@ begin
   inherited;
   case Message.NMHdr.code of
     MCN_SELCHANGE:
-      FOnPropertyChanged.Invoke(Self, 'Date', utPropertyChanged);
+      NotifyPropertyChanged.DoPropertyChanged('Date');
   end;
-end;
-
-function TMonthCalendar.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
 end;
 
 { TPanel }
 
-function TPanel.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+constructor TPanel.Create(AOwner: TComponent);
 begin
-  Result := FOnPropertyChanged.EventHandler;
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
 end;
 
 procedure TPanel.SetBindingSource(const Value: TObject);
 begin
   FBindingSource := Value;
-  FOnPropertyChanged.Invoke(Self, 'BindingSource', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('BindingSource');
 end;
 
 { TRadioButton }
 
+constructor TRadioButton.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TRadioButton.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Checked', utLostFocus);
-end;
-
-function TRadioButton.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('Checked', utLostFocus);
 end;
 
 procedure TRadioButton.SetChecked(Value: Boolean);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Checked', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('Checked');
 end;
 
 { TRadioGroup }
 
+constructor TRadioGroup.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TRadioGroup.Click;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'ItemIndex', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
 end;
 
 procedure TRadioGroup.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'ItemIndex', utLostFocus);
-end;
-
-function TRadioGroup.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
 end;
 
 { TTrackBar }
 
+constructor TTrackBar.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+end;
+
 procedure TTrackBar.Changed;
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Position', utPropertyChanged);
+  NotifyPropertyChanged.DoPropertyChanged('Position');
 end;
 
 procedure TTrackBar.CMExit(var Message: TCMExit);
 begin
   inherited;
-  FOnPropertyChanged.Invoke(Self, 'Position', utLostFocus);
-end;
-
-function TTrackBar.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
+  NotifyPropertyChanged.DoPropertyChanged('Position', utLostFocus);
 end;
 
 { TTreeView }
+
+constructor TTreeView.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FOnCollectionChanged.Add(OnSourceCollectionChanged);
+end;
 
 procedure TTreeView.CNNotify(var Message: TWMNotifyTV);
 var
@@ -994,8 +992,8 @@ begin
         LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
       end;
 
-      DoPropertyChanged('CurrentItem');
-      DoPropertyChanged('Selected');
+      NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
+      NotifyPropertyChanged.DoPropertyChanged('Selected');
 
       LTreeNode := Items.GetNode(Message.NMTreeView.itemNew.hItem);
       if Assigned(LTreeNode)
@@ -1008,22 +1006,10 @@ begin
   end;
 end;
 
-constructor TTreeView.Create(AOwner: TComponent);
-begin
-  inherited;
-  FOnCollectionChanged.Add(OnSourceCollectionChanged);
-end;
-
 procedure TTreeView.DoCurrentItemPropertyChanged(Sender: TObject;
   PropertyName: string; UpdateTrigger: TUpdateTrigger);
 begin
 
-end;
-
-procedure TTreeView.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
 function TTreeView.GetCurrentItem: TObject;
@@ -1062,11 +1048,6 @@ begin
   Result := FOnCollectionChanged.EventHandler;
 end;
 
-function TTreeView.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
-end;
-
 procedure TTreeView.OnSourceCollectionChanged(Sender, Item: TObject;
   Action: TCollectionChangedAction);
 var
@@ -1090,7 +1071,7 @@ begin
           if Items[i].Selected then
           begin
             Items.Delete(Items[i]);
-            DoPropertyChanged('CurrentItem');
+            NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
           end
           else
           begin

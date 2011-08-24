@@ -60,6 +60,7 @@
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Collections.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.Adapters.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Notifications.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>

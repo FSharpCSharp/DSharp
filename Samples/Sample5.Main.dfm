@@ -55,41 +55,48 @@ object MainForm: TMainForm
       Height = 21
       TabOrder = 1
     end
-    object ComboBox1: TComboBox
+    object MovePrevious: TButton
       Left = 16
-      Top = 80
-      Width = 145
-      Height = 21
+      Top = 176
+      Width = 90
+      Height = 25
+      Caption = 'Previous'
       TabOrder = 2
-      Text = 'ComboBox1'
+    end
+    object MoveNext: TButton
+      Left = 121
+      Top = 176
+      Width = 88
+      Height = 25
+      Caption = 'Next'
+      TabOrder = 3
     end
   end
-  object Button1: TButton
+  object AddContact: TButton
     Left = 199
     Top = 8
     Width = 106
     Height = 25
     Caption = 'Add contact'
     TabOrder = 2
-    OnClick = Button1Click
+    OnClick = AddContactClick
   end
-  object Button2: TButton
+  object DeleteContact: TButton
     Left = 320
     Top = 8
     Width = 105
     Height = 25
     Caption = 'Delete contact'
     TabOrder = 3
-    OnClick = Button2Click
+    OnClick = DeleteContactClick
   end
-  object Button3: TButton
+  object SelectFirst: TButton
     Left = 439
     Top = 8
     Width = 107
     Height = 25
     Caption = 'Select first'
     TabOrder = 4
-    OnClick = Button3Click
   end
   object BindingGroup1: TBindingGroup
     Left = 272
@@ -120,10 +127,34 @@ object MainForm: TMainForm
         SourcePropertyName = 'BindingSource.Lastname'
       end
       item
-        Target = ComboBox1
-        TargetPropertyName = 'View.ItemsSource'
-        Source = Owner
-        SourcePropertyName = 'Contacts'
+        Target = MoveNext
+        TargetPropertyName = 'Enabled'
+        Source = ListBox1
+        SourcePropertyName = 'View.CanMoveCurrentToNext'
+      end
+      item
+        Target = MovePrevious
+        TargetPropertyName = 'Enabled'
+        Source = ListBox1
+        SourcePropertyName = 'View.CanMoveCurrentToPrevious'
+      end
+      item
+        Target = MoveNext
+        TargetPropertyName = 'OnClick'
+        Source = ListBox1
+        SourcePropertyName = 'View.MoveCurrentToNext'
+      end
+      item
+        Target = MovePrevious
+        TargetPropertyName = 'OnClick'
+        Source = ListBox1
+        SourcePropertyName = 'View.MoveCurrentToPrevious'
+      end
+      item
+        Target = SelectFirst
+        TargetPropertyName = 'OnClick'
+        Source = ListBox1
+        SourcePropertyName = 'View.MoveCurrentToFirst'
       end>
   end
 end

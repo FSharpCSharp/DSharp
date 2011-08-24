@@ -33,8 +33,8 @@ interface
 
 uses
   DSharp.Collections,
-  DSharp.Bindings,
   DSharp.Bindings.Collections,
+  DSharp.Bindings.Notifications,
   DSharp.Core.Events;
 
 type

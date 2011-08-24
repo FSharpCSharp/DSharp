@@ -41,17 +41,18 @@ uses
   SysUtils;
 
 type
-  TCollectionView = class(TPropertyChangedBase, ICollectionView)
+  TCollectionView = class(TPropertyChangedBase, ICollectionView, ICollectionViewNavigation)
   protected
     FFilter: TPredicate<TObject>;
     FItemIndex: Integer;
-    FItems: TStrings;
     FItemsSource: TList<TObject>;
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction); virtual;
+    function GetCanMoveCurrentToNext: Boolean; virtual;
+    function GetCanMoveCurrentToPrevious: Boolean; virtual;
     function GetCurrentItem: TObject; virtual;
     function GetFilter: TPredicate<TObject>; virtual;
     function GetItemsSource: TList<TObject>; virtual;
@@ -59,12 +60,23 @@ type
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     procedure SetCurrentItem(const Value: TObject); virtual;
     procedure SetFilter(const Value: TPredicate<TObject>); virtual;
+    procedure SetItemIndex(const Value: Integer); virtual;
     procedure SetItemsSource(const Value: TList<TObject>); virtual;
     procedure SetItemTemplate(const Value: IDataTemplate); virtual;
     procedure UpdateItems(AClearItems: Boolean = False); virtual;
   public
+    constructor Create;
+
+    procedure MoveCurrentToFirst; virtual;
+    procedure MoveCurrentToLast; virtual;
+    procedure MoveCurrentToNext; virtual;
+    procedure MoveCurrentToPrevious; virtual;
+
+    property CanMoveCurrentToNext: Boolean read GetCanMoveCurrentToNext;
+    property CanMoveCurrentToPrevious: Boolean read GetCanMoveCurrentToPrevious;
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
+    property ItemIndex: Integer read FItemIndex write SetItemIndex;
     property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent>
@@ -78,10 +90,30 @@ uses
 
 { TCollectionView }
 
+constructor TCollectionView.Create;
+begin
+  inherited;
+  FItemIndex := -1;
+end;
+
 procedure TCollectionView.DoSourceCollectionChanged(Sender, Item: TObject;
   Action: TCollectionChangedAction);
 begin
   // implemented by child classes
+end;
+
+function TCollectionView.GetCanMoveCurrentToNext: Boolean;
+begin
+  // TODO: Implement filter support
+  Result := not Assigned(FFilter) and Assigned(FItemsSource)
+    and (FItemIndex < Pred(FItemsSource.Count));
+end;
+
+function TCollectionView.GetCanMoveCurrentToPrevious: Boolean;
+begin
+  // TODO: Implement filter support
+  Result := not Assigned(FFilter) and Assigned(FItemsSource)
+    and (FItemIndex > 0);
 end;
 
 function TCollectionView.GetCurrentItem: TObject;
@@ -113,15 +145,69 @@ begin
   Result := FOnCollectionChanged.EventHandler;
 end;
 
+procedure TCollectionView.MoveCurrentToFirst;
+begin
+  if not Assigned(FFilter) then
+  begin
+    if CanMoveCurrentToPrevious xor (FItemIndex = -1) then
+    begin
+      ItemIndex := 0;
+    end;
+  end;
+end;
+
+procedure TCollectionView.MoveCurrentToLast;
+begin
+  if not Assigned(FFilter) then
+  begin
+    if CanMoveCurrentToNext then
+    begin
+      ItemIndex := Pred(FItemsSource.Count);
+    end;
+  end;
+end;
+
+procedure TCollectionView.MoveCurrentToNext;
+begin
+  if not Assigned(FFilter) then
+  begin
+    if CanMoveCurrentToNext then
+    begin
+      ItemIndex := ItemIndex + 1;
+    end;
+  end;
+end;
+
+procedure TCollectionView.MoveCurrentToPrevious;
+begin
+  if not Assigned(FFilter) then
+  begin
+    if CanMoveCurrentToPrevious then
+    begin
+      ItemIndex := ItemIndex - 1;
+    end;
+  end;
+end;
+
 procedure TCollectionView.SetCurrentItem(const Value: TObject);
 begin
-  // not implemented yet
+  // not yet implemented
 end;
 
 procedure TCollectionView.SetFilter(const Value: TPredicate<TObject>);
 begin
   FFilter := Value;
   UpdateItems(True);
+end;
+
+procedure TCollectionView.SetItemIndex(const Value: Integer);
+begin
+  FItemIndex := Value;
+
+  DoPropertyChanged('CurrentItem');
+  DoPropertyChanged('ItemIndex');
+  DoPropertyChanged('CanMoveCurrentToNext');
+  DoPropertyChanged('CanMoveCurrentToPrevious');
 end;
 
 procedure TCollectionView.SetItemsSource(const Value: TList<TObject>);

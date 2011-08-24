@@ -66,6 +66,20 @@ type
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
   end;
 
+  ICollectionViewNavigation = interface
+    ['{BF47D8EF-C8E0-444F-96A9-4954A4F0A433}']
+    function GetCanMoveCurrentToNext: Boolean;
+    function GetCanMoveCurrentToPrevious: Boolean;
+
+    procedure MoveCurrentToFirst;
+    procedure MoveCurrentToLast;
+    procedure MoveCurrentToNext;
+    procedure MoveCurrentToPrevious;
+
+    property CanMoveCurrentToNext: Boolean read GetCanMoveCurrentToNext;
+    property CanMoveCurrentToPrevious: Boolean read GetCanMoveCurrentToPrevious;
+  end;
+
 implementation
 
 end.

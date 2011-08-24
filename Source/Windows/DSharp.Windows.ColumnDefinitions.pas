@@ -86,6 +86,7 @@ implementation
 
 uses
   DSharp.Bindings.Collections,
+  DSharp.Bindings.Notifications,
   StrUtils;
 
 { TColumnDefinition }

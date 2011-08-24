@@ -12,18 +12,18 @@ type
   TMainForm = class(TForm)
     ListBox1: TListBox;
     Panel1: TPanel;
-    Button1: TButton;
-    Button2: TButton;
+    AddContact: TButton;
+    DeleteContact: TButton;
     BindingGroup1: TBindingGroup;
     Edit1: TEdit;
     Label1: TLabel;
     Edit2: TEdit;
     Label2: TLabel;
-    Button3: TButton;
-    ComboBox1: TComboBox;
-    procedure Button1Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
-    procedure Button3Click(Sender: TObject);
+    SelectFirst: TButton;
+    MovePrevious: TButton;
+    MoveNext: TButton;
+    procedure AddContactClick(Sender: TObject);
+    procedure DeleteContactClick(Sender: TObject);
   private
     { Private declarations }
     FContacts: TList<TObject>;
@@ -47,7 +47,7 @@ uses
 
 { TMainForm }
 
-procedure TMainForm.Button1Click(Sender: TObject);
+procedure TMainForm.AddContactClick(Sender: TObject);
 var
   LContact: TContact;
 begin
@@ -56,14 +56,9 @@ begin
   ListBox1.View.CurrentItem := LContact;
 end;
 
-procedure TMainForm.Button2Click(Sender: TObject);
+procedure TMainForm.DeleteContactClick(Sender: TObject);
 begin
   FContacts.Remove(ListBox1.View.CurrentItem);
-end;
-
-procedure TMainForm.Button3Click(Sender: TObject);
-begin
-  ListBox1.ItemIndex := 0;
 end;
 
 constructor TMainForm.Create(AOwner: TComponent);
@@ -74,7 +69,7 @@ begin
   FContacts.Add(TContact.Create('Baby', 'Doe'));
   inherited;
   ListBox1.View.ItemTemplate := TContactTemplate.Create;
-  ComboBox1.View.ItemTemplate := TContactTemplate.Create;
+//  ComboBox1.View.ItemTemplate := TContactTemplate.Create;
 end;
 
 destructor TMainForm.Destroy;

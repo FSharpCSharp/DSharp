@@ -33,7 +33,7 @@ interface
 
 uses
   Classes,
-  DSharp.Bindings,
+  DSharp.Bindings.Notifications,
   DSharp.Core.Events;
 
 type

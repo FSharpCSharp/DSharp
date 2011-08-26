@@ -147,6 +147,8 @@ procedure TCollectionViewAdapter.DoSourceCollectionChanged(Sender,
 var
   LIndex: Integer;
 begin
+  inherited;
+
   case Action of
     caAdd:
     begin
@@ -162,6 +164,8 @@ begin
       RemoveDisplayItem(LIndex);
     end;
   end;
+
+  NotifyPropertyChanged(FOwner, Self, 'View');
 end;
 
 function TCollectionViewAdapter.GetOwner: TPersistent;
@@ -179,8 +183,9 @@ begin
   begin
     while not (FItemIndex < GetDisplayItemsCount) do
     begin
-      ItemIndex := FItemIndex - 1;
+      Dec(FItemIndex);
     end;
+    ItemIndex := FItemIndex;
   end;
 end;
 

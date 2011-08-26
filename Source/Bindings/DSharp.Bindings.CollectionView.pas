@@ -190,7 +190,7 @@ procedure TCollectionView.MoveCurrentToFirst;
 begin
   if not Assigned(FFilter) then
   begin
-    if CanMoveCurrentToPrevious xor (FItemIndex = -1) then
+    if CanMoveCurrentToPrevious xor (FItemIndex = -1) and (FItemsSource.Count > 0) then
     begin
       ItemIndex := 0;
     end;

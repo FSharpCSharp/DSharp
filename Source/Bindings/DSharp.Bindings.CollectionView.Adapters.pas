@@ -33,28 +33,72 @@ interface
 
 uses
   Classes,
-  DSharp.Bindings.Notifications,
+  ComCtrls,
   DSharp.Collections,
-  DSharp.Bindings.CollectionView;
+  DSharp.Bindings.CollectionView,
+  DSharp.Bindings.Notifications;
 
 type
-  TCollectionViewStringsAdapter = class(TCollectionView)
+  TCollectionViewAdapter = class abstract(TCollectionView)
   private
-    FItems: TStrings;
     FOwner: TPersistent;
   protected
+    function AddDisplayItem: Integer; virtual; abstract;
+    procedure ClearDisplayItems; virtual; abstract;
+    function FindDisplayItem(AItem: TObject): Integer; virtual; abstract;
+    function GetDisplayItemsCount: Integer; virtual; abstract;
+    procedure RemoveDisplayItem(AIndex: Integer); virtual; abstract;
+    procedure UpdateDisplayItem(AIndex: Integer; AItem: TObject); virtual; abstract;
+
+    procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction); override;
-    function GetCurrentItem: TObject; override;
     function GetOwner: TPersistent; override;
+    procedure UpdateItemIndex(ACurrentItem: TObject);
+    procedure UpdateItems(AClearItems: Boolean = False); override;
+  public
+    constructor Create(AOwner: TPersistent);
+  end;
+
+  TCollectionViewStringsAdapter = class(TCollectionViewAdapter)
+  private
+    FItems: TStrings;
+  protected
+    function AddDisplayItem: Integer; override;
+    procedure ClearDisplayItems; override;
+    function FindDisplayItem(AItem: TObject): Integer; override;
+    function GetDisplayItemsCount: Integer; override;
+    procedure RemoveDisplayItem(AIndex: Integer); override;
+    procedure UpdateDisplayItem(AIndex: Integer; AItem: TObject); override;
+
+    function GetCurrentItem: TObject; override;
     procedure SetItemIndex(const Value: Integer); override;
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
     constructor Create(AOwner: TPersistent; AItems: TStrings);
     destructor Destroy; override;
+  end;
 
-    procedure DoCurrentItemPropertyChanged(Sender: TObject;
-      PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
+  TCollectionViewListItemsAdapter = class(TCollectionViewAdapter)
+  private
+    FItems: TListItems;
+    FColumns: TListColumns;
+  protected
+    function AddDisplayItem: Integer; override;
+    procedure ClearDisplayItems; override;
+    function GetDisplayItemsCount: Integer; override;
+    function FindDisplayItem(AItem: TObject): Integer; override;
+    procedure RemoveDisplayItem(AIndex: Integer); override;
+    procedure UpdateDisplayItem(AIndex: Integer; AItem: TObject); override;
+
+    function GetCurrentItem: TObject; override;
+    procedure SetItemIndex(const Value: Integer); override;
+    procedure UpdateItems(AClearItems: Boolean = False); override;
+  public
+    constructor Create(AOwner: TPersistent; AItems: TListItems;
+      AColumns: TListColumns);
+    destructor Destroy; override;
   end;
 
 implementation
@@ -63,11 +107,244 @@ uses
   DSharp.Core.Reflection,
   Rtti;
 
+{ TCollectionViewAdapter }
+
+constructor TCollectionViewAdapter.Create(AOwner: TPersistent);
+begin
+  inherited Create();
+  FOwner := AOwner;
+end;
+
+procedure TCollectionViewAdapter.DoItemPropertyChanged(ASender: TObject;
+  APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+var
+  LIndex: Integer;
+begin
+  LIndex := FindDisplayItem(ASender);
+
+  if not Assigned(FFilter) or FFilter(ASender) then
+  begin
+    if LIndex = -1 then
+    begin
+      LIndex := AddDisplayItem();
+    end;
+
+    UpdateDisplayItem(LIndex, ASender);
+  end
+  else
+  begin
+    if LIndex > -1 then
+    begin
+      RemoveDisplayItem(LIndex);
+    end;
+  end;
+
+  NotifyPropertyChanged(FOwner, Self, 'View');
+end;
+
+procedure TCollectionViewAdapter.DoSourceCollectionChanged(Sender,
+  Item: TObject; Action: TCollectionChangedAction);
+var
+  LIndex: Integer;
+begin
+  case Action of
+    caAdd:
+    begin
+      if not Assigned(FFilter) or FFilter(Item) then
+      begin
+        LIndex := AddDisplayItem();
+        UpdateDisplayItem(LIndex, Item);
+      end;
+    end;
+    caRemove:
+    begin
+      LIndex := FindDisplayItem(Item);
+      RemoveDisplayItem(LIndex);
+    end;
+  end;
+end;
+
+function TCollectionViewAdapter.GetOwner: TPersistent;
+begin
+  Result := FOwner;
+end;
+
+procedure TCollectionViewAdapter.UpdateItemIndex(ACurrentItem: TObject);
+begin
+  if Assigned(ACurrentItem) then
+  begin
+    ItemIndex := FindDisplayItem(ACurrentItem);
+  end
+  else
+  begin
+    while not (FItemIndex < GetDisplayItemsCount) do
+    begin
+      ItemIndex := FItemIndex - 1;
+    end;
+  end;
+end;
+
+procedure TCollectionViewAdapter.UpdateItems(AClearItems: Boolean);
+var
+  LCurrentItem: TObject;
+  LIndex: Integer;
+  LItem: TObject;
+begin
+  LCurrentItem := CurrentItem;
+
+  if AClearItems then
+  begin
+    ClearDisplayItems;
+  end;
+
+  if Assigned(FItemsSource) then
+  begin
+    for LItem in FItemsSource do
+    begin
+      LIndex := FindDisplayItem(LItem);
+      if not Assigned(FFilter) or FFilter(LItem) then
+      begin
+        if LIndex = -1 then
+        begin
+          LIndex := AddDisplayItem();
+        end;
+
+        UpdateDisplayItem(LIndex, LItem);
+      end;
+    end;
+  end;
+
+  UpdateItemIndex(LCurrentItem);
+
+  NotifyPropertyChanged(FOwner, Self, 'View');
+end;
+
+{ TCollectionViewListItemsAdapter }
+
+constructor TCollectionViewListItemsAdapter.Create(AOwner: TPersistent;
+  AItems: TListItems; AColumns: TListColumns);
+begin
+  inherited Create(AOwner);
+  FItems := AItems;
+  FColumns := AColumns;
+end;
+
+destructor TCollectionViewListItemsAdapter.Destroy;
+begin
+  FColumns := nil;
+  FItems := nil;
+  SetItemsSource(nil);
+  inherited;
+end;
+
+procedure TCollectionViewListItemsAdapter.ClearDisplayItems;
+begin
+  FItems.Clear();
+end;
+
+function TCollectionViewListItemsAdapter.AddDisplayItem: Integer;
+var
+  LListItem: TListItem;
+begin
+  LListItem := FItems.Add;
+  Result := LListItem.Index;
+end;
+
+function TCollectionViewListItemsAdapter.GetCurrentItem: TObject;
+begin
+  if ItemIndex > -1 then
+  begin
+    Result := FItems[ItemIndex].Data;
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TCollectionViewListItemsAdapter.GetDisplayItemsCount: Integer;
+begin
+  Result := FItems.Count;
+end;
+
+function TCollectionViewListItemsAdapter.FindDisplayItem(AItem: TObject): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+  for i := 0 to Pred(FItems.Count) do
+  begin
+    if FItems[i].Data = AItem then
+    begin
+      Result := i;
+      Break;
+    end;
+  end;
+end;
+
+procedure TCollectionViewListItemsAdapter.RemoveDisplayItem(AIndex: Integer);
+begin
+  if AIndex = ItemIndex then
+  begin
+    FItems.Delete(AIndex);
+    UpdateItemIndex(nil);
+    NotifyPropertyChanged(FOwner, Self, 'View');
+  end
+  else
+  begin
+    FItems.Delete(AIndex);
+  end;
+end;
+
+procedure TCollectionViewListItemsAdapter.UpdateDisplayItem(AIndex: Integer;
+  AItem: TObject);
+var
+  i: Integer;
+  LListItem: TListItem;
+begin
+  LListItem := FItems[AIndex];
+  LListItem.Data := AItem;
+  LListItem.SubItems.Clear();
+  for i := 0 to Pred(FColumns.Count) do
+  begin
+    if i = 0 then
+    begin
+      LListItem.Caption := ItemTemplate.GetText(AItem, i);
+    end
+    else
+    begin
+      LListItem.SubItems.Add(ItemTemplate.GetText(AItem, i));
+    end;
+  end;
+end;
+
+procedure TCollectionViewListItemsAdapter.SetItemIndex(const Value: Integer);
+var
+  LProperty: TRttiProperty;
+begin
+  inherited;
+
+  if FOwner.TryGetProperty('ItemIndex', LProperty) then
+  begin
+    LProperty.SetValue(FOwner, Value);
+  end;
+
+  NotifyPropertyChanged(FOwner, Self, 'View');
+end;
+
+procedure TCollectionViewListItemsAdapter.UpdateItems(AClearItems: Boolean);
+begin
+  if Assigned(FItems) then
+  begin
+    inherited;
+  end;
+end;
+
 { TCollectionViewStringsAdapter }
 
 constructor TCollectionViewStringsAdapter.Create(AOwner: TPersistent; AItems: TStrings);
 begin
-  inherited Create();
+  inherited Create(AOwner);
   FItems := AItems;
   FOwner := AOwner;
 end;
@@ -79,46 +356,19 @@ begin
   inherited;
 end;
 
-procedure TCollectionViewStringsAdapter.DoCurrentItemPropertyChanged(Sender: TObject;
-  PropertyName: string; UpdateTrigger: TUpdateTrigger);
-var
-  LIndex: Integer;
+function TCollectionViewStringsAdapter.AddDisplayItem: Integer;
 begin
-  LIndex := FItemIndex;
-  if (LIndex > -1) and Assigned(FItemTemplate) then
-  begin
-    FItems[LIndex] := FItemTemplate.GetText(FItems.Objects[LIndex], -1);
-  end;
+  Result := FItems.AddObject('', nil);
 end;
 
-procedure TCollectionViewStringsAdapter.DoSourceCollectionChanged(Sender, Item: TObject;
-  Action: TCollectionChangedAction);
-var
-  i: Integer;
+procedure TCollectionViewStringsAdapter.ClearDisplayItems;
 begin
-  case Action of
-    caAdd:
-    begin
-      if not Assigned(FFilter) or FFilter(Item) then
-      begin
-        FItems.AddObject(ItemTemplate.GetText(Item, -1), Item);
-      end;
-    end;
-    caRemove:
-    begin
-      i := FItems.IndexOfObject(Item);
-      if i = FItemIndex then
-      begin
-        FItems.Delete(i);
-        FItemIndex := -1;
-        NotifyPropertyChanged(FOwner, Self, 'View');
-      end
-      else
-      begin
-        FItems.Delete(i);
-      end;
-    end;
-  end;
+  FItems.Clear();
+end;
+
+function TCollectionViewStringsAdapter.FindDisplayItem(AItem: TObject): Integer;
+begin
+  Result := FItems.IndexOfObject(AItem);
 end;
 
 function TCollectionViewStringsAdapter.GetCurrentItem: TObject;
@@ -133,9 +383,23 @@ begin
   end;
 end;
 
-function TCollectionViewStringsAdapter.GetOwner: TPersistent;
+function TCollectionViewStringsAdapter.GetDisplayItemsCount: Integer;
 begin
-  Result := FOwner;
+  Result := FItems.Count;
+end;
+
+procedure TCollectionViewStringsAdapter.RemoveDisplayItem(AIndex: Integer);
+begin
+  if AIndex = ItemIndex then
+  begin
+    FItems.Delete(AIndex);
+    UpdateItemIndex(nil);
+    NotifyPropertyChanged(FOwner, Self, 'View');
+  end
+  else
+  begin
+    FItems.Delete(AIndex);
+  end;
 end;
 
 procedure TCollectionViewStringsAdapter.SetItemIndex(const Value: Integer);
@@ -152,34 +416,18 @@ begin
   NotifyPropertyChanged(FOwner, Self, 'View');
 end;
 
+procedure TCollectionViewStringsAdapter.UpdateDisplayItem(AIndex: Integer;
+  AItem: TObject);
+begin
+  FItems[AIndex] := ItemTemplate.GetText(AItem, -1);
+  FItems.Objects[AIndex] := AItem;
+end;
+
 procedure TCollectionViewStringsAdapter.UpdateItems(AClearItems: Boolean);
-var
-  LItem: TObject;
 begin
   if Assigned(FItems) then
   begin
-    if AClearItems then
-    begin
-      FItems.Clear;
-    end;
-
-    if Assigned(FItemsSource) then
-    begin
-      for LItem in FItemsSource do
-      begin
-        if not Assigned(FFilter) or FFilter(LItem) then
-        begin
-          if AClearItems then
-          begin
-            FItems.AddObject(ItemTemplate.GetText(LItem, -1), LItem);
-          end
-          else
-          begin
-            FItems[FItems.IndexOfObject(LItem)] := ItemTemplate.GetText(LItem, -1);
-          end;
-        end;
-      end;
-    end;
+    inherited;
   end;
 end;
 

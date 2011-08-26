@@ -54,7 +54,7 @@ type
       read GetOnPropertyChanged;
   end;
 
-  TNotifiyPropertyChanged = class sealed(TInterfacedObject, INotifyPropertyChanged)
+  TNotifyPropertyChanged = class sealed(TInterfacedObject, INotifyPropertyChanged)
   private
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     FOwner: TObject;
@@ -88,18 +88,18 @@ end;
 
 { TNotifiyPropertyChanged }
 
-constructor TNotifiyPropertyChanged.Create(AOwner: TObject);
+constructor TNotifyPropertyChanged.Create(AOwner: TObject);
 begin
   FOwner := AOwner;
 end;
 
-procedure TNotifiyPropertyChanged.DoPropertyChanged(const APropertyName: string;
+procedure TNotifyPropertyChanged.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
   FOnPropertyChanged.Invoke(FOwner, APropertyName, AUpdateTrigger);
 end;
 
-function TNotifiyPropertyChanged.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TNotifyPropertyChanged.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   Result := FOnPropertyChanged.EventHandler;
 end;

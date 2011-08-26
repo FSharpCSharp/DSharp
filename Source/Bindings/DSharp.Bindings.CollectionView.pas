@@ -34,6 +34,7 @@ interface
 uses
   Classes,
   DSharp.Bindings.Collections,
+  DSharp.Bindings.Notifications,
   DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.PropertyChangedBase,
@@ -49,6 +50,9 @@ type
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 
+    procedure AddNotification(AItem: TObject);
+    procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged); virtual;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction); virtual;
     function GetCanMoveCurrentToNext: Boolean; virtual;
@@ -58,6 +62,7 @@ type
     function GetItemsSource: TList<TObject>; virtual;
     function GetItemTemplate: IDataTemplate; virtual;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    procedure RemoveNotification(AItem: TObject);
     procedure SetCurrentItem(const Value: TObject); virtual;
     procedure SetFilter(const Value: TPredicate<TObject>); virtual;
     procedure SetItemIndex(const Value: Integer); virtual;
@@ -66,6 +71,7 @@ type
     procedure UpdateItems(AClearItems: Boolean = False); virtual;
   public
     constructor Create;
+    destructor Destroy; override;
 
     procedure MoveCurrentToFirst; virtual;
     procedure MoveCurrentToLast; virtual;
@@ -96,10 +102,45 @@ begin
   FItemIndex := -1;
 end;
 
+destructor TCollectionView.Destroy;
+begin
+  ItemsSource := nil;
+  inherited;
+end;
+
+procedure TCollectionView.AddNotification(AItem: TObject);
+var
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChangedEvent: TEvent<TPropertyChangedEvent>;
+begin
+  if Supports(AItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+  begin
+    LPropertyChangedEvent := LNotifyPropertyChanged.OnPropertyChanged;
+    LPropertyChangedEvent.Add(DoItemPropertyChanged);
+  end;
+end;
+
+procedure TCollectionView.DoItemPropertyChanged(ASender: TObject;
+  APropertyName: string; AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+begin
+
+end;
+
 procedure TCollectionView.DoSourceCollectionChanged(Sender, Item: TObject;
   Action: TCollectionChangedAction);
 begin
-  // implemented by child classes
+  case Action of
+    caAdd:
+    begin
+      AddNotification(Item);
+    end;
+    caRemove:
+    begin
+      RemoveNotification(Item);
+    end;
+  end;
+
+  inherited;
 end;
 
 function TCollectionView.GetCanMoveCurrentToNext: Boolean;
@@ -189,6 +230,18 @@ begin
   end;
 end;
 
+procedure TCollectionView.RemoveNotification(AItem: TObject);
+var
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChangedEvent: TEvent<TPropertyChangedEvent>;
+begin
+  if Supports(AItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
+  begin
+    LPropertyChangedEvent := LNotifyPropertyChanged.OnPropertyChanged;
+    LPropertyChangedEvent.Remove(DoItemPropertyChanged);
+  end;
+end;
+
 procedure TCollectionView.SetCurrentItem(const Value: TObject);
 begin
   // not yet implemented
@@ -212,24 +265,33 @@ end;
 
 procedure TCollectionView.SetItemsSource(const Value: TList<TObject>);
 var
-  LNotifyCollectionChanged: INotifyCollectionChanged;
   LCollectionChanged: TEvent<TCollectionChangedEvent>;
+  LItem: TObject;
 begin
   if FItemsSource <> Value then
   begin
-    if Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
+    if Assigned(FItemsSource) then
     begin
-      LCollectionChanged := LNotifyCollectionChanged.OnCollectionChanged;
+      LCollectionChanged := TEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
       LCollectionChanged.Remove(DoSourceCollectionChanged);
+
+      for LItem in FItemsSource do
+      begin
+        RemoveNotification(LItem);
+      end;
     end;
 
     FItemsSource := Value;
 
-    if Assigned(FItemsSource)
-      and Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
+    if Assigned(FItemsSource) then
     begin
-      LCollectionChanged := LNotifyCollectionChanged.OnCollectionChanged;
-      LCollectionChanged.Add(DoSourceCollectionChanged)
+      LCollectionChanged := TEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
+      LCollectionChanged.Add(DoSourceCollectionChanged);
+
+      for LItem in FItemsSource do
+      begin
+        AddNotification(LItem);
+      end;
     end;
     UpdateItems(True);
 

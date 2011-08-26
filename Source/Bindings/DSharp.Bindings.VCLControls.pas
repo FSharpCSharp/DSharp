@@ -187,37 +187,17 @@ type
 
   TListView = class(ComCtrls.TListView, INotifyPropertyChanged, ICollectionView)
   private
-    FFilter: TPredicate<TObject>;
-    FItemsSource: TList<TObject>;
-    FItemTemplate: IDataTemplate;
     FNotifyPropertyChanged: INotifyPropertyChanged;
-    FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    procedure CNNotify(var Message: TWMNotifyLV); message CN_NOTIFY;
-    procedure DoCurrentItemPropertyChanged(Sender: TObject;
-      PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    function GetCurrentItem: TObject;
-    function GetFilter: TPredicate<TObject>;
-    function GetItemsSource: TList<TObject>;
-    function GetItemTemplate: IDataTemplate;
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    procedure SetCurrentItem(const Value: TObject);
-    procedure SetFilter(const Value: TPredicate<TObject>);
-    procedure SetItemsSource(const Value: TList<TObject>);
-    procedure SetItemTemplate(const Value: IDataTemplate);
-    procedure UpdateItems(AClearItems: Boolean = False);
+    FView: TCollectionViewListItemsAdapter;
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
+    procedure CNNotify(var Message: TWMNotifyLV); message CN_NOTIFY;
     procedure Edit(const Item: TLVItem); override;
-    procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
-      Action: TCollectionChangedAction);
   public
     constructor Create(AOwner: TComponent); override;
-    property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
-    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
-    property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
-    property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read FOnCollectionChanged;
+    destructor Destroy; override;
+    property View: TCollectionViewListItemsAdapter read FView implements ICollectionView;
   end;
 
   TMemo = class(StdCtrls.TMemo, INotifyPropertyChanged)
@@ -333,7 +313,7 @@ implementation
 constructor TCheckBox.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TCheckBox.Click;
@@ -355,7 +335,7 @@ end;
 constructor TColorBox.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TColorBox.Change;
@@ -375,7 +355,7 @@ end;
 constructor TComboBox.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
   FView := TCollectionViewStringsAdapter.Create(Self, Items);
 end;
 
@@ -435,7 +415,7 @@ end;
 constructor TDateTimePicker.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TDateTimePicker.Change;
@@ -465,7 +445,7 @@ end;
 constructor TEdit.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TEdit.Change;
@@ -485,7 +465,7 @@ end;
 constructor TForm.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TForm.DoPropertyChanged(const APropertyName: string;
@@ -499,7 +479,7 @@ end;
 constructor TFrame.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TFrame.DoPropertyChanged(const APropertyName: string;
@@ -519,7 +499,7 @@ end;
 constructor TGroupBox.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TGroupBox.SetBindingSource(const Value: TObject);
@@ -533,7 +513,7 @@ end;
 constructor TLabeledEdit.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TLabeledEdit.Change;
@@ -553,7 +533,7 @@ end;
 constructor TListBox.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
   FView := TCollectionViewStringsAdapter.Create(Self, Items);
 end;
 
@@ -564,34 +544,13 @@ begin
 end;
 
 procedure TListBox.CMChanged(var Message: TCMChanged);
-//var
-//  LItem: TObject;
-//  LNotifyPropertyChanged: INotifyPropertyChanged;
-//  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   inherited;
 
   // multiselect not supported yet
   if FView.ItemIndex <> ItemIndex then
   begin
-//    LItem := FView.CurrentItem;
-//    begin
-//      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-//      begin
-//        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-//        LPropertyChanged.Remove(FView.DoCurrentItemPropertyChanged);
-//      end;
-//    end;
-
     FView.ItemIndex := ItemIndex;
-//    LItem := FView.CurrentItem;
-//    begin
-//      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-//      begin
-//        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-//        LPropertyChanged.Add(FView.DoCurrentItemPropertyChanged);
-//      end;
-//    end;
 
     NotifyPropertyChanged.DoPropertyChanged('View');
   end;
@@ -608,15 +567,17 @@ end;
 constructor TListView.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
-  FOnCollectionChanged.Add(OnSourceCollectionChanged);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+  FView := TCollectionViewListItemsAdapter.Create(Self, Items, Columns);
+end;
+
+destructor TListView.Destroy;
+begin
+  FView.Free;
+  inherited;
 end;
 
 procedure TListView.CNNotify(var Message: TWMNotifyLV);
-var
-  LListItem: TListItem;
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   inherited;
   case Message.NMHdr.code of
@@ -627,58 +588,18 @@ begin
         if (Message.NMListView.uOldState and LVIS_SELECTED <> 0)
           and (Message.NMListView.uNewState and LVIS_SELECTED = 0) then
         begin
-          LListItem := Items[Message.NMListView.iItem];
-          begin
-            if Supports(LListItem.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
-            begin
-              LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-              LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
-            end;
-          end;
-
-          NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
-          NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
+          NotifyPropertyChanged.DoPropertyChanged('View');
         end else
         if (Message.NMListView.uOldState and LVIS_SELECTED = 0)
           and (Message.NMListView.uNewState and LVIS_SELECTED <> 0) then
         begin
-          LListItem := Items[Message.NMListView.iItem];
+          if FView.ItemIndex <> Message.NMListView.iItem then
           begin
-            if Supports(LListItem.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
-            begin
-              LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-              LPropertyChanged.Add(DoCurrentItemPropertyChanged);
-            end;
+            FView.ItemIndex := Message.NMListView.iItem;
           end;
 
-          NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
-          NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
+          NotifyPropertyChanged.DoPropertyChanged('View');
         end;
-      end;
-    end;
-  end;
-end;
-
-procedure TListView.DoCurrentItemPropertyChanged(Sender: TObject;
-  PropertyName: string; UpdateTrigger: TUpdateTrigger);
-var
-  i: Integer;
-  LIndex: Integer;
-  LListItem: TListItem;
-begin
-  LIndex := ItemIndex;
-  if (LIndex > -1) and Assigned(FItemTemplate) then
-  begin
-    LListItem := Items[LIndex];
-    for i := 0 to Pred(Columns.Count) do
-    begin
-      if i = 0 then
-      begin
-        LListItem.Caption := ItemTemplate.GetText(LListItem.Data, i);
-      end
-      else
-      begin
-        LListItem.SubItems[i - 1] := ItemTemplate.GetText(LListItem.Data, i);
       end;
     end;
   end;
@@ -688,164 +609,7 @@ procedure TListView.Edit(const Item: TLVItem);
 begin
   inherited;
   // editing not supported yet
-//  ItemTemplate.SetText(CurrentItem, 0, Selected.Caption);
-end;
-
-function TListView.GetCurrentItem: TObject;
-begin
-  if ItemIndex > -1 then
-  begin
-    Result := Items[ItemIndex].Data;
-  end
-  else
-  begin
-    Result := nil;
-  end;
-end;
-
-function TListView.GetFilter: TPredicate<TObject>;
-begin
-  Result := FFilter;
-end;
-
-function TListView.GetItemsSource: TList<TObject>;
-begin
-  Result := FItemsSource;
-end;
-
-function TListView.GetItemTemplate: IDataTemplate;
-begin
-  if not Assigned(FItemTemplate) then
-  begin
-    FItemTemplate := TDefaultDataTemplate.Create();
-  end;
-  Result := FItemTemplate;
-end;
-
-function TListView.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-begin
-  Result := FOnCollectionChanged.EventHandler;
-end;
-
-procedure TListView.OnSourceCollectionChanged(Sender, Item: TObject;
-  Action: TCollectionChangedAction);
-var
-  i: Integer;
-begin
-  // not fully implemented yet
-  case Action of
-    caAdd:
-    begin
-      if not Assigned(FFilter) or FFilter(Item) then
-      begin
-        Items.Add.Data := Item;
-      end;
-    end;
-    caRemove:
-    begin
-      for i := 0 to Pred(Items.Count) do
-      begin
-        if Items[i].Data = Item then
-        begin
-          if i = ItemIndex then
-          begin
-            Items.Delete(i);
-            NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
-          end
-          else
-          begin
-            Items.Delete(i);
-          end;
-        end;
-      end;
-    end;
-  end;
-end;
-
-procedure TListView.SetCurrentItem(const Value: TObject);
-begin
-  // not implemented yet
-end;
-
-procedure TListView.SetFilter(const Value: TPredicate<TObject>);
-begin
-  FFilter := Value;
-
-  UpdateItems(True);
-end;
-
-procedure TListView.SetItemsSource(const Value: TList<TObject>);
-begin
-  if FItemsSource <> Value then
-  begin
-    FItemsSource := Value;
-
-    UpdateItems(True);
-  end;
-end;
-
-procedure TListView.SetItemTemplate(const Value: IDataTemplate);
-begin
-  if FItemTemplate <> Value then
-  begin
-    FItemTemplate := Value;
-
-    UpdateItems(False);
-  end;
-end;
-
-procedure TListView.UpdateItems(AClearItems: Boolean);
-var
-  i: Integer;
-  LItem: TObject;
-  LListItem: TListItem;
-begin
-  if AClearItems then
-  begin
-    Items.Clear;
-  end;
-
-  if Assigned(FItemsSource) then
-  begin
-    for LItem in FItemsSource do
-    begin
-      if not Assigned(FFilter) or FFilter(LItem) then
-      begin
-        LListItem := nil;
-        if AClearItems then
-        begin
-          LListItem := Items.Add;
-          LListItem.Data := LItem;
-        end
-        else
-        begin
-          for i := 0 to Pred(Items.Count) do
-          begin
-            if Items[i].Data = LItem then
-            begin
-              LListItem := Items[i];
-              LListItem.SubItems.Clear;
-              Break;
-            end;
-          end;
-        end;
-        if Assigned(LListItem) then
-        begin
-          for i := 0 to Pred(Columns.Count) do
-          begin
-            if i = 0 then
-            begin
-              LListItem.Caption := ItemTemplate.GetText(LListItem.Data, i);
-            end
-            else
-            begin
-              LListItem.SubItems.Add(ItemTemplate.GetText(LListItem.Data, i));
-            end;
-          end;
-        end;
-      end;
-    end;
-  end;
+  FView.ItemTemplate.SetText(FView.CurrentItem, 0, Selected.Caption);
 end;
 
 { TMemo }
@@ -853,7 +617,7 @@ end;
 constructor TMemo.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TMemo.Change;
@@ -873,7 +637,7 @@ end;
 constructor TMonthCalendar.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TMonthCalendar.CMExit(var Message: TCMExit);
@@ -896,7 +660,7 @@ end;
 constructor TPanel.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TPanel.SetBindingSource(const Value: TObject);
@@ -910,7 +674,7 @@ end;
 constructor TRadioButton.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TRadioButton.CMExit(var Message: TCMExit);
@@ -930,7 +694,7 @@ end;
 constructor TRadioGroup.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TRadioGroup.Click;
@@ -950,7 +714,7 @@ end;
 constructor TTrackBar.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
 procedure TTrackBar.Changed;
@@ -970,7 +734,7 @@ end;
 constructor TTreeView.Create(AOwner: TComponent);
 begin
   inherited;
-  FNotifyPropertyChanged := TNotifiyPropertyChanged.Create(Self);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
   FOnCollectionChanged.Add(OnSourceCollectionChanged);
 end;
 

@@ -37,7 +37,7 @@ uses
   CommCtrl,
   Controls,
   DSharp.Bindings.Collections,
-  DSharp.Bindings.CollectionView.Adapters,
+  DSharp.Bindings.CollectionView,
   DSharp.Bindings.Notifications,
   DSharp.Collections,
   DSharp.Core.DataTemplates,
@@ -77,7 +77,7 @@ type
   TComboBox = class(StdCtrls.TComboBox, INotifyPropertyChanged, ICollectionView)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
-    FView: TCollectionViewStringsAdapter;
+    FView: TCollectionView;
     function GetText: TCaption;
     procedure SetText(const Value: TCaption);
     property NotifyPropertyChanged: INotifyPropertyChanged
@@ -90,7 +90,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property View: TCollectionViewStringsAdapter read FView implements ICollectionView;
+    property View: TCollectionView read FView implements ICollectionView;
   published
     property Text: TCaption read GetText write SetText;
   end;
@@ -173,7 +173,7 @@ type
   TListBox = class(StdCtrls.TListBox, INotifyPropertyChanged, ICollectionView)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
-    FView: TCollectionViewStringsAdapter;
+    FView: TCollectionView;
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
@@ -182,13 +182,13 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property View: TCollectionViewStringsAdapter read FView implements ICollectionView;
+    property View: TCollectionView read FView implements ICollectionView;
   end;
 
   TListView = class(ComCtrls.TListView, INotifyPropertyChanged, ICollectionView)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
-    FView: TCollectionViewListItemsAdapter;
+    FView: TCollectionView;
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
@@ -197,7 +197,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    property View: TCollectionViewListItemsAdapter read FView implements ICollectionView;
+    property View: TCollectionView read FView implements ICollectionView;
   end;
 
   TMemo = class(StdCtrls.TMemo, INotifyPropertyChanged)
@@ -274,39 +274,22 @@ type
 
   TTreeView = class(ComCtrls.TTreeView, INotifyPropertyChanged, ICollectionView)
   private
-    FFilter: TPredicate<TObject>;
-    FItemsSource: TList<TObject>;
-    FItemTemplate: IDataTemplate;
     FNotifyPropertyChanged: INotifyPropertyChanged;
-    FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    procedure CNNotify(var Message: TWMNotifyTV); message CN_NOTIFY;
-    procedure DoCurrentItemPropertyChanged(Sender: TObject;
-      PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    function GetCurrentItem: TObject;
-    function GetFilter: TPredicate<TObject>;
-    function GetItemsSource: TList<TObject>;
-    function GetItemTemplate: IDataTemplate;
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    procedure SetCurrentItem(const Value: TObject);
-    procedure SetFilter(const Value: TPredicate<TObject>);
-    procedure SetItemsSource(const Value: TList<TObject>);
-    procedure SetItemTemplate(const Value: IDataTemplate);
-    procedure UpdateItems(AClearItems: Boolean = False);
+    FView: TCollectionView;
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
-    procedure OnSourceCollectionChanged(Sender: TObject; Item: TObject;
-      Action: TCollectionChangedAction);
+    procedure CNNotify(var Message: TWMNotifyTV); message CN_NOTIFY;
   public
     constructor Create(AOwner: TComponent); override;
-    property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
-    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
-    property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
-    property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read FOnCollectionChanged;
+    destructor Destroy; override;
+    property View: TCollectionView read FView implements ICollectionView;
   end;
 
 implementation
+
+uses
+  DSharp.Bindings.CollectionView.Adapters;
 
 { TCheckBox }
 
@@ -735,206 +718,25 @@ constructor TTreeView.Create(AOwner: TComponent);
 begin
   inherited;
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
-  FOnCollectionChanged.Add(OnSourceCollectionChanged);
+  FView := TCollectionViewTreeNodesAdapter.Create(Self, Items);
 end;
 
 procedure TTreeView.CNNotify(var Message: TWMNotifyTV);
-var
-  LTreeNode: TTreeNode;
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   inherited;
   case Message.NMHdr.code of
     TVN_SELCHANGEDA, TVN_SELCHANGEDW:
     begin
-      LTreeNode := Items.GetNode(Message.NMTreeView.itemOld.hItem);
-      if Assigned(LTreeNode)
-        and Supports(LTreeNode.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
-      begin
-        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
-      end;
-
-      NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
+      FView.ItemIndex := NativeInt(Items.GetNode(Message.NMTreeView.itemNew.hItem));
       NotifyPropertyChanged.DoPropertyChanged('Selected');
-
-      LTreeNode := Items.GetNode(Message.NMTreeView.itemNew.hItem);
-      if Assigned(LTreeNode)
-        and Supports(LTreeNode.Data, INotifyPropertyChanged, LNotifyPropertyChanged) then
-      begin
-        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Add(DoCurrentItemPropertyChanged);
-      end;
     end;
   end;
 end;
 
-procedure TTreeView.DoCurrentItemPropertyChanged(Sender: TObject;
-  PropertyName: string; UpdateTrigger: TUpdateTrigger);
+destructor TTreeView.Destroy;
 begin
-
-end;
-
-function TTreeView.GetCurrentItem: TObject;
-begin
-  if SelectionCount > 0 then
-  begin
-    Result := Selections[0].Data;
-  end
-  else
-  begin
-    Result := nil;
-  end;
-end;
-
-function TTreeView.GetFilter: TPredicate<TObject>;
-begin
-  Result := FFilter;
-end;
-
-function TTreeView.GetItemsSource: TList<TObject>;
-begin
-  Result := FItemsSource;
-end;
-
-function TTreeView.GetItemTemplate: IDataTemplate;
-begin
-  if not Assigned(FItemTemplate) then
-  begin
-    FItemTemplate := TDefaultDataTemplate.Create();
-  end;
-  Result := FItemTemplate;
-end;
-
-function TTreeView.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-begin
-  Result := FOnCollectionChanged.EventHandler;
-end;
-
-procedure TTreeView.OnSourceCollectionChanged(Sender, Item: TObject;
-  Action: TCollectionChangedAction);
-var
-  i: Integer;
-begin
-  // not fully implemented yet
-  case Action of
-    caAdd:
-    begin
-      if not Assigned(FFilter) or FFilter(Item) then
-      begin
-        Items.AddObject(CreateNode(), '', Item);
-      end;
-    end;
-    caRemove:
-    begin
-      for i := 0 to Pred(Items.Count) do
-      begin
-        if Items[i].Data = Item then
-        begin
-          if Items[i].Selected then
-          begin
-            Items.Delete(Items[i]);
-            NotifyPropertyChanged.DoPropertyChanged('CurrentItem');
-          end
-          else
-          begin
-            Items.Delete(Items[i]);
-          end;
-        end;
-      end;
-    end;
-  end;
-end;
-
-procedure TTreeView.SetCurrentItem(const Value: TObject);
-begin
-  // not implemented yet
-end;
-
-procedure TTreeView.SetFilter(const Value: TPredicate<TObject>);
-begin
-  FFilter := Value;
-
-  UpdateItems(True);
-end;
-
-procedure TTreeView.SetItemsSource(const Value: TList<TObject>);
-begin
-  if FItemsSource <> Value then
-  begin
-    FItemsSource := Value;
-
-    UpdateItems(True);
-  end;
-end;
-
-procedure TTreeView.SetItemTemplate(const Value: IDataTemplate);
-begin
-  if FItemTemplate <> Value then
-  begin
-    FItemTemplate := Value;
-
-    UpdateItems(False);
-  end;
-end;
-
-procedure TTreeView.UpdateItems(AClearItems: Boolean);
-var
-  i: Integer;
-  LItem: TObject;
-  LTreeNode: TTreeNode;
-
-  procedure CreateNodes(ANode: TTreeNode; AItemTemplate: IDataTemplate);
-  var
-    LItem: TObject;
-    LItemTemplate: IDataTemplate;
-    LTreeNode: TTreeNode;
-  begin
-    if Assigned(AItemTemplate) and (AItemTemplate.GetItemCount(ANode.Data) > 0) then
-    begin
-      for LItem in AItemTemplate.GetItems(ANode.Data) do
-      begin
-        LItemTemplate := AItemTemplate.GetItemTemplate(LItem);
-        LTreeNode := Items.AddChildObject(ANode, LItemTemplate.GetText(LItem, -1), LItem);
-        CreateNodes(LTreeNode, LItemTemplate);
-      end;
-    end;
-  end;
-
-begin
-  if AClearItems then
-  begin
-    Items.Clear;
-  end;
-
-  if Assigned(FItemsSource) then
-  begin
-    for LItem in FItemsSource do
-    begin
-      if not Assigned(FFilter) or FFilter(LItem) then
-      begin
-        if AClearItems then
-        begin
-          Items.AddChildObject(nil, ItemTemplate.GetText(LItem, -1), LItem);
-        end
-        else
-        begin
-          for i := 0 to Pred(Items.Count) do
-          begin
-            if Items[i].Data = LItem then
-            begin
-              LTreeNode := Items[i];
-              LTreeNode.Text := ItemTemplate.GetText(LItem, -1);
-              LTreeNode.DeleteChildren;
-              CreateNodes(LTreeNode, ItemTemplate);
-              Break;
-            end;
-          end;
-        end;
-      end;
-    end;
-  end;
+  FView.Free();
+  inherited;
 end;
 
 end.

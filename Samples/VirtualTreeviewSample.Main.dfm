@@ -262,13 +262,13 @@ object MainForm: TMainForm
         Target = LabeledEdit1
         TargetPropertyName = 'Text'
         Source = TreeView1
-        SourcePropertyName = 'CurrentItem.Name'
+        SourcePropertyName = 'View.CurrentItem.Name'
       end
       item
         Target = LabeledEdit2
         TargetPropertyName = 'Text'
         Source = TreeView1
-        SourcePropertyName = 'CurrentItem.Value'
+        SourcePropertyName = 'View.CurrentItem.Value'
       end
       item
         Target = Edit1

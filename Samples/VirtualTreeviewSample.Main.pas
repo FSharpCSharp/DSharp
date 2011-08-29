@@ -108,8 +108,12 @@ begin
   InventoryPresenter.ItemsSource := TList<TObject>(xmlItems);
   InventoryPresenter.ItemTemplate := TXmlDataTemplate.Create(InventoryPresenter.ColumnDefinitions);
 
-  TreeView1.ItemsSource := TList<TObject>(xmlItems);
-  TreeView1.ItemTemplate := TXmlDataTemplate.Create(nil);
+  xmlItems := TObservableCollection<TXNode>.Create();
+  xmlItems.AddRange(
+    XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
+
+  TreeView1.View.ItemsSource := TList<TObject>(xmlItems);
+  TreeView1.View.ItemTemplate := TXmlDataTemplate.Create(nil);
 
   ComboBox1.View.ItemsSource := ContactsPresenter.ItemsSource;
   ComboBox1.View.ItemTemplate := DataTemplate(['Firstname']);
@@ -120,6 +124,7 @@ procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   ContactsPresenter.ItemsSource.Free();
   InventoryPresenter.ItemsSource.Free();
+  TreeView1.View.ItemsSource.Free();
 end;
 
 function TMainForm.InventoryPresenterColumnDefinitions0GetText(Sender: TObject;

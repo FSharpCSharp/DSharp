@@ -45,7 +45,7 @@ type
   TCollectionView = class(TPropertyChangedBase, ICollectionView, ICollectionViewNavigation)
   protected
     FFilter: TPredicate<TObject>;
-    FItemIndex: Integer;
+    FItemIndex: NativeInt;
     FItemsSource: TList<TObject>;
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
@@ -65,7 +65,7 @@ type
     procedure RemoveNotification(AItem: TObject);
     procedure SetCurrentItem(const Value: TObject); virtual;
     procedure SetFilter(const Value: TPredicate<TObject>); virtual;
-    procedure SetItemIndex(const Value: Integer); virtual;
+    procedure SetItemIndex(const Value: NativeInt); virtual;
     procedure SetItemsSource(const Value: TList<TObject>); virtual;
     procedure SetItemTemplate(const Value: IDataTemplate); virtual;
     procedure UpdateItems(AClearItems: Boolean = False); virtual;
@@ -82,7 +82,7 @@ type
     property CanMoveCurrentToPrevious: Boolean read GetCanMoveCurrentToPrevious;
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
-    property ItemIndex: Integer read FItemIndex write SetItemIndex;
+    property ItemIndex: NativeInt read FItemIndex write SetItemIndex;
     property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent>
@@ -253,7 +253,7 @@ begin
   UpdateItems(True);
 end;
 
-procedure TCollectionView.SetItemIndex(const Value: Integer);
+procedure TCollectionView.SetItemIndex(const Value: NativeInt);
 begin
   FItemIndex := Value;
 

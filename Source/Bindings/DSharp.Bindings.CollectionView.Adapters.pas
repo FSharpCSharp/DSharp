@@ -43,12 +43,12 @@ type
   private
     FOwner: TPersistent;
   protected
-    function AddDisplayItem: Integer; virtual; abstract;
+    function AddDisplayItem: NativeInt; virtual; abstract;
     procedure ClearDisplayItems; virtual; abstract;
-    function FindDisplayItem(AItem: TObject): Integer; virtual; abstract;
-    function GetDisplayItemsCount: Integer; virtual; abstract;
-    procedure RemoveDisplayItem(AIndex: Integer); virtual; abstract;
-    procedure UpdateDisplayItem(AIndex: Integer; AItem: TObject); virtual; abstract;
+    function FindDisplayItem(AItem: TObject): NativeInt; virtual; abstract;
+    function GetDisplayItemsCount: NativeInt; virtual; abstract;
+    procedure RemoveDisplayItem(AIndex: NativeInt); virtual; abstract;
+    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); virtual; abstract;
 
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
@@ -65,15 +65,15 @@ type
   private
     FItems: TStrings;
   protected
-    function AddDisplayItem: Integer; override;
+    function AddDisplayItem: NativeInt; override;
     procedure ClearDisplayItems; override;
-    function FindDisplayItem(AItem: TObject): Integer; override;
-    function GetDisplayItemsCount: Integer; override;
-    procedure RemoveDisplayItem(AIndex: Integer); override;
-    procedure UpdateDisplayItem(AIndex: Integer; AItem: TObject); override;
+    function FindDisplayItem(AItem: TObject): NativeInt; override;
+    function GetDisplayItemsCount: NativeInt; override;
+    procedure RemoveDisplayItem(AIndex: NativeInt); override;
+    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); override;
 
     function GetCurrentItem: TObject; override;
-    procedure SetItemIndex(const Value: Integer); override;
+    procedure SetItemIndex(const Value: NativeInt); override;
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
     constructor Create(AOwner: TPersistent; AItems: TStrings);
@@ -85,15 +85,15 @@ type
     FItems: TListItems;
     FColumns: TListColumns;
   protected
-    function AddDisplayItem: Integer; override;
+    function AddDisplayItem: NativeInt; override;
     procedure ClearDisplayItems; override;
-    function GetDisplayItemsCount: Integer; override;
-    function FindDisplayItem(AItem: TObject): Integer; override;
-    procedure RemoveDisplayItem(AIndex: Integer); override;
-    procedure UpdateDisplayItem(AIndex: Integer; AItem: TObject); override;
+    function GetDisplayItemsCount: NativeInt; override;
+    function FindDisplayItem(AItem: TObject): NativeInt; override;
+    procedure RemoveDisplayItem(AIndex: NativeInt); override;
+    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); override;
 
     function GetCurrentItem: TObject; override;
-    procedure SetItemIndex(const Value: Integer); override;
+    procedure SetItemIndex(const Value: NativeInt); override;
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
     constructor Create(AOwner: TPersistent; AItems: TListItems;
@@ -101,9 +101,29 @@ type
     destructor Destroy; override;
   end;
 
+  TCollectionViewTreeNodesAdapter = class(TCollectionViewAdapter)
+  private
+    FItems: TTreeNodes;
+  protected
+    function AddDisplayItem: NativeInt; override;
+    procedure ClearDisplayItems; override;
+    function GetDisplayItemsCount: NativeInt; override;
+    function FindDisplayItem(AItem: TObject): NativeInt; override;
+    procedure RemoveDisplayItem(AIndex: NativeInt); override;
+    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); override;
+
+    function GetCurrentItem: TObject; override;
+    procedure SetItemIndex(const Value: NativeInt); override;
+    procedure UpdateItems(AClearItems: Boolean = False); override;
+  public
+    constructor Create(AOwner: TPersistent; AItems: TTreeNodes);
+    destructor Destroy; override;
+  end;
+
 implementation
 
 uses
+  DSharp.Core.DataTemplates,
   DSharp.Core.Reflection,
   Rtti;
 
@@ -118,7 +138,7 @@ end;
 procedure TCollectionViewAdapter.DoItemPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 var
-  LIndex: Integer;
+  LIndex: NativeInt;
 begin
   LIndex := FindDisplayItem(ASender);
 
@@ -145,7 +165,7 @@ end;
 procedure TCollectionViewAdapter.DoSourceCollectionChanged(Sender,
   Item: TObject; Action: TCollectionChangedAction);
 var
-  LIndex: Integer;
+  LIndex: NativeInt;
 begin
   inherited;
 
@@ -192,7 +212,7 @@ end;
 procedure TCollectionViewAdapter.UpdateItems(AClearItems: Boolean);
 var
   LCurrentItem: TObject;
-  LIndex: Integer;
+  LIndex: NativeInt;
   LItem: TObject;
 begin
   LCurrentItem := CurrentItem;
@@ -247,7 +267,7 @@ begin
   FItems.Clear();
 end;
 
-function TCollectionViewListItemsAdapter.AddDisplayItem: Integer;
+function TCollectionViewListItemsAdapter.AddDisplayItem: NativeInt;
 var
   LListItem: TListItem;
 begin
@@ -267,14 +287,14 @@ begin
   end;
 end;
 
-function TCollectionViewListItemsAdapter.GetDisplayItemsCount: Integer;
+function TCollectionViewListItemsAdapter.GetDisplayItemsCount: NativeInt;
 begin
   Result := FItems.Count;
 end;
 
-function TCollectionViewListItemsAdapter.FindDisplayItem(AItem: TObject): Integer;
+function TCollectionViewListItemsAdapter.FindDisplayItem(AItem: TObject): NativeInt;
 var
-  i: Integer;
+  i: NativeInt;
 begin
   Result := -1;
   for i := 0 to Pred(FItems.Count) do
@@ -287,7 +307,7 @@ begin
   end;
 end;
 
-procedure TCollectionViewListItemsAdapter.RemoveDisplayItem(AIndex: Integer);
+procedure TCollectionViewListItemsAdapter.RemoveDisplayItem(AIndex: NativeInt);
 begin
   if AIndex = ItemIndex then
   begin
@@ -301,10 +321,10 @@ begin
   end;
 end;
 
-procedure TCollectionViewListItemsAdapter.UpdateDisplayItem(AIndex: Integer;
+procedure TCollectionViewListItemsAdapter.UpdateDisplayItem(AIndex: NativeInt;
   AItem: TObject);
 var
-  i: Integer;
+  i: NativeInt;
   LListItem: TListItem;
 begin
   LListItem := FItems[AIndex];
@@ -323,7 +343,7 @@ begin
   end;
 end;
 
-procedure TCollectionViewListItemsAdapter.SetItemIndex(const Value: Integer);
+procedure TCollectionViewListItemsAdapter.SetItemIndex(const Value: NativeInt);
 var
   LProperty: TRttiProperty;
 begin
@@ -361,7 +381,7 @@ begin
   inherited;
 end;
 
-function TCollectionViewStringsAdapter.AddDisplayItem: Integer;
+function TCollectionViewStringsAdapter.AddDisplayItem: NativeInt;
 begin
   Result := FItems.AddObject('', nil);
 end;
@@ -371,7 +391,7 @@ begin
   FItems.Clear();
 end;
 
-function TCollectionViewStringsAdapter.FindDisplayItem(AItem: TObject): Integer;
+function TCollectionViewStringsAdapter.FindDisplayItem(AItem: TObject): NativeInt;
 begin
   Result := FItems.IndexOfObject(AItem);
 end;
@@ -388,12 +408,12 @@ begin
   end;
 end;
 
-function TCollectionViewStringsAdapter.GetDisplayItemsCount: Integer;
+function TCollectionViewStringsAdapter.GetDisplayItemsCount: NativeInt;
 begin
   Result := FItems.Count;
 end;
 
-procedure TCollectionViewStringsAdapter.RemoveDisplayItem(AIndex: Integer);
+procedure TCollectionViewStringsAdapter.RemoveDisplayItem(AIndex: NativeInt);
 begin
   if AIndex = ItemIndex then
   begin
@@ -407,7 +427,7 @@ begin
   end;
 end;
 
-procedure TCollectionViewStringsAdapter.SetItemIndex(const Value: Integer);
+procedure TCollectionViewStringsAdapter.SetItemIndex(const Value: NativeInt);
 var
   LProperty: TRttiProperty;
 begin
@@ -421,7 +441,7 @@ begin
   NotifyPropertyChanged(FOwner, Self, 'View');
 end;
 
-procedure TCollectionViewStringsAdapter.UpdateDisplayItem(AIndex: Integer;
+procedure TCollectionViewStringsAdapter.UpdateDisplayItem(AIndex: NativeInt;
   AItem: TObject);
 begin
   FItems[AIndex] := ItemTemplate.GetText(AItem, -1);
@@ -429,6 +449,134 @@ begin
 end;
 
 procedure TCollectionViewStringsAdapter.UpdateItems(AClearItems: Boolean);
+begin
+  if Assigned(FItems) then
+  begin
+    inherited;
+  end;
+end;
+
+{ TCollectionViewTreeNodesAdapter }
+
+constructor TCollectionViewTreeNodesAdapter.Create(AOwner: TPersistent;
+  AItems: TTreeNodes);
+begin
+  inherited Create(AOwner);
+  FItems := AItems;
+end;
+
+destructor TCollectionViewTreeNodesAdapter.Destroy;
+begin
+  FItems := nil;
+  SetItemsSource(nil);
+  inherited;
+end;
+
+function TCollectionViewTreeNodesAdapter.AddDisplayItem: NativeInt;
+begin
+  Result := NativeInt(FItems.AddObject(nil, '', nil));
+end;
+
+procedure TCollectionViewTreeNodesAdapter.ClearDisplayItems;
+begin
+  FItems.Clear();
+end;
+
+function TCollectionViewTreeNodesAdapter.FindDisplayItem(
+  AItem: TObject): NativeInt;
+var
+  i: NativeInt;
+begin
+  Result := -1;
+  for i := 0 to Pred(FItems.Count) do
+  begin
+    if FItems[i].Data = AItem then
+    begin
+      Result := NativeInt(FItems[i]);
+      Break;
+    end;
+  end;
+end;
+
+function TCollectionViewTreeNodesAdapter.GetCurrentItem: TObject;
+begin
+  if FItemIndex > 0 then
+  begin
+    Result := TTreeNode(FItemIndex).Data;
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TCollectionViewTreeNodesAdapter.GetDisplayItemsCount: NativeInt;
+begin
+  Result := FItems.Count;
+end;
+
+procedure TCollectionViewTreeNodesAdapter.RemoveDisplayItem(AIndex: NativeInt);
+begin
+  if AIndex = ItemIndex then
+  begin
+    ItemIndex := NativeInt(TTreeNode(AIndex).GetPrev());
+    FItems.Delete(TTreeNode(AIndex));
+    NotifyPropertyChanged(FOwner, Self, 'View');
+  end
+  else
+  begin
+    FItems.Delete(TTreeNode(AIndex));
+  end;
+end;
+
+procedure TCollectionViewTreeNodesAdapter.SetItemIndex(const Value: NativeInt);
+var
+  LProperty: TRttiProperty;
+begin
+  inherited;
+
+  if FOwner.TryGetProperty('Selected', LProperty) then
+  begin
+    if Value > 0 then
+      LProperty.SetValue(FOwner, TTreeNode(Value))
+    else
+      LProperty.SetValue(FOwner, nil);
+  end;
+
+  NotifyPropertyChanged(FOwner, Self, 'View');
+end;
+
+procedure TCollectionViewTreeNodesAdapter.UpdateDisplayItem(AIndex: NativeInt;
+  AItem: TObject);
+
+  procedure CreateNodes(ANode: TTreeNode; AItemTemplate: IDataTemplate);
+  var
+    LItem: TObject;
+    LItemTemplate: IDataTemplate;
+    LTreeNode: TTreeNode;
+  begin
+    if Assigned(AItemTemplate) and (AItemTemplate.GetItemCount(ANode.Data) > 0) then
+    begin
+      for LItem in AItemTemplate.GetItems(ANode.Data) do
+      begin
+        LItemTemplate := AItemTemplate.GetItemTemplate(LItem);
+        LTreeNode := FItems.AddChildObject(ANode, LItemTemplate.GetText(LItem, -1), LItem);
+        CreateNodes(LTreeNode, LItemTemplate);
+      end;
+    end;
+  end;
+
+var
+  LTreeNode: TTreeNode;
+begin
+  LTreeNode := TTreeNode(AIndex);
+  LTreeNode.Text := ItemTemplate.GetText(AItem, -1);
+  LTreeNode.Data := AItem;
+  LTreeNode.DeleteChildren();
+  CreateNodes(LTreeNode, ItemTemplate);
+end;
+
+procedure TCollectionViewTreeNodesAdapter.UpdateItems(AClearItems: Boolean);
 begin
   if Assigned(FItems) then
   begin

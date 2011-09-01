@@ -1,0 +1,64 @@
+package DSharp.Core;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'DSharp Core Library'}
+{$LIBSUFFIX '.DelphiXE2'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  vcl;
+
+contains
+  DSharp.Collections in '..\..\Source\Collections\DSharp.Collections.pas',
+  DSharp.Collections.Fibers in '..\..\Source\Collections\DSharp.Collections.Fibers.pas',
+  DSharp.Collections.Threading in '..\..\Source\Collections\DSharp.Collections.Threading.pas',
+  DSharp.Collections.Yield in '..\..\Source\Collections\DSharp.Collections.Yield.pas',
+  DSharp.Core.Collections in '..\..\Source\Core\DSharp.Core.Collections.pas',
+  DSharp.Core.CopyOperator in '..\..\Source\Core\DSharp.Core.CopyOperator.pas',
+  DSharp.Core.DataConversion.Default in '..\..\Source\Core\DSharp.Core.DataConversion.Default.pas',
+  DSharp.Core.DataConversion in '..\..\Source\Core\DSharp.Core.DataConversion.pas',
+  DSharp.Core.DataTemplates.Default in '..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas',
+  DSharp.Core.DataTemplates in '..\..\Source\Core\DSharp.Core.DataTemplates.pas',
+  DSharp.Core.Events in '..\..\Source\Core\DSharp.Core.Events.pas',
+  DSharp.Core.Expressions in '..\..\Source\Core\DSharp.Core.Expressions.pas',
+  DSharp.Core.Fibers in '..\..\Source\Core\DSharp.Core.Fibers.pas',
+  DSharp.Core.Generics in '..\..\Source\Core\DSharp.Core.Generics.pas',
+  DSharp.Core.Lambda in '..\..\Source\Core\DSharp.Core.Lambda.pas',
+  DSharp.Core.Lazy in '..\..\Source\Core\DSharp.Core.Lazy.pas',
+  DSharp.Core.Logging in '..\..\Source\Core\DSharp.Core.Logging.pas',
+  DSharp.Core.Logging.Console in '..\..\Source\Core\DSharp.Core.Logging.Console.pas',
+  DSharp.Core.NotificationHandler in '..\..\Source\Core\DSharp.Core.NotificationHandler.pas',
+  DSharp.Core.Properties in '..\..\Source\Core\DSharp.Core.Properties.pas',
+  DSharp.Core.PropertyPath in '..\..\Source\Core\DSharp.Core.PropertyPath.pas',
+  DSharp.Core.Reflection in '..\..\Source\Core\DSharp.Core.Reflection.pas',
+  DSharp.Core.Threading in '..\..\Source\Core\DSharp.Core.Threading.pas',
+  DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
+  DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas';
+
+end.

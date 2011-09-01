@@ -42,7 +42,7 @@
 			<DllSuffix>160</DllSuffix>
 			<DesignOnlyPackage>true</DesignOnlyPackage>
 			<GenPackage>true</GenPackage>
-			<DCC_DcuOutput>..\..\Library\DelphiXE</DCC_DcuOutput>
+			<DCC_DcuOutput>..\..\Library\DelphiXE2</DCC_DcuOutput>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_Description>DSharp data binding designtime package</DCC_Description>
 			<DCC_S>false</DCC_S>

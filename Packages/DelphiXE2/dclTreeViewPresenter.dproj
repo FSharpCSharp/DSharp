@@ -29,12 +29,6 @@
 			<CfgParent>Base</CfgParent>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win32)'!=''">
-			<Cfg_1_Win32>true</Cfg_1_Win32>
-			<CfgParent>Cfg_1</CfgParent>
-			<Cfg_1>true</Cfg_1>
-			<Base>true</Base>
-		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
 			<Cfg_2>true</Cfg_2>
 			<CfgParent>Base</CfgParent>
@@ -52,7 +46,7 @@
 			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
 			<GenDll>true</GenDll>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<DCC_DcuOutput>..\..\Library\DelphiXE</DCC_DcuOutput>
+			<DCC_DcuOutput>..\..\Library\DelphiXE2</DCC_DcuOutput>
 			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base_Win64)'!=''">
@@ -67,9 +61,6 @@
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
 			<DCC_Optimize>false</DCC_Optimize>
 			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-			<DllSuffix>160</DllSuffix>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
 			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>

@@ -35,12 +35,6 @@
 			<Cfg_1>true</Cfg_1>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win32)'!=''">
-			<Cfg_1_Win32>true</Cfg_1_Win32>
-			<CfgParent>Cfg_1</CfgParent>
-			<Cfg_1>true</Cfg_1>
-			<Base>true</Base>
-		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
 			<Cfg_2>true</Cfg_2>
 			<CfgParent>Base</CfgParent>
@@ -96,6 +90,7 @@
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Collections.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.Adapters.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Notifications.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>

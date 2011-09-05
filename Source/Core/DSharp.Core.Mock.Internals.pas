@@ -83,6 +83,7 @@ type
   public
     constructor Create(AMode: TMockMode);
     destructor Destroy; override;
+    procedure Verify;
     function WhenCalling: T;
     function WillExecute(const Value: TValue): IWhenCalling<T>;
     function WillReturn(const Value: TValue): IWhenCalling<T>;
@@ -92,6 +93,7 @@ type
 
 const
   CCreationError = 'Unable to create mock for type: %0:s';
+  CExpectationsNotMet = 'Expectation not met: %0:s(%1:s)';
   CUnexpectedCall = 'Unexpected method call: %0:s(%1:s)';
 
 implementation
@@ -234,6 +236,20 @@ end;
 function TMockWrapper<T>.GetInstance: T;
 begin
   Result := FInstance;
+end;
+
+procedure TMockWrapper<T>.Verify;
+var
+  LBehaviour: TBehaviour;
+begin
+  for LBehaviour in FBehaviours do
+  begin
+    if LBehaviour.CallCount = 0 then
+    begin
+      raise EMockException.CreateFmt(CExpectationsNotMet, [
+        LBehaviour.Method.Name, TValue.ToString(LBehaviour.Arguments)]);
+    end;
+  end;
 end;
 
 function TMockWrapper<T>.WhenCalling: T;

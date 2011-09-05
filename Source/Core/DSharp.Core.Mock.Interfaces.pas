@@ -41,6 +41,7 @@ type
 
   IMock<T> = interface
     function GetInstance: T;
+    procedure Verify;
     function WillExecute(const Value: TValue): IWhenCalling<T>;
     function WillReturn(const Value: TValue): IWhenCalling<T>;
     property Instance: T read GetInstance;

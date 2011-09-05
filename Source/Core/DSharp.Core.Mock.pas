@@ -53,7 +53,9 @@ type
     property Mock: IMock<T> read GetMock;
   public
     constructor Create(AMode: TMockMode);
+    class operator Implicit(const Value: Mock<T>): IMock<T>;
     class operator Implicit(const Value: Mock<T>): T;
+    procedure Verify;
     function WillExecute<TAction>(const Value: TAction): IWhenCalling<T>;
     function WillReturn<TResult>(const Value: TResult): IWhenCalling<T>;
     property Instance: T read GetInstance;
@@ -86,9 +88,19 @@ begin
   Result := FMock;
 end;
 
+class operator Mock<T>.Implicit(const Value: Mock<T>): IMock<T>;
+begin
+  Result := Value.Mock;
+end;
+
 class operator Mock<T>.Implicit(const Value: Mock<T>): T;
 begin
   Result := Value.Mock.Instance;
+end;
+
+procedure Mock<T>.Verify;
+begin
+  Mock.Verify;
 end;
 
 function Mock<T>.WillExecute<TAction>(const Value: TAction): IWhenCalling<T>;

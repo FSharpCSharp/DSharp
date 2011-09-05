@@ -63,11 +63,20 @@ type
     function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
   end;
 
+{$IF COMPILERVERSION > 22}
+  TRttiInvokableTypeHelper = class helper for TRttiInvokableType
+  private
+    function GetParameterCount: Integer;
+  public
+    property ParameterCount: Integer read GetParameterCount;
+  end;
+{$IFEND}
+
   TRttiMethodHelper = class helper for TRttiMethod
   private
-    function GetParamCount: Integer;
+    function GetParameterCount: Integer;
   public
-    property ParamCount: Integer read GetParamCount;
+    property ParameterCount: Integer read GetParameterCount;
   end;
 
   TRttiObjectHelper = class helper for TRttiObject
@@ -90,6 +99,7 @@ type
     function ExtractGenericArguments: string;
     function GetAsInterface: TRttiInterfaceType;
     function GetIsInterface: Boolean;
+    function GetMethodCount: Integer;
     function InheritsFrom(OtherType: PTypeInfo): Boolean;
   public
     function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
@@ -110,6 +120,7 @@ type
 
     property AsInterface: TRttiInterfaceType read GetAsInterface;
     property IsInterface: Boolean read GetIsInterface;
+    property MethodCount: Integer read GetMethodCount;
   end;
 
   TValueHelper = record helper for TValue
@@ -135,6 +146,9 @@ type
     function AsUInt64: UInt64;
     function AsWord: Word;
 
+    class function ToString(const Values: TArray<TValue>): string; overload; static;
+    class function Equals(const Left, Right: TArray<TValue>): Boolean; static;
+
     class function FromBoolean(const Value: Boolean): TValue; static;
     class function FromString(const Value: string): TValue; static;
 
@@ -152,10 +166,13 @@ type
     function IsWord: Boolean;
   end;
 
-
-function FindType(const AName: string; out AType: TRttiType): Boolean;
+function FindType(const AName: string; out AType: TRttiType): Boolean; overload;
+function GetRttiType(AClass: TClass): TRttiType; overload;
+function GetRttiType(ATypeInfo: PTypeInfo): TRttiType; overload;
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
 function IsTypeCovariantTo(ThisType, OtherType: PTypeInfo): Boolean;
+function TryGetRttiType(AClass: TClass; out AType: TRttiType): Boolean; overload;
+function TryGetRttiType(ATypeInfo: PTypeInfo; out AType: TRttiType): Boolean; overload;
 
 implementation
 
@@ -181,6 +198,16 @@ begin
     end;
   end;
   Result := Assigned(AType);
+end;
+
+function GetRttiType(AClass: TClass): TRttiType;
+begin
+  Result := Context.GetType(AClass);
+end;
+
+function GetRttiType(ATypeInfo: PTypeInfo): TRttiType;
+begin
+  Result := Context.GetType(ATypeInfo);
 end;
 
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
@@ -214,6 +241,18 @@ begin
       Result := Result + Delimiter + Values[i];
     end;
   end;
+end;
+
+function TryGetRttiType(AClass: TClass; out AType: TRttiType): Boolean; overload;
+begin
+  AType := Context.GetType(AClass);
+  Result := Assigned(AType);
+end;
+
+function TryGetRttiType(ATypeInfo: PTypeInfo; out AType: TRttiType): Boolean; overload;
+begin
+  AType := Context.GetType(ATypeInfo);
+  Result := Assigned(AType);
 end;
 
 {$IFDEF VER210}
@@ -375,9 +414,18 @@ begin
   end;
 end;
 
+{ TRttiInvokableTypeHelper }
+
+{$IF COMPILERVERSION > 22}
+function TRttiInvokableTypeHelper.GetParameterCount: Integer;
+begin
+  Result := Length(GetParameters());
+end;
+{$IFEND}
+
 { TRttiMethodHelper }
 
-function TRttiMethodHelper.GetParamCount: Integer;
+function TRttiMethodHelper.GetParameterCount: Integer;
 begin
   Result := Length(GetParameters);
 end;
@@ -559,6 +607,11 @@ begin
   end;
 end;
 
+function TRttiTypeHelper.GetMethodCount: Integer;
+begin
+  Result := Length(GetMethods);
+end;
+
 function TRttiTypeHelper.InheritsFrom(OtherType: PTypeInfo): Boolean;
 var
   LType: TRttiType;
@@ -737,6 +790,25 @@ begin
   Result := AsType<Word>;
 end;
 
+class function TValueHelper.Equals(const Left, Right: TArray<TValue>): Boolean;
+var
+  i: Integer;
+begin
+  Result := Length(Left) = Length(Left);
+  if Result then
+  begin
+    for i := Low(Left) to High(Left) do
+    begin
+      if (Left[i].TypeInfo <> Right[i].TypeInfo)
+        or (Left[i].ToString <> Right[i].ToString) then
+      begin
+        Result := False;
+        Break;
+      end;
+    end
+  end;
+end;
+
 class function TValueHelper.FromBoolean(const Value: Boolean): TValue;
 begin
   Result := TValue.From<Boolean>(Value);
@@ -837,6 +909,21 @@ end;
 function TValueHelper.IsWord: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(Word);
+end;
+
+class function TValueHelper.ToString(const Values: TArray<TValue>): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  for i := Low(Values) to High(Values) do
+  begin
+    if i > Low(Values) then
+    begin
+      Result := Result + ', ';
+    end;
+    Result := Result + Values[i].ToString;
+  end;
 end;
 
 function TValueHelper.TryConvert(ATypeInfo: PTypeInfo;

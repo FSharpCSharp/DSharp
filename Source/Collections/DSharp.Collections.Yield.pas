@@ -92,6 +92,12 @@ type
   end;
 
   Yield<T> = record
+{$IFDEF CPUX64}
+{$HINTS OFF}
+  private
+    FValue: Pointer; // workaround for 64-bit bug
+{$HINTS ON}
+{$ENDIF}
   public
     class operator Implicit(AValue: T): Yield<T>; inline;
   end;

@@ -106,7 +106,7 @@ begin
   if FindType(FCurrentNode.NodeName, LType)
     and LType.TryGetMethod('Create', LMethod) then
   begin
-    SetLength(LArgs, LMethod.ParamCount);
+    SetLength(LArgs, LMethod.ParameterCount);
     AValue := LMethod.Invoke(LType.AsInstance.MetaclassType, LArgs);
     if not Assigned(FRoot) then
     begin

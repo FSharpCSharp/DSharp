@@ -96,7 +96,12 @@ function SwitchToFiber(lpFiber: Pointer): Boolean; stdcall; external kernel32;
 
 function GetCurrentFiber: Pointer;
 asm
+{$IFDEF CPUX64}
+//  MOV RAX, GS[$20] // BASM64 generates wrong code => $20 becomes image00000000_00400000+0x25af9
+  DB $65, $48, $8B, $04, $25, $20, $00, $00, $00
+{$ELSE}
   MOV EAX, FS:[$10]
+{$ENDIF}
 end;
 
 function GetFiberData: Pointer; inline;

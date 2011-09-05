@@ -48,6 +48,10 @@ type
     procedure InternalNotify(Sender: TObject; const Item: TMethod;
       Action: TCollectionNotification);
   strict protected
+{$IF CompilerVersion > 22}
+    FInvokableType: TRttiInvokableType;
+    FParameters: TArray<TRttiParameter>;
+{$IFEND}
     type
       TEvent = procedure of object;
     procedure MethodAdded(const AMethod: TMethod); virtual; abstract;
@@ -165,6 +169,7 @@ begin
 end;
 
 procedure TEventHandler.InternalInvoke(Params: PParameters; StackSize: Integer);
+{$IF CompilerVersion <= 22}
 const
   PointerSize = SizeOf(Pointer);
 var
@@ -198,6 +203,98 @@ begin
     end;
   end;
 end;
+{$IFEND}
+
+{$IFDEF CPUX86}
+const
+  PointerSize = SizeOf(Pointer);
+var
+  i: Integer;
+  LMethod: TMethod;
+  LArgs: TArray<TValue>;
+  LOffset: Byte;
+begin
+  if FMethods.Count > 0 then
+  begin
+    LOffset := 0;
+    SetLength(LArgs, Length(FParameters) + 1);
+
+    for i := Low(FParameters) to High(FParameters) do
+    begin
+      if (FInvokableType.CallingConvention = ccReg) and (i < 2) then
+      begin
+        if FParameters[i].Flags * [pfVar, pfConst, pfOut] <> [] then
+        begin
+          LArgs[i + 1] := TValue.From<Pointer>(Pointer(Params.Registers[i + 1]));
+        end
+        else
+        begin
+          TValue.Make(NativeInt(Params.Registers[i + 1]),
+            FParameters[i].ParamType.Handle, LArgs[i + 1]);
+        end
+      end
+      else
+      begin
+        if FParameters[i].Flags * [pfVar, pfConst, pfOut] <> [] then
+        begin
+          TValue.Make(Pointer(PNativeInt(@Params.Stack[LOffset])^),
+            FParameters[i].ParamType.Handle, LArgs[i + 1]);
+        end
+        else
+        begin
+          TValue.Make(PNativeInt(@Params.Stack[LOffset])^,
+            FParameters[i].ParamType.Handle, LArgs[i + 1]);
+        end;
+        Inc(LOffset, FParameters[i].ParamType.TypeSize);
+      end;
+    end;
+
+    for LMethod in FMethods do
+    begin
+      LArgs[0] := TValue.From<TObject>(LMethod.Data);
+      Rtti.Invoke(LMethod.Code, LArgs, FInvokableType.CallingConvention, nil);
+    end;
+  end;
+end;
+{$ENDIF CPUX86}
+
+{$IFDEF CPUX64}
+const
+  PointerSize = SizeOf(Pointer);
+var
+  i: Integer;
+  LMethod: TMethod;
+  LArgs: TArray<TValue>;
+  LOffset: Byte;
+begin
+  if FMethods.Count > 0 then
+  begin
+    LOffset := 8;
+    SetLength(LArgs, Length(FParameters) + 1);
+
+    for i := Low(FParameters) to High(FParameters) do
+    begin
+      if FParameters[i].Flags * [pfVar, pfConst, pfOut] <> [] then
+      begin
+        LArgs[i + 1] := TValue.From<Pointer>(
+          Pointer(PNativeInt(@Params.Stack[LOffset])^));
+      end
+      else
+      begin
+        TValue.Make(PNativeInt(@Params.Stack[LOffset])^,
+          FParameters[i].ParamType.Handle, LArgs[i + 1]);
+      end;
+      Inc(LOffset, PointerSize);
+    end;
+
+    for LMethod in FMethods do
+    begin
+      LArgs[0] := TValue.From<TObject>(LMethod.Data);
+      Rtti.Invoke(LMethod.Code, LArgs, FInvokableType.CallingConvention, nil);
+    end;
+  end;
+end;
+{$ENDIF CPUX64}
 
 procedure TEventHandler.InternalNotify(Sender: TObject; const Item: TMethod;
   Action: TCollectionNotification);
@@ -301,6 +398,10 @@ var
 begin
   MethInfo := TypeInfo(T);
   TypeData := GetTypeData(MethInfo);
+{$IF CompilerVersion > 22}
+  FInvokableType := Context.GetType(MethInfo) as TRttiInvokableType;
+  FParameters := FInvokableType.GetParameters();
+{$IFEND}
   inherited Create();
   Assert(MethInfo.Kind = tkMethod, 'T must be a method pointer type');
   SetEventDispatcher(FInvoke, TypeData);

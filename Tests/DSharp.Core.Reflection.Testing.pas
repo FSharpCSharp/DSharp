@@ -145,6 +145,46 @@ type
     procedure TryConvert_ValueIsObject_TypeIsBoolean_True;
   end;
 
+  // only roughly tested with 32-bit - only for finding obvious errors
+  TSameValueTestCase = class(TTestCase)
+  published
+    procedure LeftIsDouble_RightIsDouble_ValuesAreEqual_True;
+    procedure LeftIsDouble_RightIsDouble_ValuesAreNotEqual_False;
+    procedure LeftIsDouble_RightIsExtended_ValuesAreEqual_True;
+    procedure LeftIsDouble_RightIsExtended_ValuesAreNotEqual_False;
+    procedure LeftIsDouble_RightIsInteger_ValuesAreEqual_True;
+    procedure LeftIsDouble_RightIsInteger_ValuesAreNotEqual_False;
+    procedure LeftIsDouble_RightIsSingle_ValuesAreEqual_True;
+    procedure LeftIsDouble_RightIsSingle_ValuesAreNotEqual_False;
+
+    procedure LeftIsExtended_RightIsDouble_ValuesAreEqual_True;
+    procedure LeftIsExtended_RightIsDouble_ValuesAreNotEqual_False;
+    procedure LeftIsExtended_RightIsExtended_ValuesAreEqual_True;
+    procedure LeftIsExtended_RightIsExtended_ValuesAreNotEqual_False;
+    procedure LeftIsExtended_RightIsInteger_ValuesAreEqual_True;
+    procedure LeftIsExtended_RightIsInteger_ValuesAreNotEqual_False;
+    procedure LeftIsExtended_RightIsSingle_ValuesAreEqual_True;
+    procedure LeftIsExtended_RightIsSingle_ValuesAreNotEqual_False;
+
+    procedure LeftIsInteger_RightIsDouble_ValuesAreEqual_True;
+    procedure LeftIsInteger_RightIsDouble_ValuesAreNotEqual_False;
+    procedure LeftIsInteger_RightIsExtended_ValuesAreEqual_True;
+    procedure LeftIsInteger_RightIsExtended_ValuesAreNotEqual_False;
+    procedure LeftIsInteger_RightIsInteger_ValuesAreEqual_True;
+    procedure LeftIsInteger_RightIsInteger_ValuesAreNotEqual_False;
+    procedure LeftIsInteger_RightIsSingle_ValuesAreEqual_True;
+    procedure LeftIsInteger_RightIsSingle_ValuesAreNotEqual_False;
+
+    procedure LeftIsSingle_RightIsDouble_ValuesAreEqual_True;
+    procedure LeftIsSingle_RightIsDouble_ValuesAreNotEqual_False;
+    procedure LeftIsSingle_RightIsExtended_ValuesAreEqual_True;
+    procedure LeftIsSingle_RightIsExtended_ValuesAreNotEqual_False;
+    procedure LeftIsSingle_RightIsInteger_ValuesAreEqual_True;
+    procedure LeftIsSingle_RightIsInteger_ValuesAreNotEqual_False;
+    procedure LeftIsSingle_RightIsSingle_ValuesAreEqual_True;
+    procedure LeftIsSingle_RightIsSingle_ValuesAreNotEqual_False;
+  end;
+
 var
   Context: TRttiContext;
 
@@ -686,9 +726,179 @@ begin
   CheckEquals(42, value.AsInteger);
 end;
 
+// Taken from Math.pas
+const
+  FuzzFactor = 1000;
+  ExtendedResolution = 1E-19 * FuzzFactor;
+  DoubleResolution   = 1E-15 * FuzzFactor;
+  SingleResolution   = 1E-7 * FuzzFactor;
+
+{ TSameValueTestCase }
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsDouble_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Double>(42), TValue.From<Double>(42 + DoubleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsDouble_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Double>(42), TValue.From<Double>(42 + SingleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsExtended_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Double>(42), TValue.From<Extended>(42 + ExtendedResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsExtended_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Double>(42), TValue.From<Extended>(42 + DoubleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsInteger_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Double>(42), TValue.From<Integer>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsInteger_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Double>(42), TValue.From<Integer>(43)));
+end;
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsSingle_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Double>(42 + DoubleResolution), TValue.From<Single>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsDouble_RightIsSingle_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Double>(42 + SingleResolution), TValue.From<Single>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsDouble_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Extended>(42 + ExtendedResolution), TValue.From<Double>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsDouble_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Double>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsExtended_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Extended>(42 + ExtendedResolution), TValue.From<Extended>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsExtended_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Extended>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsInteger_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Extended>(42 + ExtendedResolution), TValue.From<Integer>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsInteger_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Integer>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsSingle_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Extended>(42 + ExtendedResolution), TValue.From<Single>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsExtended_RightIsSingle_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Single>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsDouble_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Integer>(42), TValue.From<Double>(42 + DoubleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsDouble_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Integer>(42), TValue.From<Double>(42 + SingleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsExtended_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Integer>(42), TValue.From<Extended>(42 + ExtendedResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsExtended_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Integer>(42), TValue.From<Extended>(42 + DoubleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsInteger_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Integer>(42), TValue.From<Integer>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsInteger_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Integer>(42), TValue.From<Integer>(43)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsSingle_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Integer>(42), TValue.From<Single>(42 + SingleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsInteger_RightIsSingle_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Integer>(42), TValue.From<Single>(42.005)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsDouble_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Single>(42), TValue.From<Double>(42 + DoubleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsDouble_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Double>(42 + SingleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsExtended_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Single>(42), TValue.From<Extended>(42 + ExtendedResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsExtended_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Extended>(42 + DoubleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsInteger_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Single>(42), TValue.From<Integer>(42)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsInteger_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Integer>(43)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsSingle_ValuesAreEqual_True;
+begin
+  CheckTrue(SameValue(TValue.From<Single>(42), TValue.From<Single>(42 + SingleResolution)));
+end;
+
+procedure TSameValueTestCase.LeftIsSingle_RightIsSingle_ValuesAreNotEqual_False;
+begin
+  CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Single>(42.005)));
+end;
+
 initialization
   RegisterTest('DSharp.Core.Reflection', TRttiTypeHelperTestCase.Suite);
   RegisterTest('DSharp.Core.Reflection', TValueHelperTestCase.Suite);
+  RegisterTest('DSharp.Core.Reflection', TSameValueTestCase.Suite);
 
 end.
 

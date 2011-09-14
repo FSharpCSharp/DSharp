@@ -131,6 +131,7 @@ type
 
     function IsFloat: Boolean;
     function IsNumeric: Boolean;
+    function IsPointer: Boolean;
     function IsString: Boolean;
 
     // conversion for almost all standard types
@@ -138,16 +139,21 @@ type
 
     function AsByte: Byte;
     function AsCardinal: Cardinal;
+    function AsCurrency: Currency;
     function AsDate: TDate;
     function AsDateTime: TDateTime;
+    function AsDouble: Double;
+    function AsFloat: Extended;
+    function AsPointer: Pointer;
     function AsShortInt: ShortInt;
+    function AsSingle: Single;
     function AsSmallInt: SmallInt;
     function AsTime: TTime;
     function AsUInt64: UInt64;
     function AsWord: Word;
 
     class function ToString(const Values: TArray<TValue>): string; overload; static;
-    class function Equals(const Left, Right: TArray<TValue>): Boolean; static;
+    class function Equals(const Left, Right: TArray<TValue>): Boolean; overload; static;
 
     class function FromBoolean(const Value: Boolean): TValue; static;
     class function FromString(const Value: string): TValue; static;
@@ -155,11 +161,14 @@ type
     function IsBoolean: Boolean;
     function IsByte: Boolean;
     function IsCardinal: Boolean;
+    function IsCurrency: Boolean;
     function IsDate: Boolean;
     function IsDateTime: Boolean;
+    function IsDouble: Boolean;
     function IsInteger: Boolean;
     function IsInt64: Boolean;
     function IsShortInt: Boolean;
+    function IsSingle: Boolean;
     function IsSmallInt: Boolean;
     function IsTime: Boolean;
     function IsUInt64: Boolean;
@@ -174,10 +183,14 @@ function IsTypeCovariantTo(ThisType, OtherType: PTypeInfo): Boolean;
 function TryGetRttiType(AClass: TClass; out AType: TRttiType): Boolean; overload;
 function TryGetRttiType(ATypeInfo: PTypeInfo; out AType: TRttiType): Boolean; overload;
 
+function CompareValue(const Left, Right: TValue): Integer;
+function SameValue(const Left, Right: TValue): Boolean;
+
 implementation
 
 uses
   Classes,
+  Math,
   StrUtils,
   SysUtils,
   Types;
@@ -276,6 +289,127 @@ begin
   end;
 end;
 {$ENDIF}
+
+function CompareValue(const Left, Right: TValue): Integer;
+begin
+  if Left.IsOrdinal and Right.IsOrdinal then
+  begin
+    Result := Math.CompareValue(Left.AsOrdinal, Right.AsOrdinal);
+  end else
+  if Left.IsFloat and Right.IsFloat then
+  begin
+    Result := Math.CompareValue(Left.AsFloat, Right.AsFloat);
+  end else
+  if Left.IsString and Right.IsString then
+  begin
+    Result := SysUtils.CompareStr(Left.AsString, Right.AsString);
+  end else
+  begin
+    Result := 0;
+  end;
+end;
+
+function SameValue(const Left, Right: TValue): Boolean;
+begin
+  if Left.IsNumeric and Right.IsNumeric then
+  begin
+    if Left.IsOrdinal then
+    begin
+      if Right.IsOrdinal then
+      begin
+        Result := Left.AsOrdinal = Right.AsOrdinal;
+      end else
+      if Right.IsSingle then
+      begin
+        Result := Math.SameValue(Left.AsOrdinal, Right.AsSingle);
+      end else
+      if Right.IsDouble then
+      begin
+        Result := Math.SameValue(Left.AsOrdinal, Right.AsDouble);
+      end
+      else
+      begin
+        Result := Math.SameValue(Left.AsOrdinal, Right.AsExtended);
+      end;
+    end else
+    if Left.IsSingle then
+    begin
+      if Right.IsOrdinal then
+      begin
+        Result := Math.SameValue(Left.AsSingle, Right.AsOrdinal);
+      end else
+      if Right.IsSingle then
+      begin
+        Result := Math.SameValue(Left.AsSingle, Right.AsSingle);
+      end else
+      if Right.IsDouble then
+      begin
+        Result := Math.SameValue(Left.AsSingle, Right.AsDouble);
+      end
+      else
+      begin
+        Result := Math.SameValue(Left.AsSingle, Right.AsExtended);
+      end;
+    end else
+    if Left.IsDouble then
+    begin
+      if Right.IsOrdinal then
+      begin
+        Result := Math.SameValue(Left.AsDouble, Right.AsOrdinal);
+      end else
+      if Right.IsSingle then
+      begin
+        Result := Math.SameValue(Left.AsDouble, Right.AsSingle);
+      end else
+      if Right.IsDouble then
+      begin
+        Result := Math.SameValue(Left.AsDouble, Right.AsDouble);
+      end
+      else
+      begin
+        Result := Math.SameValue(Left.AsDouble, Right.AsExtended);
+      end;
+    end
+    else
+    begin
+      if Right.IsOrdinal then
+      begin
+        Result := Math.SameValue(Left.AsExtended, Right.AsOrdinal);
+      end else
+      if Right.IsSingle then
+      begin
+        Result := Math.SameValue(Left.AsExtended, Right.AsSingle);
+      end else
+      if Right.IsDouble then
+      begin
+        Result := Math.SameValue(Left.AsExtended, Right.AsDouble);
+      end
+      else
+      begin
+        Result := Math.SameValue(Left.AsExtended, Right.AsExtended);
+      end;
+    end;
+  end else
+  if Left.IsString and Right.IsString then
+  begin
+    Result := Left.AsString = Right.AsString;
+  end else
+  if Left.IsObject and Right.IsObject then
+  begin
+    Result := Left.AsObject = Right.AsObject;
+  end else
+  if Left.IsPointer and Right.IsPointer then
+  begin
+    Result := Left.AsPointer = Right.AsPointer;
+  end else
+  if Left.TypeInfo = Right.TypeInfo then
+  begin
+    Result := Left.AsPointer = Right.AsPointer;
+  end else
+  begin
+    Result := False;
+  end;
+end;
 
 { TObjectHelper }
 
@@ -755,6 +889,11 @@ begin
   Result := AsType<Cardinal>;
 end;
 
+function TValueHelper.AsCurrency: Currency;
+begin
+  Result := AsType<Currency>;
+end;
+
 function TValueHelper.AsDate: TDate;
 begin
   Result := AsType<TDate>;
@@ -765,9 +904,29 @@ begin
   Result := AsType<TDateTime>;
 end;
 
+function TValueHelper.AsDouble: Double;
+begin
+  Result := AsType<Double>;
+end;
+
+function TValueHelper.AsFloat: Extended;
+begin
+  Result := AsType<Extended>;
+end;
+
+function TValueHelper.AsPointer: Pointer;
+begin
+  ExtractRawDataNoCopy(@Result);
+end;
+
 function TValueHelper.AsShortInt: ShortInt;
 begin
   Result := AsType<ShortInt>;
+end;
+
+function TValueHelper.AsSingle: Single;
+begin
+  Result := AsType<Single>;
 end;
 
 function TValueHelper.AsSmallInt: SmallInt;
@@ -799,8 +958,7 @@ begin
   begin
     for i := Low(Left) to High(Left) do
     begin
-      if (Left[i].TypeInfo <> Right[i].TypeInfo)
-        or (Left[i].ToString <> Right[i].ToString) then
+      if not SameValue(Left[i], Right[i]) then
       begin
         Result := False;
         Break;
@@ -851,6 +1009,11 @@ begin
   Result := TypeInfo = System.TypeInfo(Cardinal);
 end;
 
+function TValueHelper.IsCurrency: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Currency);
+end;
+
 function TValueHelper.IsDate: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(TDate);
@@ -859,6 +1022,11 @@ end;
 function TValueHelper.IsDateTime: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(TDateTime);
+end;
+
+function TValueHelper.IsDouble: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Double);
 end;
 
 function TValueHelper.IsFloat: Boolean;
@@ -881,9 +1049,19 @@ begin
   Result := Kind in [tkInteger, tkChar, tkEnumeration, tkFloat, tkWChar, tkInt64];
 end;
 
+function TValueHelper.IsPointer: Boolean;
+begin
+  Result := Kind = tkPointer;
+end;
+
 function TValueHelper.IsShortInt: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(ShortInt);
+end;
+
+function TValueHelper.IsSingle: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Single);
 end;
 
 function TValueHelper.IsSmallInt: Boolean;

@@ -45,8 +45,11 @@ type
 
   IParameter = interface(IExpression)
     ['{E276DEFC-4223-4709-AF19-75F8EEF7104E}']
+    function GetName: string;
     function GetValue: TValue;
+    procedure SetName(const Value: string);
     procedure SetValue(const Value: TValue);
+    property Name: string read GetName write SetName;
     property Value: TValue read GetValue write SetValue;
   end;
 
@@ -110,8 +113,11 @@ type
   end;
 
   TExpression = class abstract(TInterfacedObject, IExpression)
+  private
+    class var FUseParentheses: Boolean;
   public
     function Compile: TValue; virtual; abstract;
+    class property UseParentheses: Boolean read FUseParentheses write FUseParentheses;
   end;
 
   TUnaryExpression = class(TExpression, IUnaryExpression)
@@ -135,6 +141,8 @@ type
     FRight: IExpression;
     function GetLeft: IExpression;
     function GetRight: IExpression;
+  protected
+    function BuildString(const OperatorString: string): string;
   public
     constructor Create(Left, Right: IExpression);
     property Left: IExpression read GetLeft;
@@ -237,9 +245,12 @@ type
   private
     function GetValue: TValue;
     procedure SetValue(const Value: TValue);
+    function GetName: string;
+    procedure SetName(const Value: string);
   public
     function Compile: TValue; override;
     function ToString: string; override;
+    property Name: string read GetName write SetName;
     property Value: TValue read GetValue write SetValue;
   end;
 
@@ -334,6 +345,7 @@ type
     constructor Create(Value: TObject); overload;
     constructor Create(Value: TValue); overload;
     constructor Create(Value: Variant); overload;
+    class function From<T>(const Value: T): TValueConstantExpression;
     function Compile: TValue; override;
     function ToString: string; override;
   end;
@@ -341,12 +353,14 @@ type
   TParameterExpression = class(TValueConstantExpression, IParameter)
   private
     FName: string;
-    procedure SetValue(const Value: TValue);
+    function GetName: string;
     function GetValue: TValue;
+    procedure SetName(const Value: string);
+    procedure SetValue(const Value: TValue);
   public
-    constructor Create(AName: string);
+    constructor Create(const AName: string);
     function ToString: string; override;
-    property Name: string read FName;
+    property Name: string read GetName write SetName;
     property Value: TValue read GetValue write SetValue;
   end;
 
@@ -388,10 +402,8 @@ var
 implementation
 
 uses
+  DSharp.Core.Reflection,
   TypInfo;
-
-var
-  Context: TRttiContext;
 
 type
   TValueHelper = record helper for TValue
@@ -429,7 +441,8 @@ end;
 
 constructor TBooleanExpression.Create(Value: IExpression);
 begin
-  FValue := Value
+  FValue := Value;
+  ExpressionStack.Push(FValue);
 end;
 
 class operator TBooleanExpression.Equal(const Left,
@@ -714,6 +727,13 @@ begin
   Result := FRight;
 end;
 
+function TBinaryExpression.BuildString(const OperatorString: string): string;
+begin
+  Result := FLeft.ToString + ' ' + OperatorString + ' ' + FRight.ToString;
+  if TExpression.UseParentheses then
+    Result := '(' + Result + ')';
+end;
+
 { TAdditionExpression }
 
 function TAdditionExpression.Compile: TValue;
@@ -739,7 +759,7 @@ end;
 
 function TAdditionExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' + ' + FRight.ToString + ')';
+  Result := BuildString('+');
 end;
 
 { TSubtractionExpression }
@@ -763,7 +783,7 @@ end;
 
 function TSubtractionExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' - ' + FRight.ToString + ')';
+  Result := BuildString('-');
 end;
 
 { TMultiplicationExpression }
@@ -787,7 +807,7 @@ end;
 
 function TMultiplicationExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' * ' + FRight.ToString + ')';
+  Result := BuildString('*');
 end;
 
 { TDivisionExpression }
@@ -807,7 +827,7 @@ end;
 
 function TDivisionExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' / ' + FRight.ToString + ')';
+  Result := BuildString('/');
 end;
 
 { TIntegerDivisionExpression }
@@ -827,7 +847,7 @@ end;
 
 function TIntegerDivisionExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' div ' + FRight.ToString + ')';
+  Result := BuildString('div');
 end;
 
 { TModulusExpression }
@@ -847,7 +867,7 @@ end;
 
 function TModulusExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' mod ' + FRight.ToString + ')';
+  Result := BuildString('mod');
 end;
 
 { TLogicalAndExpression }
@@ -859,7 +879,7 @@ end;
 
 function TLogicalAndExpression.ToString: string;
 begin
-  Result := '('  + FLeft.ToString + ' and ' + FRight.ToString + ')';
+  Result := BuildString('and');
 end;
 
 { TLogicalOrExpression }
@@ -871,7 +891,7 @@ end;
 
 function TLogicalOrExpression.ToString: string;
 begin
-  Result := '('  + FLeft.ToString + ' or ' + FRight.ToString + ')';
+  Result := BuildString('or');
 end;
 
 { TLogicalXorExpression }
@@ -883,7 +903,7 @@ end;
 
 function TLogicalXorExpression.ToString: string;
 begin
-  Result := '('  + FLeft.ToString + ' xor ' + FRight.ToString + ')';
+  Result := BuildString('xor');
 end;
 
 { TEqualExpression }
@@ -895,19 +915,12 @@ var
 begin
   LLeft := FLeft.Compile;
   LRight := FRight.Compile;
-  if LLeft.IsNumeric and LRight.IsNumeric then
-  begin
-    Result := TValue.From<Boolean>(LLeft.AsExtended = LRight.AsExtended);
-  end
-  else
-  begin
-    Result := TValue.From<Boolean>(LLeft.ToString = LRight.ToString);
-  end;
+  Result := SameValue(LLeft, LRight);
 end;
 
 function TEqualExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' = ' + FRight.ToString + ')';
+  Result := BuildString('=');
 end;
 
 { TNotEqualExpression }
@@ -931,7 +944,7 @@ end;
 
 function TNotEqualExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' <> ' + FRight.ToString + ')';
+  Result := BuildString('<>');
 end;
 
 { TLessThanExpression }
@@ -955,7 +968,7 @@ end;
 
 function TLessThanExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' < ' + FRight.ToString + ')';
+  Result := BuildString('<');
 end;
 
 { TLessThanOrEqualExpression }
@@ -979,7 +992,7 @@ end;
 
 function TLessThanOrEqualExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' <= ' + FRight.ToString + ')';
+  Result := BuildString('<=');
 end;
 
 { TGreaterThanExpression }
@@ -1003,7 +1016,7 @@ end;
 
 function TGreaterThanExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' > ' + FRight.ToString + ')';
+  Result := BuildString('>');
 end;
 
 { TGreaterThanOrEqualExpression }
@@ -1027,7 +1040,7 @@ end;
 
 function TGreaterThanOrEqualExpression.ToString: string;
 begin
-  Result := '(' + FLeft.ToString + ' >= ' + FRight.ToString + ')';
+  Result := BuildString('>=');
 end;
 
 { TBooleanConstantExpression }
@@ -1120,6 +1133,12 @@ begin
   FValue := TValue.FromVariant(Value);
 end;
 
+class function TValueConstantExpression.From<T>(
+  const Value: T): TValueConstantExpression;
+begin
+  Result := TValueConstantExpression.Create(TValue.From<T>(Value));
+end;
+
 function TValueConstantExpression.ToString: string;
 begin
   Result := FValue.ToString;
@@ -1127,14 +1146,24 @@ end;
 
 { TParameterExpression }
 
-constructor TParameterExpression.Create(AName: string);
+constructor TParameterExpression.Create(const AName: string);
 begin
   FName := AName;
+end;
+
+function TParameterExpression.GetName: string;
+begin
+  Result := FName;
 end;
 
 function TParameterExpression.GetValue: TValue;
 begin
   Result := FValue;
+end;
+
+procedure TParameterExpression.SetName(const Value: string);
+begin
+  FName := Value;
 end;
 
 procedure TParameterExpression.SetValue(const Value: TValue);
@@ -1186,18 +1215,8 @@ begin
 end;
 
 function TPropertyExpression.GetMethod(AObject: TObject): TRttiMethod;
-var
-  LType: TRttiType;
 begin
-  if Assigned(AObject) then
-  begin
-    LType := Context.GetType(AObject.ClassType);
-    Result := LType.GetMethod(FName);
-  end
-  else
-  begin
-    Result := nil;
-  end;
+  Result := AObject.GetMethod(FName);
 end;
 
 function TPropertyExpression.GetObject: TObject;
@@ -1213,18 +1232,8 @@ begin
 end;
 
 function TPropertyExpression.GetProperty(AObject: TObject): TRttiProperty;
-var
-  LType: TRttiType;
 begin
-  if Assigned(AObject) then
-  begin
-    LType := Context.GetType(AObject.ClassType);
-    Result := LType.GetProperty(FName);
-  end
-  else
-  begin
-    Result := nil;
-  end;
+  Result := AObject.GetProperty(FName);
 end;
 
 function TPropertyExpression.ToString: string;
@@ -1266,18 +1275,8 @@ begin
 end;
 
 function TMethodExpression.GetMethod(AObject: TObject): TRttiMethod;
-var
-  LType: TRttiType;
 begin
-  if Assigned(AObject) then
-  begin
-    LType := Context.GetType(AObject.ClassType);
-    Result := LType.GetMethod(FName);
-  end
-  else
-  begin
-    Result := nil;
-  end;
+  Result := AObject.GetMethod(FName);
 end;
 
 function TMethodExpression.GetObject: TObject;
@@ -1336,6 +1335,11 @@ begin
     raise EArgumentException.Create('Left side cannot be assigned to');
 end;
 
+function TAssignExpression.GetName: string;
+begin
+  Result := '';
+end;
+
 function TAssignExpression.GetValue: TValue;
 var
   LLeft: IParameter;
@@ -1346,6 +1350,11 @@ begin
   end
   else
     Result := TValue.Empty;
+end;
+
+procedure TAssignExpression.SetName(const Value: string);
+begin
+
 end;
 
 procedure TAssignExpression.SetValue(const Value: TValue);
@@ -1456,7 +1465,6 @@ begin
 end;
 
 initialization
-  Context := TRttiContext.Create();
   ExpressionStack := TStack<IExpression>.Create();
   ParameterList[0] := TParameterExpression.Create('Arg1');
   ParameterList[1] := TParameterExpression.Create('Arg2');

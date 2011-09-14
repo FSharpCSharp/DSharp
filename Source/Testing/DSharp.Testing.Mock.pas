@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Mock;
+unit DSharp.Testing.Mock;
 
 {$IF COMPILERVERSION < 22}
   {$MESSAGE FATAL 'This unit requires Delphi XE or higher.'}
@@ -36,7 +36,8 @@ unit DSharp.Core.Mock;
 interface
 
 uses
-  DSharp.Core.Mock.Interfaces;
+  DSharp.Testing.Mock.Interfaces,
+  SysUtils;
 
 type
   TMockMode = (
@@ -53,18 +54,23 @@ type
     property Mock: IMock<T> read GetMock;
   public
     constructor Create(AMode: TMockMode);
-    class operator Implicit(const Value: Mock<T>): IMock<T>;
-    class operator Implicit(const Value: Mock<T>): T;
+    procedure Free;
+    class operator Implicit(var Value: Mock<T>): IMock<T>;
+    class operator Implicit(var Value: Mock<T>): T;
     procedure Verify;
-    function WillExecute<TAction>(const Value: TAction): IWhenCalling<T>;
-    function WillReturn<TResult>(const Value: TResult): IWhenCalling<T>;
+    function WillExecute<TAction>(const Action: TAction): IExpect<T>;
+    function WillRaise(const ExceptionClass: ExceptClass;
+      const Msg: string = ''): IExpect<T>; overload;
+    function WillRaise(const ExceptionClass: ExceptClass; const Msg: string;
+      const Args: array of const): IExpect<T>; overload;
+    function WillReturn<TResult>(const Value: TResult): IExpect<T>;
     property Instance: T read GetInstance;
   end;
 
 implementation
 
 uses
-  DSharp.Core.Mock.Internals,
+  DSharp.Testing.Mock.Internals,
   Rtti;
 
 { Mock<T> }
@@ -72,6 +78,11 @@ uses
 constructor Mock<T>.Create(AMode: TMockMode);
 begin
   FMock := TMockWrapper<T>.Create(AMode);
+end;
+
+procedure Mock<T>.Free;
+begin
+  FMock := nil;
 end;
 
 function Mock<T>.GetInstance: T;
@@ -88,12 +99,12 @@ begin
   Result := FMock;
 end;
 
-class operator Mock<T>.Implicit(const Value: Mock<T>): IMock<T>;
+class operator Mock<T>.Implicit(var Value: Mock<T>): IMock<T>;
 begin
   Result := Value.Mock;
 end;
 
-class operator Mock<T>.Implicit(const Value: Mock<T>): T;
+class operator Mock<T>.Implicit(var Value: Mock<T>): T;
 begin
   Result := Value.Mock.Instance;
 end;
@@ -103,12 +114,35 @@ begin
   Mock.Verify;
 end;
 
-function Mock<T>.WillExecute<TAction>(const Value: TAction): IWhenCalling<T>;
+function Mock<T>.WillExecute<TAction>(const Action: TAction): IExpect<T>;
 begin
-  Result := Mock.WillExecute(TValue.From<TAction>(Value));
+  Result := Mock.WillExecute(TValue.From<TAction>(Action));
 end;
 
-function Mock<T>.WillReturn<TResult>(const Value: TResult): IWhenCalling<T>;
+function Mock<T>.WillRaise(const ExceptionClass: ExceptClass;
+  const Msg: string): IExpect<T>;
+begin
+  Result := Mock.WillRaise(
+    function: Exception
+    begin
+      Result := ExceptionClass.Create(Msg);
+    end);
+end;
+
+function Mock<T>.WillRaise(const ExceptionClass: ExceptClass;
+  const Msg: string; const Args: array of const): IExpect<T>;
+var
+  LMsg: string;
+begin
+  LMsg := Format(Msg, Args);
+  Result := Mock.WillRaise(
+    function: Exception
+    begin
+      Result := ExceptClass.Create(LMsg);
+    end);
+end;
+
+function Mock<T>.WillReturn<TResult>(const Value: TResult): IExpect<T>;
 begin
   Result := Mock.WillReturn(TValue.From<TResult>(Value));
 end;

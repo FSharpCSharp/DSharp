@@ -27,23 +27,35 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Mock.Interfaces;
+unit DSharp.Testing.Mock.Interfaces;
 
 interface
 
 uses
-  Rtti;
+  Rtti,
+  SysUtils;
 
 type
-  IWhenCalling<T> = interface
+  IWhen<T> = interface
     function WhenCalling: T;
+  end;
+
+  IExpect<T> = interface
+    function AtLeast(const Count: Cardinal): IWhen<T>;
+    function AtLeastOnce: IWhen<T>;
+    function AtMost(const Count: Cardinal): IWhen<T>;
+    function Between(const LowValue, HighValue: Cardinal): IWhen<T>;
+    function Exactly(const Count: Cardinal): IWhen<T>;
+    function Never: IWhen<T>;
+    function Once: IWhen<T>;
   end;
 
   IMock<T> = interface
     function GetInstance: T;
     procedure Verify;
-    function WillExecute(const Value: TValue): IWhenCalling<T>;
-    function WillReturn(const Value: TValue): IWhenCalling<T>;
+    function WillExecute(const Action: TValue): IExpect<T>;
+    function WillRaise(const Exception: TFunc<Exception>): IExpect<T>;
+    function WillReturn(const Value: TValue): IExpect<T>;
     property Instance: T read GetInstance;
   end;
 

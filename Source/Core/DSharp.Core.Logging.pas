@@ -32,7 +32,7 @@ unit DSharp.Core.Logging;
 interface
 
 uses
-  DSharp.Collections,
+  Generics.Collections,
   Rtti,
   SysUtils;
 
@@ -59,7 +59,8 @@ type
     procedure LeaveMethod(const AInstance: TObject; const AName: string); overload;
     procedure LogException(const AException: Exception; const ATitle: string = '');
     procedure LogMessage(const AMessage: string);
-    procedure LogValue<T>(const AName: string; const AValue: T);
+    procedure LogValue(const AName: string; const AValue: TValue); overload;
+    procedure LogValue<T>(const AName: string; const AValue: T); overload;
   end;
 
 function Logging: TBaseLogging;
@@ -146,6 +147,11 @@ end;
 procedure TBaseLogging.LogMessage(const AMessage: string);
 begin
   LogEntry(TLogEntry.Create(AMessage, TValue.Empty, lkMessage));
+end;
+
+procedure TBaseLogging.LogValue(const AName: string; const AValue: TValue);
+begin
+  LogEntry(TLogEntry.Create(AName, AValue, lkValue));
 end;
 
 procedure TBaseLogging.LogValue<T>(const AName: string; const AValue: T);

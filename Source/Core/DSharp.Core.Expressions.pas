@@ -107,7 +107,7 @@ type
     class operator Implicit(Value: Variant): TValueExpression;
     class operator Implicit(Value: string): TValueExpression;
     class operator Implicit(Value: TValueExpression): Extended;
-    class operator Implicit(Value: TValueExpression): Integer;
+    class operator Implicit(Value: TValueExpression): Int64;
     function Compile: TValue;
     function ToString: string;
   end;
@@ -596,7 +596,7 @@ begin
   Result := Value.Compile.AsExtended;
 end;
 
-class operator TValueExpression.Implicit(Value: TValueExpression): Integer;
+class operator TValueExpression.Implicit(Value: TValueExpression): Int64;
 begin
   Result := Trunc(Value.Compile.AsExtended);
 end;

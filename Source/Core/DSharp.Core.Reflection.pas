@@ -394,6 +394,10 @@ begin
   begin
     Result := Left.AsString = Right.AsString;
   end else
+  if Left.IsClass and Right.IsClass then
+  begin
+    Result := Left.AsClass = Right.AsClass;
+  end else
   if Left.IsObject and Right.IsObject then
   begin
     Result := Left.AsObject = Right.AsObject;

@@ -24,6 +24,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<DCC_UnitSearchPath>..\..\Source\Core;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
@@ -48,12 +49,6 @@
 			<DCCReference Include="Main.pas">
 				<Form>Form1</Form>
 			</DCCReference>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Aspects.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Aspects.Logging.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Logging.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Logging.SmartInspect.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Logging.SmartInspect.Helper.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

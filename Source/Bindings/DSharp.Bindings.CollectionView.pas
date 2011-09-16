@@ -244,7 +244,10 @@ end;
 
 procedure TCollectionView.SetCurrentItem(const Value: TObject);
 begin
-  // not yet implemented
+  if Assigned(FItemsSource) then
+  begin
+    ItemIndex := FItemsSource.IndexOf(Value);
+  end;
 end;
 
 procedure TCollectionView.SetFilter(const Value: TPredicate<TObject>);

@@ -36,25 +36,121 @@ uses
   TypInfo;
 
 type
+  {$REGION 'Documentation'}
+  ///	<summary>Extends <see cref="System.TObject">TObject</see> with several
+  ///	methods to directly retrieve RTTI.</summary>
+  {$ENDREGION}
   TObjectHelper = class helper for TObject
   public
+    {$REGION 'Documentation'}
+    ///	<summary>Returns a list of all fields of the object.</summary>
+    {$ENDREGION}
     function GetFields: TArray<TRttiField>;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns the field with the given name; <b>nil</b> if nothing
+    ///	is found.</summary>
+    ///	<param name="AName">Name of the field to find.</param>
+    {$ENDREGION}
     function GetField(const AName: string): TRttiField;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns a list of all methods of the object.</summary>
+    {$ENDREGION}
     function GetMethods: TArray<TRttiMethod>;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns the method at the given code address; <b>nil</b> if
+    ///	nothing is found.</summary>
+    ///	<param name="ACodeAddress">Code address of the method to find.</param>
+    {$ENDREGION}
     function GetMethod(ACodeAddress: Pointer): TRttiMethod; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns the method with the given name; <b>nil</b> if nothing
+    ///	is found.</summary>
+    ///	<param name="AName">Name of the method to find.</param>
+    {$ENDREGION}
     function GetMethod(const AName: string): TRttiMethod; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns a list of all properties of the object.</summary>
+    {$ENDREGION}
     function GetProperties: TArray<TRttiProperty>;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns the property with the given name; nil if nothing is
+    ///	found.</summary>
+    ///	<param name="AName">Name of the property to find.</param>
+    {$ENDREGION}
     function GetProperty(const AName: string): TRttiProperty;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns the type of the object.</summary>
+    {$ENDREGION}
     function GetType: TRttiType;
 
+    {$REGION 'Documentation'}
+    ///	<summary>Returns if the object contains a field with the given
+    ///	name.</summary>
+    ///	<param name="AName">Name of the field to find.</param>
+    {$ENDREGION}
     function HasField(const AName: string): Boolean;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns if the object contains a method with the given
+    ///	name.</summary>
+    {$ENDREGION}
     function HasMethod(const AName: string): Boolean;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Returns if the object contains a property with the given
+    ///	name.</summary>
+    {$ENDREGION}
     function HasProperty(const AName: string): Boolean;
 
+    {$REGION 'Documentation'}
+    ///	<summary>Retrieves the method with the given name and returns if this
+    ///	was successful.</summary>
+    ///	<param name="AName">Name of the field to find.</param>
+    ///	<param name="AField">Field that was found when Result is
+    ///	<b>True</b></param>
+    {$ENDREGION}
     function TryGetField(const AName: string; out AField: TRttiField): Boolean;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Retrieves the method with the given code address and returns
+    ///	if this was successful.</summary>
+    ///	<param name="ACodeAddress">Code address of the method to find</param>
+    ///	<param name="AMethod">Method that was found when Result is
+    ///	<b>True</b></param>
+    {$ENDREGION}
     function TryGetMethod(ACodeAddress: Pointer; out AMethod: TRttiMethod): Boolean; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Retrieves the method with the given name and returns if this
+    ///	was successful.</summary>
+    ///	<param name="AName">Name of the method to find</param>
+    ///	<param name="AMethod">Method that was found when Result is
+    ///	<b>True</b></param>
+    {$ENDREGION}
     function TryGetMethod(const AName: string; out AMethod: TRttiMethod): Boolean; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Retrieves the method with the given name and returns if this
+    ///	was successful.</summary>
+    ///	<param name="AName">Name of the property to find</param>
+    ///	<param name="AProperty">Property that was found when Result is
+    ///	<b>True</b></param>
+    {$ENDREGION}
     function TryGetProperty(const AName: string; out AProperty: TRttiProperty): Boolean;
+
+    {$REGION 'Documentation'}
+    ///	<summary>Retrieves the type of the object and returns if this was
+    ///	successful.</summary>
+    ///	<param name="AType">Type of the object when Result is
+    ///	<b>True</b></param>
+    {$ENDREGION}
     function TryGetType(out AType: TRttiType): Boolean;
   end;
 

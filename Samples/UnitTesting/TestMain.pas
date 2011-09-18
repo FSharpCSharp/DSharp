@@ -51,8 +51,8 @@ begin
   try
     FAccountService.TransferFunds(LBritishAccount, LCanadianAccount, 100);
 
-    Verify.That(LBritishAccount.Balance, ShouldBe.EqualTo(0));
-    Verify.That(LCanadianAccount.Balance, ShouldBe.EqualTo(220));
+    Verify.That(LBritishAccount.Balance, ShouldBe.EqualTo<Double>(0));
+    Verify.That(LCanadianAccount.Balance, ShouldBe.EqualTo<Double>(220));
 
     FMockCurrencyService.Verify();
   finally

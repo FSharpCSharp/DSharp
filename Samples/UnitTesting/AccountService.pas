@@ -13,7 +13,6 @@ type
     constructor Create(ACurrencyService: TCurrencyServiceBase);
 
     procedure TransferFunds(ASource, ATarget: TAccount; AAmount: Currency); override;
-    property CurrencyService: TCurrencyServiceBase read FCurrencyService;
   end;
 
 implementation

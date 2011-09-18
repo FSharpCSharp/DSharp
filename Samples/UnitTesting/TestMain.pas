@@ -29,6 +29,7 @@ uses
 
 procedure TCurrencyServiceTest.SetUp;
 begin
+  FMockCurrencyService := Mock<TCurrencyServiceBase>.Create();
   FAccountService := TAccountService.Create(FMockCurrencyService);
 end;
 

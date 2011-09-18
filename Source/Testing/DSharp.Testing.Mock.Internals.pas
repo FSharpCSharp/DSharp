@@ -89,7 +89,7 @@ type
     function FindExpectation(Method: TRttiMethod; Arguments: TArray<TValue>): TExpectation;
     function GetInstance: T;
   public
-    constructor Create(AMode: TMockMode);
+    constructor Create(AMode: TMockMode = mmMock);
     destructor Destroy; override;
     procedure Verify;
 

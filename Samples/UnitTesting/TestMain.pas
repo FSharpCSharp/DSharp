@@ -17,7 +17,7 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
-    procedure ShouldUseCurrencyServiceToDetermineConversionRateBetweenAccounts;
+    procedure TransferFunds_UsesCurrencyService;
   end;
 
 implementation
@@ -39,26 +39,26 @@ begin
   FMockCurrencyService.Free();
 end;
 
-procedure TCurrencyServiceTest.ShouldUseCurrencyServiceToDetermineConversionRateBetweenAccounts;
+procedure TCurrencyServiceTest.TransferFunds_UsesCurrencyService;
 var
-  LCanadianAccount: TAccount;
-  LBritishAccount: TAccount;
+  LAmericanAccount: TAccount;
+  LGermanAccount: TAccount;
 begin
-  LCanadianAccount := TAccount.Create('12345', 'CAD');
-  LBritishAccount := TAccount.Create('54321', 'GBP');
-  LBritishAccount.Deposit(100);
+  LAmericanAccount := TAccount.Create('12345', 'USD');
+  LGermanAccount := TAccount.Create('54321', 'EUR');
+  LGermanAccount.Deposit(100);
 
-  FMockCurrencyService.WillReturn<Double>(2.2).Once.WhenCalling.GetConversionRate('GBP', 'CAD');
+  FMockCurrencyService.WillReturn<Double>(1.38).Once.WhenCalling.GetConversionRate('EUR', 'USD');
   try
-    FAccountService.TransferFunds(LBritishAccount, LCanadianAccount, 100);
+    FAccountService.TransferFunds(LGermanAccount, LAmericanAccount, 100);
 
-    Verify.That(LBritishAccount.Balance, ShouldBe.EqualTo<Double>(0));
-    Verify.That(LCanadianAccount.Balance, ShouldBe.EqualTo<Double>(220));
+    Verify.That(LGermanAccount.Balance, ShouldBe.EqualTo<Double>(0));
+    Verify.That(LAmericanAccount.Balance, ShouldBe.EqualTo<Double>(138));
 
     FMockCurrencyService.Verify();
   finally
-    LCanadianAccount.Free();
-    LBritishAccount.Free();
+    LAmericanAccount.Free();
+    LGermanAccount.Free();
   end;
 end;
 

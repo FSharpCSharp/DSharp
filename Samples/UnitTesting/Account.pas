@@ -16,7 +16,7 @@ type
 
     property Number: string read FNumber write FNumber;
     property Currency: string read FCurrency write FCurrency;
-    property Balance: Currency read FBalance write FBalance;
+    property Balance: Currency read FBalance;
   end;
 
 implementation

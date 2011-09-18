@@ -53,7 +53,7 @@ type
     function GetMock: IMock<T>;
     property Mock: IMock<T> read GetMock;
   public
-    constructor Create(AMode: TMockMode);
+    class function Create(AMode: TMockMode = mmMock): Mock<T>; static;
     procedure Free;
     class operator Implicit(var Value: Mock<T>): IMock<T>;
     class operator Implicit(var Value: Mock<T>): T;
@@ -75,9 +75,9 @@ uses
 
 { Mock<T> }
 
-constructor Mock<T>.Create(AMode: TMockMode);
+class function Mock<T>.Create(AMode: TMockMode = mmMock): Mock<T>;
 begin
-  FMock := TMockWrapper<T>.Create(AMode);
+  Result.FMock := TMockWrapper<T>.Create(AMode);
 end;
 
 procedure Mock<T>.Free;
@@ -94,7 +94,7 @@ function Mock<T>.GetMock: IMock<T>;
 begin
   if not Assigned(FMock) then
   begin
-    FMock := TMockWrapper<T>.Create(mmMock);
+    FMock := TMockWrapper<T>.Create();
   end;
   Result := FMock;
 end;

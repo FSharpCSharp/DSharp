@@ -77,12 +77,14 @@ type
   AspectWeaver = record
   private
     class var FClassWeavers: TObjectDictionary<TClass, TClassWeaver>;
+    class procedure InternalAddAspect(AClass: TClass;
+      AAspectClass: TAspectClass; const AMethodName: string); static;
   public
     class constructor Create;
     class destructor Destroy;
 
     class procedure AddAspect(AClass: TClass; AAspectClass: TAspectClass;
-      const AMethodName: string); static;
+      const AMethodName: string; AIncludeDerivedClasses: Boolean = True); static;
   end;
 
 implementation
@@ -270,7 +272,7 @@ begin
   FClassWeavers.Free();
 end;
 
-class procedure AspectWeaver.AddAspect(AClass: TClass;
+class procedure AspectWeaver.InternalAddAspect(AClass: TClass;
   AAspectClass: TAspectClass; const AMethodName: string);
 var
   LClassWeaver: TClassWeaver;
@@ -289,6 +291,29 @@ begin
       if (LMethod.VirtualIndex >= 0) and TRegEx.IsMatch(LMethod.Name, AMethodName, []) then
       begin
         LClassWeaver.Add(LMethod, AAspectClass);
+      end;
+    end;
+  end;
+end;
+
+class procedure AspectWeaver.AddAspect(AClass: TClass;
+  AAspectClass: TAspectClass; const AMethodName: string;
+  AIncludeDerivedClasses: Boolean = True);
+var
+  LType: TRttiType;
+begin
+  AspectWeaver.InternalAddAspect(AClass, AAspectClass, AMethodName);
+
+  if AIncludeDerivedClasses then
+  begin
+    for LType in GetRttiTypes do
+    begin
+      if LType.IsInstance and LType.AsInstance.MetaclassType.InheritsFrom(AClass)
+        and (LType.AsInstance.MetaclassType <> AClass) then
+      try
+        AspectWeaver.InternalAddAspect(
+          LType.AsInstance.MetaclassType, AAspectClass, AMethodName);
+      except
       end;
     end;
   end;

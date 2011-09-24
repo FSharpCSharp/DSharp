@@ -1008,6 +1008,13 @@ constructor TBindingGroup.Create(AOwner: TComponent);
 var
   i: Integer;
 begin
+  FBindings := TBindingCollection.Create(Self);
+  FItems := TList<TObject>.Create();
+  FValidationErrors := TList<IValidationResult>.Create();
+  FValidationErrors.OnCollectionChanged.Add(DoValidationErrorsChanged);
+  FValidationRules := TList<IValidationRule>.Create();
+  FValidationRules.OnCollectionChanged.Add(DoValidationRulesChanged);
+
   if Assigned(AOwner) then
   begin
     for i := 0 to AOwner.ComponentCount - 1 do
@@ -1019,12 +1026,6 @@ begin
     end;
   end;
   inherited;
-  FBindings := TBindingCollection.Create(Self);
-  FItems := TList<TObject>.Create();
-  FValidationErrors := TList<IValidationResult>.Create();
-  FValidationErrors.OnCollectionChanged.Add(DoValidationErrorsChanged);
-  FValidationRules := TList<IValidationRule>.Create();
-  FValidationRules.OnCollectionChanged.Add(DoValidationRulesChanged);
 end;
 
 destructor TBindingGroup.Destroy;

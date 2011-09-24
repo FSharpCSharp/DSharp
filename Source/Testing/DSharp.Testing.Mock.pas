@@ -40,12 +40,6 @@ uses
   SysUtils;
 
 type
-  TMockMode = (
-    mmMock,  // checks exact behaviours like order of calls and parameter value matching
-    mmFake,  // order of calls is ignored but values of parameters have to match
-    mmStub   // order of calls and parameter values are ignored
-  );
-
   Mock<T> = record
   private
     FMock: IMock<T>;
@@ -53,8 +47,7 @@ type
     function GetMock: IMock<T>;
     property Mock: IMock<T> read GetMock;
   public
-    class function Create(AMode: TMockMode = mmMock): Mock<T>; static;
-    procedure Free;
+    procedure Clear;
     class operator Implicit(var Value: Mock<T>): IMock<T>;
     class operator Implicit(var Value: Mock<T>): T;
     procedure Verify;
@@ -75,12 +68,7 @@ uses
 
 { Mock<T> }
 
-class function Mock<T>.Create(AMode: TMockMode = mmMock): Mock<T>;
-begin
-  Result.FMock := TMockWrapper<T>.Create(AMode);
-end;
-
-procedure Mock<T>.Free;
+procedure Mock<T>.Clear;
 begin
   FMock := nil;
 end;

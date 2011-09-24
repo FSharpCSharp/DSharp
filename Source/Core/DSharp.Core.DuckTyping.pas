@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Testing.Mock.Interfaces;
+unit DSharp.Core.DuckTyping;
 
 interface
 
@@ -36,30 +36,38 @@ uses
   SysUtils;
 
 type
-  IWhen<T> = interface
-    function WhenCalling: T;
-    function WhenCallingWithAnyArguments: T;
-  end;
-
-  IExpect<T> = interface
-    function AtLeast(const Count: Cardinal): IWhen<T>;
-    function AtLeastOnce: IWhen<T>;
-    function AtMost(const Count: Cardinal): IWhen<T>;
-    function Between(const LowValue, HighValue: Cardinal): IWhen<T>;
-    function Exactly(const Count: Cardinal): IWhen<T>;
-    function Never: IWhen<T>;
-    function Once: IWhen<T>;
-  end;
-
-  IMock<T> = interface
-    function GetInstance: T;
-    procedure Verify;
-    function WillExecute(const Action: TValue): IExpect<T>;
-    function WillRaise(const Exception: TFunc<Exception>): IExpect<T>;
-    function WillReturn(const Value: TValue): IExpect<T>;
-    property Instance: T read GetInstance;
+  Duck<T: IInterface> = record
+  private
+    FInstance: T;
+  public
+    class operator Implicit(const Value: TObject): Duck<T>;
+    class operator Implicit(const Value: Duck<T>): T;
   end;
 
 implementation
+
+uses
+  DSharp.Core.Dynamics,
+  DSharp.Core.Reflection;
+
+{ Duck<T> }
+
+class operator Duck<T>.Implicit(const Value: TObject): Duck<T>;
+var
+  LType: TRttiType;
+  LVirtualInterface: IInterface;
+begin
+  LType := GetRttiType(TypeInfo(T));
+  if LType is TRttiInterfaceType then
+  begin
+    LVirtualInterface := TVirtualObjectInterface.Create(LType.Handle, Value);
+    Supports(LVirtualInterface, TRttiInterfaceType(LType).GUID, Result.FInstance);
+  end;
+end;
+
+class operator Duck<T>.Implicit(const Value: Duck<T>): T;
+begin
+  Result := Value.FInstance;
+end;
 
 end.

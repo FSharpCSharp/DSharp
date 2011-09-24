@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Plugins;
+unit DSharp.Core.Dynamics;
 
 interface
 
@@ -39,11 +39,6 @@ uses
 function Supports(const ModuleName: string; IID: TGUID; out Intf): Boolean; overload;
 
 type
-  TObjectHelper = class helper for TObject
-  public
-    function AsType<T: IInterface>: T;
-  end;
-
   TVirtualObjectInterface = class(TVirtualInterface)
   private
     FInstance: TObject;
@@ -58,12 +53,14 @@ type
 implementation
 
 uses
+  DSharp.Core.Reflection,
   RTLConsts,
   SysUtils,
   Windows;
 
-var
-  Context: TRttiContext;
+resourcestring
+  CInterfaceMissingRTTI = 'interface %s does not contain RTTI';
+  CMethodNotImplemented = 'method not implemented: %0:s.%1:s(%2:s)';
 
 type
   TVirtualLibraryInterface = class(TVirtualInterface)
@@ -91,7 +88,7 @@ begin
     begin
       LType := nil;
       // bit ugly but no other way to get from guid to the interface
-      for LType in Context.GetTypes do
+      for LType in GetRttiTypes() do
         if (LType is TRttiInterfaceType)
           and (TRttiInterfaceType(LType).GUID = IID) then
           Break;
@@ -117,7 +114,7 @@ var
 begin
   FLibrayHandle := ALibraryHandle;
   FMethods := TDictionary<string, Pointer>.Create();
-  LType := Context.GetType(PIID);
+  LType := GetRttiType(PIID);
   LMethods := LType.GetMethods;
   for LMethod in LMethods do
   begin
@@ -186,24 +183,29 @@ begin
   end;
 end;
 
-{ TVirtualDuckInterface }
+{ TVirtualObjectInterface }
 
 constructor TVirtualObjectInterface.Create(PIID: PTypeInfo; AInstance: TObject);
 var
-  i: Integer;
   LType: TRttiType;
   LMethods: TArray<TRttiMethod>;
   LMethod: TRttiMethod;
   LInstanceType: TRttiType;
   LInstanceMethod: TRttiMethod;
-  LParams1, LParams2: TArray<TRttiParameter>;
-  LFound: Boolean;
 begin
   FInstance := AInstance;
-  FMethods := TObjectDictionary<Integer, TRttiMethod>.Create([doOwnsValues]);
-  LType := Context.GetType(PIID);
+  FMethods := TObjectDictionary<Integer, TRttiMethod>.Create();
+  LType := GetRttiType(PIID);
   LMethods := LType.GetMethods;
-  LInstanceType := Context.GetType(AInstance.ClassInfo);
+  LInstanceType := GetRttiType(AInstance.ClassInfo);
+  if Length(LMethods) = 0 then
+  begin
+    if LType.IsPublicType then
+      raise Exception.CreateResFmt(@CInterfaceMissingRTTI, [LType.QualifiedName])
+    else
+      raise Exception.CreateResFmt(@CInterfaceMissingRTTI, [LType.Name]);
+  end;
+
   for LMethod in LMethods do
   begin
     if LMethod.VirtualIndex > 2 then
@@ -212,25 +214,11 @@ begin
       begin
         if SameText(LMethod.Name, LInstanceMethod.Name) then
         begin
-          LParams1 := LMethod.GetParameters();
-          LParams2 := LInstanceMethod.GetParameters();
-          if Length(LParams1) = Length(LParams2) then
+          if TRttiParameter.Equals(
+            LMethod.GetParameters(), LInstanceMethod.GetParameters()) then
           begin
-            LFound := True;
-            for i := Low(LParams1) to High(LParams1) do
-            begin
-              if LParams1[i].ParamType <> LParams2[i].ParamType then
-              begin
-                LFound := False;
-                Break;
-              end;
-            end;
-
-            if LFound then
-            begin
-              FMethods.Add(LMethod.VirtualIndex, LInstanceMethod);
-              Break;
-            end;
+            FMethods.Add(LMethod.VirtualIndex, LInstanceMethod);
+            Break;
           end;
         end;
       end;
@@ -291,22 +279,11 @@ begin
     begin
       Result := FMethods[Method.VirtualIndex].Invoke(FInstance, LArgs);
     end;
-  end;
-end;
-
-{ TObjectHelper }
-
-function TObjectHelper.AsType<T>: T;
-var
-  LContext: TRttiContext;
-  LType: TRttiType;
-  LVirtualInterface: IInterface;
-begin
-  LType := LContext.GetType(TypeInfo(T));
-  if LType is TRttiInterfaceType then
+  end
+  else
   begin
-    LVirtualInterface := TVirtualObjectInterface.Create(LType.Handle, Self);
-    Supports(LVirtualInterface, TRttiInterfaceType(LType).GUID, Result);
+    raise ENotImplemented.CreateResFmt(@CMethodNotImplemented,
+      [Method.Parent.Name, Method.Name, TValue.ToString(@Args[1])]);
   end;
 end;
 

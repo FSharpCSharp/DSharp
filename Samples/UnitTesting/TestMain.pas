@@ -29,14 +29,13 @@ uses
 
 procedure TCurrencyServiceTest.SetUp;
 begin
-  FMockCurrencyService := Mock<TCurrencyServiceBase>.Create();
   FAccountService := TAccountService.Create(FMockCurrencyService);
 end;
 
 procedure TCurrencyServiceTest.TearDown;
 begin
   FAccountService.Free();
-  FMockCurrencyService.Free();
+  FMockCurrencyService.Clear();
 end;
 
 procedure TCurrencyServiceTest.TransferFunds_UsesCurrencyService;
@@ -53,7 +52,7 @@ begin
     FAccountService.TransferFunds(LGermanAccount, LAmericanAccount, 100);
 
     Verify.That(LGermanAccount.Balance, ShouldBe.EqualTo<Double>(0));
-    Verify.That(LAmericanAccount.Balance, ShouldBe.EqualTo<Double>(138));
+    Verify.That(LAmericanAccount.Balance, ShouldBe.EqualTo<Double>(138), 'this fails in 64-bit (see QC 99028)');
 
     FMockCurrencyService.Verify();
   finally
@@ -63,7 +62,9 @@ begin
 end;
 
 initialization
-//  ReportMemoryLeaksOnShutdown := True;  // memleak in Delphi XE (see QC 98671)
+{$IF COMPILERVERSION > 22} // memleak in Delphi XE - fixed in XE2 (see QC 98671)
+  ReportMemoryLeaksOnShutdown := True;
+{$IFEND}
   RegisterTest(TCurrencyServiceTest.Suite);
 
 end.

@@ -36,14 +36,14 @@ uses
   TypInfo;
 
 type
-  TDefaultConverter = class(TInterfacedObject, IValueConverter)
+  TDefaultConverter = class(TValueConverter)
   private
     FSourceType: PTypeInfo;
     FTargetType: PTypeInfo;
   public
     constructor Create(ASourceType, ATargetType: PTypeInfo);
-    function Convert(Value: TValue): TValue;
-    function ConvertBack(Value: TValue): TValue;
+    function Convert(Value: TValue): TValue; override;
+    function ConvertBack(Value: TValue): TValue; override;
   end;
 
 implementation

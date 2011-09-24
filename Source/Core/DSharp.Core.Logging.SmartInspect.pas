@@ -44,10 +44,8 @@ implementation
 
 uses
   DSharp.Core.Logging.SmartInspect.Helper,
-  Rtti,
   SiAuto,
-  SysUtils,
-  Variants;
+  SysUtils;
 
 { TSmartInspectLogging }
 
@@ -56,19 +54,25 @@ begin
   case ALogEntry.LogKind of
     lkEnterMethod:
     begin
-      if ALogEntry.Value.IsClass then
-        SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
-      else if ALogEntry.Value.IsObject then
-        SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      if not ALogEntry.Value.IsEmpty then
+      begin
+        if ALogEntry.Value.IsClass then
+          SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+        else if ALogEntry.Value.IsObject then
+          SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      end
       else
         SiMain.EnterMethod(ALogEntry.Name);
     end;
     lkLeaveMethod:
     begin
-      if ALogEntry.Value.IsClass then
-        SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
-      else if ALogEntry.Value.IsObject then
-        SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      if not ALogEntry.Value.IsEmpty then
+      begin
+        if ALogEntry.Value.IsClass then
+          SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+        else if ALogEntry.Value.IsObject then
+          SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      end
       else
         SiMain.LeaveMethod(ALogEntry.Name);
     end;

@@ -27,39 +27,71 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Testing.Mock.Interfaces;
+unit DSharp.Core.Logging.CodeSite;
 
 interface
 
 uses
-  Rtti,
-  SysUtils;
+  DSharp.Core.Logging;
 
 type
-  IWhen<T> = interface
-    function WhenCalling: T;
-    function WhenCallingWithAnyArguments: T;
-  end;
-
-  IExpect<T> = interface
-    function AtLeast(const Count: Cardinal): IWhen<T>;
-    function AtLeastOnce: IWhen<T>;
-    function AtMost(const Count: Cardinal): IWhen<T>;
-    function Between(const LowValue, HighValue: Cardinal): IWhen<T>;
-    function Exactly(const Count: Cardinal): IWhen<T>;
-    function Never: IWhen<T>;
-    function Once: IWhen<T>;
-  end;
-
-  IMock<T> = interface
-    function GetInstance: T;
-    procedure Verify;
-    function WillExecute(const Action: TValue): IExpect<T>;
-    function WillRaise(const Exception: TFunc<Exception>): IExpect<T>;
-    function WillReturn(const Value: TValue): IExpect<T>;
-    property Instance: T read GetInstance;
+  TCodeSiteLogging = class(TBaseLogging)
+  protected
+    procedure LogEntry(const ALogEntry: TLogEntry); override;
   end;
 
 implementation
+
+uses
+  CodeSiteLogging,
+  DSharp.Core.Logging.CodeSite.Helper,
+  SysUtils;
+
+{ TCodeSiteLogging }
+
+procedure TCodeSiteLogging.LogEntry(const ALogEntry: TLogEntry);
+begin
+  case ALogEntry.LogKind of
+    lkEnterMethod:
+    begin
+      if not ALogEntry.Value.IsEmpty then
+      begin
+        if ALogEntry.Value.IsClass then
+          CodeSite.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+        else if ALogEntry.Value.IsObject then
+          CodeSite.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      end
+      else
+        CodeSite.EnterMethod(ALogEntry.Name);
+    end;
+    lkLeaveMethod:
+    begin
+      if not ALogEntry.Value.IsEmpty then
+      begin
+        if ALogEntry.Value.IsClass then
+          CodeSite.ExitMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+        else if ALogEntry.Value.IsObject then
+          CodeSite.ExitMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+      end
+      else
+        CodeSite.ExitMethod(ALogEntry.Name);
+    end;
+    lkMessage:
+    begin
+      CodeSite.SendMsg(ALogEntry.Name);
+    end;
+    lkException:
+    begin
+      CodeSite.SendException(ALogEntry.Name, ALogEntry.Value.AsType<Exception>);
+    end;
+    lkValue:
+    begin
+      CodeSite.Send(ALogEntry.Name, ALogEntry.Value);
+    end;
+  end;
+end;
+
+initialization
+  RegisterLogging(TCodeSiteLogging.Create);
 
 end.

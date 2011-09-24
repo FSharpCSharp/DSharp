@@ -185,6 +185,11 @@ type
     function TryGetAttributeOfType<T: TCustomAttribute>(out AAttribute: T): Boolean;
   end;
 
+  TRttiParameterHelper = class helper for TRttiParameter
+  public
+    class function Equals(const Left, Right: TArray<TRttiParameter>): Boolean; //overload;
+  end;
+
   TRttiPropertyHelper = class helper for TRttiProperty
   public
     function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
@@ -272,8 +277,17 @@ type
   end;
 
 function FindType(const AName: string; out AType: TRttiType): Boolean; overload;
+
+///	<summary>
+///	  Returns the RTTI type of the given TClass.
+///	</summary>
 function GetRttiType(AClass: TClass): TRttiType; overload;
+
+{$REGION 'Documentation'}
+///	<summary>Returns the RTTI type of the given TypeInfo.</summary>
+{$ENDREGION}
 function GetRttiType(ATypeInfo: PTypeInfo): TRttiType; overload;
+function GetRttiTypes: TArray<TRttiType>;
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
 function IsTypeCovariantTo(ThisType, OtherType: PTypeInfo): Boolean;
 function TryGetRttiType(AClass: TClass; out AType: TRttiType): Boolean; overload;
@@ -317,6 +331,11 @@ end;
 function GetRttiType(ATypeInfo: PTypeInfo): TRttiType;
 begin
   Result := Context.GetType(ATypeInfo);
+end;
+
+function GetRttiTypes: TArray<TRttiType>;
+begin
+  Result := Context.GetTypes();
 end;
 
 function IsClassCovariantTo(ThisClass, OtherClass: TClass): Boolean;
@@ -661,7 +680,7 @@ end;
 
 function TRttiMethodHelper.GetParameterCount: Integer;
 begin
-  Result := Length(GetParameters);
+  Result := Length(GetParameters());
 end;
 
 { TRttiObjectHelper }
@@ -705,6 +724,27 @@ function TRttiObjectHelper.TryGetAttributeOfType<T>(out AAttribute: T): Boolean;
 begin
   AAttribute := GetAttributeOfType<T>;
   Result := Assigned(AAttribute);
+end;
+
+{ TRttiParameterHelper }
+
+class function TRttiParameterHelper.Equals(const Left,
+  Right: TArray<TRttiParameter>): Boolean;
+var
+  i: Integer;
+begin
+  Result := Length(Left) = Length(Left);
+  if Result then
+  begin
+    for i := Low(Left) to High(Left) do
+    begin
+      if Left[i].ParamType <> Right[i].ParamType then
+      begin
+        Result := False;
+        Break;
+      end;
+    end
+  end;
 end;
 
 { TRttiPropertyHelper }

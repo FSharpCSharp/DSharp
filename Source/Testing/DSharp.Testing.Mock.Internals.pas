@@ -32,7 +32,6 @@ unit DSharp.Testing.Mock.Internals;
 interface
 
 uses
-  DSharp.Testing.Mock,
   DSharp.Testing.Mock.Interfaces,
   Generics.Collections,
   Rtti,
@@ -43,11 +42,12 @@ type
   TExpectation = class
   private
     FAction: TValue;
+    FAnyArguments: Boolean;
     FArguments: TArray<TValue>;
     FCallCount: Cardinal;
     FException: TFunc<Exception>;
     FMethod: TRttiMethod;
-    FRequiredCountMatcher: TFunc<Boolean>;
+    FRequiredCountMatcher: TPredicate<Cardinal>;
     FResult: TValue;
   public
     destructor Destroy; override;
@@ -57,10 +57,12 @@ type
     function HasBeenMet: Boolean;
 
     property Action: TValue read FAction write FAction;
+    property AnyArguments: Boolean read FAnyArguments write FAnyArguments;
     property Arguments: TArray<TValue> read FArguments write FArguments;
     property CallCount: Cardinal read FCallCount write FCallCount;
     property Exception: TFunc<Exception> read FException write FException;
-    property RequiredCountMatcher: TFunc<Boolean> read FRequiredCountMatcher write FRequiredCountMatcher;
+    property RequiredCountMatcher: TPredicate<Cardinal>
+      read FRequiredCountMatcher write FRequiredCountMatcher;
     property Method: TRttiMethod read FMethod write FMethod;
     property Result: TValue read FResult write FResult;
   end;
@@ -74,7 +76,6 @@ type
     FExpectations: TObjectList<TExpectation>;
     FInstance: T;
     FInterceptor: TVirtualMethodInterceptor;
-    FMode: TMockMode;
     FState: TMockState;
     FType: TMockType;
 {$IF COMPILERVERSION > 22}
@@ -89,7 +90,7 @@ type
     function FindExpectation(Method: TRttiMethod; Arguments: TArray<TValue>): TExpectation;
     function GetInstance: T;
   public
-    constructor Create(AMode: TMockMode = mmMock);
+    constructor Create;
     destructor Destroy; override;
     procedure Verify;
 
@@ -104,6 +105,7 @@ type
 
     // IWhen<T>
     function WhenCalling: T;
+    function WhenCallingWithAnyArguments: T;
 
     // IMock<T>
     function WillExecute(const Action: TValue): IExpect<T>;
@@ -122,16 +124,16 @@ implementation
 
 uses
   DSharp.Core.Reflection,
+  RTLConsts,
   TypInfo;
 
 { TMockWrapper<T> }
 
-constructor TMockWrapper<T>.Create(AMode: TMockMode);
+constructor TMockWrapper<T>.Create;
 var
   LType: TRttiType;
 begin
   FExpectations := TObjectList<TExpectation>.Create(True);
-  FMode := AMode;
   LType := GetRttiType(TypeInfo(T));
   if LType is TRttiInstanceType then
   begin
@@ -139,7 +141,6 @@ begin
   end else
 {$IF COMPILERVERSION > 22}
   if (LType is TRttiInterfaceType)
-    and (TRttiInterfaceType(LType).GUID <> TGUID.Empty())
     and (LType.MethodCount > 0) then
   begin
     CreateInterfaceMock(LType);
@@ -226,9 +227,9 @@ end;
 function TMockWrapper<T>.AtLeast(const Count: Cardinal): IWhen<T>;
 begin
   FCurrentExpectation.RequiredCountMatcher :=
-    function: Boolean
+    function(CallCount: Cardinal): Boolean
     begin
-      Result := FCurrentExpectation.CallCount >= Count;
+      Result := CallCount >= Count;
     end;
   Result := Self;
 end;
@@ -236,9 +237,9 @@ end;
 function TMockWrapper<T>.AtLeastOnce: IWhen<T>;
 begin
   FCurrentExpectation.RequiredCountMatcher :=
-    function: Boolean
+    function(CallCount: Cardinal): Boolean
     begin
-      Result := FCurrentExpectation.CallCount >= 1;
+      Result := CallCount >= 1;
     end;
   Result := Self;
 end;
@@ -246,9 +247,9 @@ end;
 function TMockWrapper<T>.AtMost(const Count: Cardinal): IWhen<T>;
 begin
   FCurrentExpectation.RequiredCountMatcher :=
-    function: Boolean
+    function(CallCount: Cardinal): Boolean
     begin
-      Result := FCurrentExpectation.CallCount <= Count;
+      Result := CallCount <= Count;
     end;
   Result := Self;
 end;
@@ -256,10 +257,9 @@ end;
 function TMockWrapper<T>.Between(const LowValue, HighValue: Cardinal): IWhen<T>;
 begin
   FCurrentExpectation.RequiredCountMatcher :=
-    function: Boolean
+    function(CallCount: Cardinal): Boolean
     begin
-      Result := (FCurrentExpectation.CallCount >= LowValue)
-        and (FCurrentExpectation.CallCount <= HighValue);
+      Result := (CallCount >= LowValue) and (CallCount <= HighValue);
     end;
   Result := Self;
 end;
@@ -267,9 +267,9 @@ end;
 function TMockWrapper<T>.Exactly(const Count: Cardinal): IWhen<T>;
 begin
   FCurrentExpectation.RequiredCountMatcher :=
-    function: Boolean
+    function(CallCount: Cardinal): Boolean
     begin
-      Result := FCurrentExpectation.CallCount = Count;
+      Result := CallCount = Count;
     end;
   Result := Self;
 end;
@@ -277,9 +277,9 @@ end;
 function TMockWrapper<T>.Never: IWhen<T>;
 begin
   FCurrentExpectation.RequiredCountMatcher :=
-    function: Boolean
+    function(CallCount: Cardinal): Boolean
     begin
-      Result := FCurrentExpectation.CallCount = 0;
+      Result := CallCount = 0;
     end;
   Result := Self;
 end;
@@ -287,9 +287,9 @@ end;
 function TMockWrapper<T>.Once: IWhen<T>;
 begin
   FCurrentExpectation.RequiredCountMatcher :=
-    function: Boolean
+    function(CallCount: Cardinal): Boolean
     begin
-      Result := FCurrentExpectation.CallCount = 1;
+      Result := CallCount = 1;
     end;
   Result := Self;
 end;
@@ -303,24 +303,18 @@ begin
 
   for LExpectation in FExpectations do
   begin
-    // skip already called expectations when in mock mode
-//    if (LExpectation.CallCount = LExpectation.RequiredCallCount) and (FMode = mmMock) then
-//    begin
-//      Continue;
-//    end;
+    // skip expectations not matching the required count
+    if not LExpectation.RequiredCountMatcher(LExpectation.CallCount + 1) then
+    begin
+      Continue;
+    end;
 
     // only get expectation if corrent method
     if (LExpectation.Method = Method)
-      // and argument values match or in stub mode
-      and (TValue.Equals(LExpectation.Arguments, Arguments) or (FMode = mmStub)) then
+      // and argument values match if they need to
+      and (LExpectation.AnyArguments  or TValue.Equals(LExpectation.Arguments, Arguments)) then
     begin
       Result := LExpectation;
-      Break;
-    end;
-
-    // don't look further if in mock mode
-    if FMode = mmMock then
-    begin
       Break;
     end;
   end;
@@ -346,6 +340,12 @@ end;
 
 function TMockWrapper<T>.WhenCalling: T;
 begin
+  Result := FInstance;
+end;
+
+function TMockWrapper<T>.WhenCallingWithAnyArguments: T;
+begin
+  FCurrentExpectation.AnyArguments := True;
   Result := FInstance;
 end;
 
@@ -392,6 +392,7 @@ type
 var
   LType: TRttiType;
   LMethod: TRttiMethod;
+  LParameters: TArray<TRttiParameter>;
   LCode: Pointer;
   LArgs: TArray<TValue>;
   i: Integer;
@@ -400,31 +401,47 @@ begin
     if not FAction.IsEmpty then
     begin
       LType := GetRttiType(FAction.TypeInfo);
-      if (LType is TRttiInterfaceType) then
+      if (LType is TRttiInterfaceType) and LType.TryGetMethod('Invoke', LMethod) then
       begin
-        if LType.TryGetMethod('Invoke', LMethod) then
+        LParameters := LMethod.GetParameters();
+
+        if Pred(Length(Arguments)) <> Length(LParameters) then
+          raise EInvocationError.CreateRes(@SParameterCountMismatch);
+
+        SetLength(LArgs, Length(Arguments) - 1);
+        for i := Low(Arguments) + 1 to High(Arguments) do
         begin
-          // TODO: better checking for matching parameters
-          Result := LMethod.Invoke(FAction, Arguments);
+          TValue.MakeWithoutCopy(Arguments[i].GetReferenceToRawData,
+            LParameters[i - 1].ParamType.Handle, LArgs[i - 1]);
+        end;
+        LMethod.Invoke(FAction, LArgs);
+        for i := Low(Arguments) + 1 to High(Arguments) do
+        begin
+          TValue.MakeWithoutCopy(LArgs[i - 1].GetReferenceToRawData,
+            LParameters[i - 1].ParamType.Handle, Arguments[i]);
+        end;
+      end
+      else
+      begin
+        // Try to do it without rtti
+        // We handle every parameter as by val - for any other parameter
+        // this causes an AV - provide RTTI for the method in that case
+
+        FAction.ExtractRawDataNoCopy(@LCode);
+        LCode := PPVtable(LCode)^^[3];
+        SetLength(LArgs, Length(Arguments));
+        for i := 0 to Length(Arguments) - 1 do
+        begin
+          TValue.MakeWithoutCopy(Arguments[i].GetReferenceToRawData,
+            Arguments[i].TypeInfo, LArgs[i]);
+        end;
+        if Assigned(ReturnType) then
+        begin
+          Result := Invoke(LCode, LArgs, ccReg, ReturnType.Handle);
         end
         else
         begin
-          // Try to do it without rtti
-          FAction.ExtractRawDataNoCopy(@LCode);
-          SetLength(LArgs, Length(Arguments));
-          TValue.Make(@LCode, TypeInfo(IInterface), LArgs[0]);
-          for i := Low(Arguments) to High(Arguments) do
-          begin
-            LArgs[i + 1] := Arguments[i];
-          end;
-          if Assigned(ReturnType) then
-          begin
-            Result := Invoke(PPVtable(LCode)^^[3], LArgs, ccReg, ReturnType.Handle);
-          end
-          else
-          begin
-            Result := Invoke(PPVtable(LCode)^^[3], LArgs, ccReg, nil);
-          end;
+          Result := Invoke(LCode, LArgs, ccReg, nil);
         end;
       end;
     end else
@@ -443,7 +460,7 @@ end;
 
 function TExpectation.HasBeenMet: Boolean;
 begin
-  Result := FRequiredCountMatcher;
+  Result := FRequiredCountMatcher(FCallCount);
 end;
 
 end.

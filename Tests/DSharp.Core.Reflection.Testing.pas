@@ -729,9 +729,13 @@ end;
 // Taken from Math.pas
 const
   FuzzFactor = 1000;
-  ExtendedResolution = 1E-19 * FuzzFactor;
   DoubleResolution   = 1E-15 * FuzzFactor;
   SingleResolution   = 1E-7 * FuzzFactor;
+{$IFDEF CPUX64}
+  ExtendedResolution = DoubleResolution;
+{$ELSE !CPUX64}
+  ExtendedResolution = 1E-19 * FuzzFactor;
+{$ENDIF}
 
 { TSameValueTestCase }
 
@@ -752,7 +756,8 @@ end;
 
 procedure TSameValueTestCase.LeftIsDouble_RightIsExtended_ValuesAreNotEqual_False;
 begin
-  CheckFalse(SameValue(TValue.From<Double>(42), TValue.From<Extended>(42 + DoubleResolution)));
+//  CheckFalse(SameValue(TValue.From<Double>(42), TValue.From<Extended>(42 + DoubleResolution)));
+  CheckFalse(SameValue(TValue.From<Double>(42), TValue.From<Extended>(42 + SingleResolution)));
 end;
 
 procedure TSameValueTestCase.LeftIsDouble_RightIsInteger_ValuesAreEqual_True;
@@ -782,7 +787,8 @@ end;
 
 procedure TSameValueTestCase.LeftIsExtended_RightIsDouble_ValuesAreNotEqual_False;
 begin
-  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Double>(42)));
+//  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Double>(42)));
+  CheckFalse(SameValue(TValue.From<Extended>(42 + SingleResolution), TValue.From<Double>(42)));
 end;
 
 procedure TSameValueTestCase.LeftIsExtended_RightIsExtended_ValuesAreEqual_True;
@@ -792,7 +798,8 @@ end;
 
 procedure TSameValueTestCase.LeftIsExtended_RightIsExtended_ValuesAreNotEqual_False;
 begin
-  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Extended>(42)));
+//  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Extended>(42)));
+  CheckFalse(SameValue(TValue.From<Extended>(42 + SingleResolution), TValue.From<Extended>(42)));
 end;
 
 procedure TSameValueTestCase.LeftIsExtended_RightIsInteger_ValuesAreEqual_True;
@@ -802,7 +809,8 @@ end;
 
 procedure TSameValueTestCase.LeftIsExtended_RightIsInteger_ValuesAreNotEqual_False;
 begin
-  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Integer>(42)));
+//  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Integer>(42)));
+  CheckFalse(SameValue(TValue.From<Extended>(42 + SingleResolution), TValue.From<Integer>(42)));
 end;
 
 procedure TSameValueTestCase.LeftIsExtended_RightIsSingle_ValuesAreEqual_True;
@@ -812,7 +820,8 @@ end;
 
 procedure TSameValueTestCase.LeftIsExtended_RightIsSingle_ValuesAreNotEqual_False;
 begin
-  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Single>(42)));
+//  CheckFalse(SameValue(TValue.From<Extended>(42 + DoubleResolution), TValue.From<Single>(42)));
+  CheckFalse(SameValue(TValue.From<Extended>(42 + SingleResolution), TValue.From<Single>(42)));
 end;
 
 procedure TSameValueTestCase.LeftIsInteger_RightIsDouble_ValuesAreEqual_True;
@@ -832,7 +841,8 @@ end;
 
 procedure TSameValueTestCase.LeftIsInteger_RightIsExtended_ValuesAreNotEqual_False;
 begin
-  CheckFalse(SameValue(TValue.From<Integer>(42), TValue.From<Extended>(42 + DoubleResolution)));
+//  CheckFalse(SameValue(TValue.From<Integer>(42), TValue.From<Extended>(42 + DoubleResolution)));
+  CheckFalse(SameValue(TValue.From<Integer>(42), TValue.From<Extended>(42 + SingleResolution)));
 end;
 
 procedure TSameValueTestCase.LeftIsInteger_RightIsInteger_ValuesAreEqual_True;
@@ -872,7 +882,8 @@ end;
 
 procedure TSameValueTestCase.LeftIsSingle_RightIsExtended_ValuesAreNotEqual_False;
 begin
-  CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Extended>(42 + DoubleResolution)));
+//  CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Extended>(42 + DoubleResolution)));
+  CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Extended>(42 + SingleResolution)));
 end;
 
 procedure TSameValueTestCase.LeftIsSingle_RightIsInteger_ValuesAreEqual_True;

@@ -43,6 +43,9 @@ uses
 
 type
   TCollectionView = class(TPropertyChangedBase, ICollectionView, ICollectionViewNavigation)
+  private
+    FUpdateCount: Integer;
+    function GetUpdating: Boolean;
   protected
     FFilter: TPredicate<TObject>;
     FItemIndex: NativeInt;
@@ -73,6 +76,9 @@ type
     constructor Create;
     destructor Destroy; override;
 
+    procedure BeginUpdate;
+    procedure EndUpdate;
+
     procedure MoveCurrentToFirst; virtual;
     procedure MoveCurrentToLast; virtual;
     procedure MoveCurrentToNext; virtual;
@@ -87,6 +93,7 @@ type
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent>
       read GetOnCollectionChanged;
+    property Updating: Boolean read GetUpdating;
   end;
 
 implementation
@@ -120,6 +127,11 @@ begin
   end;
 end;
 
+procedure TCollectionView.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+end;
+
 procedure TCollectionView.DoItemPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
 begin
@@ -141,6 +153,14 @@ begin
   end;
 
   inherited;
+end;
+
+procedure TCollectionView.EndUpdate;
+begin
+  if FUpdateCount > 0 then
+  begin
+    Dec(FUpdateCount);
+  end;
 end;
 
 function TCollectionView.GetCanMoveCurrentToNext: Boolean;
@@ -184,6 +204,11 @@ end;
 function TCollectionView.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   Result := FOnCollectionChanged.EventHandler;
+end;
+
+function TCollectionView.GetUpdating: Boolean;
+begin
+  Result := FUpdateCount > 0;
 end;
 
 procedure TCollectionView.MoveCurrentToFirst;

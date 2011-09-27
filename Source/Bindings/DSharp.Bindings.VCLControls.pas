@@ -45,6 +45,7 @@ uses
   DSharp.Core.Events,
   ExtCtrls,
   Forms,
+  Grids,
   Messages,
   StdCtrls,
   SysUtils;
@@ -258,6 +259,22 @@ type
     procedure CMExit(var Message: TCMExit); message CM_EXIT;
   public
     constructor Create(AOwner: TComponent); override;
+  end;
+
+  TStringGrid = class(Grids.TStringGrid, INotifyPropertyChanged, ICollectionView)
+  private
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    FView: TCollectionView;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
+  protected
+    function CanEditShow: Boolean; override;
+    function SelectCell(ACol, ARow: Longint): Boolean; override;
+    procedure SetEditText(ACol, ARow: Longint; const Value: string); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property View: TCollectionView read FView implements ICollectionView;
   end;
 
   TTrackBar = class(ComCtrls.TTrackBar, INotifyPropertyChanged)
@@ -591,7 +608,6 @@ end;
 procedure TListView.Edit(const Item: TLVItem);
 begin
   inherited;
-  // editing not supported yet
   FView.ItemTemplate.SetText(FView.CurrentItem, 0, Selected.Caption);
 end;
 
@@ -690,6 +706,44 @@ procedure TRadioGroup.CMExit(var Message: TCMExit);
 begin
   inherited;
   NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
+end;
+
+{ TStringGrid }
+
+constructor TStringGrid.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+  FView := TCollectionViewStringGridAdapter.Create(Self, Self);
+end;
+
+destructor TStringGrid.Destroy;
+begin
+  FView.Free();
+  inherited;
+end;
+
+function TStringGrid.CanEditShow: Boolean;
+begin
+  Result := inherited and (FView.CurrentItem <> nil);
+end;
+
+function TStringGrid.SelectCell(ACol, ARow: Integer): Boolean;
+begin
+  Result := inherited;
+  FView.ItemIndex := ARow - FixedRows;
+  NotifyPropertyChanged.DoPropertyChanged('Selected');
+end;
+
+procedure TStringGrid.SetEditText(ACol, ARow: Integer; const Value: string);
+begin
+  inherited;
+  FView.BeginUpdate;
+  try
+    FView.ItemTemplate.SetText(FView.ItemsSource[ARow - FixedRows], ACol - FixedCols, Value);
+  finally
+    FView.EndUpdate;
+  end;
 end;
 
 { TTrackBar }

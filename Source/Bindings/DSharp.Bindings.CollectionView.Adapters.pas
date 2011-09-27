@@ -36,7 +36,8 @@ uses
   ComCtrls,
   DSharp.Collections,
   DSharp.Bindings.CollectionView,
-  DSharp.Bindings.Notifications;
+  DSharp.Bindings.Notifications,
+  Grids;
 
 type
   TCollectionViewAdapter = class abstract(TCollectionView)
@@ -101,6 +102,28 @@ type
     destructor Destroy; override;
   end;
 
+  TCollectionViewStringGridAdapter = class(TCollectionViewAdapter)
+  private
+    FEmpty: Boolean;
+    FGrid: TStringGrid;
+    procedure ClearRow(AIndex: NativeInt);
+    procedure DeleteRow(AIndex: NativeInt);
+  protected
+    function AddDisplayItem: NativeInt; override;
+    procedure ClearDisplayItems; override;
+    function GetDisplayItemsCount: NativeInt; override;
+    function FindDisplayItem(AItem: TObject): NativeInt; override;
+    procedure RemoveDisplayItem(AIndex: NativeInt); override;
+    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); override;
+
+    function GetCurrentItem: TObject; override;
+    procedure SetItemIndex(const Value: NativeInt); override;
+    procedure UpdateItems(AClearItems: Boolean = False); override;
+  public
+    constructor Create(AOwner: TPersistent; AGrid: TStringGrid);
+    destructor Destroy; override;
+  end;
+
   TCollectionViewTreeNodesAdapter = class(TCollectionViewAdapter)
   private
     FItems: TTreeNodes;
@@ -127,6 +150,9 @@ uses
   DSharp.Core.Reflection,
   Rtti;
 
+type
+  TStringGridAccess = class(TStringGrid);
+
 { TCollectionViewAdapter }
 
 constructor TCollectionViewAdapter.Create(AOwner: TPersistent);
@@ -149,7 +175,10 @@ begin
       LIndex := AddDisplayItem();
     end;
 
-    UpdateDisplayItem(LIndex, ASender);
+    if not Updating then
+    begin
+      UpdateDisplayItem(LIndex, ASender);
+    end;
   end
   else
   begin
@@ -360,6 +389,145 @@ end;
 procedure TCollectionViewListItemsAdapter.UpdateItems(AClearItems: Boolean);
 begin
   if Assigned(FItems) then
+  begin
+    inherited;
+  end;
+end;
+
+{ TCollectionViewStringGridAdapter }
+
+constructor TCollectionViewStringGridAdapter.Create(AOwner: TPersistent;
+  AGrid: TStringGrid);
+begin
+  inherited Create(AOwner);
+  FGrid := AGrid;
+end;
+
+destructor TCollectionViewStringGridAdapter.Destroy;
+begin
+  FGrid := nil;
+  SetItemsSource(nil);
+  inherited;
+end;
+
+function TCollectionViewStringGridAdapter.AddDisplayItem: NativeInt;
+begin
+  if FEmpty then
+  begin
+    FEmpty := False;
+    Result := 0;
+  end
+  else
+  begin
+    FGrid.RowCount := FGrid.RowCount + 1;
+    Result := FGrid.RowCount - FGrid.FixedRows - 1;
+  end;
+end;
+
+procedure TCollectionViewStringGridAdapter.ClearDisplayItems;
+begin
+  FGrid.RowCount := FGrid.FixedRows + 1;
+  ClearRow(FGrid.RowCount - 1);
+  FEmpty := True;
+end;
+
+procedure TCollectionViewStringGridAdapter.ClearRow(AIndex: NativeInt);
+begin
+  with FGrid.Rows[AIndex + FGrid.FixedRows] do
+  begin
+    Text := '';
+    Objects[0] := nil;
+  end;
+end;
+
+procedure TCollectionViewStringGridAdapter.DeleteRow(AIndex: NativeInt);
+begin
+  if FGrid.RowCount > FGrid.FixedRows + 1 then
+  begin
+    TStringGridAccess(FGrid).DeleteRow(AIndex + FGrid.FixedRows);
+  end
+  else
+  begin
+    ClearRow(AIndex);
+  end;
+end;
+
+function TCollectionViewStringGridAdapter.FindDisplayItem(
+  AItem: TObject): NativeInt;
+begin
+  Result := FGrid.Cols[0].IndexOfObject(AItem);
+  if Result > -1 then
+  begin
+    Result := Result - FGrid.FixedRows;
+  end;
+end;
+
+function TCollectionViewStringGridAdapter.GetCurrentItem: TObject;
+begin
+  if FItemIndex > -1 then
+  begin
+    Result := FGrid.Cols[0].Objects[FItemIndex + FGrid.FixedRows];
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TCollectionViewStringGridAdapter.GetDisplayItemsCount: NativeInt;
+begin
+  Result := FGrid.RowCount - FGrid.FixedRows;
+end;
+
+procedure TCollectionViewStringGridAdapter.RemoveDisplayItem(AIndex: NativeInt);
+begin
+  if AIndex = ItemIndex then
+  begin
+    DeleteRow(AIndex);
+    UpdateItemIndex(nil);
+    NotifyPropertyChanged(FOwner, Self, 'View');
+  end
+  else
+  begin
+    DeleteRow(AIndex);
+  end;
+end;
+
+procedure TCollectionViewStringGridAdapter.SetItemIndex(const Value: NativeInt);
+var
+  LProperty: TRttiProperty;
+begin
+  if FItemIndex <> Value then
+  begin
+    inherited;
+
+    if FOwner.TryGetProperty('Row', LProperty) then
+    begin
+      if Value > -1 then
+        LProperty.SetValue(FOwner, Value + FGrid.FixedRows)
+      else
+        LProperty.SetValue(FOwner, FGrid.FixedRows);
+    end;
+
+    NotifyPropertyChanged(FOwner, Self, 'View');
+  end;
+end;
+
+procedure TCollectionViewStringGridAdapter.UpdateDisplayItem(AIndex: NativeInt;
+  AItem: TObject);
+var
+  i: Integer;
+begin
+  FGrid.Cols[0].Objects[AIndex + FGrid.FixedRows] := AItem;
+  for i := FGrid.FixedCols to FGrid.ColCount - 1 do
+  begin
+    FGrid.Cells[i, AIndex + FGrid.FixedRows] := ItemTemplate.GetText(AItem, i - FGrid.FixedCols);
+  end;
+end;
+
+procedure TCollectionViewStringGridAdapter.UpdateItems(AClearItems: Boolean);
+begin
+  if Assigned(FGrid) then
   begin
     inherited;
   end;

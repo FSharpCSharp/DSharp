@@ -112,6 +112,7 @@ uses
   CommCtrl,
   ExtCtrls,
   Forms,
+  Grids,
   StdCtrls,
 
   ColnEdit,
@@ -220,6 +221,7 @@ begin
   begin
     Proc(LClass.UnitName);
   end;
+  Proc(TStringGrid.UnitName);
   Proc('DSharp.Bindings.VCLControls');
 end;
 

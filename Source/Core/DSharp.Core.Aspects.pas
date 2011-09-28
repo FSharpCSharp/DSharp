@@ -132,7 +132,8 @@ begin
   FInterceptor.OnAfter := DoAfter;
   FInterceptor.OnException := DoException;
   FVirtualMethodCount := GetVirtualMethodCount(AClass);
-  ReplaceOriginalClass();
+  if FVirtualMethodCount > 0 then
+    ReplaceOriginalClass();
 end;
 
 destructor TClassWeaver.Destroy;
@@ -146,13 +147,14 @@ end;
 procedure TClassWeaver.DoAfter(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; var Result: TValue);
 var
-  LAspect: TAspectClass;
+  i: Integer;
+  LAspects: TList<TAspectClass>;
 begin
-  if FAspects.ContainsKey(Method) then
+  if FAspects.TryGetValue(Method, LAspects) then
   begin
-    for LAspect in FAspects.Items[Method] do
+    for i := 0 to Pred(LAspects.Count) do
     begin
-      LAspect.DoAfter(Instance, Method, Args, Result);
+      LAspects[i].DoAfter(Instance, Method, Args, Result);
     end;
   end;
 end;
@@ -160,13 +162,14 @@ end;
 procedure TClassWeaver.DoBefore(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
 var
-  LAspect: TAspectClass;
+  i: Integer;
+  LAspects: TList<TAspectClass>;
 begin
-  if FAspects.ContainsKey(Method) then
+  if FAspects.TryGetValue(Method, LAspects) then
   begin
-    for LAspect in FAspects.Items[Method] do
+    for i := 0 to Pred(LAspects.Count) do
     begin
-      LAspect.DoBefore(Instance, Method, Args, DoInvoke, Result);
+      LAspects[i].DoBefore(Instance, Method, Args, DoInvoke, Result);
     end;
   end;
 end;
@@ -175,13 +178,14 @@ procedure TClassWeaver.DoException(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; out RaiseException: Boolean; Exception: Exception;
   out Result: TValue);
 var
-  LAspect: TAspectClass;
+  i: Integer;
+  LAspects: TList<TAspectClass>;
 begin
-  if FAspects.ContainsKey(Method) then
+  if FAspects.TryGetValue(Method, LAspects) then
   begin
-    for LAspect in FAspects.Items[Method] do
+    for i := 0 to Pred(LAspects.Count) do
     begin
-      LAspect.DoException(Instance, Method, Args, RaiseException, Exception, Result);
+      LAspects[i].DoException(Instance, Method, Args, RaiseException, Exception, Result);
     end;
   end;
 end;

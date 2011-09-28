@@ -740,7 +740,11 @@ begin
   inherited;
   FView.BeginUpdate;
   try
-    FView.ItemTemplate.SetText(FView.ItemsSource[ARow - FixedRows], ACol - FixedCols, Value);
+    if (FView.ItemsSource <> nil) and (FView.ItemTemplate <> nil)
+      and (FView.ItemsSource.Count > ARow - FixedRows) then
+    begin
+      FView.ItemTemplate.SetText(FView.ItemsSource[ARow - FixedRows], ACol - FixedCols, Value);
+    end;
   finally
     FView.EndUpdate;
   end;

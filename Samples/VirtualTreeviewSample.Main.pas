@@ -5,8 +5,8 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, DSharp.Windows.ColumnDefinitions, ExtCtrls, StdCtrls, ComCtrls,
-  DSharp.Bindings.VCLControls, xmldom, XMLIntf, msxmldom, XMLDoc,
-  DSharp.Bindings, DSharp.Windows.TreeViewPresenter, VirtualTrees;
+  Grids, DSharp.Bindings.VCLControls, xmldom, XMLIntf, msxmldom, XMLDoc,
+  DSharp.Bindings, DSharp.Windows.TreeViewPresenter, VirtualTrees, DBGrids;
 
 type
   TMainForm = class(TForm)
@@ -33,6 +33,8 @@ type
     LabeledEdit2: TLabeledEdit;
     ComboBox1: TComboBox;
     Edit1: TEdit;
+    TabSheet4: TTabSheet;
+    StringGrid1: TStringGrid;
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
@@ -72,6 +74,8 @@ type
 
     function GetText(const Item: TObject;
       const ColumnIndex: Integer): string; override;
+    procedure SetText(const Item: TObject; const ColumnIndex: Integer;
+      const Value: string); override;
   end;
 
 function DataTemplate(const AColumns: array of string): IDataTemplate;
@@ -118,6 +122,16 @@ begin
   ComboBox1.View.ItemsSource := ContactsPresenter.ItemsSource;
   ComboBox1.View.ItemTemplate := DataTemplate(['Firstname']);
   ComboBox1.View.ItemsSource.Add(TContact.Create('Baby', 'Doe'));
+
+  // connect the contacts list to the stringgrid
+  StringGrid1.View.ItemsSource := ContactsPresenter.ItemsSource;
+  StringGrid1.View.ItemTemplate := DataTemplate(['Lastname', 'Firstname']);
+
+  // set column captions
+  StringGrid1.Rows[0].CommaText := ',Lastname,Firstname';
+
+  // connect navigation of VirtualTreeView (presenter) with StringGrid
+  TBinding.Create(ContactsPresenter, 'CurrentItem', StringGrid1.View, 'CurrentItem');
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -177,7 +191,23 @@ begin
   if ColumnIndex = -1 then
     Result := Item.GetProperty(FColumns[0]).GetValue(Item).ToString
   else
-    Result := Item.GetProperty(FColumns[ColumnIndex]).GetValue(Item).ToString;
+    if ColumnIndex < Length(FColumns) then
+      Result := Item.GetProperty(FColumns[ColumnIndex]).GetValue(Item).ToString
+    else
+      Result := inherited;
+end;
+
+procedure TColumnsDataTemplate.SetText(const Item: TObject;
+  const ColumnIndex: Integer; const Value: string);
+begin
+  // only string properties supported here
+
+  // TODO: implement helper methods for TRttiProperty to do conversion
+  if ColumnIndex = -1 then
+    Item.GetProperty(FColumns[0]).SetValue(Item, Value)
+  else
+    if ColumnIndex < Length(FColumns) then
+      Item.GetProperty(FColumns[ColumnIndex]).SetValue(Item, Value);
 end;
 
 initialization

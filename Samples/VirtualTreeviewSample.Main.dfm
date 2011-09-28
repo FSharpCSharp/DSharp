@@ -23,7 +23,7 @@ object MainForm: TMainForm
     Top = 8
     Width = 538
     Height = 274
-    ActivePage = TabSheet1
+    ActivePage = TabSheet4
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
     object TabSheet1: TTabSheet
@@ -38,7 +38,6 @@ object MainForm: TMainForm
         Height = 194
         Anchors = [akLeft, akTop, akRight, akBottom]
         Header.AutoSizeIndex = 0
-        Header.DefaultHeight = 17
         Header.Font.Charset = DEFAULT_CHARSET
         Header.Font.Color = clWindowText
         Header.Font.Height = -11
@@ -119,7 +118,6 @@ object MainForm: TMainForm
         Height = 217
         Anchors = [akLeft, akTop, akRight, akBottom]
         Header.AutoSizeIndex = 0
-        Header.DefaultHeight = 17
         Header.Font.Charset = DEFAULT_CHARSET
         Header.Font.Color = clWindowText
         Header.Font.Height = -11
@@ -200,6 +198,26 @@ object MainForm: TMainForm
         EditLabel.Height = 13
         EditLabel.Caption = 'NodeValue'
         TabOrder = 2
+      end
+    end
+    object TabSheet4: TTabSheet
+      Caption = 'StringGrid'
+      ImageIndex = 3
+      object StringGrid1: TStringGrid
+        Left = 19
+        Top = 19
+        Width = 326
+        Height = 206
+        ColCount = 4
+        DefaultRowHeight = 17
+        RowCount = 2
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goAlwaysShowEditor]
+        TabOrder = 0
+        ColWidths = (
+          11
+          150
+          150
+          64)
       end
     end
   end

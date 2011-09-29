@@ -40,14 +40,14 @@ type
 
   IValueConverter = interface
     ['{20006CE1-6C5A-41AF-9E2C-5D625C2BC07D}']
-    function Convert(Value: TValue): TValue;
-    function ConvertBack(Value: TValue): TValue;
+    function Convert(const Value: TValue): TValue;
+    function ConvertBack(const Value: TValue): TValue;
   end;
 
   TValueConverter = class(TInterfacedObject, IValueConverter)
   public
-    function Convert(Value: TValue): TValue; virtual;
-    function ConvertBack(Value: TValue): TValue; virtual;
+    function Convert(const Value: TValue): TValue; virtual;
+    function ConvertBack(const Value: TValue): TValue; virtual;
   end;
 
   ValueConversionAttribute = class(TCustomAttribute)
@@ -64,12 +64,12 @@ implementation
 
 { TValueConverter }
 
-function TValueConverter.Convert(Value: TValue): TValue;
+function TValueConverter.Convert(const Value: TValue): TValue;
 begin
   Result := Value;
 end;
 
-function TValueConverter.ConvertBack(Value: TValue): TValue;
+function TValueConverter.ConvertBack(const Value: TValue): TValue;
 begin
   Result := Value;
 end;

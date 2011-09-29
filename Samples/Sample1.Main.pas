@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, ExtCtrls, StdCtrls, ComCtrls, DSharp.Bindings.VCLControls,
+  Dialogs, ExtCtrls, StdCtrls, ComCtrls, Grids, DSharp.Bindings.VCLControls,
   DSharp.Bindings, Sample1.Settings;
 
 type
@@ -58,13 +58,13 @@ uses
 type
   TNegation = class(TValueConverter)
   public
-    function Convert(Value: TValue): TValue; override;
-    function ConvertBack(Value: TValue): TValue; override;
+    function Convert(const Value: TValue): TValue; override;
+    function ConvertBack(const Value: TValue): TValue; override;
   end;
 
   TFutureDateRule = class(TValidationRule)
   public
-    function Validate(AValue: TValue): IValidationResult; override;
+    function Validate(const Value: TValue): IValidationResult; override;
   end;
 
 procedure TMainForm.BeginEdit;
@@ -156,31 +156,31 @@ end;
 
 { TNegation }
 
-function TNegation.Convert(Value: TValue): TValue;
+function TNegation.Convert(const Value: TValue): TValue;
 begin
   Result := not Value.AsBoolean;
 end;
 
-function TNegation.ConvertBack(Value: TValue): TValue;
+function TNegation.ConvertBack(const Value: TValue): TValue;
 begin
   Result := not Value.AsBoolean;
 end;
 
 { TFutureDateRule }
 
-function TFutureDateRule.Validate(AValue: TValue): IValidationResult;
+function TFutureDateRule.Validate(const Value: TValue): IValidationResult;
 begin
-  if not AValue.IsType<TDate> then
+  if not Value.IsType<TDate> then
   begin
     Exit(TValidationResult.Create(False, 'Value is not a valid date'));
   end;
 
-  if AValue.AsType<TDate> <= Now then
+  if Value.AsType<TDate> <= Now then
   begin
     Exit(TValidationResult.Create(False, 'Date must be in the future'));
   end;
 
-  if AValue.AsType<TDate> > IncMonth(Now) then
+  if Value.AsType<TDate> > IncMonth(Now) then
   begin
     Exit(TValidationResult.Create(False, 'Date must be within one month from today'));
   end;

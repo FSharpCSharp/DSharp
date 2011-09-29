@@ -42,8 +42,8 @@ type
     FTargetType: PTypeInfo;
   public
     constructor Create(ASourceType, ATargetType: PTypeInfo);
-    function Convert(Value: TValue): TValue; override;
-    function ConvertBack(Value: TValue): TValue; override;
+    function Convert(const Value: TValue): TValue; override;
+    function ConvertBack(const Value: TValue): TValue; override;
   end;
 
 implementation
@@ -59,12 +59,12 @@ begin
   FTargetType := ATargetType;
 end;
 
-function TDefaultConverter.Convert(Value: TValue): TValue;
+function TDefaultConverter.Convert(const Value: TValue): TValue;
 begin
   Value.TryConvert(FTargetType, Result);
 end;
 
-function TDefaultConverter.ConvertBack(Value: TValue): TValue;
+function TDefaultConverter.ConvertBack(const Value: TValue): TValue;
 begin
   Value.TryConvert(FSourceType, Result);
 end;

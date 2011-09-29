@@ -101,13 +101,13 @@ type
     class operator GreaterThanOrEqual(const Left, Right: TValueExpression): TBooleanExpression;
     class operator LessThan(const Left, Right: TValueExpression): TBooleanExpression;
     class operator LessThanOrEqual(const Left, Right: TValueExpression): TBooleanExpression;
-    class operator Implicit(Value: Extended): TValueExpression;
-    class operator Implicit(Value: Integer): TValueExpression;
-    class operator Implicit(Value: TBooleanExpression): TValueExpression;
-    class operator Implicit(Value: Variant): TValueExpression;
-    class operator Implicit(Value: string): TValueExpression;
-    class operator Implicit(Value: TValueExpression): Extended;
-    class operator Implicit(Value: TValueExpression): Int64;
+    class operator Implicit(const Value: Extended): TValueExpression;
+    class operator Implicit(const Value: Integer): TValueExpression;
+    class operator Implicit(const Value: TBooleanExpression): TValueExpression;
+    class operator Implicit(const Value: Variant): TValueExpression;
+    class operator Implicit(const Value: string): TValueExpression;
+    class operator Implicit(const Value: TValueExpression): Extended;
+    class operator Implicit(const Value: TValueExpression): Int64;
     function Compile: TValue;
     function ToString: string;
   end;
@@ -342,9 +342,9 @@ type
   private
     FValue: TValue;
   public
-    constructor Create(Value: TObject); overload;
-    constructor Create(Value: TValue); overload;
-    constructor Create(Value: Variant); overload;
+    constructor Create(const Value: TObject); overload;
+    constructor Create(const Value: TValue); overload;
+    constructor Create(const Value: Variant); overload;
     class function From<T>(const Value: T): TValueConstantExpression;
     function Compile: TValue; override;
     function ToString: string; override;
@@ -576,32 +576,32 @@ begin
   Result.FValue := TGreaterThanOrEqualExpression.Create(Left.FValue, Right.FValue);
 end;
 
-class operator TValueExpression.Implicit(Value: Extended): TValueExpression;
+class operator TValueExpression.Implicit(const Value: Extended): TValueExpression;
 begin
   Result.FValue := TFloatConstantExpression.Create(Value);
 end;
 
-class operator TValueExpression.Implicit(Value: Integer): TValueExpression;
+class operator TValueExpression.Implicit(const Value: Integer): TValueExpression;
 begin
   Result.FValue := TIntegerConstantExpression.Create(Value);
 end;
 
-class operator TValueExpression.Implicit(Value: string): TValueExpression;
+class operator TValueExpression.Implicit(const Value: string): TValueExpression;
 begin
   Result.FValue := TStringConstantExpression.Create(Value);
 end;
 
-class operator TValueExpression.Implicit(Value: TValueExpression): Extended;
+class operator TValueExpression.Implicit(const Value: TValueExpression): Extended;
 begin
   Result := Value.Compile.AsExtended;
 end;
 
-class operator TValueExpression.Implicit(Value: TValueExpression): Int64;
+class operator TValueExpression.Implicit(const Value: TValueExpression): Int64;
 begin
   Result := Trunc(Value.Compile.AsExtended);
 end;
 
-class operator TValueExpression.Implicit(Value: Variant): TValueExpression;
+class operator TValueExpression.Implicit(const Value: Variant): TValueExpression;
 begin
   case TVarData(Value).VType of
     varByRef or varVariant:
@@ -614,7 +614,7 @@ begin
   end;
 end;
 
-class operator TValueExpression.Implicit(Value: TBooleanExpression): TValueExpression;
+class operator TValueExpression.Implicit(const Value: TBooleanExpression): TValueExpression;
 begin
   Result.FValue := Value.FValue;
 end;
@@ -1118,17 +1118,17 @@ begin
   Result := FValue;
 end;
 
-constructor TValueConstantExpression.Create(Value: TValue);
+constructor TValueConstantExpression.Create(const Value: TValue);
 begin
   FValue := Value;
 end;
 
-constructor TValueConstantExpression.Create(Value: TObject);
+constructor TValueConstantExpression.Create(const Value: TObject);
 begin
   FValue := TValue.From<TObject>(Value);
 end;
 
-constructor TValueConstantExpression.Create(Value: Variant);
+constructor TValueConstantExpression.Create(const Value: Variant);
 begin
   FValue := TValue.FromVariant(Value);
 end;

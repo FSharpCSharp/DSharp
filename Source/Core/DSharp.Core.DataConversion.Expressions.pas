@@ -41,8 +41,8 @@ type
     FSourceToTargetExpression: IExpression;
     FTargetToSourceExpression: IExpression;
   public
-    function Convert(Value: TValue): TValue; override;
-    function ConvertBack(Value: TValue): TValue; override;
+    function Convert(const Value: TValue): TValue; override;
+    function ConvertBack(const Value: TValue): TValue; override;
 
     property SourceToTargetExpression: IExpression
       read FSourceToTargetExpression write FSourceToTargetExpression;
@@ -54,7 +54,7 @@ implementation
 
 { TExpressionConverter }
 
-function TExpressionConverter.Convert(Value: TValue): TValue;
+function TExpressionConverter.Convert(const Value: TValue): TValue;
 begin
   if Assigned(FSourceToTargetExpression) then
     Result := FSourceToTargetExpression.Compile
@@ -62,7 +62,7 @@ begin
     Result := Value;
 end;
 
-function TExpressionConverter.ConvertBack(Value: TValue): TValue;
+function TExpressionConverter.ConvertBack(const Value: TValue): TValue;
 begin
   if Assigned(FTargetToSourceExpression) then
     Result := FTargetToSourceExpression.Compile

@@ -97,20 +97,14 @@ uses
 resourcestring
   RMemoryWriteError = 'Error writing memory (%s)';
 
-function WriteProtectedMemory(BaseAddress, Buffer: Pointer;
-  Size: Cardinal; out WrittenBytes: Cardinal): Boolean;
-begin
-  Result := WriteProcessMemory(GetCurrentProcess, BaseAddress, Buffer, Size, WrittenBytes);
-end;
-
 procedure WriteMem(const Location, Buffer: Pointer; const Size: Cardinal);
 var
-  WrittenBytes: Cardinal;
+  WrittenBytes: {$IF COMPILERVERSION > 22}NativeUInt;{$ELSE}Cardinal;{$IFEND}
   SaveFlag: Cardinal;
 begin
   if VirtualProtect(Location, Size, PAGE_EXECUTE_READWRITE, @SaveFlag) then
   try
-    if not WriteProtectedMemory(Location, Buffer, Size, WrittenBytes) then
+    if not WriteProcessMemory(GetCurrentProcess, Location, Buffer, Size, WrittenBytes) then
       raise Exception.CreateResFmt(@RMemoryWriteError, [SysErrorMessage(GetLastError)]);
   finally
     VirtualProtect(Location, Size, SaveFlag, @SaveFlag);

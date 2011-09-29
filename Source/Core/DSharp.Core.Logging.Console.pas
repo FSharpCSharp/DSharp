@@ -35,6 +35,7 @@ implementation
 
 uses
   DSharp.Core.Logging,
+  DSharp.Core.Reflection,
   Rtti,
   StrUtils,
   SysUtils,
@@ -87,7 +88,7 @@ begin
     begin
       if ALogEntry.Name <> '' then
         LMessage := ALogEntry.Name + ': ';
-      LMessage := LMessage + ALogEntry.Value.ToString;
+      LMessage := LMessage + TValue.ToString(ALogEntry.Value);
     end;
   end;
 

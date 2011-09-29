@@ -98,7 +98,9 @@ begin
 end;
 
 initialization
+{$IF COMPILERVERSION > 21}
   XmlFormatSettings := TFormatSettings.Create();
+{$IFEND}
   XmlFormatSettings.DateSeparator := '-';
   XmlFormatSettings.DecimalSeparator := '.';
   XmlFormatSettings.ShortTimeFormat := 'hh:nn:ss.zzz';

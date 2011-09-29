@@ -93,7 +93,7 @@ begin
   begin
     FItem.Free();
     FItem := FCache;
-    FCache := nil;
+    TObject(FCache) := nil;
   end;
 end;
 
@@ -116,7 +116,7 @@ begin
   FCache.Assign(FItem);
   FItem.Free();
   FItem := FCache;
-  FCache := nil;
+  TObject(FCache) := nil;
 end;
 
 procedure TEditableViewModelBase<T>.Save;

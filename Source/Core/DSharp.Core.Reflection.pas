@@ -33,6 +33,7 @@ interface
 
 uses
   Rtti,
+  Types,
   TypInfo;
 
 type
@@ -253,6 +254,7 @@ type
     function AsUInt64: UInt64;
     function AsWord: Word;
 
+    class function ToString(const Value: TValue): string; overload; static;
     class function ToString(const Values: TArray<TValue>): string; overload; static;
     class function Equals(const Left, Right: TArray<TValue>): Boolean; overload; static;
 
@@ -296,14 +298,17 @@ function TryGetRttiType(ATypeInfo: PTypeInfo; out AType: TRttiType): Boolean; ov
 function CompareValue(const Left, Right: TValue): Integer;
 function SameValue(const Left, Right: TValue): Boolean;
 
+{$IFDEF VER210}
+function SplitString(const S: string; const Delimiter: Char): TStringDynArray;
+{$ENDIF}
+
 implementation
 
 uses
   Classes,
   Math,
   StrUtils,
-  SysUtils,
-  Types;
+  SysUtils;
 
 var
   Context: TRttiContext;
@@ -1241,6 +1246,31 @@ begin
       Result := Result + ', ';
     end;
     Result := Result + Values[i].ToString;
+  end;
+end;
+
+class function TValueHelper.ToString(const Value: TValue): string;
+begin
+  if Value.Kind = tkFloat then
+  begin
+    if Value.IsDate then
+    begin
+      Result := DateToStr(Value.AsDate);
+    end else
+    if Value.IsDateTime then
+    begin
+      Result := DateTimeToStr(Value.AsDateTime);
+    end else
+    if Value.IsTime then
+    begin
+      Result := TimeToStr(Value.AsTime);
+    end else
+    begin
+      Result := Value.ToString;
+    end;
+  end else
+  begin
+    Result := Value.ToString;
   end;
 end;
 

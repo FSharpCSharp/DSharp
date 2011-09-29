@@ -846,6 +846,7 @@ begin
       LSourceValue := FConverter.ConvertBack(LTargetValue);
 
       FSourceProperty.SetValue(FSource, LSourceValue);
+      FValidationErrors.Clear();
     finally
       EndUpdate();
     end;
@@ -887,6 +888,7 @@ begin
       LTargetValue := FConverter.Convert(LSourceValue);
 
       FTargetProperty.SetValue(FTarget, LTargetValue);
+      FValidationErrors.Clear();
     finally
       EndUpdate();
     end;

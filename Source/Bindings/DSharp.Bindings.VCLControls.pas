@@ -104,6 +104,7 @@ type
   protected
     procedure Change; override;
     procedure CMExit(var Message: TCMExit); message CM_EXIT;
+    procedure WMLButtonDown(var Message: TWMLButtonDown); message WM_LBUTTONDOWN;
   public
     constructor Create(AOwner: TComponent); override;
   end;
@@ -466,6 +467,15 @@ begin
     begin
       SetFocus;
     end;
+  end;
+end;
+
+procedure TDateTimePicker.WMLButtonDown(var Message: TWMLButtonDown);
+begin
+  inherited;
+  if not Focused then
+  begin
+    Perform(WM_KILLFOCUS, 0, 0);
   end;
 end;
 

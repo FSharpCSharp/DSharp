@@ -38,10 +38,11 @@ contains
   DSharp.Bindings.Collections in '..\..\Source\Bindings\DSharp.Bindings.Collections.pas',
   DSharp.Bindings.CollectionView in '..\..\Source\Bindings\DSharp.Bindings.CollectionView.pas',
   DSharp.Bindings.CollectionView.Adapters in '..\..\Source\Bindings\DSharp.Bindings.CollectionView.Adapters.pas',
+  DSharp.Bindings.Exceptions in '..\..\Source\Bindings\DSharp.Bindings.Exceptions.pas',
   DSharp.Bindings.Notifications in '..\..\Source\Bindings\DSharp.Bindings.Notifications.pas',
+  DSharp.Bindings.Validations in '..\..\Source\Bindings\DSharp.Bindings.Validations.pas',
   DSharp.Bindings.VCLControls in '..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas',
   DSharp.Bindings.VCLControls.Extensions in '..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas',
-  DSharp.Collections.ObservableCollection in '..\..\Source\Collections\DSharp.Collections.ObservableCollection.pas',
   DSharp.Core.PropertyChangedBase in '..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas',
   DSharp.Core.XNode in '..\..\Source\Core\DSharp.Core.XNode.pas';
 

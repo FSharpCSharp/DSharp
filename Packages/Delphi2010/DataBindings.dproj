@@ -25,7 +25,7 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<DesignOnlyPackage>false</DesignOnlyPackage>
-			<DCC_DependencyCheckOutputName>..\..\..\..\..\..\..\..\Public\Documents\RAD Studio\7.0\Bpl\DataBindings140.bpl</DCC_DependencyCheckOutputName>
+			<DCC_DependencyCheckOutputName>..\..\..\..\..\..\..\..\..\Public\Documents\RAD Studio\7.0\Bpl\DataBindings140.bpl</DCC_DependencyCheckOutputName>
 			<DllSuffix>140</DllSuffix>
 			<DCC_Description>DSharp data binding runtime package</DCC_Description>
 			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
@@ -60,7 +60,9 @@
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Collections.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.Adapters.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Exceptions.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Notifications.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>

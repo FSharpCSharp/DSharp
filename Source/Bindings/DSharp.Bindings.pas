@@ -70,13 +70,16 @@ type
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     FOnTargetUpdated: TPropertyChangedEvent;
     FOnValidation: TEvent<TValidationEvent>;
+    FPreventFocusChange: Boolean;
     FTarget: TObject;
     FTargetProperty: IPropertyPath;
     FTargetPropertyName: string;
     FTargetUpdateTrigger: TUpdateTrigger;
     FUpdateCount: Integer;
+    FValidatesOnDataErrors: Boolean;
     FValidationErrors: TList<IValidationResult>;
     FValidationRules: TList<IValidationRule>;
+    class var DataErrorValidationRule: IValidationRule;
     procedure BeginUpdate;
     procedure EndUpdate;
     procedure DoPropertyChanged(const APropertyName: string;
@@ -101,6 +104,7 @@ type
     procedure SetTarget(const Value: TObject);
     procedure SetTargetPropertyName(const AValue: string);
   public
+    class constructor Create;
     constructor Create(Collection: TCollection); override;
     destructor Destroy; override;
 
@@ -128,11 +132,15 @@ type
       write FNotifyOnTargetUpdated default False;
     property OnTargetUpdated: TPropertyChangedEvent read FOnTargetUpdated
       write FOnTargetUpdated;
+    property PreventFocusChange: Boolean
+      read FPreventFocusChange write FPreventFocusChange default False;
     property Target: TObject read FTarget write SetTarget;
     property TargetPropertyName: string read FTargetPropertyName
       write SetTargetPropertyName;
     property TargetUpdateTrigger: TUpdateTrigger read FTargetUpdateTrigger
       write FTargetUpdateTrigger default UpdateTriggerDefault;
+    property ValidatesOnDataErrors: Boolean
+      read FValidatesOnDataErrors write FValidatesOnDataErrors default False;
   end;
 
   TBinding = class(TBindingBase)
@@ -155,9 +163,11 @@ type
     function GetDisplayName: string; override;
     procedure InitConverter; override;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); override;
+    procedure RaiseValidationError;
     procedure SetSource(const Value: TObject);
     procedure SetSourceProperty(AObject: TObject; APropertyName: string);
     procedure SetSourcePropertyName(const Value: string);
+    function ValidateCommitted: Boolean;
   public
     constructor Create(ASource: TObject = nil; ASourcePropertyName: string = '';
       ATarget: TObject = nil; ATargetPropertyName: string = '';
@@ -257,8 +267,10 @@ function GetBindingForComponent(AComponent: TPersistent): TBinding;
 implementation
 
 uses
-  DSharp.Core.Logging,
+  DSharp.Bindings.Exceptions,
+  DSharp.Bindings.Validations,
   DSharp.Core.DataConversion.Default,
+  DSharp.Core.Logging,
   Forms;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
@@ -330,6 +342,11 @@ begin
   Inc(FUpdateCount);
 end;
 
+class constructor TBindingBase.Create;
+begin
+  DataErrorValidationRule := TDataErrorValidationRule.Create();
+end;
+
 constructor TBindingBase.Create(Collection: TCollection);
 begin
   inherited;
@@ -372,7 +389,7 @@ end;
 procedure TBindingBase.DoTargetUpdated(ASender: TObject; APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  if Assigned(FOnTargetUpdated) then
+  if FNotifyOnTargetUpdated and Assigned(FOnTargetUpdated) then
   begin
     FOnTargetUpdated(ASender, APropertyName, AUpdateTrigger);
   end;
@@ -649,7 +666,7 @@ end;
 procedure TBinding.DoSourceUpdated(ASender: TObject; APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  if Assigned(FOnSourceUpdated) then
+  if FNotifyOnSourceUpdated and Assigned(FOnSourceUpdated) then
   begin
     FOnSourceUpdated(ASender, APropertyName, AUpdateTrigger);
   end;
@@ -669,9 +686,22 @@ begin
         DoSourceUpdated(ASender, APropertyName, AUpdateTrigger);
 
         UpdateSource();
+      end
+      else
+      begin
+        if FPreventFocusChange then
+        begin
+          RaiseValidationError();
+        end;
       end;
     finally
       EndUpdate();
+    end;
+
+    if not ValidateCommitted() 
+      and (FSourceUpdateTrigger = utLostFocus) and FPreventFocusChange then
+    begin
+      RaiseValidationError();
     end;
   end;
 end;
@@ -723,6 +753,11 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TBinding.RaiseValidationError;
+begin
+  raise EValidationError.Create(Self);
 end;
 
 procedure TBinding.SetSource(const Value: TObject);
@@ -954,6 +989,23 @@ begin
     on E: Exception do
     begin
       FOnValidation.Invoke(Self, LValidationRule, TValidationResult.Create(False, E.Message));
+      Result := False;
+    end;
+  end;
+end;
+
+function TBinding.ValidateCommitted: Boolean;
+var
+  LValidationResult: IValidationResult;
+begin
+  Result := True;
+
+  if FValidatesOnDataErrors then
+  begin
+    LValidationResult := TBindingBase.DataErrorValidationRule.Validate(TValue.From<TBinding>(Self));
+    if not LValidationResult.IsValid then
+    begin
+      FValidationErrors.Add(LValidationResult);
       Result := False;
     end;
   end;

@@ -53,7 +53,7 @@ type
 
   TValidationResult = class(TInterfacedObject, IValidationResult)
   strict private
-  	FErrorContent: string;
+    FErrorContent: string;
     FIsValid: Boolean;
   private
     function GetErrorContent: string;
@@ -103,9 +103,9 @@ type
   IDataErrorInfo = interface
     ['{E8216DF2-CFF7-4C61-9A82-20AAB177D204}']
     function GetError: string;
-    function GetItem(const AName: string): string;
+    function GetItem(const Name: string): string;
     property Error: string read GetError;
-    property Item[const AName: string]: string read GetItem; default;
+    property Item[const Name: string]: string read GetItem; default;
   end;
 
 implementation

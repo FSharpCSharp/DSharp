@@ -5,7 +5,9 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ComCtrls, ExtCtrls, StdCtrls, Grids, DSharp.Bindings.VCLControls,
-  DSharp.Bindings, pngimage;
+  DSharp.Bindings, pngimage,
+  // for the IDataErrorInfo interface we are using in our model class
+  DSharp.Core.Validations;
 
 type
   // our data object we are binding to
@@ -13,11 +15,14 @@ type
 
   // we will do a simple view to model binding in this example
   // purpose is to show the validations so we keep it all in this unit
-  TModel = class(TComponent)
+  TModel = class(TComponent, IDataErrorInfo)
   private
     FDate: TDate;
     FTime: TTime;
     procedure SetDate(const Value: TDate);
+  protected
+    function GetError: string;
+    function GetItem(const Name: string): string;
   public
     property Date: TDate read FDate write SetDate;
     property Time: TTime read FTime write FTime;
@@ -30,6 +35,8 @@ type
     Image1: TImage;
     Button1: TButton;
     DateTimePicker2: TDateTimePicker;
+    Image2: TImage;
+    DateTimePicker3: TDateTimePicker;
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
   private
@@ -55,7 +62,6 @@ uses
 //  DSharp.Core.Logging.CodeSite,
 //  DSharp.Core.Logging.SmartInspect,
 
-  DSharp.Core.Validations,
   Rtti;
 
 type
@@ -131,6 +137,19 @@ begin
       end;
     end));
 
+  // another possibility is to implement IDataErrorInfo in the model
+  // (or actually view model if you are using the MVVM pattern)
+  // and set the ValidatesOnDataErrors property on the binding to true
+  binding := TBinding.Create(FModel, 'Date', DateTimePicker3, 'Date');
+  binding.ValidatesOnDataErrors := True;
+  // this also shows how to set up the binding to prevent a focus change
+  // when the value is not valid
+  // this only works when SourceUpdateTrigger is set to utLostFocus
+  binding.PreventFocusChange := True;
+  binding.SourceUpdateTrigger := utLostFocus;
+  TBinding.Create(binding, 'ValidationErrors.Count', Image2, 'Visible');
+  TBinding.Create(binding, 'ValidationErrors[0].ErrorContent', Image2, 'Hint');
+
   // that was only a small part of showing the power of DSharp bindings validations
 
   // if you are using the DWS integration you can create even more powerful
@@ -140,9 +159,25 @@ end;
 
 { TModel }
 
+function TModel.GetError: string;
+begin
+  Result := 'Some error occured';
+end;
+
+function TModel.GetItem(const Name: string): string;
+begin
+  Result := '';
+
+  if (Name = 'Date') and (FDate <= Now()) then
+  begin
+    Result := 'Date must be in the future';
+  end;
+end;
+
 procedure TModel.SetDate(const Value: TDate);
 begin
   FDate := Value;
+
   // Show logging so you can see when the value is actually updated
   // DateTimePicker however has a kinda weird behaviour when you look at it first
   // when you open the calendar it will trigger twice (when you select a date and when you close it)

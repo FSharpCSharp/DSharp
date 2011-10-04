@@ -306,7 +306,8 @@ type
 implementation
 
 uses
-  DSharp.Bindings.CollectionView.Adapters;
+  DSharp.Bindings.CollectionView.Adapters,
+  DSharp.Bindings.Exceptions;
 
 { TCheckBox }
 
@@ -325,9 +326,16 @@ end;
 
 procedure TCheckBox.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Checked', utLostFocus);
-  NotifyPropertyChanged.DoPropertyChanged('State', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Checked', utLostFocus);
+    NotifyPropertyChanged.DoPropertyChanged('State', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 { TColorBox }
@@ -346,8 +354,15 @@ end;
 
 procedure TColorBox.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Selected', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Selected', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 { TComboBox }
@@ -373,9 +388,16 @@ end;
 
 procedure TComboBox.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
-  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
+    NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 function TComboBox.GetText: TCaption;
@@ -431,12 +453,19 @@ end;
 
 procedure TDateTimePicker.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  case Kind of
-    dtkDate:
-      NotifyPropertyChanged.DoPropertyChanged('Date', utLostFocus);
-    dtkTime:
-      NotifyPropertyChanged.DoPropertyChanged('Time', utLostFocus);
+  try
+    case Kind of
+      dtkDate:
+        NotifyPropertyChanged.DoPropertyChanged('Date', utLostFocus);
+      dtkTime:
+        NotifyPropertyChanged.DoPropertyChanged('Time', utLostFocus);
+    end;
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
   end;
 end;
 
@@ -456,8 +485,15 @@ end;
 
 procedure TEdit.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 { TForm }
@@ -524,8 +560,15 @@ end;
 
 procedure TLabeledEdit.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 { TListBox }
@@ -627,8 +670,16 @@ end;
 
 procedure TMemo.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
+
 end;
 
 { TMonthCalendar }
@@ -641,8 +692,15 @@ end;
 
 procedure TMonthCalendar.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Date', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Date', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 procedure TMonthCalendar.CNNotify(var Message: TWMNotifyMC);
@@ -678,8 +736,15 @@ end;
 
 procedure TRadioButton.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Checked', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Checked', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 procedure TRadioButton.SetChecked(Value: Boolean);
@@ -704,8 +769,15 @@ end;
 
 procedure TRadioGroup.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 { TStringGrid }
@@ -766,8 +838,15 @@ end;
 
 procedure TTrackBar.CMExit(var Message: TCMExit);
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Position', utLostFocus);
+  try
+    NotifyPropertyChanged.DoPropertyChanged('Position', utLostFocus);
+    inherited;
+  except
+    on EValidationError do
+    begin
+      SetFocus;
+    end;
+  end;
 end;
 
 { TTreeView }

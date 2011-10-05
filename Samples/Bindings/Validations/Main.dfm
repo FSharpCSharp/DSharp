@@ -56,7 +56,7 @@ object MainForm: TMainForm
   end
   object Image2: TImage
     Left = 123
-    Top = 162
+    Top = 98
     Width = 16
     Height = 16
     AutoSize = True
@@ -97,12 +97,12 @@ object MainForm: TMainForm
     TabOrder = 0
   end
   object Button1: TButton
-    Left = 22
-    Top = 80
+    Left = 270
+    Top = 24
     Width = 99
     Height = 25
     Caption = 'Update source'
-    TabOrder = 1
+    TabOrder = 3
     OnClick = Button1Click
   end
   object DateTimePicker2: TDateTimePicker
@@ -113,20 +113,20 @@ object MainForm: TMainForm
     Date = 40815.803912592600000000
     Time = 40815.803912592600000000
     Kind = dtkTime
-    TabOrder = 2
+    TabOrder = 1
   end
   object DateTimePicker3: TDateTimePicker
     Left = 24
-    Top = 160
+    Top = 96
     Width = 97
     Height = 21
     Date = 40815.726325405090000000
     Time = 40815.726325405090000000
-    TabOrder = 3
+    TabOrder = 2
   end
   object BindingGroup1: TBindingGroup
-    Left = 304
-    Top = 32
+    Left = 352
+    Top = 144
     Bindings = <>
   end
 end

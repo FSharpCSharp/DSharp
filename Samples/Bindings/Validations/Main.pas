@@ -88,6 +88,7 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   binding: TBinding;
+  capturedBinding: TBinding;
 begin
   // create our data class and bind the DateTimePicker to it
   FModel := TModel.Create(Self);
@@ -123,13 +124,15 @@ begin
   // we can enter some invalid value and then exit the control
   // when that happens the validationrule gets triggered and resets it
   binding.SourceUpdateTrigger := utLostFocus;
+  // keep the binding for the delegate
+  capturedBinding := binding;
   binding.ValidationRules.Add(TDelegateRule.Create(
     function(Value: TValue): IValidationResult
     begin
       if not TimeInRange(Value.AsType<TTime>, 0.25, 0.75)  then
       begin
         Result := TValidationResult.Create(False, 'Time must be between 6:00 and 18:00');
-        binding.UpdateTarget;
+        capturedBinding.UpdateTarget;
       end
       else
       begin

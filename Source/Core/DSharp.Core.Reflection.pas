@@ -236,6 +236,8 @@ type
     function IsPointer: Boolean;
     function IsString: Boolean;
 
+    function IsInterface: Boolean;
+
     // conversion for almost all standard types
     function TryConvert(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
 
@@ -1187,6 +1189,11 @@ end;
 function TValueHelper.IsInteger: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(Integer);
+end;
+
+function TValueHelper.IsInterface: Boolean;
+begin
+  Result := TypeInfo.Kind = tkInterface;
 end;
 
 function TValueHelper.IsNumeric: Boolean;

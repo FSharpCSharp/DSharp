@@ -162,9 +162,11 @@ end;
 
 function TProperty.GetValue(Instance: Pointer): TValue;
 var
-  LList: TObject;
+  LListObject: TObject;
   LMethod: TMethod;
   LObject: TObject;
+  LListInterface: IInterface;
+  LTypeInfo: PTypeInfo;
 begin
   if Assigned(FProperty) then
   begin
@@ -181,34 +183,66 @@ begin
   begin
     if Result.IsObject then
     begin
-      LList := Result.AsObject;
+      LListObject := Result.AsObject;
       Result := TValue.Empty;
       LObject := nil;
 
-      if Assigned(LList) then
+      if Assigned(LListObject) then
       begin
-        if LList.InheritsFrom(TCollection) and (TCollection(LList).Count > FIndex) then
+        if LListObject.InheritsFrom(TCollection) and (TCollection(LListObject).Count > FIndex) then
         begin
-          LObject := TCollection(LList).Items[FIndex];
+          LObject := TCollection(LListObject).Items[FIndex];
         end else
-        if LList.InheritsFrom(TList) and (TList(LList).Count > FIndex) then
+        if LListObject.InheritsFrom(TList) and (TList(LListObject).Count > FIndex) then
         begin
-          LObject := TList(LList).Items[FIndex];
+          LObject := TList(LListObject).Items[FIndex];
         end else
-        if IsClassCovariantTo(LList.ClassType, TList<TObject>) and (TList<TObject>(LList).Count > 0) then
+        if IsClassCovariantTo(LListObject.ClassType, TList<TObject>)
+          and (TList<TObject>(LListObject).Count > FIndex) then
         begin
-          LObject := TList<TObject>(LList).Items[FIndex];
+          LObject := TList<TObject>(LListObject).Items[FIndex];
         end else
+
         // hack to put the interface into an object reference to carry it around
-        if IsClassCovariantTo(LList.ClassType, TList<IInterface>) and (TList<TObject>(LList).Count > 0) then
+        if IsClassCovariantTo(LListObject.ClassType, TList<IInterface>)
+          and (TList<TObject>(LListObject).Count > FIndex) then
         begin
-          LObject := TList<IInterface>(LList).Items[FIndex] as TObject;
+          LObject := TList<IInterface>(LListObject).Items[FIndex] as TObject;
         end;
+
         if Assigned(LObject) then
         begin
           Result := TValue.From(LObject);
         end;
       end
+    end else
+    if Result.IsInterface then
+    begin
+      LListInterface := Result.AsInterface;
+      LTypeInfo := Result.TypeInfo;
+      Result := TValue.Empty;
+      LObject := nil;
+
+      if Assigned(LListInterface) then
+      begin
+        if IsTypeCovariantTo(LTypeInfo, TypeInfo(IList<TObject>))
+          and (IList<TObject>(LListInterface).Count > FIndex) then
+        begin
+          LObject := IList<TObject>(LListInterface).Items[FIndex];
+        end else
+
+        // hack to put the interface into an object reference to carry it around
+        if IsTypeCovariantTo(LTypeInfo, TypeInfo(IList<IInterface>))
+          and (IList<TObject>(LListInterface).Count > FIndex) then
+        begin
+          LObject := IList<IInterface>(LListInterface).Items[FIndex] as TObject;
+        end;
+
+        if Assigned(LObject) then
+        begin
+          Result := TValue.From(LObject);
+        end;
+      end;
     end;
   end;
 end;
@@ -263,7 +297,14 @@ begin
       LValue := FProperties[i].GetValue(LObject);
       if i < Pred(FProperties.Count) then
       begin
-        LObject := LValue.AsObject();
+        if LValue.IsObject then
+        begin
+          LObject := LValue.AsObject();
+        end else
+        if LValue.IsInterface then
+        begin
+          LObject := LValue.AsInterface() as TObject;
+        end;
       end;
     end
     else
@@ -397,12 +438,23 @@ begin
     begin
       FProperties.Add(LProperty);
       LType := LProperty.PropertyType;
-      if LProperty.IsReadable and LProperty.PropertyType.IsInstance then
+      if LProperty.IsReadable then
       begin
-        LObject := LProperty.GetValue(LObject).AsObject;
-        if Assigned(LObject) then
+        if LProperty.PropertyType.IsInstance then
         begin
-          LType := Context.GetType(LObject.ClassType);
+          LObject := LProperty.GetValue(LObject).AsObject;
+          if Assigned(LObject) then
+          begin
+            LType := Context.GetType(LObject.ClassType);
+          end;
+        end else
+        if LProperty.PropertyType.IsInterface then
+        begin
+          LObject := LProperty.GetValue(LObject).AsInterface as TObject;
+          if Assigned(LObject) then
+          begin
+            LType := Context.GetType(LObject.ClassType);
+          end;
         end;
       end;
       LPropertyName := RightStr(LPropertyName, Length(LPropertyName) - Pos('.', LPropertyName));

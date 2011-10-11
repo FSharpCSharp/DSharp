@@ -45,9 +45,9 @@ type
     IValidatable, IDataErrorInfo, ICanClose, IClose, IHaveDisplayName)
   private
     FThrowOnInvalidPropertyName: Boolean;
-    FValidationErrors: TList<IValidationResult>;
+    FValidationErrors: IList<IValidationResult>;
 
-    function GetValidationErrors: TList<IValidationResult>;
+    function GetValidationErrors: IList<IValidationResult>;
   protected
     // ICanClose
     function CanClose: Boolean; virtual;
@@ -73,7 +73,7 @@ type
     property Error: string read GetError;
     property ThrowOnInvalidPropertyName: Boolean
       read FThrowOnInvalidPropertyName write FThrowOnInvalidPropertyName;
-    property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
+    property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
   end;
 
 implementation
@@ -121,7 +121,7 @@ begin
   Result := '';
 end;
 
-function TViewModelBase.GetValidationErrors: TList<IValidationResult>;
+function TViewModelBase.GetValidationErrors: IList<IValidationResult>;
 begin
   Result := FValidationErrors;
 end;

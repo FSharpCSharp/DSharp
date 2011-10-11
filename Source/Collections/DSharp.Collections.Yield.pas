@@ -32,14 +32,17 @@ unit DSharp.Collections.Yield;
 interface
 
 {.$DEFINE USE_COLLECTIONS}
+{.$DEFINE USE_SPRING}
 {$DEFINE USE_FIBERS}
 
 uses
 {$IFDEF USE_COLLECTIONS}
   Collections.Base,
+{$ELSEIF DEFINED(USE_SPRING)}
+  Spring.Collections,
 {$ELSE}
   DSharp.Collections,
-{$ENDIF}
+{$IFEND}
 {$IFDEF USE_FIBERS}
   DSharp.Collections.Fibers,
   DSharp.Core.Fibers,
@@ -52,18 +55,22 @@ uses
 type
 {$IFDEF USE_COLLECTIONS}
   TDelegateEnumerable<T> = class(TEnexCollection<T>)
+{$ELSEIF DEFINED(USE_SPRING)}
+  TDelegateEnumerable<T> = class(TEnumerableBase<T>)
 {$ELSE}
   TDelegateEnumerable<T> = class(TEnumerable<T>)
-{$ENDIF}
+{$IFEND}
   strict private
     FEnumeration: TProc;
 
     type
 {$IFDEF USE_COLLECTIONS}
       TEnumerator = class(TInterfacedObject, IEnumerator<T>)
+{$ELSEIF DEFINED(USE_SPRING)}
+      TEnumerator = class(TEnumeratorBase<T>)
 {$ELSE}
       TEnumerator = class(TEnumerator<T>)
-{$ENDIF}
+{$IFEND}
       private
 {$IFDEF USE_FIBERS}
         FFiber: TEnumeratorFiber<T>;

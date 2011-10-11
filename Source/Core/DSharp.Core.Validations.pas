@@ -95,9 +95,9 @@ type
     AValidationResult: IValidationResult) of object;
 
   IValidatable = interface
-    function GetValidationErrors: TList<IValidationResult>;
+    function GetValidationErrors: IList<IValidationResult>;
     function Validate: Boolean;
-    property ValidationErrors: TList<IValidationResult> read GetValidationErrors;
+    property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
   end;
 
   IDataErrorInfo = interface

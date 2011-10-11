@@ -43,7 +43,7 @@ type
 
     function GetItem(const Item: TObject; const Index: Integer): TObject; override;
     function GetItemCount(const Item: TObject): Integer; override;
-    function GetItems(const Item: TObject): TList<TObject>; override;
+    function GetItems(const Item: TObject): IList<TObject>; override;
 
     function GetTemplateDataClass: TClass; override;
   end;
@@ -77,11 +77,11 @@ begin
   end;
 end;
 
-function TXmlDataTemplate.GetItems(const Item: TObject): TList<TObject>;
+function TXmlDataTemplate.GetItems(const Item: TObject): IList<TObject>;
 begin
   if Assigned(Item) then
   begin
-    Result := TList<TObject>(TXNode(Item).ChildNodes);
+    Result := IList<TObject>(TXNode(Item).ChildNodes);
   end
   else
   begin

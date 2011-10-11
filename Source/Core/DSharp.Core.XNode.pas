@@ -37,15 +37,24 @@ uses
   xmldom;
 
 type
-  TXNodeList = class;
+  TXNode = class;
+
+  IXNodeList = IList<TXNode>;
+
+  TXNodeList = class(TObjectList<TXNode>, IXNodeList)
+  private
+    FDOMNode: IDOMNode;
+  public
+    constructor Create(ANode: IDOMNode);
+  end;
 
   TXNode = class(TPropertyChangedBase)
   private
-    FAttributes: TXNodeList;
-    FChildNodes: TXNodeList;
+    FAttributes: IXNodeList;
+    FChildNodes: IXNodeList;
     FDOMNode: IDOMNode;
-    function GetAttributes: TXNodeList;
-    function GetChildNodes: TXNodeList;
+    function GetAttributes: IXNodeList;
+    function GetChildNodes: IXNodeList;
     function GetName: string;
     function GetTextNode(ANode: IDOMNode): IDOMNode;
     function GetValue: string;
@@ -60,18 +69,11 @@ type
     class function SelectElements(Node: IDOMNode; const XPath: string): IDOMNodeList; overload;
     function SelectValue(const XPath: string = ''): string;
 
-    property Attributes: TXNodeList read GetAttributes;
-    property ChildNodes: TXNodeList read GetChildNodes;
+    property Attributes: IXNodeList read GetAttributes;
+    property ChildNodes: IXNodeList read GetChildNodes;
     property DOMNode: IDOMNode read FDOMNode;
     property Name: string read GetName;
     property Value: string read GetValue write SetValue;
-  end;
-
-  TXNodeList = class(TObjectList<TXNode>)
-  private
-    FDOMNode: IDOMNode;
-  public
-    constructor Create(ANode: IDOMNode);
   end;
 
 implementation
@@ -90,12 +92,10 @@ end;
 
 destructor TXNode.Destroy;
 begin
-  FAttributes.Free();
-  FChildNodes.Free();
   inherited;
 end;
 
-function TXNode.GetAttributes: TXNodeList;
+function TXNode.GetAttributes: IXNodeList;
 var
   i: Integer;
 begin
@@ -113,7 +113,7 @@ begin
   Result := FAttributes;
 end;
 
-function TXNode.GetChildNodes: TXNodeList;
+function TXNode.GetChildNodes: IXNodeList;
 var
   i: Integer;
 begin

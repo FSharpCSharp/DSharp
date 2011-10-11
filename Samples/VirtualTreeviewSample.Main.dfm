@@ -12,7 +12,6 @@ object MainForm: TMainForm
   Font.Style = []
   OldCreateOrder = False
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
   DesignSize = (
     554
     290)
@@ -23,7 +22,7 @@ object MainForm: TMainForm
     Top = 8
     Width = 538
     Height = 274
-    ActivePage = TabSheet4
+    ActivePage = TabSheet1
     Anchors = [akLeft, akTop, akRight, akBottom]
     TabOrder = 0
     object TabSheet1: TTabSheet

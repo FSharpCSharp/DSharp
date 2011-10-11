@@ -58,6 +58,7 @@
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.DataTemplate.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.RttiDataTemplate.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.XmlDataTemplate.pas"/>
+			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.CustomPresenter.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>

@@ -6,7 +6,8 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, DSharp.Windows.ColumnDefinitions, ExtCtrls, StdCtrls, ComCtrls,
   Grids, DSharp.Bindings.VCLControls, xmldom, XMLIntf, msxmldom, XMLDoc,
-  DSharp.Bindings, DSharp.Windows.TreeViewPresenter, VirtualTrees, DBGrids;
+  DSharp.Bindings, DSharp.Windows.CustomPresenter,
+  DSharp.Windows.TreeViewPresenter, VirtualTrees;
 
 type
   TMainForm = class(TForm)
@@ -38,7 +39,6 @@ type
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     function InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
       ColumnDefinition: TColumnDefinition; Item: TObject): string;
     procedure SaveXmlClick(Sender: TObject);
@@ -99,7 +99,7 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 var
-  xmlItems: TList<TXNode>;
+  xmlItems: IXNodeList;
 begin
   ContactsPresenter.ItemsSource := TObservableCollection<TObject>.Create();
   ContactsPresenter.ItemsSource.Add(TContact.Create('John', 'Doe'));
@@ -109,14 +109,14 @@ begin
   xmlItems.AddRange(
     XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
 
-  InventoryPresenter.ItemsSource := TList<TObject>(xmlItems);
+  InventoryPresenter.ItemsSource := IList<TObject>(xmlItems);
   InventoryPresenter.ItemTemplate := TXmlDataTemplate.Create(InventoryPresenter.ColumnDefinitions);
 
   xmlItems := TObservableCollection<TXNode>.Create();
   xmlItems.AddRange(
     XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
 
-  TreeView1.View.ItemsSource := TList<TObject>(xmlItems);
+  TreeView1.View.ItemsSource := IList<TObject>(xmlItems);
   TreeView1.View.ItemTemplate := TXmlDataTemplate.Create(nil);
 
   ComboBox1.View.ItemsSource := ContactsPresenter.ItemsSource;
@@ -132,13 +132,6 @@ begin
 
   // connect navigation of VirtualTreeView (presenter) with StringGrid
   TBinding.Create(ContactsPresenter, 'CurrentItem', StringGrid1.View, 'CurrentItem');
-end;
-
-procedure TMainForm.FormDestroy(Sender: TObject);
-begin
-  ContactsPresenter.ItemsSource.Free();
-  InventoryPresenter.ItemsSource.Free();
-  TreeView1.View.ItemsSource.Free();
 end;
 
 function TMainForm.InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
@@ -194,7 +187,7 @@ begin
     if ColumnIndex < Length(FColumns) then
       Result := Item.GetProperty(FColumns[ColumnIndex]).GetValue(Item).ToString
     else
-      Result := inherited;
+      Result := '';
 end;
 
 procedure TColumnsDataTemplate.SetText(const Item: TObject;

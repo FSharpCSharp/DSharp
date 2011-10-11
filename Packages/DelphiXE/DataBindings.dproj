@@ -63,6 +63,7 @@
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
+			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.ObservableCollection.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.XNode.pas"/>
 			<BuildConfiguration Include="Release">

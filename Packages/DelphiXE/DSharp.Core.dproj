@@ -75,6 +75,7 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyPath.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Threading.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.Utils.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Variants.pas"/>
 			<BuildConfiguration Include="Release">

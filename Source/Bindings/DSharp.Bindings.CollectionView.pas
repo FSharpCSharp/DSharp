@@ -49,7 +49,7 @@ type
   protected
     FFilter: TPredicate<TObject>;
     FItemIndex: NativeInt;
-    FItemsSource: TList<TObject>;
+    FItemsSource: IList<TObject>;
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 
@@ -62,14 +62,14 @@ type
     function GetCanMoveCurrentToPrevious: Boolean; virtual;
     function GetCurrentItem: TObject; virtual;
     function GetFilter: TPredicate<TObject>; virtual;
-    function GetItemsSource: TList<TObject>; virtual;
+    function GetItemsSource: IList<TObject>; virtual;
     function GetItemTemplate: IDataTemplate; virtual;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     procedure RemoveNotification(AItem: TObject);
     procedure SetCurrentItem(const Value: TObject); virtual;
     procedure SetFilter(const Value: TPredicate<TObject>); virtual;
     procedure SetItemIndex(const Value: NativeInt); virtual;
-    procedure SetItemsSource(const Value: TList<TObject>); virtual;
+    procedure SetItemsSource(const Value: IList<TObject>); virtual;
     procedure SetItemTemplate(const Value: IDataTemplate); virtual;
     procedure UpdateItems(AClearItems: Boolean = False); virtual;
   public
@@ -89,7 +89,7 @@ type
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
     property ItemIndex: NativeInt read FItemIndex write SetItemIndex;
-    property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
+    property ItemsSource: IList<TObject> read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent>
       read GetOnCollectionChanged;
@@ -99,7 +99,8 @@ type
 implementation
 
 uses
-  DSharp.Core.DataTemplates.Default;
+  DSharp.Core.DataTemplates.Default,
+  DSharp.Core.Utils;
 
 { TCollectionView }
 
@@ -187,7 +188,7 @@ begin
   Result := FFilter;
 end;
 
-function TCollectionView.GetItemsSource: TList<TObject>;
+function TCollectionView.GetItemsSource: IList<TObject>;
 begin
   Result := FItemsSource;
 end;
@@ -291,7 +292,7 @@ begin
   DoPropertyChanged('CanMoveCurrentToPrevious');
 end;
 
-procedure TCollectionView.SetItemsSource(const Value: TList<TObject>);
+procedure TCollectionView.SetItemsSource(const Value: IList<TObject>);
 var
   LCollectionChanged: TEvent<TCollectionChangedEvent>;
   LItem: TObject;

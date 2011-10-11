@@ -71,7 +71,7 @@ procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string
 implementation
 
 uses
-  SysUtils;
+  DSharp.Core.Utils;
 
 procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string;
   AUpdateTrigger: TUpdateTrigger = utPropertyChanged);

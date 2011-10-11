@@ -73,6 +73,7 @@ type
     procedure DeleteRange(Index, Count: NativeInt);
     function First: T;
     function GetItem(Index: NativeInt): T;
+    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
     function IndexOf(Value: T): NativeInt;
     procedure Insert(Index: NativeInt; Value: T);
     procedure InsertRange(Index: NativeInt; Values: array of T); overload;
@@ -87,6 +88,8 @@ type
 
     property Count: NativeInt read GetCount;
     property Items[Index: NativeInt]: T read GetItem write SetItem; default;
+    property OnCollectionChanged: TEvent<TCollectionChangedEvent<T>>
+      read GetOnCollectionChanged;
   end;
 
   TEnumerator = class(TInterfacedObject, IEnumerator)
@@ -457,8 +460,14 @@ begin
 end;
 
 function TList<T>.ToArray: TArray<T>;
+var
+  i: Integer;
 begin
-  Result := Copy(FItems, 0, FCount);
+  SetLength(Result, FCount);
+  for i := 0 to Pred(FCount) do
+  begin
+    Result[i] := FItems[i];
+  end;
 end;
 
 { TList<T>.TEnumerator }

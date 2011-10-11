@@ -55,14 +55,14 @@ type
     procedure SetCurrentItem(const Value: TObject);
     function GetFilter: TPredicate<TObject>;
     procedure SetFilter(const Value: TPredicate<TObject>);
-    function GetItemsSource: TList<TObject>;
-    procedure SetItemsSource(const Value: TList<TObject>);
+    function GetItemsSource: IList<TObject>;
+    procedure SetItemsSource(const Value: IList<TObject>);
     function GetItemTemplate: IDataTemplate;
     procedure SetItemTemplate(const Value: IDataTemplate);
 
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
-    property ItemsSource: TList<TObject> read GetItemsSource write SetItemsSource;
+    property ItemsSource: IList<TObject> read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
   end;
 

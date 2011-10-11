@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, Sample5.Contact, DSharp.Collections.ObservableCollection,
-  DSharp.Collections, ExtCtrls, StdCtrls, ComCtrls,
+  DSharp.Collections, ExtCtrls, StdCtrls, ComCtrls, Grids,
   DSharp.Bindings.VCLControls, DSharp.Bindings;
 
 type
@@ -26,13 +26,12 @@ type
     procedure DeleteContactClick(Sender: TObject);
   private
     { Private declarations }
-    FContacts: TList<TObject>;
+    FContacts: IList<TObject>;
   public
     { Public declarations }
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
 
-    property Contacts: TList<TObject> read FContacts;
+    property Contacts: IList<TObject> read FContacts;
   end;
 
 var
@@ -70,12 +69,6 @@ begin
   inherited;
   ListBox1.View.ItemTemplate := TContactTemplate.Create;
 //  ComboBox1.View.ItemTemplate := TContactTemplate.Create;
-end;
-
-destructor TMainForm.Destroy;
-begin
-  inherited;
-  FContacts.Free();
 end;
 
 end.

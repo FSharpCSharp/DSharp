@@ -78,6 +78,7 @@ type
   TColumnDefinitions = class(TOwnedCollection<TColumnDefinition>)
   protected
     function AddColumn(const ACaption: string; const AWidth: Integer): TColumnDefinition;
+    procedure Initialize; virtual;
   public
     constructor Create(AOwner: TPersistent = nil); override;
   end;
@@ -151,6 +152,12 @@ end;
 constructor TColumnDefinitions.Create(AOwner: TPersistent);
 begin
   inherited;
+  Initialize();
+end;
+
+procedure TColumnDefinitions.Initialize;
+begin
+  // implemented by descendants
 end;
 
 function TColumnDefinitions.AddColumn(

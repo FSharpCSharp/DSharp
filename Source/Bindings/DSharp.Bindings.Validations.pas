@@ -47,7 +47,7 @@ implementation
 uses
   DSharp.Bindings,
   DSharp.Collections,
-  SysUtils;
+  DSharp.Core.Utils;
 
 { TDataErrorValidationRule }
 
@@ -60,7 +60,7 @@ function TDataErrorValidationRule.Validate(const Value: TValue): IValidationResu
 var
   LBinding: TBinding;
   LBindingGroup: TBindingGroup;
-  LItems: TList<TObject>;
+  LItems: IList<TObject>;
   LItem: TObject;
   i: Integer;
   LInfo: IDataErrorInfo;

@@ -53,8 +53,6 @@ type
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure Notify(Value: T; Action: TCollectionChangedAction); override;
   public
-    procedure AfterConstruction; override;
-    procedure BeforeDestruction; override;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
@@ -62,7 +60,7 @@ type
 implementation
 
 uses
-  SysUtils;
+  DSharp.Core.Utils;
 
 { TObservableCollection<T> }
 
@@ -82,16 +80,6 @@ procedure TObservableCollection<T>.DoPropertyChanged(
   const APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
   FOnPropertyChanged.Invoke(Self, 'Count');
-end;
-
-procedure TObservableCollection<T>.AfterConstruction;
-begin
-
-end;
-
-procedure TObservableCollection<T>.BeforeDestruction;
-begin
-
 end;
 
 function TObservableCollection<T>.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;

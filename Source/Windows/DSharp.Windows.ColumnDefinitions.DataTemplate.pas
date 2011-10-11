@@ -47,6 +47,8 @@ type
       DrawMode: TDrawMode): Boolean; override;
 
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
+
+    property ColumnDefinitions: TColumnDefinitions read FColumnDefinitions;
   end;
 
 implementation

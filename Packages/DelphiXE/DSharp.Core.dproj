@@ -68,16 +68,15 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Generics.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Lambda.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Lazy.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Logging.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Logging.Console.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.NotificationHandler.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Properties.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyPath.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Threading.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Utils.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Variants.pas"/>
+			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.pas"/>
+			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.Console.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

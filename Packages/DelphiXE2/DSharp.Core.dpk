@@ -51,14 +51,14 @@ contains
   DSharp.Core.Generics in '..\..\Source\Core\DSharp.Core.Generics.pas',
   DSharp.Core.Lambda in '..\..\Source\Core\DSharp.Core.Lambda.pas',
   DSharp.Core.Lazy in '..\..\Source\Core\DSharp.Core.Lazy.pas',
-  DSharp.Core.Logging in '..\..\Source\Core\DSharp.Core.Logging.pas',
-  DSharp.Core.Logging.Console in '..\..\Source\Core\DSharp.Core.Logging.Console.pas',
   DSharp.Core.NotificationHandler in '..\..\Source\Core\DSharp.Core.NotificationHandler.pas',
   DSharp.Core.Properties in '..\..\Source\Core\DSharp.Core.Properties.pas',
-  DSharp.Core.PropertyPath in '..\..\Source\Core\DSharp.Core.PropertyPath.pas',
   DSharp.Core.Reflection in '..\..\Source\Core\DSharp.Core.Reflection.pas',
   DSharp.Core.Threading in '..\..\Source\Core\DSharp.Core.Threading.pas',
+  DSharp.Core.Utils in '..\..\Source\Core\DSharp.Core.Utils.pas',
   DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
-  DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas';
+  DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas',
+  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
+  DSharp.Logging.Console in '..\..\Source\Logging\DSharp.Logging.Console.pas';
 
 end.

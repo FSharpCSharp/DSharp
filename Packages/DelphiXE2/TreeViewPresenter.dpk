@@ -39,6 +39,7 @@ contains
   DSharp.Windows.ColumnDefinitions.DataTemplate in '..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.DataTemplate.pas',
   DSharp.Windows.ColumnDefinitions.RttiDataTemplate in '..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.RttiDataTemplate.pas',
   DSharp.Windows.ColumnDefinitions.XmlDataTemplate in '..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.XmlDataTemplate.pas',
+  DSharp.Windows.CustomPresenter in '..\..\Source\Windows\DSharp.Windows.CustomPresenter.pas',
   DSharp.Windows.TreeViewPresenter in '..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.pas';
 
 end.

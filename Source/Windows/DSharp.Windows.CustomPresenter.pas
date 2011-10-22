@@ -35,6 +35,7 @@ uses
   Classes,
   Controls,
   DSharp.Bindings.Collections,
+  DSharp.Bindings.CollectionView,
   DSharp.Bindings.Notifications,
   DSharp.Collections,
   DSharp.Core.DataTemplates,
@@ -47,24 +48,15 @@ type
   TCustomPresenter = class(TComponent, ICollectionView, INotifyPropertyChanged)
   private
     FColumnDefinitions: TColumnDefinitions;
-    FItemsSource: IList<TObject>;
-    FItemTemplate: IDataTemplate;
     FImageList: TImageList;
-    FFilter: TPredicate<TObject>;
-    FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
     FPopupMenu: TPopupMenu;
-    function GetFilter: TPredicate<TObject>;
-    function GetItemsSource: IList<TObject>;
-    function GetItemTemplate: IDataTemplate; overload;
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FView: TCollectionView;
     procedure SetColumnDefinitions(const Value: TColumnDefinitions);
-    procedure SetFilter(const Value: TPredicate<TObject>);
-    procedure SetItemsSource(const Value: IList<TObject>);
-    procedure SetItemTemplate(const Value: IDataTemplate);
     procedure SetImageList(const Value: TImageList);
     procedure SetPopupMenu(const Value: TPopupMenu);
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
@@ -84,16 +76,27 @@ type
     function GetItemTemplate(const Item: TObject): IDataTemplate; overload;
     procedure Refresh; virtual;
 
-    property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
-    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
-    property ItemsSource: IList<TObject> read GetItemsSource write SetItemsSource;
-    property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
+    property View: TCollectionView read FView implements ICollectionView;
   published
     property ColumnDefinitions: TColumnDefinitions
       read FColumnDefinitions write SetColumnDefinitions;
     property ImageList: TImageList read FImageList write SetImageList;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
+  end;
+
+  TCollectionViewPresenterAdapter = class(TCollectionView)
+  private
+    FPresenter: TCustomPresenter;
+  protected
+    procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
+    procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
+      Action: TCollectionChangedAction); override;
+    function GetCurrentItem: TObject; override;
+    procedure SetCurrentItem(const Value: TObject); override;
+    procedure UpdateItems(AClearItems: Boolean = False); override;
+  public
+    constructor Create(Presenter: TCustomPresenter);
   end;
 
 implementation
@@ -106,10 +109,11 @@ uses
 constructor TCustomPresenter.Create(AOwner: TComponent);
 begin
   inherited;
-  FOnCollectionChanged.Add(DoSourceCollectionChanged);
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+  FView := TCollectionViewPresenterAdapter.Create(Self);
 
   FColumnDefinitions := TColumnDefinitions.Create(Self);
-  FItemTemplate := TColumnDefinitionsDataTemplate.Create(FColumnDefinitions);
+  FView.ItemTemplate := TColumnDefinitionsDataTemplate.Create(FColumnDefinitions);
 end;
 
 destructor TCustomPresenter.Destroy;
@@ -118,27 +122,20 @@ begin
   begin
     FColumnDefinitions.Free();
   end;
+  FView.Free();
   inherited;
 end;
 
 procedure TCustomPresenter.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+  NotifyPropertyChanged.DoPropertyChanged(APropertyName, AUpdateTrigger);
 end;
 
 procedure TCustomPresenter.DoSourceCollectionChanged(Sender, Item: TObject;
   Action: TCollectionChangedAction);
 begin
-  DoPropertyChanged('ItemsSource');
-
-  if Action = caReplace then
-  begin
-    if Item = CurrentItem then
-    begin
-      DoPropertyChanged('CurrentItem');
-    end;
-  end;
+  Refresh();
 end;
 
 function TCustomPresenter.GetCurrentItem: TObject;
@@ -146,39 +143,14 @@ begin
   Result := nil; // implemented by descendants
 end;
 
-function TCustomPresenter.GetFilter: TPredicate<TObject>;
-begin
-  Result := FFilter;
-end;
-
-function TCustomPresenter.GetItemsSource: IList<TObject>;
-begin
-  Result := FItemsSource;
-end;
-
-function TCustomPresenter.GetItemTemplate: IDataTemplate;
-begin
-  Result := FItemTemplate;
-end;
-
 function TCustomPresenter.GetItemTemplate(const Item: TObject): IDataTemplate;
 begin
   Result := nil;
 
-  if Assigned(FItemTemplate) then
+  if Assigned(FView.ItemTemplate) then
   begin
-    Result := FItemTemplate.GetItemTemplate(Item);
+    Result := FView.ItemTemplate.GetItemTemplate(Item);
   end
-end;
-
-function TCustomPresenter.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-begin
-  Result := FOnCollectionChanged.EventHandler;
-end;
-
-function TCustomPresenter.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged.EventHandler;
 end;
 
 procedure TCustomPresenter.InitColumns;
@@ -220,10 +192,10 @@ procedure TCustomPresenter.SetColumnDefinitions(
 begin
   if Assigned(FColumnDefinitions) and (FColumnDefinitions.Owner = Self) then
   begin
-    if (FItemTemplate is TColumnDefinitionsDataTemplate)
-      and ((FItemTemplate as TColumnDefinitionsDataTemplate).ColumnDefinitions = FColumnDefinitions) then
+    if (FView.ItemTemplate is TColumnDefinitionsDataTemplate)
+      and ((FView.ItemTemplate as TColumnDefinitionsDataTemplate).ColumnDefinitions = FColumnDefinitions) then
     begin
-      FItemTemplate := nil;
+      FView.ItemTemplate := nil;
     end;
 
     FColumnDefinitions.Free();
@@ -234,13 +206,7 @@ end;
 
 procedure TCustomPresenter.SetCurrentItem(const Value: TObject);
 begin
-  DoPropertyChanged('CurrentItem');
-end;
-
-procedure TCustomPresenter.SetFilter(const Value: TPredicate<TObject>);
-begin
-  FFilter := Value;
-  Refresh();
+  DoPropertyChanged('View');
 end;
 
 procedure TCustomPresenter.SetImageList(const Value: TImageList);
@@ -249,44 +215,57 @@ begin
   InitControl();
 end;
 
-procedure TCustomPresenter.SetItemsSource(const Value: IList<TObject>);
-var
-  LNotifyCollectionChanged: INotifyCollectionChanged;
-  LCollectionChanged: TEvent<TCollectionChangedEvent>;
-begin
-  if FItemsSource <> Value then
-  begin
-    if Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
-    begin
-      LCollectionChanged := LNotifyCollectionChanged.OnCollectionChanged;
-      LCollectionChanged.Remove(DoSourceCollectionChanged);
-    end;
-
-    FItemsSource := Value;
-
-    if Assigned(FItemsSource)
-      and Supports(FItemsSource, INotifyCollectionChanged, LNotifyCollectionChanged) then
-    begin
-      LCollectionChanged := LNotifyCollectionChanged.OnCollectionChanged;
-      LCollectionChanged.Add(DoSourceCollectionChanged)
-    end;
-    Refresh();
-
-    DoPropertyChanged('ItemsSource');
-  end;
-end;
-
-procedure TCustomPresenter.SetItemTemplate(const Value: IDataTemplate);
-begin
-  FItemTemplate := Value;
-  InitColumns();
-  Refresh();
-end;
-
 procedure TCustomPresenter.SetPopupMenu(const Value: TPopupMenu);
 begin
   FPopupMenu := Value;
   InitControl();
+end;
+
+{ TCollectionViewPresenterAdapter }
+
+constructor TCollectionViewPresenterAdapter.Create(Presenter: TCustomPresenter);
+begin
+  FPresenter := Presenter;
+end;
+
+procedure TCollectionViewPresenterAdapter.DoItemPropertyChanged(
+  ASender: TObject; APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+begin
+  inherited;
+
+  NotifyPropertyChanged(FPresenter, Self, 'View');
+end;
+
+procedure TCollectionViewPresenterAdapter.DoSourceCollectionChanged(Sender,
+  Item: TObject; Action: TCollectionChangedAction);
+begin
+  inherited;
+
+  FPresenter.DoSourceCollectionChanged(Sender, Item, Action);
+
+  NotifyPropertyChanged(FPresenter, Self, 'View');
+end;
+
+function TCollectionViewPresenterAdapter.GetCurrentItem: TObject;
+begin
+  Result := FPresenter.GetCurrentItem();
+end;
+
+procedure TCollectionViewPresenterAdapter.SetCurrentItem(const Value: TObject);
+begin
+  FPresenter.SetCurrentItem(Value);
+end;
+
+procedure TCollectionViewPresenterAdapter.UpdateItems(AClearItems: Boolean);
+begin
+  inherited;
+
+  if not (csDestroying in FPresenter.ComponentState) then
+  begin
+    FPresenter.Refresh();
+  end;
+
+  NotifyPropertyChanged(FPresenter, Self, 'View');
 end;
 
 end.

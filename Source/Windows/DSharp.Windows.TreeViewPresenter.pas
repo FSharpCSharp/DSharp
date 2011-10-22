@@ -84,8 +84,6 @@ type
     procedure DoChecked(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoCompareNodes(Sender: TBaseVirtualTree;
       Node1, Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
-    procedure DoCurrentItemPropertyChanged(Sender: TObject;
-      PropertyName: string; UpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoDblClick(Sender: TObject);
     procedure DoDragAllowed(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; var Allowed: Boolean);
@@ -110,6 +108,8 @@ type
     procedure DoKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure DoMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure DoNewText(Sender: TBaseVirtualTree; Node: PVirtualNode;
+      Column: TColumnIndex; NewText: string);
     procedure DoNodeMoved(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoPaintText(Sender: TBaseVirtualTree; const TargetCanvas: TCanvas;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType);
@@ -274,41 +274,25 @@ var
   LItem1, LItem2: TObject;
   LItemTemplate1, LItemTemplate2: IDataTemplate;
 begin
-  LItem1 := GetNodeItem(Sender, Node1);
-  LItem2 := GetNodeItem(Sender, Node2);
-  LItemTemplate1 := GetItemTemplate(LItem1);
-  LItemTemplate2 := GetItemTemplate(LItem2);
+  if Column > -1 then
+  begin
+    LItem1 := GetNodeItem(Sender, Node1);
+    LItem2 := GetNodeItem(Sender, Node2);
+    LItemTemplate1 := GetItemTemplate(LItem1);
+    LItemTemplate2 := GetItemTemplate(LItem2);
 
-  if Assigned(FOnCompare) then
-  begin
-    FOnCompare(Self, LItem1, LItem2, Column, Result);
-  end
-  else
-  begin
-    // Using item template to sort
-    if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
+    if Assigned(FOnCompare) then
     begin
-      Result := CompareText(LItemTemplate1.GetText(LItem1, Column),
-        LItemTemplate2.GetText(LItem2, Column));
-    end;
-  end;
-end;
-
-procedure TTreeViewPresenter.DoCurrentItemPropertyChanged(Sender: TObject;
-  PropertyName: string; UpdateTrigger: TUpdateTrigger);
-var
-  LItem: TObject;
-  LNode: PVirtualNode;
-begin
-  if Assigned(FTreeView) and (FTreeView.SelectedCount > 0) then
-  begin
-    for LNode in FTreeView.GetSortedSelection(True) do
+      FOnCompare(Self, LItem1, LItem2, Column, Result);
+    end
+    else
     begin
-      FTreeView.InvalidateNode(LNode);
-      FTreeView.SortTree(FTreeView.Header.SortColumn, FTreeView.Header.SortDirection, False);
-      DoFilterNode(FTreeView, LNode);
-      LItem := GetNodeItem(FTreeView, LNode);
-      DoSourceCollectionChanged(Sender, LItem, caReplace);
+      // Using item template to sort
+      if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
+      begin
+        Result := CompareText(LItemTemplate1.GetText(LItem1, Column),
+          LItemTemplate2.GetText(LItem2, Column));
+      end;
     end;
   end;
 end;
@@ -416,9 +400,9 @@ var
 begin
   LItem := GetNodeItem(Sender, Node);
 
-  if Assigned(Filter) then
+  if Assigned(View.Filter) then
   begin
-    Sender.IsFiltered[Node] := not Filter(LItem);
+    Sender.IsFiltered[Node] := not View.Filter(LItem);
   end
   else
   begin
@@ -529,7 +513,7 @@ begin
   end
   else
   begin
-    LItem := ItemsSource[Node.Index];
+    LItem := View.ItemsSource[Node.Index];
   end;
 
   SetNodeItem(Sender, Node, LItem);
@@ -619,6 +603,20 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.DoNewText(Sender: TBaseVirtualTree;
+  Node: PVirtualNode; Column: TColumnIndex; NewText: string);
+var
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
+begin
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
+  if Assigned(LItemTemplate) then
+  begin
+    LItemTemplate.SetText(LItem, Column, NewText);
+  end;
+end;
+
 procedure TTreeViewPresenter.DoNodeMoved(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var
@@ -629,7 +627,7 @@ begin
   if Sender.GetNodeLevel(Node) = 0 then
   begin
     LItem := GetNodeItem(Sender, Node);
-    ItemsSource.Move(ItemsSource.IndexOf(LItem), Node.Index);
+    View.ItemsSource.Move(View.ItemsSource.IndexOf(LItem), Node.Index);
   end
   else
   begin
@@ -675,13 +673,14 @@ begin
       caRemove: ResetRootNodeCount;
       caReplace:
       begin
-        FTreeView.ReinitNode(LNode, True);
-        FTreeView.InvalidateNode(LNode);
+        if Assigned(LNode) then
+        begin
+          FTreeView.ReinitNode(LNode, True);
+          FTreeView.InvalidateNode(LNode);
+        end;
       end;
     end;
   end;
-
-  inherited;
 end;
 
 procedure TTreeViewPresenter.FullCollapse;
@@ -804,6 +803,7 @@ begin
     FTreeView.OnInitNode := DoInitNode;
     FTreeView.OnKeyDown := DoKeyDown;
     FTreeView.OnMouseDown := DoMouseDown;
+    FTreeView.OnNewText := DoNewText;
     FTreeView.OnNodeMoved := DoNodeMoved;
     FTreeView.OnPaintText := DoPaintText;
   end;
@@ -862,7 +862,7 @@ begin
     FTreeView.TreeOptions.PaintOptions :=
       FTreeView.TreeOptions.PaintOptions + [toHideFocusRect];
     FTreeView.TreeOptions.SelectionOptions :=
-      FTreeView.TreeOptions.SelectionOptions + [toFullRowSelect, toRightClickSelect];
+      FTreeView.TreeOptions.SelectionOptions + [toExtendedFocus, toFullRowSelect, toRightClickSelect];
   end;
 end;
 
@@ -875,10 +875,10 @@ procedure TTreeViewPresenter.ResetRootNodeCount;
 begin
   if Assigned(FTreeView) then
   begin
-    if Assigned(ItemsSource) then
+    if Assigned(View.ItemsSource) then
     begin
       FTreeView.Clear;
-      FTreeView.RootNodeCount := ItemsSource.Count;
+      FTreeView.RootNodeCount := View.ItemsSource.Count;
     end
     else
     begin
@@ -1015,19 +1015,8 @@ procedure TTreeViewPresenter.UpdateSelectedItems;
 var
   i: Integer;
   LItem: TObject;
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
   LSelectedNodes: TNodeArray;
 begin
-  for LItem in FSelectedItems do
-  begin
-    if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-    begin
-      LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-      LPropertyChanged.Remove(DoCurrentItemPropertyChanged);
-    end;
-  end;
-
   FSelectedItems.Clear();
   LSelectedNodes := FTreeView.GetSortedSelection(False);
 
@@ -1037,15 +1026,10 @@ begin
     if Assigned(LItem) then
     begin
       FSelectedItems.Add(LItem);
-      if Supports(LItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-      begin
-        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Add(DoCurrentItemPropertyChanged);
-      end;
     end;
   end;
 
-  DoPropertyChanged('CurrentItem');
+  DoPropertyChanged('View');
   DoPropertyChanged('SelectedItem');
   DoPropertyChanged('SelectedItems');
 end;

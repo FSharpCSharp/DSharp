@@ -47,6 +47,8 @@ type
       DrawMode: TDrawMode): Boolean; override;
 
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
+    procedure SetText(const Item: TObject; const ColumnIndex: Integer;
+      const Value: string); override;
 
     property ColumnDefinitions: TColumnDefinitions read FColumnDefinitions;
   end;
@@ -88,35 +90,63 @@ end;
 
 function TColumnDefinitionsDataTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
+var
+  LColumnDefinition: TColumnDefinition;
 begin
   if Assigned(Item) and Assigned(FColumnDefinitions)
     and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
   begin
-    with FColumnDefinitions[ColumnIndex].Binding do
+    LColumnDefinition := FColumnDefinitions[ColumnIndex];
+    with LColumnDefinition.Binding do
     begin
-      if Assigned(FColumnDefinitions[ColumnIndex].OnGetText) then
+      if Assigned(LColumnDefinition.OnGetText) then
       begin
-        Result := FColumnDefinitions[ColumnIndex].OnGetText(
-          FColumnDefinitions.Owner, FColumnDefinitions[ColumnIndex], Item);
+        Result := LColumnDefinition.OnGetText(
+          FColumnDefinitions.Owner, LColumnDefinition, Item);
       end
       else
       begin
         Source := Item;
-        if SourceProperty.IsReadable then
-        begin
-          Result := SourceProperty.GetValue(Item).ToString;
-        end
-        else
-        begin
-          Result := inherited;
+        try
+          Result := SourceProperty.Value.ToString;
+        finally
+          Source := nil;
         end;
-        Source := nil;
       end;
     end;
   end
   else
   begin
     Result := inherited;
+  end;
+end;
+
+procedure TColumnDefinitionsDataTemplate.SetText(const Item: TObject;
+  const ColumnIndex: Integer; const Value: string);
+var
+  LColumnDefinition: TColumnDefinition;
+begin
+  if Assigned(Item) and Assigned(FColumnDefinitions)
+    and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
+  begin
+    with FColumnDefinitions[ColumnIndex].Binding do
+    begin
+      LColumnDefinition := FColumnDefinitions[ColumnIndex];
+      if Assigned(LColumnDefinition.OnSetText) then
+      begin
+        LColumnDefinition.OnSetText(
+          FColumnDefinitions.Owner, LColumnDefinition, Item, Value);
+      end
+      else
+      begin
+        Source := Item;
+        try
+          SourceProperty.Value := Value;
+        finally
+          Source := nil;
+        end;
+      end;
+    end;
   end;
 end;
 

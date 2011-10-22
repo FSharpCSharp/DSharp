@@ -161,7 +161,7 @@ begin
   AddElementConvention<TRadioGroup>('ItemIndex', 'OnClick');
   AddElementConvention<TTrackBar>('Position', 'OnChange');
 
-  AddElementConvention<TTreeViewPresenter>('ItemsSource', 'OnSelectionChanged')
+  AddElementConvention<TTreeViewPresenter>('View.ItemsSource', 'OnSelectionChanged')
     .ApplyBinding :=
     procedure(AViewModel: TObject; APropertyName: string;
       AViewElement: TComponent; ABindingType: TBindingType;

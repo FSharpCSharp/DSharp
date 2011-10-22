@@ -53,7 +53,6 @@ type
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 
-    procedure AddNotification(AItem: TObject);
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); virtual;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
@@ -65,7 +64,6 @@ type
     function GetItemsSource: IList<TObject>; virtual;
     function GetItemTemplate: IDataTemplate; virtual;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    procedure RemoveNotification(AItem: TObject);
     procedure SetCurrentItem(const Value: TObject); virtual;
     procedure SetFilter(const Value: TPredicate<TObject>); virtual;
     procedure SetItemIndex(const Value: NativeInt); virtual;
@@ -116,18 +114,6 @@ begin
   inherited;
 end;
 
-procedure TCollectionView.AddNotification(AItem: TObject);
-var
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChangedEvent: TEvent<TPropertyChangedEvent>;
-begin
-  if Supports(AItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-  begin
-    LPropertyChangedEvent := LNotifyPropertyChanged.OnPropertyChanged;
-    LPropertyChangedEvent.Add(DoItemPropertyChanged);
-  end;
-end;
-
 procedure TCollectionView.BeginUpdate;
 begin
   Inc(FUpdateCount);
@@ -143,17 +129,11 @@ procedure TCollectionView.DoSourceCollectionChanged(Sender, Item: TObject;
   Action: TCollectionChangedAction);
 begin
   case Action of
-    caAdd:
+    caReplace:
     begin
-      AddNotification(Item);
-    end;
-    caRemove:
-    begin
-      RemoveNotification(Item);
+      DoItemPropertyChanged(Item, '');
     end;
   end;
-
-  inherited;
 end;
 
 procedure TCollectionView.EndUpdate;
@@ -214,9 +194,10 @@ end;
 
 procedure TCollectionView.MoveCurrentToFirst;
 begin
-  if not Assigned(FFilter) then
+  if not Assigned(FFilter)  then
   begin
-    if CanMoveCurrentToPrevious xor (FItemIndex = -1) and (FItemsSource.Count > 0) then
+    if CanMoveCurrentToPrevious xor (FItemIndex = -1)
+      and Assigned(FItemsSource) and (FItemsSource.Count > 0) then
     begin
       ItemIndex := 0;
     end;
@@ -256,18 +237,6 @@ begin
   end;
 end;
 
-procedure TCollectionView.RemoveNotification(AItem: TObject);
-var
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChangedEvent: TEvent<TPropertyChangedEvent>;
-begin
-  if Supports(AItem, INotifyPropertyChanged, LNotifyPropertyChanged) then
-  begin
-    LPropertyChangedEvent := LNotifyPropertyChanged.OnPropertyChanged;
-    LPropertyChangedEvent.Remove(DoItemPropertyChanged);
-  end;
-end;
-
 procedure TCollectionView.SetCurrentItem(const Value: TObject);
 begin
   if Assigned(FItemsSource) then
@@ -295,7 +264,6 @@ end;
 procedure TCollectionView.SetItemsSource(const Value: IList<TObject>);
 var
   LCollectionChanged: TEvent<TCollectionChangedEvent>;
-  LItem: TObject;
 begin
   if FItemsSource <> Value then
   begin
@@ -303,11 +271,6 @@ begin
     begin
       LCollectionChanged := TEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
       LCollectionChanged.Remove(DoSourceCollectionChanged);
-
-      for LItem in FItemsSource do
-      begin
-        RemoveNotification(LItem);
-      end;
     end;
 
     FItemsSource := Value;
@@ -316,11 +279,6 @@ begin
     begin
       LCollectionChanged := TEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
       LCollectionChanged.Add(DoSourceCollectionChanged);
-
-      for LItem in FItemsSource do
-      begin
-        AddNotification(LItem);
-      end;
     end;
     UpdateItems(True);
 

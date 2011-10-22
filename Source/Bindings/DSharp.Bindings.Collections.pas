@@ -39,8 +39,7 @@ uses
   SysUtils;
 
 type
-  TCollectionChangedEvent = procedure(Sender: TObject; Item: TObject;
-    Action: TCollectionChangedAction) of object;
+  TCollectionChangedEvent = TCollectionChangedEvent<TObject>;
 
   INotifyCollectionChanged = interface
     ['{FE0D3160-6BCE-46B6-B01D-1B3C23EA76F3}']

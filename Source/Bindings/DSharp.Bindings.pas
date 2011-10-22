@@ -39,8 +39,8 @@ uses
   DSharp.Core.Collections,
   DSharp.Core.DataConversion,
   DSharp.Core.Events,
+  DSharp.Core.Expressions,
   DSharp.Core.NotificationHandler,
-  DSharp.Core.PropertyPath,
   DSharp.Core.Validations,
   Rtti,
   SysUtils;
@@ -72,7 +72,7 @@ type
     FOnValidation: TEvent<TValidationEvent>;
     FPreventFocusChange: Boolean;
     FTarget: TObject;
-    FTargetProperty: IPropertyPath;
+    FTargetProperty: IMemberExpression;
     FTargetPropertyName: string;
     FTargetUpdateTrigger: TUpdateTrigger;
     FUpdateCount: Integer;
@@ -122,7 +122,7 @@ type
     property OnPropertyChanged: TEvent<TPropertyChangedEvent>
       read GetOnPropertyChanged;
     property OnValidation: TEvent<TValidationEvent> read GetOnValidation;
-    property TargetProperty: IPropertyPath read FTargetProperty;
+    property TargetProperty: IMemberExpression read FTargetProperty;
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
     property ValidationRules: IList<IValidationRule> read GetValidationRules;
   published
@@ -149,7 +149,7 @@ type
     FOnSourceUpdated: TPropertyChangedEvent;
     FSource: TObject;
     FSourceCollectionChanged: INotifyCollectionChanged;
-    FSourceProperty: IPropertyPath;
+    FSourceProperty: IMemberExpression;
     FSourcePropertyName: string;
     FSourceUpdateTrigger: TUpdateTrigger;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
@@ -184,7 +184,7 @@ type
     procedure CancelEdit; override;
     procedure CommitEdit; override;
 
-    property SourceProperty: IPropertyPath read FSourceProperty;
+    property SourceProperty: IMemberExpression read FSourceProperty;
   published
     property NotifyOnSourceUpdated: Boolean read FNotifyOnSourceUpdated
       write FNotifyOnSourceUpdated default False;
@@ -270,9 +270,11 @@ uses
   DSharp.Bindings.Exceptions,
   DSharp.Bindings.Validations,
   DSharp.Core.DataConversion.Default,
-  DSharp.Core.Logging,
+  DSharp.Core.Reflection,
   DSharp.Core.Utils,
-  Forms;
+  Forms,
+  StrUtils,
+  TypInfo;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 var
@@ -321,6 +323,22 @@ begin
   begin
     Result := LBindingGroup.GetBindingForTarget(AComponent);
   end;
+end;
+
+function IsRootProperty(const Name: string; Expression: IParameterExpression): Boolean;
+var
+  LRoot: string;
+begin
+  LRoot := Expression.Name;
+  if ContainsText(LRoot, '.') then
+  begin
+    LRoot := LeftStr(LRoot, Pred(Pos('.', LRoot)));
+  end;
+  if ContainsText(LRoot, '[') then
+  begin
+    LRoot := LeftStr(LRoot, Pred(Pos('[', LRoot)));
+  end;
+  Result := SameText(Name, LRoot);
 end;
 
 { TBindingBase }
@@ -514,7 +532,7 @@ begin
 
     if Assigned(FTarget) then
     begin
-      FTargetProperty := TPropertyPath.Create(FTarget, FTargetPropertyName);
+      FTargetProperty := TPropertyExpression.Create(FTarget, FTargetPropertyName);
 
       if FTarget is TComponent then
       begin
@@ -539,7 +557,7 @@ begin
     FTargetPropertyName := AValue;
     if Assigned(FTarget) then
     begin
-      FTargetProperty := TPropertyPath.Create(FTarget, FTargetPropertyName);
+      FTargetProperty := TPropertyExpression.Create(FTarget, FTargetPropertyName);
       UpdateTarget();
     end;
   end;
@@ -649,7 +667,7 @@ procedure TBinding.DoSourcePropertyChanged(ASender: TObject;
 begin
   if (FUpdateCount = 0) and (FBindingMode in [bmOneWay..bmTwoWay])
     and (AUpdateTrigger = FTargetUpdateTrigger)
-    and (SameText(APropertyName, FSourceProperty.Root)) then
+    and IsRootProperty(APropertyName, FSourceProperty) then
   begin
     BeginUpdate();
     try
@@ -676,7 +694,7 @@ procedure TBinding.DoTargetPropertyChanged(ASender: TObject;
 begin
   if (FUpdateCount = 0) and (FBindingMode in [bmTwoWay..bmOneWayToSource])
     and (AUpdateTrigger = FSourceUpdateTrigger)
-    and SameText(APropertyName, FTargetProperty.Root) then
+    and IsRootProperty(APropertyName, FTargetProperty) then
   begin
     BeginUpdate();
     try
@@ -728,12 +746,22 @@ end;
 procedure TBinding.InitConverter;
 begin
   if (not Assigned(FConverter) or ((FConverter as TObject) is TDefaultConverter))
-    and Assigned(FSourceProperty) and Assigned(FSourceProperty.PropertyType)
-    and Assigned(FTargetProperty) and Assigned(FTargetProperty.PropertyType) then
+    and Assigned(FTargetProperty) and Assigned(FTargetProperty.Member)
+    and Assigned(FSourceProperty) and Assigned(FSourceProperty.Member) then
   begin
-    FConverter := TDefaultConverter.Create(
-      FSourceProperty.PropertyType.Handle,
-      FTargetProperty.PropertyType.Handle);
+    if (FTargetProperty.Member.RttiType.TypeKind = tkMethod)
+      and (FSourceProperty.Member is TRttiMethod) then
+    begin
+      FConverter := TDefaultConverter.Create(
+        TypeInfo(TMethod),
+        FTargetProperty.Member.RttiType.Handle);
+    end
+    else
+    begin
+      FConverter := TDefaultConverter.Create(
+        FSourceProperty.Member.RttiType.Handle,
+        FTargetProperty.Member.RttiType.Handle);
+    end;
   end;
 end;
 
@@ -831,7 +859,7 @@ begin
 
   if Assigned(FSource) then
   begin
-    FSourceProperty := TPropertyPath.Create(FSource, FSourcePropertyName);
+    FSourceProperty := TPropertyExpression.Create(FSource, FSourcePropertyName);
   end
   else
   begin
@@ -839,8 +867,8 @@ begin
   end;
 
   if Assigned(FSource) and Assigned(FSourceProperty)
-    and FSourceProperty.PropertyType.IsInstance and FSourceProperty.IsReadable
-    and Supports(FSourceProperty.GetValue(FSource).AsObject,
+    and FSourceProperty.Value.IsObject and FSourceProperty.Member.IsReadable
+    and Supports(FSourceProperty.Value.AsObject,
     INotifyCollectionChanged, FSourceCollectionChanged) then
   begin
     LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
@@ -870,16 +898,16 @@ begin
   if FActive
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
-    and FTargetProperty.IsReadable and FSourceProperty.IsWritable then
+    and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsReadable then
   begin
     BeginUpdate();
     try
-      LTargetValue := FTargetProperty.GetValue(FTarget);
+      LTargetValue := FTargetProperty.Value;
 
       InitConverter();
       LSourceValue := FConverter.ConvertBack(LTargetValue);
 
-      FSourceProperty.SetValue(FSource, LSourceValue);
+      FSourceProperty.Value := LSourceValue;
       FValidationErrors.Clear();
     finally
       EndUpdate();
@@ -897,11 +925,11 @@ begin
     or not (csLoading in FBindingGroup.ComponentState))
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
-    and FTargetProperty.IsWritable and FSourceProperty.IsReadable then
+    and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsReadable then
   begin
     BeginUpdate();
     try
-      LSourceValue := FSourceProperty.GetValue(FSource);
+      LSourceValue := FSourceProperty.Value;
 
       if Assigned(FSourceCollectionChanged) then
       begin
@@ -921,7 +949,7 @@ begin
       InitConverter();
       LTargetValue := FConverter.Convert(LSourceValue);
 
-      FTargetProperty.SetValue(FTarget, LTargetValue);
+      FTargetProperty.Value := LTargetValue;
       FValidationErrors.Clear();
     finally
       EndUpdate();
@@ -941,9 +969,10 @@ begin
 
   LValidationRule := nil;
   try
-    if Assigned(FTarget) and Assigned(FTargetProperty) and FTargetProperty.IsReadable then
+    if Assigned(FTarget) and Assigned(FTargetProperty)
+      and FTargetProperty.Member.IsReadable then
     begin
-      LTargetValue := FTargetProperty.GetValue(FTarget);
+      LTargetValue := FTargetProperty.Value;
 
       for LValidationRule in FValidationRules do
       begin
@@ -1213,7 +1242,7 @@ begin
     if (LBinding.Source = AItem)
       and SameText(LBinding.SourcePropertyName, APropertyName) then
     begin
-      AValue := LBinding.SourceProperty.GetValue(AItem);
+      AValue := LBinding.SourceProperty.Value;
       Result := True;
       Break;
     end;

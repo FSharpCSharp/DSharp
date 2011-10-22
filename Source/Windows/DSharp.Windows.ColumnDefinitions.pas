@@ -155,7 +155,7 @@ begin
         function(Item: TObject): Boolean
         begin
           Binding.Source := Item;
-          Result := ContainsText(Binding.SourceProperty.GetValue(Item).ToString, FCustomFilter);
+          Result := ContainsText(Binding.SourceProperty.Value.ToString, FCustomFilter);
           Binding.Source := nil;
         end;
     end

@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.PropertyPath;
+unit DSharp.Core.PropertyPath deprecated;
 
 interface
 
@@ -261,7 +261,7 @@ procedure TProperty.SetValue(Instance: Pointer; const AValue: TValue);
 begin
   if FIndex = -1 then
   begin
-    FProperty.SetValue(Instance, AValue);
+    FProperty.TrySetValue(Instance, AValue);
   end;
 end;
 

@@ -66,7 +66,6 @@ type
     function Validate: Boolean;
   public
     constructor Create; virtual;
-    destructor Destroy; override;
 
     procedure VerifyPropertyName(const APropertyName: string);
     property DisplayName: string read GetDisplayName;
@@ -88,12 +87,6 @@ uses
 constructor TViewModelBase.Create;
 begin
   FValidationErrors := TList<IValidationResult>.Create();
-end;
-
-destructor TViewModelBase.Destroy;
-begin
-  FValidationErrors.Free();
-  inherited;
 end;
 
 function TViewModelBase.CanClose: Boolean;

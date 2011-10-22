@@ -50,6 +50,8 @@ type
     ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean of object;
   TGetTextEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject): string of object;
+  TSetTextEvent = procedure(Sender: TObject; ColumnDefinition: TColumnDefinition;
+    Item: TObject; const Value: string) of object;
 
   TColumnDefinition = class(TCollectionItem)
   private
@@ -59,12 +61,14 @@ type
     FFilter: TPredicate<TObject>;
     FOnCustomDraw: TCustomDrawEvent;
     FOnGetText: TGetTextEvent;
+    FOnSetText: TSetTextEvent;
     FWidth: Integer;
     procedure SetCaption(const Value: string);
     procedure SetCustomFilter(const Value: string);
   public
     constructor Create(Collection: TCollection); override;
     destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
   published
     property Binding: TBinding read FBinding write FBinding;
     property Caption: string read FCaption write SetCaption;
@@ -72,15 +76,16 @@ type
     property Filter: TPredicate<TObject> read FFilter;
     property OnCustomDraw: TCustomDrawEvent read FOnCustomDraw write FOnCustomDraw;
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
+    property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;
 
   TColumnDefinitions = class(TOwnedCollection<TColumnDefinition>)
   protected
-    function AddColumn(const ACaption: string; const AWidth: Integer): TColumnDefinition;
     procedure Initialize; virtual;
   public
     constructor Create(AOwner: TPersistent = nil); override;
+    function Add(const Caption: string; const Width: Integer = CDefaultWidth): TColumnDefinition; overload;
   end;
 
 implementation
@@ -105,6 +110,26 @@ destructor TColumnDefinition.Destroy;
 begin
   FBinding.Free();
   inherited;
+end;
+
+procedure TColumnDefinition.Assign(Source: TPersistent);
+var
+  LSource: TColumnDefinition;
+begin
+  if Source is TColumnDefinition then
+  begin
+    LSource := TColumnDefinition(Source);
+    Binding.SourcePropertyName := LSource.Binding.SourcePropertyName;
+    Caption := LSource.Caption;
+    CustomFilter := LSource.CustomFilter;
+    OnCustomDraw := LSource.OnCustomDraw;
+    OnGetText := LSource.OnGetText;
+    Width := LSource.Width;
+  end
+  else
+  begin
+    inherited;
+  end;
 end;
 
 procedure TColumnDefinition.SetCaption(const Value: string);
@@ -160,12 +185,11 @@ begin
   // implemented by descendants
 end;
 
-function TColumnDefinitions.AddColumn(
-  const ACaption: string; const AWidth: Integer): TColumnDefinition;
+function TColumnDefinitions.Add(const Caption: string; const Width: Integer): TColumnDefinition;
 begin
-  Result := TColumnDefinition.Create(Self);
-  Result.Caption := ACaption;
-  Result.Width := AWidth;
+  Result := Add();
+  Result.Caption := Caption;
+  Result.Width := Width;
 end;
 
 end.

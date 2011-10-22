@@ -37,13 +37,72 @@ uses
 type
   ILazy<T> = interface(TFunc<T>)
     ['{78D1D1AA-ED7E-49B1-9DA0-402C4FA5036D}']
-    function GetMetaData: TObject;//TExportMetaData;
-
     function IsValueCreated: Boolean;
-    property MetaData: TObject read GetMetaData;//TExportMetaData read GetMetaData;
     property Value: T read Invoke;
   end;
 
+  TLazy<T> = class(TInterfacedObject, ILazy<T>)
+  private
+    FIsValueCreated: Boolean;
+    FValue: T;
+    FValueFactory: TFunc<T>;
+    function Invoke: T;
+  public
+    constructor Create(const ValueFactory: TFunc<T>);
+
+    function IsValueCreated: Boolean;
+    property Value: T read Invoke;
+  end;
+
+  Lazy<T> = record
+  strict private
+    FLazy: ILazy<T>;
+    function GetValue: T;
+  public
+    property Value: T read GetValue;
+    class operator Implicit(const Value: TFunc<T>): Lazy<T>; overload;
+    class operator Implicit(const Value: Lazy<T>): T; overload;
+  end;
+
 implementation
+
+{ TLazy<T> }
+
+constructor TLazy<T>.Create(const ValueFactory: TFunc<T>);
+begin
+  FValueFactory := ValueFactory;
+end;
+
+function TLazy<T>.Invoke: T;
+begin
+  if not FIsValueCreated then
+  begin
+    FValue := FValueFactory();
+    FIsValueCreated := True;
+  end;
+  Result := FValue;
+end;
+
+function TLazy<T>.IsValueCreated: Boolean;
+begin
+  Result := FIsValueCreated;
+end;
+
+{ Lazy<T> }
+
+function Lazy<T>.GetValue: T;
+begin
+  Result := FLazy();
+end;
+
+class operator Lazy<T>.Implicit(const Value: TFunc<T>): Lazy<T>;
+begin
+  Result.FLazy := TLazy<T>.Create(Value);
+end;
+
+class operator Lazy<T>.Implicit(const Value: Lazy<T>): T;
+begin
+  Result := Value.Value;
+end;
 
 end.

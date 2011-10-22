@@ -56,11 +56,11 @@ implementation
 uses
   DateUtils,
   DSharp.Bindings.Notifications,
-  DSharp.Core.Logging,
-  DSharp.Core.Logging.Console,
+  DSharp.Logging,
+  DSharp.Logging.Console,
 // Uncomment if you want to use any of the following logging tools
-//  DSharp.Core.Logging.CodeSite,
-//  DSharp.Core.Logging.SmartInspect,
+//  DSharp.Logging.CodeSite,
+//  DSharp.Logging.SmartInspect,
 
   Rtti;
 

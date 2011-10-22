@@ -43,7 +43,6 @@ type
     IEditable)
   private
     FCache: T;
-    FEditAction: TEditAction;
     FItem: T;
     procedure SetItem(const Value: T);
   protected
@@ -54,7 +53,6 @@ type
 
     procedure Close; override;
 
-    property EditAction: TEditAction read FEditAction write FEditAction;
     property Item: T read FItem write SetItem;
   public
     destructor Destroy; override;

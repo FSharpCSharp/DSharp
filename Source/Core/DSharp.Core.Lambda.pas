@@ -36,51 +36,51 @@ uses
   SysUtils;
 
 type
-  TLambda = record
+  Lambda = record
   public
     class function InitExpression(Expression: IExpression): IExpression; overload; static;
-    class function InitExpression(Expression: Variant): IExpression; overload; static;
+    class function InitExpression(const Expression: Variant): IExpression; overload; static;
 
     class function Make<TResult>(
-      Expression: Variant): TFunc<TResult>; overload; static;
+      const Expression: Variant): TFunc<TResult>; overload; static;
     class function Make<T, TResult>(
-      Expression: Variant): TFunc<T, TResult>; overload; static;
+      const Expression: Variant): TFunc<T, TResult>; overload; static;
     class function Make<T1, T2, TResult>(
-      Expression: Variant): TFunc<T1, T2, TResult>; overload; static;
+      const Expression: Variant): TFunc<T1, T2, TResult>; overload; static;
     class function Make<T1, T2, T3, TResult>(
-      Expression: Variant): TFunc<T1, T2, T3, TResult>; overload; static;
+      const Expression: Variant): TFunc<T1, T2, T3, TResult>; overload; static;
     class function Make<T1, T2, T3, T4, TResult>(
-      Expression: Variant): TFunc<T1, T2, T3, T4, TResult>; overload; static;
+      const Expression: Variant): TFunc<T1, T2, T3, T4, TResult>; overload; static;
 
     class function Predicate<T>(Expression: Variant): TPredicate<T>; overload; static;
 
     class function Make<TResult>(
-      Expression: IExpression): TFunc<TResult>; overload; static;
+      AExpression: IExpression): TFunc<TResult>; overload; static;
     class function Make<T, TResult>(
-      Expression: IExpression): TFunc<T, TResult>; overload; static;
+      AExpression: IExpression): TFunc<T, TResult>; overload; static;
     class function Make<T1, T2, TResult>(
-      Expression: IExpression): TFunc<T1, T2, TResult>; overload; static;
+      AExpression: IExpression): TFunc<T1, T2, TResult>; overload; static;
     class function Make<T1, T2, T3, TResult>(
-      Expression: IExpression): TFunc<T1, T2, T3, TResult>; overload; static;
+      AExpression: IExpression): TFunc<T1, T2, T3, TResult>; overload; static;
     class function Make<T1, T2, T3, T4, TResult>(
-      Expression: IExpression): TFunc<T1, T2, T3, T4, TResult>; overload; static;
+      AExpression: IExpression): TFunc<T1, T2, T3, T4, TResult>; overload; static;
 
-    class function Predicate<T>(Expression: IExpression): TPredicate<T>; overload; static;
+    class function Predicate<T>(AExpression: IExpression): TPredicate<T>; overload; static;
 
-    class function GetExpression(var AFunc): IExpression; static;
-    class function SetExpression(var AFunc;
-      AExpression: IExpression): Boolean; static;
+    class function GetExpression(var Func): IExpression; static;
+    class function SetExpression(var Func;
+      Expression: IExpression): Boolean; static;
   end;
 
 function Arg(AObject: TObject): Variant; overload;
-function Arg(AValue: Variant): Variant; overload;
+function Arg(const AValue: Variant): Variant; overload;
 function Arg1: Variant; overload;
 function Arg1(AObject: TObject): Variant; overload;
 function Arg2: Variant;
 function Arg3: Variant;
 function Arg4: Variant;
 
-function Bool(Expression: Variant): Variant;
+function Bool(const AExpression: Variant): Variant;
 
 implementation
 
@@ -90,9 +90,9 @@ uses
 
 type
   TArgument = class(TObject)
+    class threadvar FCount: Integer;
   private
     FIndex: Integer;
-    class threadvar FCount: Integer;
   public
     constructor Create;
     destructor Destroy; override;
@@ -102,53 +102,47 @@ type
 function Arg(AObject: TObject): Variant;
 begin
   Result := AsDynamic(AObject);
-  ExpressionStack.Push(TExpressionVarData(Result).VExpressionInfo.Expression);
 end;
 
-function Arg(AValue: Variant): Variant; overload;
+function Arg(const AValue: Variant): Variant; overload;
 begin
   Result := AsDynamic(AValue);
-  ExpressionStack.Push(TExpressionVarData(Result).VExpressionInfo.Expression);
 end;
 
 function Arg1: Variant;
 begin
-  Result := AsDynamic(ParameterList[0]);
-  ExpressionStack.Push(ParameterList[0]);
+  Result := AsDynamic(ExpressionParams[0]);
 end;
 
 function Arg1(AObject: TObject): Variant;
 begin
   Result := Arg1;
-  ParameterList[0].Value := TValue.From<TObject>(AObject);
+  ExpressionParams[0].Value := TValue.From<TObject>(AObject);
 end;
 
 function Arg2: Variant;
 begin
-  Result := AsDynamic(ParameterList[1]);
-  ExpressionStack.Push(ParameterList[1]);
+  Result := AsDynamic(ExpressionParams[1]);
 end;
 
 function Arg3: Variant;
 begin
-  Result := AsDynamic(ParameterList[2]);
-  ExpressionStack.Push(ParameterList[2]);
+  Result := AsDynamic(ExpressionParams[2]);
 end;
 
 function Arg4: Variant;
 begin
-  Result := AsDynamic(ParameterList[3]);
-  ExpressionStack.Push(ParameterList[3]);
+  Result := AsDynamic(ExpressionParams[3]);
 end;
 
-function Bool(Expression: Variant): Variant;
+function Bool(const AExpression: Variant): Variant;
 begin
   Result := AsDynamic(ExpressionStack.Peek());
 end;
 
 { TLambda }
 
-class function TLambda.InitExpression(Expression: IExpression): IExpression;
+class function Lambda.InitExpression(Expression: IExpression): IExpression;
 begin
   if ExpressionStack.Count = 1 then
   begin
@@ -160,7 +154,7 @@ begin
   end;
 end;
 
-class function TLambda.InitExpression(Expression: Variant): IExpression;
+class function Lambda.InitExpression(const Expression: Variant): IExpression;
 begin
   if ExpressionStack.Count = 1 then
   begin
@@ -168,13 +162,13 @@ begin
   end
   else
   begin
-    Result := TValueConstantExpression.Create(TValue.FromVariant(Expression));
+    Result := TConstantExpression.Create(Expression);
   end;
 end;
 
-class function TLambda.GetExpression(var AFunc): IExpression;
+class function Lambda.GetExpression(var Func): IExpression;
 var
-  LInterface: IInterface absolute AFunc;
+  LInterface: IInterface absolute Func;
   LField: TRttiField;
   LObject: TObject;
   LType: TRttiType;
@@ -186,7 +180,7 @@ begin
     LType := TRttiContext.Create.GetType(LObject.ClassType);
     if Assigned(LType) then
     begin
-      LField := LType.GetField('expr');
+      LField := LType.GetField('Expression');
       if Assigned(LField) then
       begin
         Result := LField.GetValue(LObject).AsType<IExpression>;
@@ -195,9 +189,9 @@ begin
   end;
 end;
 
-class function TLambda.SetExpression(var AFunc; AExpression: IExpression): Boolean;
+class function Lambda.SetExpression(var Func; Expression: IExpression): Boolean;
 var
-  LInterface: IInterface absolute AFunc;
+  LInterface: IInterface absolute Func;
   LField: TRttiField;
   LObject: TObject;
   LType: TRttiType;
@@ -209,159 +203,183 @@ begin
     LType := TRttiContext.Create.GetType(LObject.ClassType);
     if Assigned(LType) then
     begin
-      LField := LType.GetField('expr');
+      LField := LType.GetField('Expression');
       if Assigned(LField) then
       begin
-        LField.SetValue(LObject, TValue.From<IExpression>(AExpression));
+        LField.SetValue(LObject, TValue.From<IExpression>(Expression));
         Result := True;
+      end;
+
+      LField := LType.GetField('Delegate');
+      if Assigned(LField) then
+      begin
+        LField.SetValue(LObject, TValue.From<TFunc<TValue>>(Expression.Compile()));
       end;
     end;
   end;
 end;
 
-class function TLambda.Make<TResult>(Expression: IExpression): TFunc<TResult>;
+class function Lambda.Make<TResult>(AExpression: IExpression): TFunc<TResult>;
 var
-  expr: IExpression;
+  Expression: IExpression;
+  Delegate: TFunc<TValue>;
 begin
-  expr := InitExpression(Expression);
+  Expression := InitExpression(AExpression);
+  Delegate := Expression.Compile();
 
   Result :=
     function: TResult
     begin
-      Result := expr.Compile.AsType<TResult>;
+      if Expression = nil then;
+      Result := Delegate().AsType<TResult>;
     end;
 end;
 
-class function TLambda.Make<TResult>(Expression: Variant): TFunc<TResult>;
+class function Lambda.Make<TResult>(const Expression: Variant): TFunc<TResult>;
 begin
   Result := Make<TResult>(InitExpression(Expression));
 end;
 
-class function TLambda.Make<T, TResult>(Expression: IExpression): TFunc<T, TResult>;
+class function Lambda.Make<T, TResult>(AExpression: IExpression): TFunc<T, TResult>;
 var
-  expr: IExpression;
-  param: IParameter;
+  Expression: IExpression;
+  Delegate: TFunc<TValue>;
+  Parameter: IValueExpression;
 begin
-  expr := InitExpression(Expression);
+  Expression := InitExpression(AExpression);
+  Delegate := Expression.Compile();
 
-  param := ParameterList[0];
+  Parameter := ExpressionParams[0];
 
   Result :=
     function(Arg1: T): TResult
     begin
-      param.Value := TValue.From<T>(Arg1);
-      Result := expr.Compile.AsType<TResult>;
+      if Expression = nil then;
+      Parameter.Value := TValue.From<T>(Arg1);
+      Result := Delegate().AsType<TResult>;
     end;
 end;
 
-class function TLambda.Make<T, TResult>(Expression: Variant): TFunc<T, TResult>;
+class function Lambda.Make<T, TResult>(const Expression: Variant): TFunc<T, TResult>;
 begin
   Result := Make<T, TResult>(InitExpression(Expression));
 end;
 
-class function TLambda.Make<T1, T2, TResult>(
-  Expression: IExpression): TFunc<T1, T2, TResult>;
+class function Lambda.Make<T1, T2, TResult>(
+  AExpression: IExpression): TFunc<T1, T2, TResult>;
 var
-  expr: IExpression;
-  param1, param2: IParameter;
+  Expression: IExpression;
+  Delegate: TFunc<TValue>;
+  Parameter1, Parameter2: IValueExpression;
 begin
-  expr := InitExpression(Expression);
+  Expression := InitExpression(AExpression);
+  Delegate := Expression.Compile();
 
-  param1 := ParameterList[0];
-  param2 := ParameterList[1];
+  Parameter1 := ExpressionParams[0];
+  Parameter2 := ExpressionParams[1];
 
   Result :=
     function(Arg1: T1; Arg2: T2): TResult
     begin
-      param1.Value := TValue.From<T1>(Arg1);
-      param2.Value := TValue.From<T2>(Arg2);
-      Result := expr.Compile.AsType<TResult>;
+      if Expression = nil then;
+      Parameter1.Value := TValue.From<T1>(Arg1);
+      Parameter2.Value := TValue.From<T2>(Arg2);
+      Result := Delegate().AsType<TResult>;
     end;
 end;
 
-class function TLambda.Make<T1, T2, TResult>(
-  Expression: Variant): TFunc<T1, T2, TResult>;
+class function Lambda.Make<T1, T2, TResult>(
+  const Expression: Variant): TFunc<T1, T2, TResult>;
 begin
   Result := Make<T1, T2, TResult>(InitExpression(Expression));
 end;
 
-class function TLambda.Make<T1, T2, T3, TResult>(
-  Expression: IExpression): TFunc<T1, T2, T3, TResult>;
+class function Lambda.Make<T1, T2, T3, TResult>(
+  AExpression: IExpression): TFunc<T1, T2, T3, TResult>;
 var
-  expr: IExpression;
-  param1, param2, param3: IParameter;
+  Expression: IExpression;
+  Delegate: TFunc<TValue>;
+  Parameter1, Parameter2, Parameter3: IValueExpression;
 begin
-  expr := InitExpression(Expression);
+  Expression := InitExpression(AExpression);
+  Delegate := Expression.Compile();
 
-  param1 := ParameterList[0];
-  param2 := ParameterList[1];
-  param3 := ParameterList[2];
+  Parameter1 := ExpressionParams[0];
+  Parameter2 := ExpressionParams[1];
+  Parameter3 := ExpressionParams[2];
 
   Result :=
     function(Arg1: T1; Arg2: T2; Arg3: T3): TResult
     begin
-      param1.Value := TValue.From<T1>(Arg1);
-      param2.Value := TValue.From<T2>(Arg2);
-      param3.Value := TValue.From<T3>(Arg3);
-      Result := expr.Compile.AsType<TResult>;
+      if Expression = nil then;
+      Parameter1.Value := TValue.From<T1>(Arg1);
+      Parameter2.Value := TValue.From<T2>(Arg2);
+      Parameter3.Value := TValue.From<T3>(Arg3);
+      Result := Delegate().AsType<TResult>;
     end;
 end;
 
 
-class function TLambda.Make<T1, T2, T3, TResult>(
-  Expression: Variant): TFunc<T1, T2, T3, TResult>;
+class function Lambda.Make<T1, T2, T3, TResult>(
+  const Expression: Variant): TFunc<T1, T2, T3, TResult>;
 begin
   Result := Make<T1, T2, T3, TResult>(InitExpression(Expression));
 end;
 
-class function TLambda.Make<T1, T2, T3, T4, TResult>(
-  Expression: IExpression): TFunc<T1, T2, T3, T4, TResult>;
+class function Lambda.Make<T1, T2, T3, T4, TResult>(
+  AExpression: IExpression): TFunc<T1, T2, T3, T4, TResult>;
 var
-  expr: IExpression;
-  param1, param2, param3, param4: IParameter;
+  Expression: IExpression;
+  Delegate: TFunc<TValue>;
+  Parameter1, Parameter2, Parameter3, Parameter4: IValueExpression;
 begin
-  expr := InitExpression(Expression);
+  Expression := InitExpression(AExpression);
+  Delegate := Expression.Compile();
 
-  param1 := ParameterList[0];
-  param2 := ParameterList[1];
-  param3 := ParameterList[2];
-  param4 := ParameterList[3];
+  Parameter1 := ExpressionParams[0];
+  Parameter2 := ExpressionParams[1];
+  Parameter3 := ExpressionParams[2];
+  Parameter4 := ExpressionParams[3];
 
   Result :=
     function(Arg1: T1; Arg2: T2; Arg3: T3; Arg4: T4): TResult
     begin
-      param1.Value := TValue.From<T1>(Arg1);
-      param2.Value := TValue.From<T2>(Arg2);
-      param3.Value := TValue.From<T3>(Arg3);
-      param4.Value := TValue.From<T4>(Arg4);
-      Result := expr.Compile.AsType<TResult>;
+      if AExpression = nil then;
+      Parameter1.Value := TValue.From<T1>(Arg1);
+      Parameter2.Value := TValue.From<T2>(Arg2);
+      Parameter3.Value := TValue.From<T3>(Arg3);
+      Parameter4.Value := TValue.From<T4>(Arg4);
+      Result := Delegate().AsType<TResult>;
     end;
 end;
 
-class function TLambda.Make<T1, T2, T3, T4, TResult>(
-  Expression: Variant): TFunc<T1, T2, T3, T4, TResult>;
+class function Lambda.Make<T1, T2, T3, T4, TResult>(
+  const Expression: Variant): TFunc<T1, T2, T3, T4, TResult>;
 begin
   Result := Make<T1, T2, T3, T4, TResult>(InitExpression(Expression));
 end;
 
-class function TLambda.Predicate<T>(Expression: IExpression): TPredicate<T>;
+class function Lambda.Predicate<T>(AExpression: IExpression): TPredicate<T>;
 var
-  expr: IExpression;
-  param: IParameter;
+  Expression: IExpression;
+  Delegate: TFunc<TValue>;
+  Parameter: IValueExpression;
 begin
-  expr := InitExpression(Expression);
+  Expression := InitExpression(AExpression);
+  Delegate := Expression.Compile();
 
-  param := ParameterList[0];
+  Parameter := ExpressionParams[0];
 
   Result :=
     function(Arg1: T): Boolean
     begin
-      param.Value := TValue.From<T>(Arg1);
-      Result := expr.Compile.AsBoolean;
+      if Expression = nil then;
+      Parameter.Value := TValue.From<T>(Arg1);
+      Result := Delegate().AsBoolean;
     end;
 end;
 
-class function TLambda.Predicate<T>(Expression: Variant): TPredicate<T>;
+class function Lambda.Predicate<T>(Expression: Variant): TPredicate<T>;
 begin
   Result := Predicate<T>(InitExpression(Expression));
 end;

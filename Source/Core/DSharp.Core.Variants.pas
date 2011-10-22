@@ -68,6 +68,8 @@ type
       const Name: string; const Arguments: TVarDataArray): Boolean; override;
     function GetProperty(var Dest: TVarData; const V: TVarData;
       const Name: string): Boolean; override;
+    function SetProperty(const V: TVarData; const Name: string;
+      const Value: TVarData): Boolean; override;
     procedure BinaryOp(var Left: TVarData; const Right: TVarData;
       const Operator: TVarOp); override;
     function CompareOp(const Left, Right: TVarData;
@@ -75,12 +77,12 @@ type
   end;
 
 var
-  Expression: TExpressionVariantType;
+  ExpressionVariantType: TExpressionVariantType;
 
   OperatorExpressions: array[opAdd..opCmpGE] of TBinaryExpressionClass = (
     TAdditionExpression, TSubtractionExpression, TMultiplicationExpression,
     TDivisionExpression, TIntegerDivisionExpression, TModulusExpression,
-    nil, nil, TLogicalAndExpression, TLogicalOrExpression, TLogicalXorExpression,
+    nil, nil, TLogicalAndExpression, TLogicalOrExpression, TLogicalExclusiveOrExpression,
     nil, nil, nil, TEqualExpression, TNotEqualExpression,
     TLessThanExpression, TLessThanOrEqualExpression, TGreaterThanExpression,
     TGreaterThanOrEqualExpression);
@@ -91,9 +93,11 @@ begin
 
   with TExpressionVarData(Result) do
   begin
-    VType := Expression.VarType;
+    VType := ExpressionVariantType.VarType;
     VExpressionInfo := TExpressionInfo.Create;
     VExpressionInfo.Expression := AExpression;
+
+    ExpressionStack.Push(VExpressionInfo.Expression);
   end;
 end;
 
@@ -103,10 +107,12 @@ begin
 
   with TExpressionVarData(Result) do
   begin
-    VType := Expression.VarType;
+    VType := ExpressionVariantType.VarType;
     VExpressionInfo := TExpressionInfo.Create;
-    VExpressionInfo.Expression := TValueConstantExpression.Create(TValue.From<TObject>(AObject));
+    VExpressionInfo.Expression := TConstantExpression.Create(AObject);
     VExpressionInfo.Instance := AObject;
+
+    ExpressionStack.Push(VExpressionInfo.Expression);
   end;
 end;
 
@@ -116,9 +122,11 @@ begin
 
   with TExpressionVarData(Result) do
   begin
-    VType := Expression.VarType;
+    VType := ExpressionVariantType.VarType;
     VExpressionInfo := TExpressionInfo.Create;
-    VExpressionInfo.Expression := TValueConstantExpression.Create(TValue.FromVariant(AValue));
+    VExpressionInfo.Expression := TConstantExpression.Create(AValue);
+
+    ExpressionStack.Push(VExpressionInfo.Expression);
   end;
 end;
 
@@ -131,8 +139,11 @@ var
 begin
   if (Right.VType = VarType) and (Left.VType = VarType) then
   begin
-    LRight := ExpressionStack.Pop();
-    LLeft := ExpressionStack.Pop();
+    ExpressionStack.Clear();
+//    LLeft := ExpressionStack.Pop();
+//    LRight := ExpressionStack.Pop();
+    LLeft := TExpressionVarData(Left).VExpressionInfo.Expression;
+    LRight := TExpressionVarData(Right).VExpressionInfo.Expression;
     TExpressionVarData(Left).VExpressionInfo.Expression :=
       OperatorExpressions[Operator].Create(LLeft, LRight);
     ExpressionStack.Push(TExpressionVarData(Left).VExpressionInfo.Expression);
@@ -145,68 +156,13 @@ end;
 
 procedure TExpressionVariantType.Cast(var Dest: TVarData;
   const Source: TVarData);
-
-  function VarDataIsBoolean(const V: TVarData): Boolean;
-  begin
-    Result := V.VType = varBoolean;
-  end;
-
-var
-  LSource, LTemp: TVarData;
 begin
-  VarDataInit(LSource);
-  try
-    VarDataCopyNoInd(LSource, Source);
-    VarDataClear(Dest);
-    if VarDataIsStr(LSource) then
-    begin
-      TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
-      TExpressionVarData(Dest).VExpressionInfo.Expression :=
-        TStringConstantExpression.Create(VarDataToStr(LSource));
-      ExpressionStack.Push(TExpressionVarData(Dest).VExpressionInfo.Expression);
-    end
-    else
-    begin
-      VarDataInit(LTemp);
-      try
-        if VarDataIsBoolean(LSource) then
-        begin
-          VarDataCastTo(LTemp, LSource, varBoolean);
-          TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
-          TExpressionVarData(Dest).VExpressionInfo.Expression :=
-            TValueConstantExpression.Create(TValue.FromVariant(Variant(LTemp)));
-          ExpressionStack.Push(TExpressionVarData(Dest).VExpressionInfo.Expression);
-        end
-        else
-        begin
-          if VarDataIsOrdinal(LSource) then
-          begin
-            VarDataCastTo(LTemp, LSource, varInteger);
-            TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
-            TExpressionVarData(Dest).VExpressionInfo.Expression :=
-              TIntegerConstantExpression.Create(LTemp.VInteger);
-            ExpressionStack.Push(TExpressionVarData(Dest).VExpressionInfo.Expression);
-          end
-          else
-          begin
-            if VarDataIsFloat(LSource) then
-            begin
-              VarDataCastTo(LTemp, LSource, varDouble);
-              TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
-              TExpressionVarData(Dest).VExpressionInfo.Expression :=
-                TFloatConstantExpression.Create(LTemp.VDouble);
-              ExpressionStack.Push(TExpressionVarData(Dest).VExpressionInfo.Expression);
-            end;
-          end;
-        end;
-      finally
-        VarDataClear(LTemp);
-      end;
-    end;
-    Dest.VType := VarType;
-  finally
-    VarDataClear(LSource);
-  end;
+  VarDataClear(Dest);
+  TExpressionVarData(Dest).VExpressionInfo := TExpressionInfo.Create;
+  TExpressionVarData(Dest).VExpressionInfo.Expression :=
+    TConstantExpression.Create(Variant(Source));
+  ExpressionStack.Push(TExpressionVarData(Dest).VExpressionInfo.Expression);
+  Dest.VType := VarType;
 end;
 
 procedure TExpressionVariantType.Clear(var V: TVarData);
@@ -273,7 +229,7 @@ begin
       end
       else
       begin
-        LParameters[i] := TValueConstantExpression.Create(TValue.FromVariant(Variant(Arguments[i])));
+        LParameters[i] := TConstantExpression.Create(Variant(Arguments[i]));
       end;
     end;
 
@@ -302,10 +258,34 @@ begin
   end;
 end;
 
+function TExpressionVariantType.SetProperty(const V: TVarData;
+  const Name: string; const Value: TVarData): Boolean;
+var
+  LParameter: IExpression;
+begin
+  with TExpressionVarData(V) do
+  begin
+    LParameter := ExpressionStack.Pop();
+
+    Result := True;
+    if ExpressionStack.Count > 0 then
+    begin
+      VExpressionInfo.Expression := TAssignExpression.Create(
+        TPropertyExpression.Create(LParameter, Name), ExpressionStack.Pop)
+    end
+    else
+    begin
+      VExpressionInfo.Expression := TAssignExpression.Create(TPropertyExpression.Create(
+        LParameter, Name), TConstantExpression.Create(Variant(Value)));
+    end;
+    ExpressionStack.Push(VExpressionInfo.Expression);
+  end;
+end;
+
 initialization
-  Expression := TExpressionVariantType.Create();
+  ExpressionVariantType := TExpressionVariantType.Create();
 
 finalization
-  Expression.Free();;
+  ExpressionVariantType.Free();;
 
 end.

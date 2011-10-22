@@ -34,7 +34,8 @@ interface
 uses
   Classes,
   DSharp.Core.Expressions,
-  Rtti;
+  Rtti,
+  SysUtils;
 
 type
   TDelphiWebScriptExpression = class(TExpression)
@@ -48,7 +49,7 @@ type
     destructor Destroy; override;
 
     procedure BindObject(AObject: TObject; const AVariableName: string = '');
-    function Compile: TValue; override;
+    function Compile: TFunc<TValue>; override;
     property Text: string read FText write FText;
   end;
 
@@ -57,8 +58,7 @@ implementation
 uses
   DSharp.DelphiWebScript.Connector,
   dwsExprs,
-  dwsRTTIConnector,
-  SysUtils;
+  dwsRTTIConnector;
 
 { TDelphiWebScriptExpression }
 
@@ -83,6 +83,7 @@ begin
     LVariableName := TComponent(AObject).Name;
   end;
   FObjects.AddObject(LVariableName, AObject);
+  FObjects.AddObject('Self', AObject);
 end;
 
 function TDelphiWebScriptExpression.BuildScript: string;
@@ -96,26 +97,31 @@ begin
   end;
 end;
 
-function TDelphiWebScriptExpression.Compile: TValue;
+function TDelphiWebScriptExpression.Compile: TFunc<TValue>;
 var
-  i: Integer;
-  LExecution: IdwsProgramExecution;
   LProgram: IdwsProgram;
 begin
   LProgram := TDelphiWebScriptConnector.Compile(BuildScript());
   if not LProgram.Msgs.HasErrors then
   begin
-    LExecution := LProgram.BeginNewExecution;
-    try
-      for i := 0 to Pred(FObjects.Count) do
+    Result :=
+      function: TValue
+      var
+        i: Integer;
+        LExecution: IdwsProgramExecution;
       begin
-        LExecution.Info.Vars[FObjects[i]].Value := TdwsRTTIVariant.FromObject(FObjects.Objects[i]);
+        LExecution := LProgram.BeginNewExecution;
+        try
+          for i := 0 to Pred(FObjects.Count) do
+          begin
+            LExecution.Info.Vars[FObjects[i]].Value := TdwsRTTIVariant.FromObject(FObjects.Objects[i]);
+          end;
+          LExecution.RunProgram(0);
+          Result := TValue.FromVariant(LExecution.Info.Vars['Result'].Value);
+        finally
+          LExecution.EndProgram;
+        end;
       end;
-      LExecution.RunProgram(0);
-      Result := TValue.FromVariant(LExecution.Info.Vars['Result'].Value);
-    finally
-      LExecution.EndProgram;
-    end;
   end;
 end;
 

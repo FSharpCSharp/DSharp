@@ -48,12 +48,12 @@ type
 
   Verify = record
   private
-    class var FActual: IParameter;
+    class var FActual: IValueExpression;
   public
     class constructor Create;
     class procedure That<T>(const Value: T; Expression: TBooleanExpression;
       const Msg: string = ''); static;
-    class property Actual: IParameter read FActual;
+    class property Actual: IValueExpression read FActual;
   end;
 
   EExpectationFailure = ETestFailure;
@@ -72,39 +72,39 @@ uses
 class function ShouldBe.AtLeast<T>(const Value: T): TBooleanExpression;
 begin
   Result := TBooleanExpression.Create(TGreaterThanOrEqualExpression.Create(
-    Verify.Actual, TValueConstantExpression.From<T>(Value)));
+    Verify.Actual, TConstantExpression.Create(Value)));
 end;
 
 class function ShouldBe.AtMost<T>(const Value: T): TBooleanExpression;
 begin
   Result := TBooleanExpression.Create(TLessThanOrEqualExpression.Create(
-    Verify.Actual, TValueConstantExpression.From<T>(Value)));
+    Verify.Actual, TConstantExpression.Create(Value)));
 end;
 
 class function ShouldBe.Between<T>(const LowValue, HighValue: T): TBooleanExpression;
 begin
   Result := TBooleanExpression.Create(TGreaterThanOrEqualExpression.Create(
-    Verify.Actual, TValueConstantExpression.From<T>(LowValue))) and
+    Verify.Actual, TConstantExpression.Create(LowValue))) and
     TBooleanExpression.Create(TLessThanOrEqualExpression.Create(
-    Verify.Actual, TValueConstantExpression.From<T>(HighValue)));
+    Verify.Actual, TConstantExpression.Create(HighValue)));
 end;
 
 class function ShouldBe.EqualTo<T>(const Value: T): TBooleanExpression;
 begin
   Result := TBooleanExpression.Create(TEqualExpression.Create(
-    Verify.Actual, TValueConstantExpression.From<T>(Value)));
+    Verify.Actual, TConstantExpression.Create(Value)));
 end;
 
 class function ShouldBe.GreaterThan<T>(const Value: T): TBooleanExpression;
 begin
   Result := TBooleanExpression.Create(TGreaterThanExpression.Create(
-    Verify.Actual, TValueConstantExpression.From<T>(Value)));
+    Verify.Actual, TConstantExpression.Create(Value)));
 end;
 
 class function ShouldBe.LessThan<T>(const Value: T): TBooleanExpression;
 begin
   Result := TBooleanExpression.Create(TLessThanExpression.Create(
-    Verify.Actual, TValueConstantExpression.From<T>(Value)));
+    Verify.Actual, TConstantExpression.Create(Value)));
 end;
 
 { Verify }
@@ -118,7 +118,7 @@ class procedure Verify.That<T>(const Value: T; Expression: TBooleanExpression;
   const Msg: string);
 begin
   Actual.Value := TValue.From<T>(Value);
-  if not Expression.Compile.AsBoolean then
+  if not Expression.Execute.AsBoolean then
   begin
     if Msg <> '' then
     begin

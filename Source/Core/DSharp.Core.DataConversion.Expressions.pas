@@ -52,20 +52,33 @@ type
 
 implementation
 
+uses
+  SysUtils;
+
 { TExpressionConverter }
 
 function TExpressionConverter.Convert(const Value: TValue): TValue;
+var
+  Delegate: TFunc<TValue>;
 begin
   if Assigned(FSourceToTargetExpression) then
-    Result := FSourceToTargetExpression.Compile
+  begin
+    Delegate := FSourceToTargetExpression.Compile();
+    Result := Delegate();
+  end
   else
     Result := Value;
 end;
 
 function TExpressionConverter.ConvertBack(const Value: TValue): TValue;
+var
+  Delegate: TFunc<TValue>;
 begin
   if Assigned(FTargetToSourceExpression) then
-    Result := FTargetToSourceExpression.Compile
+  begin
+    Delegate := FTargetToSourceExpression.Compile();
+    Result := Delegate();
+  end
   else
     Result := Value;
 end;

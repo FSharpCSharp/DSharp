@@ -41,19 +41,16 @@ type
   TObservableCollection<T: class> = class(TObjectList<T>,
     INotifyCollectionChanged, INotifyPropertyChanged)
   private
-    FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
   protected
-    procedure DoCollectionChanged(Value: T; Action: TCollectionChangedAction);
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    procedure Notify(Value: T; Action: TCollectionChangedAction); override;
+    procedure Notify(const Value: T; const Action: TCollectionChangedAction); override;
   public
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent> read GetOnCollectionChanged;
     property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
@@ -64,16 +61,10 @@ uses
 
 { TObservableCollection<T> }
 
-procedure TObservableCollection<T>.DoCollectionChanged(Value: T;
-  Action: TCollectionChangedAction);
-begin
-  FOnCollectionChanged.Invoke(Self, Value, Action);
-end;
-
 procedure TObservableCollection<T>.DoItemPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  DoCollectionChanged(T(ASender), caReplace);
+  inherited Notify(T(ASender), caReplace);
 end;
 
 procedure TObservableCollection<T>.DoPropertyChanged(
@@ -84,7 +75,7 @@ end;
 
 function TObservableCollection<T>.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
-  Result := FOnCollectionChanged.EventHandler;
+  TEvent<TCollectionChangedEvent<T>>(Result) := inherited GetOnCollectionChanged;
 end;
 
 function TObservableCollection<T>.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
@@ -92,12 +83,12 @@ begin
   Result := FOnPropertyChanged.EventHandler;
 end;
 
-procedure TObservableCollection<T>.Notify(Value: T; Action: TCollectionChangedAction);
+procedure TObservableCollection<T>.Notify(const Value: T; const Action: TCollectionChangedAction);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
   LPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
-  DoCollectionChanged(Value, TCollectionChangedAction(Action));
+//  inherited;
 
   if Supports(TObject(Value), INotifyPropertyChanged, LNotifyPropertyChanged) then
   begin

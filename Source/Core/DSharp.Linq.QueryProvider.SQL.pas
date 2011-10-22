@@ -50,6 +50,7 @@ implementation
 
 uses
   DSharp.Collections,
+  DSharp.Core.Reflection,
   SysUtils;
 
 { TExpressionHelper }
@@ -79,9 +80,9 @@ begin
     Result := '[' + TPropertyExpression(Self).Name + ']';
   end
   else
-  if Self is TStringConstantExpression then
+  if (Self is TConstantExpression) and TConstantExpression(Self).Value.IsString then
   begin
-    Result := QuotedStr(TStringConstantExpression(Self).Value);
+    Result := QuotedStr(TConstantExpression(Self).Value.ToString);
   end;
 end;
 

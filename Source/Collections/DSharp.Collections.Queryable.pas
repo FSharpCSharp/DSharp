@@ -105,7 +105,7 @@ end;
 function TQueryable<T>.Where(predicate: Variant): IQueryable<T>;
 begin
   // Keep it simple for now and only support one where call
-  FExpression := TLambda.InitExpression(predicate);
+  FExpression := Lambda.InitExpression(predicate);
 
   Result := Self;
 end;

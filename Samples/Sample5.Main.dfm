@@ -103,6 +103,7 @@ object MainForm: TMainForm
     Top = 152
     Bindings = <
       item
+        BindingMode = bmOneWay
         Target = ListBox1
         TargetPropertyName = 'View.ItemsSource'
         Source = Owner

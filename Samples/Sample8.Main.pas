@@ -34,40 +34,37 @@ uses
 procedure TMainForm.Button1Click(Sender: TObject);
 var
   e: IExpression;
-  v: IParameter;
+  Result: IValueExpression;
   func: TFunc<Boolean>;
   i: Integer;
 begin
   e := TMethodExpression.Create(
-    TValueConstantExpression.Create(Self),
+    TConstantExpression.Create(Self),
     'ShowMessage',
-    [TStringConstantExpression.Create('Hello world')]);
-  func := TLambda.Make<Boolean>(e);
+    [TConstantExpression.Create('Hello world')]);
+  func := Lambda.Make<Boolean>(e);
   func();
 
-  v := TParameterExpression.Create('Result');
-  e := TBlockExpression.Create([
-    TAssignExpression.Create(v, TValueConstantExpression.Create(1)),
-    TRepeatUntilLoopExpression.Create(
-      TIfThenExpression.Create(
-        TGreaterThanExpression.Create(ParameterList[0], TValueConstantExpression.Create(0)),
-        TBlockExpression.Create([
-          TAssignExpression.Create(v,
-            TMultiplicationExpression.Create(v, ParameterList[0])
-          ),
-          TAssignExpression.Create(ParameterList[0],
-            TSubtractionExpression.Create(ParameterList[0],
-              TValueConstantExpression.Create(1)
-            )
-          )
-        ])
-      ),
-      TEqualExpression.Create(ParameterList[0], TValueConstantExpression.Create(0))
-    )
+  Result := Expression.Parameter('Result');
+  e := Expression.Block([
+    Expression.Assign(Result, TConstantExpression.Create(1)),
+    Expression.Loop(
+      Expression.IfThenElse(
+        Expression.GreaterThan(ExpressionParams[0], TConstantExpression.Create(0)),
+        Expression.Block([
+          Expression.MultiplyAssign(Result, ExpressionParams[0]),
+          Expression.SubtractAssign(ExpressionParams[0], TConstantExpression.Create(1))
+        ]),
+        Expression.Break
+      )
+    ),
+    Result
   ]);
 
-  i := TLambda.Make<Integer, Integer>(e)(5);
+  i := Lambda.Make<Integer, Integer>(e)(5);
   ShowMessage(IntToStr(i));
+
+  Memo1.Lines.Add(e.ToString);
 end;
 
 procedure TMainForm.ShowMessage(const Msg: string);

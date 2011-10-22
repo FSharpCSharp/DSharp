@@ -42,13 +42,22 @@ uses
 type
   TStartsTextExpression = class(TBinaryExpression)
   public
-    function Compile: TValue; override;
+    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
-function TStartsTextExpression.Compile: TValue;
+function TStartsTextExpression.Compile: TFunc<TValue>;
+var
+  LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
-  Result := TValue.From<Boolean>(StrUtils.StartsText(Left.Compile.ToString, Right.Compile.ToString));
+  LeftDelegate := Left.Compile();
+  RightDelegate := Right.Compile();
+
+  Result :=
+    function: TValue
+    begin
+      Result := TValue.From<Boolean>(StrUtils.StartsText(LeftDelegate().ToString, RightDelegate().ToString));
+    end;
 end;
 
 function TStartsTextExpression.ToString: string;
@@ -70,7 +79,7 @@ procedure TMainForm.Button1Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
-  Memo1.Lines.Add(TLambda.GetExpression(filter1).ToString);
+  Memo1.Lines.Add(Lambda.GetExpression(filter1).ToString);
   for cust in customers.Where(filter1) do
   begin
     Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));
@@ -81,7 +90,7 @@ procedure TMainForm.Button2Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
-  Memo1.Lines.Add(TLambda.GetExpression(filter2).ToString);
+  Memo1.Lines.Add(Lambda.GetExpression(filter2).ToString);
   for cust in customers.Where(filter2) do
   begin
     Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));
@@ -90,10 +99,10 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  filter1 := TLambda.Predicate<TCustomer>(
+  filter1 := Lambda.Predicate<TCustomer>(
     Bool(Arg1.CompanyName = 'Alfreds Futterkiste')
       or Bool(Arg1.CompanyName = 'Around the Horn'));
-  filter2 := TLambda.Predicate<TCustomer>(StartsText(Arg(Edit1).Text, Arg1.CompanyName));
+  filter2 := Lambda.Predicate<TCustomer>(StartsText(Arg(Edit1).Text, Arg1.CompanyName));
 
   customers := TObjectList<TCustomer>.Create();
   customers.OwnsObjects := True;

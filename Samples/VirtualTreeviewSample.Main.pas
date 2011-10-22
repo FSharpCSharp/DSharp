@@ -36,6 +36,7 @@ type
     Edit1: TEdit;
     TabSheet4: TTabSheet;
     StringGrid1: TStringGrid;
+    Edit2: TEdit;
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
@@ -88,50 +89,46 @@ var
   LContact: TContact;
 begin
   LContact := TContact.Create('FirstName', 'LastName');
-  ContactsPresenter.ItemsSource.Add(LContact);
-  ContactsPresenter.CurrentItem := LContact;
+  ContactsPresenter.View.ItemsSource.Add(LContact);
+  ContactsPresenter.View.CurrentItem := LContact;
 end;
 
 procedure TMainForm.DeleteContactClick(Sender: TObject);
 begin
-  ContactsPresenter.ItemsSource.Remove(ContactsPresenter.CurrentItem);
+  ContactsPresenter.View.ItemsSource.Remove(ContactsPresenter.View.CurrentItem);
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   xmlItems: IXNodeList;
 begin
-  ContactsPresenter.ItemsSource := TObservableCollection<TObject>.Create();
-  ContactsPresenter.ItemsSource.Add(TContact.Create('John', 'Doe'));
-  ContactsPresenter.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
+  ContactsPresenter.View.ItemsSource := TObservableCollection<TObject>.Create();
+  ContactsPresenter.View.ItemsSource.Add(TContact.Create('John', 'Doe'));
+  ContactsPresenter.View.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
 
-  xmlItems := TObservableCollection<TXNode>.Create();
+  xmlItems := TXNodeList.Create();
   xmlItems.AddRange(
     XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
 
-  InventoryPresenter.ItemsSource := IList<TObject>(xmlItems);
-  InventoryPresenter.ItemTemplate := TXmlDataTemplate.Create(InventoryPresenter.ColumnDefinitions);
-
-  xmlItems := TObservableCollection<TXNode>.Create();
-  xmlItems.AddRange(
-    XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
+  InventoryPresenter.View.ItemsSource := IList<TObject>(xmlItems);
+  InventoryPresenter.View.ItemTemplate := TXmlDataTemplate.Create(InventoryPresenter.ColumnDefinitions);
 
   TreeView1.View.ItemsSource := IList<TObject>(xmlItems);
   TreeView1.View.ItemTemplate := TXmlDataTemplate.Create(nil);
 
-  ComboBox1.View.ItemsSource := ContactsPresenter.ItemsSource;
+  ComboBox1.View.ItemsSource := ContactsPresenter.View.ItemsSource;
   ComboBox1.View.ItemTemplate := DataTemplate(['Firstname']);
   ComboBox1.View.ItemsSource.Add(TContact.Create('Baby', 'Doe'));
 
   // connect the contacts list to the stringgrid
-  StringGrid1.View.ItemsSource := ContactsPresenter.ItemsSource;
+  StringGrid1.View.ItemsSource := ContactsPresenter.View.ItemsSource;
   StringGrid1.View.ItemTemplate := DataTemplate(['Lastname', 'Firstname']);
 
   // set column captions
   StringGrid1.Rows[0].CommaText := ',Lastname,Firstname';
 
   // connect navigation of VirtualTreeView (presenter) with StringGrid
-  TBinding.Create(ContactsPresenter, 'CurrentItem', StringGrid1.View, 'CurrentItem');
+  TBinding.Create(ContactsPresenter, 'View.CurrentItem', StringGrid1, 'View.CurrentItem');
 end;
 
 function TMainForm.InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
@@ -193,14 +190,11 @@ end;
 procedure TColumnsDataTemplate.SetText(const Item: TObject;
   const ColumnIndex: Integer; const Value: string);
 begin
-  // only string properties supported here
-
-  // TODO: implement helper methods for TRttiProperty to do conversion
   if ColumnIndex = -1 then
-    Item.GetProperty(FColumns[0]).SetValue(Item, Value)
+    Item.GetProperty(FColumns[0]).TrySetValue(Item, Value)
   else
     if ColumnIndex < Length(FColumns) then
-      Item.GetProperty(FColumns[ColumnIndex]).SetValue(Item, Value);
+      Item.GetProperty(FColumns[ColumnIndex]).TrySetValue(Item, Value);
 end;
 
 initialization

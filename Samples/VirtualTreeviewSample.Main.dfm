@@ -45,6 +45,8 @@ object MainForm: TMainForm
         Header.MainColumn = -1
         NodeDataSize = 4
         TabOrder = 2
+        TreeOptions.MiscOptions = [toAcceptOLEDrop, toEditable, toFullRepaintOnResize, toInitOnSave, toToggleOnDblClick, toWheelPanning, toEditOnClick]
+        TreeOptions.SelectionOptions = [toExtendedFocus]
         Columns = <>
       end
       object Lastname: TLabeledEdit
@@ -116,7 +118,7 @@ object MainForm: TMainForm
         Width = 329
         Height = 217
         Anchors = [akLeft, akTop, akRight, akBottom]
-        Header.AutoSizeIndex = 0
+        Header.AutoSizeIndex = -1
         Header.Font.Charset = DEFAULT_CHARSET
         Header.Font.Color = clWindowText
         Header.Font.Height = -11
@@ -159,6 +161,14 @@ object MainForm: TMainForm
         Caption = 'Save Xml'
         TabOrder = 3
         OnClick = SaveXmlClick
+      end
+      object Edit2: TEdit
+        Left = 376
+        Top = 200
+        Width = 121
+        Height = 21
+        TabOrder = 4
+        Text = 'Edit2'
       end
     end
     object TabSheet3: TTabSheet
@@ -247,33 +257,33 @@ object MainForm: TMainForm
         Target = Lastname
         TargetPropertyName = 'Text'
         Source = ContactsPresenter
-        SourcePropertyName = 'CurrentItem.Lastname'
+        SourcePropertyName = 'View.CurrentItem.Lastname'
       end
       item
         Target = Firstname
         TargetPropertyName = 'Text'
         Source = ContactsPresenter
-        SourcePropertyName = 'CurrentItem.Firstname'
+        SourcePropertyName = 'View.CurrentItem.Firstname'
       end
       item
         BindingMode = bmOneWay
         Target = NodeName
         TargetPropertyName = 'Text'
         Source = InventoryPresenter
-        SourcePropertyName = 'CurrentItem.Name'
+        SourcePropertyName = 'View.CurrentItem.Name'
       end
       item
         Target = NodeValue
         TargetPropertyName = 'Text'
         Source = InventoryPresenter
-        SourcePropertyName = 'CurrentItem.Value'
+        SourcePropertyName = 'View.CurrentItem.Value'
       end
       item
         BindingMode = bmOneWay
         Target = DeleteContact
         TargetPropertyName = 'Enabled'
         Source = ContactsPresenter
-        SourcePropertyName = 'CurrentItem'
+        SourcePropertyName = 'View.CurrentItem'
       end
       item
         Target = LabeledEdit1
@@ -292,6 +302,12 @@ object MainForm: TMainForm
         TargetPropertyName = 'Text'
         Source = ComboBox1
         SourcePropertyName = 'Text'
+      end
+      item
+        Target = Edit2
+        TargetPropertyName = 'Text'
+        Source = InventoryPresenter
+        SourcePropertyName = 'View.ItemsSource[2].ChildNodes[0].Value'
       end>
   end
   object InventoryPresenter: TTreeViewPresenter
@@ -312,6 +328,16 @@ object MainForm: TMainForm
     ParseOptions = [poPreserveWhiteSpace]
     XML.Strings = (
       '<Inventory xmlns="">'
+      '  <CDs>'
+      '    <CD Stock="in" Number="3">'
+      '      <Title>Classical Collection</Title>'
+      '      <Summary>Classical Music</Summary>'
+      '    </CD>'
+      '    <CD Stock="out" Number="9">'
+      '      <Title>Jazz Collection</Title>'
+      '      <Summary>Jazz Music</Summary>'
+      '    </CD>'
+      '  </CDs>'
       '  <Books>'
       '    <Book ISBN="0-7356-0562-9" Stock="in" Number="9">'
       '      <Title>XML in Action</Title>'
@@ -334,16 +360,6 @@ object MainForm: TMainForm
       '      <Summary>The C# language definition</Summary>'
       '    </Book>'
       '  </Books>'
-      '  <CDs>'
-      '    <CD Stock="in" Number="3">'
-      '      <Title>Classical Collection</Title>'
-      '      <Summary>Classical Music</Summary>'
-      '    </CD>'
-      '    <CD Stock="out" Number="9">'
-      '      <Title>Jazz Collection</Title>'
-      '      <Summary>Jazz Music</Summary>'
-      '    </CD>'
-      '  </CDs>'
       '</Inventory>')
     Left = 192
     Top = 160

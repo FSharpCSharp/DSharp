@@ -52,4 +52,13 @@ object MainForm: TMainForm
     TabOrder = 3
     OnClick = Button3Click
   end
+  object Button4: TButton
+    Left = 392
+    Top = 8
+    Width = 105
+    Height = 25
+    Caption = 'Member expression'
+    TabOrder = 4
+    OnClick = Button4Click
+  end
 end

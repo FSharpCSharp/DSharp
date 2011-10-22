@@ -95,6 +95,7 @@ type
     AValidationResult: IValidationResult) of object;
 
   IValidatable = interface
+    ['{9D8703D8-CC3A-476A-B6C7-8693B05F2C6E}']
     function GetValidationErrors: IList<IValidationResult>;
     function Validate: Boolean;
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;

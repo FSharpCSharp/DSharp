@@ -41,8 +41,8 @@ type
   [InheritedExport]
   IWindowManager = interface
     ['{61AB99D7-E09D-4D94-B1EC-EA154959809D}']
-    function ShowDialog(ARootModel: TObject): Integer;
-    procedure ShowWindow(ARootModel: TObject);
+    function ShowDialog(Model: TObject): Integer;
+    procedure ShowWindow(Model: TObject);
   end;
 
   [PartCreationPolicy(cpShared)]
@@ -50,13 +50,13 @@ type
   private
     FRunning: Boolean;
   protected
-    function CreateWindow(ARootModel: TObject; AIsDialog: Boolean): TForm;
-    function EnsureWindow(AModel: TObject; AView: TControl): TForm;
+    function CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
+    function EnsureWindow(Model: TObject; View: TControl): TForm;
   public
     constructor Create;
 
-    function ShowDialog(ARootModel: TObject): Integer;
-    procedure ShowWindow(ARootModel: TObject);
+    function ShowDialog(Model: TObject): Integer;
+    procedure ShowWindow(Model: TObject);
   end;
 
 implementation
@@ -80,31 +80,31 @@ begin
   Application.MainFormOnTaskbar := True;
 end;
 
-function TWindowManager.CreateWindow(ARootModel: TObject; AIsDialog: Boolean): TForm;
+function TWindowManager.CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
 var
   LView: TControl;
   LWindow: TForm;
 begin
-  LView := ViewLocator.GetOrCreateViewType(ARootModel.ClassType);
-  LWindow := EnsureWindow(ARootModel, LView);
-  TWindowConductor.Create(ARootModel, LWindow);
-  ViewModelBinder.Bind(ARootModel, LView);
+  LView := ViewLocator.GetOrCreateViewType(Model.ClassType);
+  LWindow := EnsureWindow(Model, LView);
+  TWindowConductor.Create(Model, LWindow);
+  ViewModelBinder.Bind(Model, LView);
 
-  if Supports(ARootModel, IHaveDisplayName) then
+  if Supports(Model, IHaveDisplayName) then
   begin
-    TBinding.Create(ARootModel, 'DisplayName', LWindow, 'Caption', bmOneWay);
+    TBinding.Create(Model, 'DisplayName', LWindow, 'Caption', bmOneWay);
   end;
 
   Result := LWindow;
 end;
 
-function TWindowManager.EnsureWindow(AModel: TObject; AView: TControl): TForm;
+function TWindowManager.EnsureWindow(Model: TObject; View: TControl): TForm;
 var
   LForm: TChildForm;
 begin
-  if AView is TForm then
+  if View is TForm then
   begin
-    Result := AView as TForm;
+    Result := View as TForm;
   end
   else
   begin
@@ -120,16 +120,16 @@ begin
       LForm.Position := poOwnerFormCenter;
     end;
 
-    LForm.Content := AView;
+    LForm.Content := View;
     Result := LForm;
   end;
 end;
 
-function TWindowManager.ShowDialog(ARootModel: TObject): Integer;
+function TWindowManager.ShowDialog(Model: TObject): Integer;
 var
   LWindow: TForm;
 begin
-  LWindow := CreateWindow(ARootModel, True);
+  LWindow := CreateWindow(Model, True);
 
   try
     Result := LWindow.ShowModal();
@@ -138,11 +138,11 @@ begin
   end;
 end;
 
-procedure TWindowManager.ShowWindow(ARootModel: TObject);
+procedure TWindowManager.ShowWindow(Model: TObject);
 var
   LWindow: TForm;
 begin
-  LWindow := CreateWindow(ARootModel, False);
+  LWindow := CreateWindow(Model, False);
 
   if not FRunning then
   begin

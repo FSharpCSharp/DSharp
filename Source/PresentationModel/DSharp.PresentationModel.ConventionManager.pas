@@ -168,7 +168,7 @@ begin
       AConvention: TElementConvention)
     begin
       SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
-      ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'SelectedItem');
+      ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
     end;
 end;
 

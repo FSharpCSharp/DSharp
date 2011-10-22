@@ -43,13 +43,15 @@ type
     procedure Close(Sender: TObject; var CloseAction: TCloseAction);
     procedure CloseQuery(Sender: TObject; var CanClose: Boolean);
   public
-    constructor Create(AModel: TObject; AView: TForm); reintroduce;
+    constructor Create(Model: TObject; View: TForm); reintroduce;
   end;
 
 implementation
 
 uses
   Controls,
+  DSharp.Bindings,
+  DSharp.Core.Validations,
   DSharp.PresentationModel.Screen,
   SysUtils;
 
@@ -59,7 +61,16 @@ procedure TWindowConductor.Close(Sender: TObject;
   var CloseAction: TCloseAction);
 var
   LClose: IClose;
+  LEditable: IEditable;
 begin
+  if Supports(FModel, IEditable, LEditable) then
+  begin
+    case FView.ModalResult of
+      mrOk: LEditable.EndEdit();
+      mrCancel: LEditable.CancelEdit();
+    end;
+  end;
+
   if Supports(FModel, IClose, LClose) then
   begin
     LClose.Close();
@@ -69,22 +80,31 @@ end;
 procedure TWindowConductor.CloseQuery(Sender: TObject; var CanClose: Boolean);
 var
   LCanClose: ICanClose;
+  LValidatable: IValidatable;
 begin
-  if (FView.ModalResult = mrOk) and Supports(FModel, ICanClose, LCanClose) then
+  if (FView.ModalResult = mrOk) then
   begin
-    CanClose := LCanClose.CanClose();
+    if Supports(FModel, IValidatable, LValidatable) then
+    begin
+      LValidatable.Validate();
+    end;
+
+    if Supports(FModel, ICanClose, LCanClose) then
+    begin
+      CanClose := LCanClose.CanClose();
+    end;
   end;
 end;
 
-constructor TWindowConductor.Create(AModel: TObject; AView: TForm);
+constructor TWindowConductor.Create(Model: TObject; View: TForm);
 var
   LCanClose: ICanClose;
   LClose: IClose;
 begin
-  inherited Create(AView);
+  inherited Create(View);
 
-  FModel := AModel;
-  FView := AView;
+  FModel := Model;
+  FView := View;
 
   if Supports(FModel, ICanClose, LCanClose) then
   begin

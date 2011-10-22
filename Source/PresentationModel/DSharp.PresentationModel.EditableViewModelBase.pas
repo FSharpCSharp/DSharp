@@ -59,9 +59,6 @@ type
   public
     destructor Destroy; override;
 
-    procedure Cancel; virtual;
-    procedure Save; virtual;
-
     property Item[const AName: string]: string read GetItem; default;
   end;
 
@@ -82,11 +79,6 @@ begin
   end;
 end;
 
-procedure TEditableViewModelBase<T>.Cancel;
-begin
-  FEditAction := eaCancel;
-end;
-
 procedure TEditableViewModelBase<T>.CancelEdit;
 begin
   if Assigned(FCache) and Assigned(FItem) then
@@ -99,10 +91,7 @@ end;
 
 procedure TEditableViewModelBase<T>.Close;
 begin
-  case FEditAction of
-    eaCancel: CancelEdit();
-    eaSave: EndEdit();
-  end;
+  CancelEdit();
 end;
 
 destructor TEditableViewModelBase<T>.Destroy;
@@ -117,14 +106,6 @@ begin
   FItem.Free();
   FItem := FCache;
   TObject(FCache) := nil;
-end;
-
-procedure TEditableViewModelBase<T>.Save;
-begin
-  if Validate then
-  begin
-    FEditAction := eaSave;
-  end;
 end;
 
 procedure TEditableViewModelBase<T>.SetItem(const Value: T);

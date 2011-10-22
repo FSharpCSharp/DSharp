@@ -78,9 +78,7 @@ type
     FInterceptor: TVirtualMethodInterceptor;
     FState: TMockState;
     FType: TMockType;
-{$IF COMPILERVERSION > 22}
     procedure CreateInterfaceMock(AType: TRttiType);
-{$IFEND}
     procedure CreateObjectMock(AType: TRttiType);
     procedure DestroyObjectMock;
     procedure DoBefore(Instance: TObject; Method: TRttiMethod;
@@ -124,6 +122,9 @@ implementation
 
 uses
   DSharp.Core.Reflection,
+{$IF COMPILERVERSION < 23}
+  DSharp.Core.VirtualInterface,
+{$IFEND}
   RTLConsts,
   TypInfo;
 
@@ -139,13 +140,11 @@ begin
   begin
     CreateObjectMock(LType);
   end else
-{$IF COMPILERVERSION > 22}
   if (LType is TRttiInterfaceType)
     and (LType.MethodCount > 0) then
   begin
     CreateInterfaceMock(LType);
   end else
-{$IFEND}
   begin
     raise EMockException.CreateFmt(CCreationError, [LType.Name]);
   end;
@@ -160,14 +159,12 @@ begin
   FExpectations.Free();
 end;
 
-{$IF COMPILERVERSION > 22}
 procedure TMockWrapper<T>.CreateInterfaceMock(AType: TRttiType);
 begin
   Supports(TVirtualInterface.Create(AType.Handle, DoMethodCall),
     TRttiInterfaceType(AType).GUID, FInstance);
   FType := mtInterface;
 end;
-{$IFEND}
 
 procedure TMockWrapper<T>.CreateObjectMock(AType: TRttiType);
 begin
@@ -388,7 +385,7 @@ function TExpectation.Execute(const Arguments: TArray<TValue>;
 type
   PPVtable = ^PVtable;
   PVtable = ^TVtable;
-  TVtable = array[0..MaxInt div SizeOf(Pointer) - 1] of Pointer;
+  TVtable = array[0..3] of Pointer;
 var
   LType: TRttiType;
   LMethod: TRttiMethod;

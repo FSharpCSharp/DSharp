@@ -32,6 +32,7 @@ unit DSharp.Logging;
 interface
 
 uses
+  Classes,
   Generics.Collections,
   Rtti,
   SysUtils;
@@ -63,17 +64,33 @@ type
     procedure LogValue<T>(const AName: string; const AValue: T); overload;
   end;
 
+  TTextLogging = class(TBaseLogging)
+  protected
+    procedure LogEntry(const ALogEntry: TLogEntry); override;
+    procedure WriteLine(const Text: string); virtual; abstract;
+  end;
+
+  TStringsLogging = class(TTextLogging)
+  private
+    FStrings: TStrings;
+  protected
+    procedure WriteLine(const Text: string); override;
+  public
+    constructor Create(AStrings: TStrings);
+  end;
+
 function Logging: TBaseLogging;
 procedure RegisterLogging(ALogging: TBaseLogging);
 procedure UnregisterLogging(ALogging: TBaseLogging);
 
 implementation
 
+uses
 {$IFDEF DEBUG}
-//uses
 //  DSharp.Logging.Console,
-//  DSharp.Logging.SmartInspect;
+//  DSharp.Logging.SmartInspect,
 {$ENDIF}
+  DSharp.Core.Reflection;
 
 type
   TLogging = class(TBaseLogging)
@@ -89,6 +106,10 @@ type
 
 var
   GLogging: TLogging;
+
+resourcestring
+  REnterMethod = 'Enter: ';
+  RLeaveMethod = 'Leave: ';
 
 function Logging: TBaseLogging;
 begin
@@ -188,6 +209,62 @@ begin
   Name := AName;
   Value := AValue;
   LogKind := ALogKind;
+end;
+
+{ TTextLogger }
+
+procedure TTextLogging.LogEntry(const ALogEntry: TLogEntry);
+var
+  LMessage: string;
+begin
+  case ALogEntry.LogKind of
+    lkEnterMethod:
+    begin
+      LMessage := REnterMethod;
+      if ALogEntry.Value.IsClass then
+        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
+      else if ALogEntry.Value.IsObject then
+        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+      LMessage := LMessage + ALogEntry.Name;
+    end;
+    lkLeaveMethod:
+    begin
+      LMessage := RLeaveMethod;
+      if ALogEntry.Value.IsClass then
+        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
+      else if ALogEntry.Value.IsObject then
+        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+      LMessage := LMessage + ALogEntry.Name;
+    end;
+    lkMessage:
+    begin
+      LMessage := ALogEntry.Name;
+    end;
+    lkException:
+    begin
+      LMessage := ALogEntry.Value.AsType<Exception>.Message;
+    end;
+    lkValue:
+    begin
+      if ALogEntry.Name <> '' then
+        LMessage := ALogEntry.Name + ': ';
+      LMessage := LMessage + TValue.ToString(ALogEntry.Value);
+    end;
+  end;
+
+  WriteLine(LMessage);
+end;
+
+{ TStringsLogger }
+
+constructor TStringsLogging.Create(AStrings: TStrings);
+begin
+  FStrings := AStrings;
+end;
+
+procedure TStringsLogging.WriteLine(const Text: string);
+begin
+  FStrings.Add(Text);
 end;
 
 initialization

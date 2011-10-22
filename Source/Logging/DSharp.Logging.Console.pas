@@ -34,65 +34,20 @@ interface
 implementation
 
 uses
-  DSharp.Core.Reflection,
   DSharp.Logging,
-  Rtti,
-  StrUtils,
-  SysUtils,
   Windows;
 
-resourcestring
-  REnterMethod = 'Enter: ';
-  RLeaveMethod = 'Leave: ';
-
 type
-  TConsoleLogging = class(TBaseLogging)
+  TConsoleLogging = class(TTextLogging)
   protected
-    procedure LogEntry(const ALogEntry: TLogEntry); override;
+    procedure WriteLine(const Text: string); override;
   end;
 
 { TConsoleLogging }
 
-procedure TConsoleLogging.LogEntry(const ALogEntry: TLogEntry);
-var
-  LMessage: string;
+procedure TConsoleLogging.WriteLine(const Text: string);
 begin
-  case ALogEntry.LogKind of
-    lkEnterMethod:
-    begin
-      LMessage := REnterMethod;
-      if ALogEntry.Value.IsClass then
-        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
-      else if ALogEntry.Value.IsObject then
-        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
-      LMessage := LMessage + ALogEntry.Name;
-    end;
-    lkLeaveMethod:
-    begin
-      LMessage := RLeaveMethod;
-      if ALogEntry.Value.IsClass then
-        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
-      else if ALogEntry.Value.IsObject then
-        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
-      LMessage := LMessage + ALogEntry.Name;
-    end;
-    lkMessage:
-    begin
-      LMessage := ALogEntry.Name;
-    end;
-    lkException:
-    begin
-      LMessage := ALogEntry.Value.AsType<Exception>.Message;
-    end;
-    lkValue:
-    begin
-      if ALogEntry.Name <> '' then
-        LMessage := ALogEntry.Name + ': ';
-      LMessage := LMessage + TValue.ToString(ALogEntry.Value);
-    end;
-  end;
-
-  Writeln(LMessage);
+  Writeln(Text);
 end;
 
 initialization

@@ -271,6 +271,8 @@ type
     function AsUInt64: UInt64;
     function AsWord: Word;
 
+    function CastAsObject: TObject;
+
     class function ToString(const Value: TValue): string; overload; static;
     class function ToString(const Values: TArray<TValue>): string; overload; static;
     class function Equals(const Left, Right: TArray<TValue>): Boolean; overload; static;
@@ -751,7 +753,7 @@ end;
 
 function TRttiMemberHelper.GetIsReadable: Boolean;
 begin
-  Result := False;
+  Result := True;
   if Self is TRttiField then
   begin
     Result := True;
@@ -1239,6 +1241,14 @@ begin
   Result := AsType<Word>;
 end;
 
+function TValueHelper.CastAsObject: TObject;
+begin
+  if IsInterface then
+    Result := AsInterface as TObject
+  else
+    Result := AsObject;
+end;
+
 class function TValueHelper.Equals(const Left, Right: TArray<TValue>): Boolean;
 var
   i: Integer;
@@ -1336,7 +1346,7 @@ end;
 
 function TValueHelper.IsInterface: Boolean;
 begin
-  Result := TypeInfo.Kind = tkInterface;
+  Result := Assigned(TypeInfo) and (TypeInfo.Kind = tkInterface);
 end;
 
 function TValueHelper.IsNumeric: Boolean;

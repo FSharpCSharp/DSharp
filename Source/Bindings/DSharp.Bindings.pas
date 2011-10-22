@@ -947,7 +947,8 @@ begin
       end;
 
       InitConverter();
-      LTargetValue := FConverter.Convert(LSourceValue);
+      if Assigned(FConverter) then
+        LTargetValue := FConverter.Convert(LSourceValue);
 
       FTargetProperty.Value := LTargetValue;
       FValidationErrors.Clear();

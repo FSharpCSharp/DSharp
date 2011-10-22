@@ -1915,7 +1915,7 @@ begin
   if Assigned(FExpression) then
   begin
     Delegate := FExpression.Compile();
-    Result := Delegate().AsObject;
+    Result := Delegate().CastAsObject();
   end
   else
   begin

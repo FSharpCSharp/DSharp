@@ -8,6 +8,7 @@ uses
   SysUtils;
 
 type
+  [Export]
   TMain = class
   private
 //    FMsg: TObject;

@@ -6,22 +6,24 @@ program Sample10;
 uses
   Sample10.Main,
   Sample10.Message,
+  DSharp.ComponentModel.Composition.BaseCatalog,
   DSharp.ComponentModel.Composition.Catalog,
   DSharp.ComponentModel.Composition.Container,
+  DSharp.ComponentModel.Composition.Primitives,
   SysUtils;
 
 var
   main: TMain;
-  catalog: TRttiCatalog;
+  catalog: TCustomCatalog;
   container: TCompositionContainer;
 begin
   ReportMemoryLeaksOnShutdown := True;
-  main := TMain.Create;
   catalog := TRttiCatalog.Create();
   container := TCompositionContainer.Create(catalog);
+
   try
     try
-      container.SatisfyImportsOnce(main);
+      main := container.Resolve<TMain>;
       main.Run();
     except
       on E: Exception do
@@ -30,7 +32,6 @@ begin
   finally
     container.Free();
     catalog.Free();
-    main.Free;
   end;
   Readln;
 end.

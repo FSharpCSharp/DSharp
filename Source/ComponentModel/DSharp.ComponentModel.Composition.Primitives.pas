@@ -32,8 +32,8 @@ unit DSharp.ComponentModel.Composition.Primitives;
 interface
 
 uses
-  DSharp.Collections,
   DSharp.ComponentModel.Composition,
+  Generics.Collections,
   Rtti,
   SysUtils;
 

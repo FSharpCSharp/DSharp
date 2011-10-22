@@ -39,7 +39,6 @@ uses
   SysUtils;
 
 type
-  // A catalog that pulls exported types through Rtti
   TRttiCatalog = class(TCustomCatalog)
   private
     FCatalog: TObjectDictionary<string, TExportInfoList>;

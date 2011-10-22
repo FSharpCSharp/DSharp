@@ -47,7 +47,6 @@ type
     function Evaluate: TObject;
   end;
 
-  // A container that holds and resolves dependencies between classes
   TCompositionContainer = class
   private
 
@@ -99,6 +98,7 @@ type
     function GetExport<T>(const Name: string): T; overload;
     function GetExports<T>(const Name: string): T; overload;
 
+    function Resolve<T>: T; overload;
     procedure SatisfyImportsOnce(Instance: TObject);
   end;
 
@@ -116,14 +116,14 @@ type
     FLazyEvaluator: ILazyEvaluator;
     FMetaData: TExportMetaData;
     FTypeInfo: PTypeInfo;
-    function GetMetaData: TObject; //TExportMetaData;
+    function GetMetaData: TObject;
     function Invoke: T;
   public
     constructor Create(ALazyEvaluator: ILazyEvaluator; TypeInfo: PTypeInfo;
       MetaData: TExportMetaData = nil);
 
     function IsValueCreated: Boolean;
-    property MetaData: TObject read GetMetaData;//TExportMetaData read GetMetaData;
+    property MetaData: TObject read GetMetaData;
     property Value: T read Invoke;
   end;
 
@@ -297,6 +297,9 @@ begin
     begin
       raise ECompositionException.Create('There are multiple exports but a single import was requested.');
     end;
+
+    if Assigned(LInfos[0].RttiProperty) then
+      LOwned := True;
 
     if Assigned(LLazyContentType) then
     begin
@@ -610,6 +613,15 @@ begin
   if (Result <> nil) and OwnsObject then
   begin
     FOwnedObjects.Add(Result);
+  end;
+end;
+
+function TCompositionContainer.Resolve<T>: T;
+begin
+  Result := GetExport<T>;
+  if GetRttiType(TypeInfo(T)).IsInstance then
+  begin
+    SatisfyImportsOnce(TObject(Result));
   end;
 end;
 

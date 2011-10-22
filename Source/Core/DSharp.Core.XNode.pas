@@ -33,6 +33,7 @@ interface
 
 uses
   DSharp.Collections,
+  DSharp.Collections.ObservableCollection,
   DSharp.Core.PropertyChangedBase,
   xmldom;
 
@@ -40,13 +41,6 @@ type
   TXNode = class;
 
   IXNodeList = IList<TXNode>;
-
-  TXNodeList = class(TObjectList<TXNode>, IXNodeList)
-  private
-    FDOMNode: IDOMNode;
-  public
-    constructor Create(ANode: IDOMNode);
-  end;
 
   TXNode = class(TPropertyChangedBase)
   private
@@ -74,6 +68,13 @@ type
     property DOMNode: IDOMNode read FDOMNode;
     property Name: string read GetName;
     property Value: string read GetValue write SetValue;
+  end;
+
+  TXNodeList = class(TObservableCollection<TXNode>, IXNodeList)
+  private
+    FDOMNode: IDOMNode;
+  public
+    constructor Create(ANode: IDOMNode = nil);
   end;
 
 implementation

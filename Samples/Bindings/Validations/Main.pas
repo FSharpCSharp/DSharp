@@ -169,8 +169,10 @@ end;
 
 function TModel.GetItem(const Name: string): string;
 begin
+  // return an empty string if everything is ok for this property
   Result := '';
 
+  // return an error description if not valid
   if (Name = 'Date') and (FDate <= Now()) then
   begin
     Result := 'Date must be in the future';

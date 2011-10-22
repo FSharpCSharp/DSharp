@@ -27,15 +27,15 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Logging.Console;
+unit DSharp.Logging.Console;
 
 interface
 
 implementation
 
 uses
-  DSharp.Core.Logging,
   DSharp.Core.Reflection,
+  DSharp.Logging,
   Rtti,
   StrUtils,
   SysUtils,
@@ -62,18 +62,18 @@ begin
     begin
       LMessage := REnterMethod;
       if ALogEntry.Value.IsClass then
-        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName
+        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
       else if ALogEntry.Value.IsObject then
-        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName;
+        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
       LMessage := LMessage + ALogEntry.Name;
     end;
     lkLeaveMethod:
     begin
       LMessage := RLeaveMethod;
       if ALogEntry.Value.IsClass then
-        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName
+        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
       else if ALogEntry.Value.IsObject then
-        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName;
+        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
       LMessage := LMessage + ALogEntry.Name;
     end;
     lkMessage:

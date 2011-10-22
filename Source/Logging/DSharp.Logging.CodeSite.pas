@@ -27,15 +27,15 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Logging.SmartInspect;
+unit DSharp.Logging.CodeSite;
 
 interface
 
 uses
-  DSharp.Core.Logging;
+  DSharp.Logging;
 
 type
-  TSmartInspectLogging = class(TBaseLogging)
+  TCodeSiteLogging = class(TBaseLogging)
   protected
     procedure LogEntry(const ALogEntry: TLogEntry); override;
   end;
@@ -43,13 +43,13 @@ type
 implementation
 
 uses
-  DSharp.Core.Logging.SmartInspect.Helper,
-  SiAuto,
+  CodeSiteLogging,
+  DSharp.Logging.CodeSite.Helper,
   SysUtils;
 
-{ TSmartInspectLogging }
+{ TCodeSiteLogging }
 
-procedure TSmartInspectLogging.LogEntry(const ALogEntry: TLogEntry);
+procedure TCodeSiteLogging.LogEntry(const ALogEntry: TLogEntry);
 begin
   case ALogEntry.LogKind of
     lkEnterMethod:
@@ -57,42 +57,41 @@ begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+          CodeSite.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
         else if ALogEntry.Value.IsObject then
-          SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+          CodeSite.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
       end
       else
-        SiMain.EnterMethod(ALogEntry.Name);
+        CodeSite.EnterMethod(ALogEntry.Name);
     end;
     lkLeaveMethod:
     begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+          CodeSite.ExitMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
         else if ALogEntry.Value.IsObject then
-          SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+          CodeSite.ExitMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
       end
       else
-        SiMain.LeaveMethod(ALogEntry.Name);
+        CodeSite.ExitMethod(ALogEntry.Name);
     end;
     lkMessage:
     begin
-       SiMain.LogMessage(ALogEntry.Name);
+      CodeSite.SendMsg(ALogEntry.Name);
     end;
     lkException:
     begin
-      SiMain.LogException(ALogEntry.Value.AsType<Exception>, ALogEntry.Name);
+      CodeSite.SendException(ALogEntry.Name, ALogEntry.Value.AsType<Exception>);
     end;
     lkValue:
     begin
-      SiMain.LogValue(ALogEntry.Name, ALogEntry.Value);
+      CodeSite.Send(ALogEntry.Name, ALogEntry.Value);
     end;
   end;
 end;
 
 initialization
-  Si.Enabled := True;
-  RegisterLogging(TSmartInspectLogging.Create);
+  RegisterLogging(TCodeSiteLogging.Create);
 
 end.

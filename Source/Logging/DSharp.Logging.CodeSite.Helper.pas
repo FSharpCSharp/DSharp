@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Logging.CodeSite.Helper;
+unit DSharp.Logging.CodeSite.Helper;
 
 interface
 

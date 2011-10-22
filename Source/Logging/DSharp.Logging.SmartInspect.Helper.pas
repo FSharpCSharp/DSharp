@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Logging.SmartInspect.Helper;
+unit DSharp.Logging.SmartInspect.Helper;
 
 interface
 

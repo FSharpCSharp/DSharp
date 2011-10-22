@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Logging;
+unit DSharp.Logging;
 
 interface
 
@@ -71,8 +71,8 @@ implementation
 
 {$IFDEF DEBUG}
 //uses
-//  DSharp.Core.Logging.Console,
-//  DSharp.Core.Logging.SmartInspect;
+//  DSharp.Logging.Console,
+//  DSharp.Logging.SmartInspect;
 {$ENDIF}
 
 type

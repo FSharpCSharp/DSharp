@@ -119,6 +119,8 @@ type
     {$ENDREGION}
     function TryGetField(const AName: string; out AField: TRttiField): Boolean;
 
+    function TryGetMember(const AName: string; out AMember: TRttiMember): Boolean;
+
     {$REGION 'Documentation'}
     ///	<summary>Retrieves the method with the given code address and returns
     ///	if this was successful.</summary>
@@ -169,6 +171,17 @@ type
   end;
 {$IFEND}
 
+  TRttiMemberHelper = class helper for TRttiMember
+  private
+    function GetIsReadable: Boolean;
+    function GetIsWritable: Boolean;
+    function GetRttiType: TRttiType;
+  public
+    property IsReadable: Boolean read GetIsReadable;
+    property IsWritable: Boolean read GetIsWritable;
+    property RttiType: TRttiType read GetRttiType;
+  end;
+
   TRttiMethodHelper = class helper for TRttiMethod
   private
     function GetParameterCount: Integer;
@@ -194,6 +207,7 @@ type
   TRttiPropertyHelper = class helper for TRttiProperty
   public
     function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
+    function TrySetValue(Instance: Pointer; Value: TValue): Boolean;
   end;
 
   TRttiTypeHelper = class helper for TRttiType
@@ -213,6 +227,7 @@ type
     function IsCovariantTo(OtherType: PTypeInfo): Boolean; overload;
     function IsGenericTypeDefinition: Boolean;
     function IsGenericTypeOf(const BaseTypeName: string): Boolean;
+    function IsInheritedFrom(OtherType: TRttiType): Boolean;
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
 
     function TryGetField(const AName: string; out AField: TRttiField): Boolean;
@@ -281,6 +296,7 @@ type
   end;
 
 function FindType(const AName: string; out AType: TRttiType): Boolean; overload;
+function FindType(const AGuid: TGUID; out AType: TRttiType): Boolean; overload;
 
 ///	<summary>
 ///	  Returns the RTTI type of the given TClass.
@@ -322,6 +338,22 @@ begin
   for LType in Context.GetTypes do
   begin
     if LType.Name = AName then
+    begin
+      AType := LType;
+      Break;
+    end;
+  end;
+  Result := Assigned(AType);
+end;
+
+function FindType(const AGuid: TGUID; out AType: TRttiType): Boolean;
+var
+  LType: TRttiType;
+begin
+  for LType in Context.GetTypes do
+  begin
+    if (LType is TRttiInterfaceType)
+      and (TRttiInterfaceType(LType).GUID = AGuid) then
     begin
       AType := LType;
       Break;
@@ -563,7 +595,11 @@ var
 begin
   Result := nil;
   if TryGetType(LType) then
+  try
     Result := LType.GetMethod(AName);
+  except
+    Result := nil;
+  end;
 end;
 
 function TObjectHelper.GetMethod(ACodeAddress: Pointer): TRttiMethod;
@@ -629,6 +665,34 @@ begin
   Result := Assigned(AField);
 end;
 
+function TObjectHelper.TryGetMember(const AName: string;
+  out AMember: TRttiMember): Boolean;
+var
+  LProperty: TRttiProperty;
+  LField: TRttiField;
+  LMethod: TRttiMethod;
+begin
+  if TryGetProperty(AName, LProperty) then
+  begin
+    Result := True;
+    AMember := LProperty;
+  end else
+  if TryGetField(AName, LField) then
+  begin
+    Result := True;
+    AMember := LField;
+  end else
+  if TryGetMethod(AName, LMethod) then
+  begin
+    Result := True;
+    AMember := LMethod;
+  end else
+  begin
+    Result := False;
+    AMember := nil
+  end;
+end;
+
 function TObjectHelper.TryGetMethod(ACodeAddress: Pointer;
   out AMethod: TRttiMethod): Boolean;
 begin
@@ -682,6 +746,55 @@ begin
   Result := Length(GetParameters());
 end;
 {$IFEND}
+
+{ TRttiMemberHelper }
+
+function TRttiMemberHelper.GetIsReadable: Boolean;
+begin
+  Result := False;
+  if Self is TRttiField then
+  begin
+    Result := True;
+  end else
+  if Self is TRttiProperty then
+  begin
+    Result := TRttiProperty(Self).IsReadable;
+  end else
+  if Self is TRttiMethod then
+  begin
+    Result := True;
+  end;
+end;
+
+function TRttiMemberHelper.GetIsWritable: Boolean;
+begin
+  Result := False;
+  if Self is TRttiField then
+  begin
+    Result := True;
+  end else
+  if Self is TRttiProperty then
+  begin
+    Result := TRttiProperty(Self).IsWritable;
+  end;
+end;
+
+function TRttiMemberHelper.GetRttiType: TRttiType;
+begin
+  Result := nil;
+  if Self is TRttiField then
+  begin
+    Result := TRttiField(Self).FieldType;
+  end else
+  if Self is TRttiProperty then
+  begin
+    Result := TRttiProperty(Self).PropertyType;
+  end else
+  if Self is TRttiMethod then
+  begin
+    Result := TRttiMethod(Self).ReturnType;
+  end;
+end;
 
 { TRttiMethodHelper }
 
@@ -772,6 +885,18 @@ begin
   except
     Value := TValue.Empty;
     Result := False;
+  end;
+end;
+
+function TRttiPropertyHelper.TrySetValue(Instance: Pointer;
+  Value: TValue): Boolean;
+var
+  LValue: TValue;
+begin
+  Result := Value.TryConvert(PropertyType.Handle, LValue);
+  if Result then
+  begin
+    SetValue(Instance, LValue);
   end;
 end;
 
@@ -972,6 +1097,24 @@ function TRttiTypeHelper.IsGenericTypeOf(const BaseTypeName: string): Boolean;
 begin
   Result := (Copy(Name, 1, Succ(Length(BaseTypeName))) = (BaseTypeName + '<'))
     and (Copy(Name, Length(Name), 1) = '>');
+end;
+
+function TRttiTypeHelper.IsInheritedFrom(OtherType: TRttiType): Boolean;
+var
+  LType: TRttiType;
+begin
+  Result := Self.Handle = OtherType.Handle;
+
+  if not Result then
+  if not Result then
+  begin
+    LType := BaseType;
+    while Assigned(LType) and not Result do
+    begin
+      Result := LType.Handle = OtherType.Handle;
+      LType := LType.BaseType;
+    end;
+  end;
 end;
 
 function TRttiTypeHelper.MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;

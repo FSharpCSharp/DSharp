@@ -32,8 +32,12 @@ unit DSharp.Core.Dynamics;
 interface
 
 uses
+{$IF COMPILERVERSION < 23}
+  DSharp.Core.VirtualInterface,
+{$IFEND}
   Generics.Collections,
   Rtti,
+  SysUtils,
   TypInfo;
 
 function Supports(const ModuleName: string; IID: TGUID; out Intf): Boolean; overload;
@@ -43,11 +47,33 @@ type
   private
     FInstance: TObject;
     FMethods: TDictionary<Integer, TRttiMethod>;
-    procedure DoInvoke(Method: TRttiMethod;
+    procedure InternalInvoke(Method: TRttiMethod;
       const Args: TArray<TValue>; out Result: TValue);
   public
-    constructor Create(PIID: PTypeInfo; AInstance: TObject);
+    constructor Create(TypeInfo: PTypeInfo; Instance: TObject);
     destructor Destroy; override;
+  end;
+
+  TInterfaceMethodInterceptor = class
+  private
+    FGuid: TGUID;
+    FOnBefore: TInterceptBeforeNotify;
+    FOnAfter: TInterceptAfterNotify;
+    FOnException: TInterceptExceptionNotify;
+    FTypeInfo: Pointer;
+    procedure DoAfter(Instance: TObject; Method: TRttiMethod;
+      const Args: TArray<TValue>; var Result: TValue);
+    procedure DoBefore(Instance: TObject; Method: TRttiMethod;
+      const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
+    procedure DoException(Instance: TObject; Method: TRttiMethod;
+      const Args: TArray<TValue>; out RaiseException: Boolean;
+      TheException: Exception; out Result: TValue);
+  public
+    constructor Create(TypeInfo: PTypeInfo);
+    function Proxify(Instance: IInterface): IInterface;
+    property OnBefore: TInterceptBeforeNotify read FOnBefore write FOnBefore;
+    property OnAfter: TInterceptAfterNotify read FOnAfter write FOnAfter;
+    property OnException: TInterceptExceptionNotify read FOnException write FOnException;
   end;
 
 implementation
@@ -55,7 +81,6 @@ implementation
 uses
   DSharp.Core.Reflection,
   RTLConsts,
-  SysUtils,
   Windows;
 
 resourcestring
@@ -67,7 +92,7 @@ type
   private
     FLibrayHandle: THandle;
     FMethods: TDictionary<string, Pointer>;
-    procedure DoInvoke(Method: TRttiMethod;
+    procedure InternalInvoke(Method: TRttiMethod;
       const Args: TArray<TValue>; out Result: TValue);
   public
     constructor Create(PIID: PTypeInfo; ALibraryHandle: THandle);
@@ -86,15 +111,11 @@ begin
     LLibraryHandle := LoadLibrary(PChar(ModuleName));
     if LLibraryHandle <> 0 then
     begin
-      LType := nil;
-      // bit ugly but no other way to get from guid to the interface
-      for LType in GetRttiTypes() do
-        if (LType is TRttiInterfaceType)
-          and (TRttiInterfaceType(LType).GUID = IID) then
-          Break;
-      if Assigned(LType) then
+      if FindType(IID, LType) then
+      begin
         LVirtualLibraryInterface := TVirtualLibraryInterface.Create(
           LType.Handle, LLibraryHandle);
+      end;
       Result := Supports(
         LVirtualLibraryInterface, TRttiInterfaceType(LType).GUID, Intf);
     end;
@@ -128,7 +149,7 @@ begin
     end;
   end;
 
-  inherited Create(PIID, DoInvoke);
+  inherited Create(PIID, InternalInvoke);
 end;
 
 destructor TVirtualLibraryInterface.Destroy;
@@ -138,7 +159,7 @@ begin
   inherited;
 end;
 
-procedure TVirtualLibraryInterface.DoInvoke(Method: TRttiMethod;
+procedure TVirtualLibraryInterface.InternalInvoke(Method: TRttiMethod;
   const Args: TArray<TValue>; out Result: TValue);
 var
   i: Integer;
@@ -156,19 +177,19 @@ begin
   begin
     if LParams[i].ParamType = nil then
     begin
-      LArgs[i] := TValue.From<Pointer>(Args[Succ(i)].GetReferenceToRawData);
+      LArgs[i] := TValue.From<Pointer>(Args[i + 1].GetReferenceToRawData);
     end
     else
     begin
       if LParams[i].Flags * [pfVar, pfOut] <> [] then
       begin
-        if LParams[i].ParamType.Handle <> Args[Succ(i)].TypeInfo then
+        if LParams[i].ParamType.Handle <> Args[i + 1].TypeInfo then
           raise EInvalidCast.CreateRes(@SByRefArgMismatch);
-        LArgs[i] := TValue.From<Pointer>(Args[Succ(i)].GetReferenceToRawData);
+        LArgs[i] := TValue.From<Pointer>(Args[i + 1].GetReferenceToRawData);
       end
       else
       begin
-        LArgs[i] := Args[Succ(i)].Cast(LParams[i].ParamType.Handle);
+        LArgs[i] := Args[i + 1].Cast(LParams[i].ParamType.Handle);
       end;
     end;
   end;
@@ -185,7 +206,7 @@ end;
 
 { TVirtualObjectInterface }
 
-constructor TVirtualObjectInterface.Create(PIID: PTypeInfo; AInstance: TObject);
+constructor TVirtualObjectInterface.Create(TypeInfo: PTypeInfo; Instance: TObject);
 var
   LType: TRttiType;
   LMethods: TArray<TRttiMethod>;
@@ -193,11 +214,11 @@ var
   LInstanceType: TRttiType;
   LInstanceMethod: TRttiMethod;
 begin
-  FInstance := AInstance;
+  FInstance := Instance;
   FMethods := TObjectDictionary<Integer, TRttiMethod>.Create();
-  LType := GetRttiType(PIID);
+  LType := GetRttiType(TypeInfo);
   LMethods := LType.GetMethods;
-  LInstanceType := GetRttiType(AInstance.ClassInfo);
+  LInstanceType := GetRttiType(Instance.ClassInfo);
   if Length(LMethods) = 0 then
   begin
     if LType.IsPublicType then
@@ -225,7 +246,7 @@ begin
     end;
   end;
 
-  inherited Create(PIID, DoInvoke);
+  inherited Create(TypeInfo, InternalInvoke);
 end;
 
 destructor TVirtualObjectInterface.Destroy;
@@ -234,7 +255,7 @@ begin
   inherited;
 end;
 
-procedure TVirtualObjectInterface.DoInvoke(Method: TRttiMethod;
+procedure TVirtualObjectInterface.InternalInvoke(Method: TRttiMethod;
   const Args: TArray<TValue>; out Result: TValue);
 var
   i: Integer;
@@ -254,19 +275,20 @@ begin
     begin
       if LParams[i].ParamType = nil then
       begin
-        LArgs[i] := TValue.From<Pointer>(Args[Succ(i)].GetReferenceToRawData);
+        LArgs[i] := TValue.From<Pointer>(Args[i + 1].GetReferenceToRawData);
       end
       else
       begin
-        if LParams[i].Flags * [pfVar, pfOut] <> [] then
+        if (pfConst in LParams[i].Flags) and (LParams[i].ParamType.TypeSize > SizeOf(Pointer))
+          or (LParams[i].Flags * [pfVar, pfOut] <> []) then
         begin
-          if LParams[i].ParamType.Handle <> Args[Succ(i)].TypeInfo then
+          if LParams[i].ParamType.Handle <> Args[i + 1].TypeInfo then
             raise EInvalidCast.CreateRes(@SByRefArgMismatch);
-          LArgs[i] := TValue.From<Pointer>(Args[Succ(i)].GetReferenceToRawData);
+          TValue.Make(Args[i + 1].GetReferenceToRawData, Args[i + 1].TypeInfo, LArgs[i]);
         end
         else
         begin
-          LArgs[i] := Args[Succ(i)].Cast(LParams[i].ParamType.Handle);
+          LArgs[i] := Args[i + 1].Cast(LParams[i].ParamType.Handle);
         end;
       end;
     end;
@@ -285,6 +307,104 @@ begin
     raise ENotImplemented.CreateResFmt(@CMethodNotImplemented,
       [Method.Parent.Name, Method.Name, TValue.ToString(@Args[1])]);
   end;
+end;
+
+{ TInterfaceMethodInterceptor }
+
+constructor TInterfaceMethodInterceptor.Create(TypeInfo: PTypeInfo);
+begin
+//  inherited Create(TypeInfo, InternalInvoke);
+  FGuid := (GetRttiType(TypeInfo) as TRttiInterfaceType).GUID;
+  FTypeInfo := TypeInfo;
+end;
+
+procedure TInterfaceMethodInterceptor.DoAfter(Instance: TObject;
+  Method: TRttiMethod; const Args: TArray<TValue>; var Result: TValue);
+begin
+  if Assigned(FOnAfter) then
+    FOnAfter(Instance, Method, Args, Result);
+end;
+
+procedure TInterfaceMethodInterceptor.DoBefore(Instance: TObject;
+  Method: TRttiMethod; const Args: TArray<TValue>; out DoInvoke: Boolean;
+  out Result: TValue);
+begin
+  if Assigned(FOnBefore) then
+    FOnBefore(Instance, Method, Args, DoInvoke, Result);
+end;
+
+procedure TInterfaceMethodInterceptor.DoException(Instance: TObject;
+  Method: TRttiMethod; const Args: TArray<TValue>; out RaiseException: Boolean;
+  TheException: Exception; out Result: TValue);
+begin
+  if Assigned(FOnException) then
+    FOnException(Instance, Method, Args, RaiseException, TheException, Result);
+end;
+
+function TInterfaceMethodInterceptor.Proxify(Instance: IInterface): IInterface;
+var
+  LVirtualInterface: TVirtualInterface;
+begin
+  if Supports(Instance, FGuid) then
+  begin
+    LVirtualInterface := TVirtualInterface.Create(FTypeInfo,
+      procedure(Method: TRttiMethod; const Args: TArray<TValue>; out Result: TValue)
+      var
+        i: Integer;
+        LArgs: TArray<TValue>;
+        LParams: TArray<TRttiParameter>;
+        LInstance: IInterface;
+        LDoInvoke: Boolean;
+      begin
+        SetLength(LArgs, Length(Args) - 1);
+        for i := 1 to Length(Args) - 1 do
+          LArgs[i - 1] := Args[i];
+        Supports(Instance, FGuid, LInstance);
+
+        LDoInvoke := True;
+        try
+          DoBefore(LInstance as TObject, Method, LArgs, LDoInvoke, Result);
+          if LDoInvoke then
+          begin
+            try
+              LParams := Method.GetParameters();
+
+              for i := 1 to Length(Args) - 1 do
+              begin
+                if (pfConst in LParams[i - 1].Flags) and (LParams[i - 1].ParamType.TypeSize > SizeOf(Pointer))
+                  or (LParams[i - 1].Flags * [pfVar, pfOut] <> []) then
+                begin
+                  if LParams[i - 1].ParamType.Handle <> Args[i].TypeInfo then
+                    raise EInvalidCast.CreateRes(@SByRefArgMismatch);
+                  TValue.Make(Args[i].GetReferenceToRawData, Args[i].TypeInfo, LArgs[i - 1]);
+                end
+                else
+                begin
+                  LArgs[i - 1] := Args[i];
+                end;
+              end;
+
+              Result := Method.Invoke(TValue.From<IInterface>(LInstance), LArgs);
+            except
+              on E: Exception do
+              begin
+                DoException(LInstance as TObject, Method, LArgs, LDoInvoke, E, Result);
+                if LDoInvoke then
+                  raise;
+              end;
+            end;
+            DoAfter(LInstance as TObject, Method, LArgs, Result);
+          end;
+        finally
+          for i := 1 to Length(Args) - 1 do
+            Args[i] := LArgs[i - 1];
+        end;
+      end);
+
+    Supports(LVirtualInterface, FGuid, Result);
+  end
+  else
+    raise ENotSupportedException.Create('');
 end;
 
 end.

@@ -27,36 +27,24 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Aspects;
+unit DSharp.Aspects.Intercepts;
 
 interface
 
 uses
+  DSharp.Aspects,
+  DSharp.Core.Dynamics,
   Generics.Collections,
   Rtti,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 type
-  TAspect = class(TCustomAttribute)
-  protected
-    class procedure DoAfter(Instance: TObject; Method: TRttiMethod;
-      const Args: TArray<TValue>; var Result: TValue); virtual;
-    class procedure DoBefore(Instance: TObject; Method: TRttiMethod;
-      const Args: TArray<TValue>; out DoInvoke: Boolean;
-      out Result: TValue); virtual;
-    class procedure DoException(Instance: TObject; Method: TRttiMethod;
-      const Args: TArray<TValue>; out RaiseException: Boolean;
-      Exception: Exception; out Result: TValue); virtual;
-  end;
-
-  TAspectClass = class of TAspect;
-
-  TClassWeaver = class
+  TIntercept = class
   private
     FAspects: TDictionary<TRttiMethod, TList<TAspectClass>>;
-    FInterceptor: TVirtualMethodInterceptor;
-    FOriginalClassData: Pointer;
-    FVirtualMethodCount: Cardinal;
+    FTypeInfo: PTypeInfo;
+  protected
     procedure DoAfter(Instance: TObject; Method: TRttiMethod;
       const Args: TArray<TValue>; var Result: TValue);
     procedure DoBefore(Instance: TObject; Method: TRttiMethod;
@@ -64,34 +52,41 @@ type
     procedure DoException(Instance: TObject; Method: TRttiMethod;
       const Args: TArray<TValue>; out RaiseException: Boolean;
       Exception: Exception; out Result: TValue);
+  public
+    constructor Create(TypeInfo: PTypeInfo);
+    destructor Destroy; override;
+
+    procedure Add(AMethod: TRttiMethod; AAspectClass: TAspectClass);
+    property TypeInfo: PTypeInfo read FTypeInfo;
+  end;
+
+  TClassIntercept = class(TIntercept)
+  private
+    FInterceptor: TVirtualMethodInterceptor;
+    FOriginalClassData: Pointer;
+    FVirtualMethodCount: Cardinal;
     function GetVirtualMethodCount(AClass: TClass): Cardinal;
     procedure ReplaceOriginalClass;
     procedure RestoreOriginalClass;
   public
     constructor Create(AClass: TClass);
     destructor Destroy; override;
-
-    procedure Add(AMethod: TRttiMethod; AAspectClass: TAspectClass);
   end;
 
-  AspectWeaver = record
+  TInterfaceIntercept = class(TIntercept)
   private
-    class var FClassWeavers: TObjectDictionary<TClass, TClassWeaver>;
-    class procedure InternalAddAspect(AClass: TClass;
-      AAspectClass: TAspectClass; const AMethodName: string); static;
+    FInterceptor: TInterfaceMethodInterceptor;
   public
-    class constructor Create;
-    class destructor Destroy;
+    constructor Create(ATypeInfo: PTypeInfo);
+    destructor Destroy; override;
 
-    class procedure AddAspect(AClass: TClass; AAspectClass: TAspectClass;
-      const AMethodName: string; AIncludeDerivedClasses: Boolean = True); static;
+    function Proxify(Instance: IInterface): IInterface;
   end;
 
 implementation
 
 uses
   DSharp.Core.Reflection,
-  RegularExpressions,
   Windows;
 
 resourcestring
@@ -116,29 +111,35 @@ begin
   FlushInstructionCache(GetCurrentProcess, Location, Size);
 end;
 
-{ TClassAspect }
+{ TIntercept }
 
-constructor TClassWeaver.Create(AClass: TClass);
+constructor TIntercept.Create;
 begin
   FAspects := TObjectDictionary<TRttiMethod, TList<TAspectClass>>.Create([doOwnsValues]);
-  FInterceptor := TVirtualMethodInterceptor.Create(AClass);
-  FInterceptor.OnBefore := DoBefore;
-  FInterceptor.OnAfter := DoAfter;
-  FInterceptor.OnException := DoException;
-  FVirtualMethodCount := GetVirtualMethodCount(AClass);
-  if FVirtualMethodCount > 0 then
-    ReplaceOriginalClass();
 end;
 
-destructor TClassWeaver.Destroy;
+destructor TIntercept.Destroy;
 begin
-  RestoreOriginalClass();
-  FInterceptor.Free();
   FAspects.Free();
   inherited;
 end;
 
-procedure TClassWeaver.DoAfter(Instance: TObject; Method: TRttiMethod;
+procedure TIntercept.Add(AMethod: TRttiMethod; AAspectClass: TAspectClass);
+var
+  LAspects: TList<TAspectClass>;
+begin
+  if not FAspects.TryGetValue(AMethod, LAspects) then
+  begin
+    LAspects := TList<TAspectClass>.Create();
+    FAspects.Add(AMethod, LAspects);
+  end;
+  if not LAspects.Contains(AAspectClass) then
+  begin
+    LAspects.Add(AAspectClass);
+  end;
+end;
+
+procedure TIntercept.DoAfter(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; var Result: TValue);
 var
   i: Integer;
@@ -153,7 +154,7 @@ begin
   end;
 end;
 
-procedure TClassWeaver.DoBefore(Instance: TObject; Method: TRttiMethod;
+procedure TIntercept.DoBefore(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
 var
   i: Integer;
@@ -168,7 +169,7 @@ begin
   end;
 end;
 
-procedure TClassWeaver.DoException(Instance: TObject; Method: TRttiMethod;
+procedure TIntercept.DoException(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; out RaiseException: Boolean; Exception: Exception;
   out Result: TValue);
 var
@@ -184,22 +185,28 @@ begin
   end;
 end;
 
-procedure TClassWeaver.Add(AMethod: TRttiMethod; AAspectClass: TAspectClass);
-var
-  LAspects: TList<TAspectClass>;
+{ TClassAspect }
+
+constructor TClassIntercept.Create(AClass: TClass);
 begin
-  if not FAspects.TryGetValue(AMethod, LAspects) then
-  begin
-    LAspects := TList<TAspectClass>.Create();
-    FAspects.Add(AMethod, LAspects);
-  end;
-  if not LAspects.Contains(AAspectClass) then
-  begin
-    LAspects.Add(AAspectClass);
-  end;
+  inherited Create(AClass.ClassInfo);
+  FInterceptor := TVirtualMethodInterceptor.Create(AClass);
+  FInterceptor.OnBefore := DoBefore;
+  FInterceptor.OnAfter := DoAfter;
+  FInterceptor.OnException := DoException;
+  FVirtualMethodCount := GetVirtualMethodCount(AClass);
+  if FVirtualMethodCount > 0 then
+    ReplaceOriginalClass();
 end;
 
-function TClassWeaver.GetVirtualMethodCount(AClass: TClass): Cardinal;
+destructor TClassIntercept.Destroy;
+begin
+  RestoreOriginalClass();
+  FInterceptor.Free();
+  inherited;
+end;
+
+function TClassIntercept.GetVirtualMethodCount(AClass: TClass): Cardinal;
 var
   LType: TRttiType;
   LMethod: TRttiMethod;
@@ -217,7 +224,7 @@ begin
   Result := LMaxIndex + 1;
 end;
 
-procedure TClassWeaver.ReplaceOriginalClass;
+procedure TClassIntercept.ReplaceOriginalClass;
 begin
   if FOriginalClassData = nil then
   begin
@@ -227,7 +234,7 @@ begin
   end;
 end;
 
-procedure TClassWeaver.RestoreOriginalClass;
+procedure TClassIntercept.RestoreOriginalClass;
 begin
   if FOriginalClassData <> nil then
   begin
@@ -237,84 +244,26 @@ begin
   end;
 end;
 
-{ TAspect }
+{ TInterfaceIntercept }
 
-class procedure TAspect.DoAfter(Instance: TObject; Method: TRttiMethod;
-  const Args: TArray<TValue>; var Result: TValue);
+constructor TInterfaceIntercept.Create(ATypeInfo: PTypeInfo);
 begin
-  // implemented by descendants
+  inherited;
+  FInterceptor := TInterfaceMethodInterceptor.Create(ATypeInfo);
+  FInterceptor.OnBefore := DoBefore;
+  FInterceptor.OnAfter := DoAfter;
+  FInterceptor.OnException := DoException;
 end;
 
-class procedure TAspect.DoBefore(Instance: TObject; Method: TRttiMethod;
-  const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
+destructor TInterfaceIntercept.Destroy;
 begin
-  // implemented by descendants
+  FInterceptor.Free;
+  inherited;
 end;
 
-class procedure TAspect.DoException(Instance: TObject; Method: TRttiMethod;
-  const Args: TArray<TValue>; out RaiseException: Boolean; Exception: Exception;
-  out Result: TValue);
+function TInterfaceIntercept.Proxify(Instance: IInterface): IInterface;
 begin
-  // implemented by descendants
-end;
-
-{ AspectWeaver }
-
-class constructor AspectWeaver.Create;
-begin
-  FClassWeavers := TObjectDictionary<TClass, TClassWeaver>.Create([doOwnsValues]);
-end;
-
-class destructor AspectWeaver.Destroy;
-begin
-  FClassWeavers.Free();
-end;
-
-class procedure AspectWeaver.InternalAddAspect(AClass: TClass;
-  AAspectClass: TAspectClass; const AMethodName: string);
-var
-  LClassWeaver: TClassWeaver;
-  LType: TRttiType;
-  LMethod: TRttiMethod;
-begin
-  if not FClassWeavers.TryGetValue(AClass, LClassWeaver) then
-  begin
-    LClassWeaver := TClassWeaver.Create(AClass);
-    FClassWeavers.Add(AClass, LClassWeaver);
-  end;
-  if TryGetRttiType(AClass, LType) then
-  begin
-    for LMethod in LType.GetMethods do
-    begin
-      if (LMethod.VirtualIndex >= 0) and TRegEx.IsMatch(LMethod.Name, AMethodName, []) then
-      begin
-        LClassWeaver.Add(LMethod, AAspectClass);
-      end;
-    end;
-  end;
-end;
-
-class procedure AspectWeaver.AddAspect(AClass: TClass;
-  AAspectClass: TAspectClass; const AMethodName: string;
-  AIncludeDerivedClasses: Boolean = True);
-var
-  LType: TRttiType;
-begin
-  AspectWeaver.InternalAddAspect(AClass, AAspectClass, AMethodName);
-
-  if AIncludeDerivedClasses then
-  begin
-    for LType in GetRttiTypes do
-    begin
-      if LType.IsInstance and LType.AsInstance.MetaclassType.InheritsFrom(AClass)
-        and (LType.AsInstance.MetaclassType <> AClass) then
-      try
-        AspectWeaver.InternalAddAspect(
-          LType.AsInstance.MetaclassType, AAspectClass, AMethodName);
-      except
-      end;
-    end;
-  end;
+  Result := FInterceptor.Proxify(Instance);
 end;
 
 end.

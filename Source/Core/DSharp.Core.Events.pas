@@ -57,6 +57,7 @@ type
     procedure MethodAdded(const AMethod: TMethod); virtual; abstract;
     procedure MethodRemoved(const AMethod: TMethod); virtual; abstract;
     procedure Add(const AEvent: TEvent);
+    function GetCount: Integer;
     function IndexOf(const AEvent: TEvent): Integer;
     function IndexOfInstance(const AInstance: TObject): Integer;
     procedure Remove(const AEvent: TEvent);
@@ -68,9 +69,11 @@ type
   end;
 
   IEventHandler<T> = interface
+    function GetCount: Integer;
     function GetInvoke: T;
     procedure Add(AEvent: T);
     procedure Remove(AEvent: T);
+    property Count: Integer read GetCount;
     property Invoke: T read GetInvoke;
   end;
 
@@ -100,6 +103,7 @@ type
     procedure Remove(AEvent: T); overload;
     procedure Remove<TDelegate>(ADelegate: TDelegate); overload;
     function IndexOf(AEvent: T): Integer;
+    property Count: Integer read GetCount;
     property Invoke: T read GetInvoke;
     property Owner: TComponent read FOwner;
   end;
@@ -110,11 +114,14 @@ type
     FInitialized: Boolean;
     function GetInvoke: T;
     function GetEventHandler: IEventHandler<T>;
+  private
+    function GetCount: Integer;
   public
     constructor Create(AEventHandler: IEventHandler<T>);
 
     procedure Add(AEvent: T);
     procedure Remove(AEvent: T);
+    property Count: Integer read GetCount;
     property EventHandler: IEventHandler<T> read GetEventHandler;
     property Invoke: T read GetInvoke;
 
@@ -319,6 +326,11 @@ begin
     FMethods.Add(LMethod);
   end;
   MethodAdded(TMethod(AEvent));
+end;
+
+function TEventHandler.GetCount: Integer;
+begin
+  Result := FMethods.Count;
 end;
 
 function TEventHandler.IndexOf(const AEvent: TEvent): Integer;
@@ -565,6 +577,18 @@ begin
   if Assigned(LEventHandler) then
   begin
     LEventHandler.Add(AEvent);
+  end;
+end;
+
+function TEvent<T>.GetCount: Integer;
+var
+  LEventHandler: IEventHandler<T>;
+begin
+  Result := 0;
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    Result := LEventHandler.Count;
   end;
 end;
 

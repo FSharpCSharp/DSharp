@@ -64,6 +64,16 @@ uses
 
   Rtti;
 
+{$IFDEF VER210}
+function TimeInRange(ATime: TTime; AStartTime, AEndTime: TTime; AInclusive: Boolean = True): Boolean;
+begin
+  if AInclusive then
+    Result := (TimeOf(AStartTime) <= TimeOf(ATime)) and (TimeOf(ATime) <= TimeOf(AEndTime))
+  else
+    Result := (TimeOf(AStartTime) < TimeOf(ATime)) and (TimeOf(ATime) < TimeOf(AEndTime));
+end;
+{$ENDIF}
+
 type
   TFutureDateRule = class(TValidationRule)
   public

@@ -29,6 +29,8 @@
 
 unit DSharp.Core.Lambda;
 
+{$IF COMPILERVERSION < 22}{$Message Warn 'This unit is not supported in Delphi 2010'}{$IFEND}
+
 interface
 
 uses

@@ -2031,22 +2031,30 @@ var
   LField: TRttiField;
   LObject: TObject;
   LProperty: TRttiProperty;
+  LValue: TValue;
 begin
   LObject := GetObject();
+  LValue := Value;
+{$IFDEF VER210}
+  if LValue.IsEmpty then
+  begin
+    TValue.Make(nil, Member.RttiType.Handle, LValue);
+  end;
+{$ENDIF}
   if LObject.TryGetProperty(FPropertyName, LProperty) then
   begin
     if FIndex > -1 then
     begin
-      SetIndexedValue(LProperty.GetValue(LObject), Value);
+      SetIndexedValue(LProperty.GetValue(LObject), LValue);
     end
     else
     begin
-      LProperty.SetValue(LObject, Value);
+      LProperty.SetValue(LObject, LValue);
     end;
   end else
   if LObject.TryGetField(FPropertyName, LField) then
   begin
-    LField.SetValue(LObject, Value);
+    LField.SetValue(LObject, LValue);
   end;
 end;
 

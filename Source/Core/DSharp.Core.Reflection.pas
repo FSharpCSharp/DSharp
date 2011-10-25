@@ -326,6 +326,7 @@ implementation
 
 uses
   Classes,
+  ComObj,
   Math,
   StrUtils,
   SysUtils;
@@ -355,7 +356,7 @@ begin
   for LType in Context.GetTypes do
   begin
     if (LType is TRttiInterfaceType)
-      and (TRttiInterfaceType(LType).GUID = AGuid) then
+      and IsEqualGUID(TRttiInterfaceType(LType).GUID, AGuid) then
     begin
       AType := LType;
       Break;

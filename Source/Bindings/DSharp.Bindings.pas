@@ -898,7 +898,7 @@ begin
   if FActive
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
-    and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsReadable then
+    and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsWritable then
   begin
     BeginUpdate();
     try
@@ -925,7 +925,7 @@ begin
     or not (csLoading in FBindingGroup.ComponentState))
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
-    and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsReadable then
+    and FTargetProperty.Member.IsWritable and FSourceProperty.Member.IsReadable then
   begin
     BeginUpdate();
     try

@@ -259,6 +259,8 @@ begin
     for LMethod in FMethods do
     begin
       LArgs[0] := TValue.From<TObject>(LMethod.Data);
+      // workaround for incorrect type guess in Rtti.pas
+      TValueData(LArgs[0]).FTypeInfo := TypeInfo(TObject);
       Rtti.Invoke(LMethod.Code, LArgs, FInvokableType.CallingConvention, nil);
     end;
   end;
@@ -297,6 +299,8 @@ begin
     for LMethod in FMethods do
     begin
       LArgs[0] := TValue.From<TObject>(LMethod.Data);
+      // workaround for incorrect type guess in Rtti.pas
+      TValueData(LArgs[0]).FTypeInfo := TypeInfo(TObject);
       Rtti.Invoke(LMethod.Code, LArgs, FInvokableType.CallingConvention, nil);
     end;
   end;
@@ -478,19 +482,23 @@ var
   LEvent: T;
   LTypeInfo: PTypeInfo;
   LTypeData: PTypeData;
+{$IF CompilerVersion > 22}
 //  LMethod: TRttiMethod;
 //  LParams: TArray<TRttiParameter>;
+{$IFEND}
 begin
   LTypeInfo := TypeInfo(TDelegate);
   Assert(LTypeInfo.Kind = tkInterface, 'TDelegate must be a method reference');
   LTypeInfo := TypeInfo(T);
   LTypeData := GetTypeData(LTypeInfo);
 
+{$IF CompilerVersion > 22}
 //  Does not work right now because method references are missing RTTI
 //  LMethod := Context.GetType(TypeInfo(TDelegate)).GetMethod('Invoke');
 //  Assert(LMethod.MethodKind = LTypeData.MethodKind, 'MethodKind does not match');
 //  LParams := LMethod.GetParameters();
 //  Assert(Length(LParams) = LTypeData.ParamCount, 'ParamCount does not match');
+{$IFEND}
   MethodReferenceToMethodPointer(ADelegate, LEvent);
   Add(LEvent);
 end;

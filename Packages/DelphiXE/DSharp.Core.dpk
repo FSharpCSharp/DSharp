@@ -42,6 +42,7 @@ contains
   DSharp.Core.DataConversion in '..\..\Source\Core\DSharp.Core.DataConversion.pas',
   DSharp.Core.DataTemplates.Default in '..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas',
   DSharp.Core.DataTemplates in '..\..\Source\Core\DSharp.Core.DataTemplates.pas',
+  DSharp.Core.Editable in '..\..\Source\Core\DSharp.Core.Editable.pas',
   DSharp.Core.Events in '..\..\Source\Core\DSharp.Core.Events.pas',
   DSharp.Core.Expressions in '..\..\Source\Core\DSharp.Core.Expressions.pas',
   DSharp.Core.Fibers in '..\..\Source\Core\DSharp.Core.Fibers.pas',

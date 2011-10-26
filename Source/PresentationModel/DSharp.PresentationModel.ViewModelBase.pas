@@ -34,18 +34,22 @@ interface
 uses
   DSharp.Bindings.Validations,
   DSharp.Collections,
+  DSharp.ComponentModel.Composition,
   DSharp.Core.PropertyChangedBase,
   DSharp.Core.Validations,
   DSharp.PresentationModel.Screen,
-  DSharp.PresentationModel.Validations;
+  DSharp.PresentationModel.Validations,
+  DSharp.PresentationModel.WindowManager;
 
 type
   [Validation(TDataErrorValidationRule)]
+  [InheritedExport]
   TViewModelBase = class(TPropertyChangedBase,
     IValidatable, IDataErrorInfo, ICanClose, IClose, IHaveDisplayName)
   private
     FThrowOnInvalidPropertyName: Boolean;
     FValidationErrors: IList<IValidationResult>;
+    FWindowManager: IWindowManager;
 
     function GetValidationErrors: IList<IValidationResult>;
   protected
@@ -64,8 +68,10 @@ type
 
     // IValidatable
     function Validate: Boolean;
+
+    property WindowManager: IWindowManager read FWindowManager;
   public
-    constructor Create; virtual;
+    constructor Create(WindowManager: IWindowManager);
 
     procedure VerifyPropertyName(const APropertyName: string);
     property DisplayName: string read GetDisplayName;
@@ -84,9 +90,10 @@ uses
 
 { TViewModelBase }
 
-constructor TViewModelBase.Create;
+constructor TViewModelBase.Create(WindowManager: IWindowManager);
 begin
   FValidationErrors := TList<IValidationResult>.Create();
+  FWindowManager := WindowManager
 end;
 
 function TViewModelBase.CanClose: Boolean;

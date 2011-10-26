@@ -62,6 +62,7 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.Editable.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Fibers.pas"/>

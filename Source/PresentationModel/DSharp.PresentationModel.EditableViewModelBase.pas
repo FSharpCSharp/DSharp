@@ -33,7 +33,7 @@ interface
 
 uses
   Classes,
-  DSharp.Bindings,
+  DSharp.Core.Editable,
   DSharp.PresentationModel.ViewModelBase;
 
 type

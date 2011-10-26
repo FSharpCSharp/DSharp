@@ -49,6 +49,7 @@ type
     function Invoke: T;
   public
     constructor Create(const ValueFactory: TFunc<T>);
+    destructor Destroy; override;
 
     function IsValueCreated: Boolean;
     property Value: T read Invoke;
@@ -59,6 +60,7 @@ type
     FLazy: ILazy<T>;
     function GetValue: T;
   public
+    class constructor Create;
     property Value: T read GetValue;
     class operator Implicit(const Value: TFunc<T>): Lazy<T>; overload;
     class operator Implicit(const Value: Lazy<T>): T; overload;
@@ -66,11 +68,30 @@ type
 
 implementation
 
+uses
+  DSharp.Core.Reflection,
+  TypInfo;
+
 { TLazy<T> }
 
 constructor TLazy<T>.Create(const ValueFactory: TFunc<T>);
 begin
   FValueFactory := ValueFactory;
+end;
+
+destructor TLazy<T>.Destroy;
+var
+  LTypeInfo: PTypeInfo;
+begin
+  if FIsValueCreated then
+  begin
+    LTypeInfo := TypeInfo(T);
+    if LTypeInfo.Kind = tkClass then
+    begin
+      TObject(FValue).Free();
+    end;
+  end;
+  inherited;
 end;
 
 function TLazy<T>.Invoke: T;
@@ -89,6 +110,12 @@ begin
 end;
 
 { Lazy<T> }
+
+class constructor Lazy<T>.Create;
+begin
+  // cause RTTI to get loaded for T
+  GetRttiType(TypeInfo(T));
+end;
 
 function Lazy<T>.GetValue: T;
 begin

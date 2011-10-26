@@ -32,6 +32,7 @@ unit DSharp.ComponentModel.Composition;
 interface
 
 uses
+  Rtti,
   TypInfo;
 
 type
@@ -100,10 +101,11 @@ type
   ImportingConstructorAttribute = class(TBaseAttribute)
   end;
 
-implementation
+  IServiceLocator = interface
+    function Resolve(TypeInfo: PTypeInfo; const Name: string = ''): TValue;
+  end;
 
-uses
-  Rtti;
+implementation
 
 { PartCreationPolicy }
 

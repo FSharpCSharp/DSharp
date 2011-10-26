@@ -150,7 +150,6 @@ begin
     LWindow.Position := poScreenCenter;
     FRunning := True;
     Application.Run();
-    Application.MainForm.Free();
   end
   else
   begin

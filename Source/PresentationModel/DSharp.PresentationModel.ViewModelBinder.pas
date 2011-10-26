@@ -65,7 +65,6 @@ end;
 class procedure ViewModelBinder.BindActions(
   AViewModel: TObject; AView: TComponent);
 var
-  LContext: TRttiContext;
   LType: TRttiType;
   LComponent: TComponent;
   LMethod: TRttiMethod;
@@ -73,7 +72,7 @@ var
   LConvention: TElementConvention;
   LPropertyName: string;
 begin
-  LType := LContext.GetType(AViewModel.ClassInfo);
+  LType := GetRttiType(AViewModel.ClassInfo);
 
   for LComponent in AView do
   begin
@@ -110,7 +109,6 @@ class procedure ViewModelBinder.BindProperties(
   AViewModel: TObject; AView: TComponent);
 var
   i: Integer;
-  LContext: TRttiContext;
   LType: TRttiType;
   LComponent: TComponent;
   LParts: TStringDynArray;
@@ -122,7 +120,7 @@ var
   LAttribute: ValidationAttribute;
   LBindingGroup: TBindingGroup;
 begin
-  LType := LContext.GetType(AViewModel.ClassInfo);
+  LType := GetRttiType(AViewModel.ClassInfo);
 
   // TODO: refactor quick and dirty implementation
   LBindingGroup := FindBindingGroup(AView);

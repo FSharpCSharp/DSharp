@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.ComponentModel.Composition.Catalog;
+unit DSharp.ComponentModel.Composition.Catalog deprecated;
 
 interface
 
@@ -39,7 +39,7 @@ uses
   SysUtils;
 
 type
-  TRttiCatalog = class(TCustomCatalog)
+  TRttiCatalog = class(TBaseCatalog)
   private
     FCatalog: TObjectDictionary<string, TExportInfoList>;
     FInheritedExportedInterfaces: TObjectDictionary<TGUID, TExportDeclarationInfo>;

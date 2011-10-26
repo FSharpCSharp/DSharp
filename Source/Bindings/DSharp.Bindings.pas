@@ -38,6 +38,7 @@ uses
   DSharp.Collections,
   DSharp.Core.Collections,
   DSharp.Core.DataConversion,
+  DSharp.Core.Editable,
   DSharp.Core.Events,
   DSharp.Core.Expressions,
   DSharp.Core.NotificationHandler,
@@ -200,13 +201,6 @@ type
   IBindable = interface
     function GetBinding: TBinding;
     property Binding: TBinding read GetBinding;
-  end;
-
-  IEditable = interface
-  ['{070C6A4B-854D-49C3-910E-31963010D68F}']
-    procedure BeginEdit;
-    procedure CancelEdit;
-    procedure EndEdit;
   end;
 
   TBindingCollection = class(TOwnedCollection<TBinding>)

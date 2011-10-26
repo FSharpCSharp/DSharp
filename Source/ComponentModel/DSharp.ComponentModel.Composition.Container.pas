@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.ComponentModel.Composition.Container;
+unit DSharp.ComponentModel.Composition.Container deprecated;
 
 interface
 
@@ -47,7 +47,7 @@ type
     function Evaluate: TObject;
   end;
 
-  TCompositionContainer = class
+  TCompositionContainer = class(TInterfacedObject, IServiceLocator)
   private
 
     type
@@ -65,7 +65,7 @@ type
       end;
 
   private
-    FCatalog: TCustomCatalog;
+    FCatalog: TBaseCatalog;
     FContext: TRttiContext;
     FObjects: TObjectDictionary<string, TObject>;
     FOwnedObjects: TObjectList<TObject>;
@@ -88,7 +88,7 @@ type
     function TryGetExport(const Name: string; TypeInfo: PTypeInfo; out Value: TValue): Boolean;
     function TryGetExports(const Name: string; TypeInfo: PTypeInfo; out OutValues: TValue): Boolean;
   public
-    constructor Create(Catalog: TCustomCatalog);
+    constructor Create(Catalog: TBaseCatalog);
     destructor Destroy; override;
 
     function GetExport<T>: T; overload;
@@ -98,7 +98,7 @@ type
     function GetExport<T>(const Name: string): T; overload;
     function GetExports<T>(const Name: string): T; overload;
 
-    function Resolve<T>: T; overload;
+    function Resolve(TypeInfo: PTypeInfo; const Name: string): TValue;
     procedure SatisfyImportsOnce(Instance: TObject);
   end;
 
@@ -168,7 +168,7 @@ begin
   end;
 end;
 
-constructor TCompositionContainer.Create(Catalog: TCustomCatalog);
+constructor TCompositionContainer.Create(Catalog: TBaseCatalog);
 begin
   FCatalog := Catalog;
   FObjects := TObjectDictionary<string, TObject>.Create([]);
@@ -616,13 +616,9 @@ begin
   end;
 end;
 
-function TCompositionContainer.Resolve<T>: T;
+function TCompositionContainer.Resolve(TypeInfo: PTypeInfo; const Name: string): TValue;
 begin
-  Result := GetExport<T>;
-  if GetRttiType(TypeInfo(T)).IsInstance then
-  begin
-    SatisfyImportsOnce(TObject(Result));
-  end;
+  Result := GetExport(Name, TypeInfo);
 end;
 
 procedure TCompositionContainer.SatisfyImportsOnce(Instance: TObject);

@@ -33,17 +33,18 @@ interface
 
 uses
   Rtti,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 type
   Composition = record
   private
-    class var FGetInstance: TFunc<TRttiType, string, TValue>;
+    class var FGetInstance: TFunc<PTypeInfo, string, TValue>;
   public
     class function Get<T>: T; overload; static;
-    class function Get<T>(AKey: string): T; overload; static;
+    class function Get<T>(const Name: string): T; overload; static;
 
-    class property GetInstance: TFunc<TRttiType, string, TValue>
+    class property GetInstance: TFunc<PTypeInfo, string, TValue>
       read FGetInstance write FGetInstance;
   end;
 
@@ -56,16 +57,13 @@ begin
   Result := Get<T>('');
 end;
 
-class function Composition.Get<T>(AKey: string): T;
+class function Composition.Get<T>(const Name: string): T;
 var
-  LContext: TRttiContext;
-  LType: TRttiType;
   LValue: TValue;
 begin
-  LType := LContext.GetType(TypeInfo(T));
   if Assigned(FGetInstance) then
   begin
-    LValue := FGetInstance(LType, AKey);
+    LValue := FGetInstance(TypeInfo(T), Name);
     Result := LValue.AsType<T>;
   end
   else

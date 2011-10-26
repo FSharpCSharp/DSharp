@@ -37,22 +37,35 @@ uses
 type
   ViewLocator = record
   public
-    class function GetOrCreateViewType(AModelType: TClass): TControl; static;
+    class function GetOrCreateViewType(ModelType: TClass): TControl; static;
   end;
 
 implementation
 
 uses
+  DSharp.Core.Reflection,
   DSharp.PresentationModel.Composition,
-  StrUtils;
+  Rtti,
+  StrUtils,
+  SysUtils;
 
 { ViewLocator }
 
-class function ViewLocator.GetOrCreateViewType(AModelType: TClass): TControl;
+class function ViewLocator.GetOrCreateViewType(ModelType: TClass): TControl;
+var
+  LViewTypeName: string;
+  LType: TRttiType;
 begin
-  // get it as interface so container does not manage lifecycle
-  Result := Composition.Get<IInterface>(
-    ReplaceText(AModelType.UnitName + '.' + AModelType.ClassName, 'Model', '')) as TControl;
+  LViewTypeName := ReplaceText(ModelType.UnitName + '.' + ModelType.ClassName, 'Model', '');
+
+  if FindType(LViewTypeName, LType) then
+  begin
+    Result := Composition.GetInstance(LType.Handle, '').AsType<TControl>;
+  end
+  else
+  begin
+    raise Exception.CreateFmt('Cannot find view for %0:s.', [ModelType.ClassName]);
+  end;
 end;
 
 end.

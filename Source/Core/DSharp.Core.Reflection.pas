@@ -338,9 +338,10 @@ function FindType(const AName: string; out AType: TRttiType): Boolean;
 var
   LType: TRttiType;
 begin
+  AType := nil;
   for LType in Context.GetTypes do
   begin
-    if LType.Name = AName then
+    if SameText(LType.Name, AName) or (LType.IsPublicType and SameText(LType.QualifiedName, AName)) then
     begin
       AType := LType;
       Break;
@@ -353,6 +354,7 @@ function FindType(const AGuid: TGUID; out AType: TRttiType): Boolean;
 var
   LType: TRttiType;
 begin
+  AType := nil;
   for LType in Context.GetTypes do
   begin
     if (LType is TRttiInterfaceType)
@@ -963,7 +965,7 @@ begin
   SetLength(Result, Length(args));
   for i := 0 to Pred(Length(args)) do
   begin
-    Result[i] := Context.FindType(args[i]);
+    FindType(args[i], Result[i]);
   end;
 end;
 

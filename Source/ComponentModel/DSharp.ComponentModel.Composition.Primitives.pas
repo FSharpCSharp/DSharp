@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.ComponentModel.Composition.Primitives;
+unit DSharp.ComponentModel.Composition.Primitives deprecated;
 
 interface
 
@@ -73,7 +73,7 @@ type
 
   // Base class for catalog for resolving identifiers to the corresponding
   // types.
-  TCustomCatalog = class abstract
+  TBaseCatalog = class abstract
   public
     function GetExports(const Name: string): TExportInfoList; virtual; abstract;
     function CanResolve(const Name: string): Boolean; virtual; abstract;

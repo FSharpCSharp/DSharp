@@ -50,7 +50,7 @@ implementation
 
 uses
   Controls,
-  DSharp.Bindings,
+  DSharp.Core.Editable,
   DSharp.Core.Validations,
   DSharp.PresentationModel.Screen,
   SysUtils;

@@ -32,22 +32,27 @@ unit DSharp.PresentationModel.Bootstrapper;
 interface
 
 uses
-  DSharp.ComponentModel.Composition.Container,
-  DSharp.PresentationModel.ViewModelBinder,
+  DSharp.ComponentModel.Composition,
+  DSharp.Core.Lazy,
   DSharp.PresentationModel.WindowManager,
-  Rtti;
+  Rtti,
+  TypInfo;
 
 type
-  TBootstrapper<T: class> = class
+  IBootstrapper<T> = interface
+    ['{F0946EB3-A0B0-4AB8-A3CA-E72419A52D9D}']
+    procedure StartRuntime;
+  end;
+
+  TBootstrapper<T> = class(TInterfacedObject, IBootstrapper<T>)
   private
-    FContainer: TCompositionContainer;
-    FViewModel: T;
+    FServiceLocator: IServiceLocator;
+    FViewModel: Lazy<T>;
     FWindowManager: IWindowManager;
-  protected
-    function GetInstance(AService: TRttiType; AKey: string): TValue;
+    function GetInstance(TypeInfo: PTypeInfo; Name: string): TValue;
     procedure StartRuntime;
   public
-    constructor Create(AContainer: TCompositionContainer);
+    constructor Create(ServiceLocator: IServiceLocator);
   end;
 
 implementation
@@ -57,27 +62,31 @@ uses
 
 { TBootstrapper<T> }
 
-constructor TBootstrapper<T>.Create(AContainer: TCompositionContainer);
+constructor TBootstrapper<T>.Create(ServiceLocator: IServiceLocator);
 begin
-  StartRuntime();
+  FServiceLocator := ServiceLocator;
 
-  FContainer := AContainer;
-  FViewModel := FContainer.GetExport<T>;
-
-  FWindowManager := Composition.Get<IWindowManager>;
-
-  FWindowManager.ShowWindow(FViewModel);
+  Composition.GetInstance := GetInstance;
 end;
 
-// TODO: Inject container into window manager?
-function TBootstrapper<T>.GetInstance(AService: TRttiType; AKey: string): TValue;
+function TBootstrapper<T>.GetInstance(TypeInfo: PTypeInfo; Name: string): TValue;
 begin
-  Result := FContainer.GetExport(AKey, AService.Handle);
+  Result := FServiceLocator.Resolve(TypeInfo, Name);
 end;
 
 procedure TBootstrapper<T>.StartRuntime;
 begin
-  Composition.GetInstance := GetInstance;
+  try
+    FWindowManager := Composition.Get<IWindowManager>;
+    FViewModel := Lazy<T>(
+      function: T
+      begin
+        Result := Composition.Get<T>;
+      end);
+
+    FWindowManager.ShowWindow(TValue.From<T>(FViewModel.Value).AsObject);
+  except
+  end;
 end;
 
 end.

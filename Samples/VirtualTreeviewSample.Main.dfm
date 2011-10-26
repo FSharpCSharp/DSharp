@@ -244,6 +244,7 @@ object MainForm: TMainForm
         Binding.SourcePropertyName = 'Firstname'
         Caption = 'Firstname'
       end>
+    Action = ContactAction
     ListMode = True
     TreeView = Contacts
     Left = 80
@@ -370,5 +371,12 @@ object MainForm: TMainForm
     Filter = 'XML Document (*.xml)|*.xml|Any file (*.*)|*.*'
     Left = 288
     Top = 160
+  end
+  object ActionList: TActionList
+    Left = 288
+    Top = 80
+    object ContactAction: TAction
+      OnExecute = ContactActionExecute
+    end
   end
 end

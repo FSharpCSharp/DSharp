@@ -7,7 +7,7 @@ uses
   Dialogs, DSharp.Windows.ColumnDefinitions, ExtCtrls, StdCtrls, ComCtrls,
   Grids, DSharp.Bindings.VCLControls, xmldom, XMLIntf, msxmldom, XMLDoc,
   DSharp.Bindings, DSharp.Windows.CustomPresenter,
-  DSharp.Windows.TreeViewPresenter, VirtualTrees;
+  DSharp.Windows.TreeViewPresenter, VirtualTrees, ActnList;
 
 type
   TMainForm = class(TForm)
@@ -37,12 +37,15 @@ type
     TabSheet4: TTabSheet;
     StringGrid1: TStringGrid;
     Edit2: TEdit;
+    ActionList: TActionList;
+    ContactAction: TAction;
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
     function InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
       ColumnDefinition: TColumnDefinition; Item: TObject): string;
     procedure SaveXmlClick(Sender: TObject);
+    procedure ContactActionExecute(Sender: TObject);
   private
     { Private declarations }
   public
@@ -82,6 +85,13 @@ type
 function DataTemplate(const AColumns: array of string): IDataTemplate;
 begin
   Result := TColumnsDataTemplate.Create(AColumns);
+end;
+
+procedure TMainForm.ContactActionExecute(Sender: TObject);
+begin
+  if ContactsPresenter.View.CurrentItem <> nil then
+    ShowMessageFmt('DoubleClick or Enter on %s', [
+      TContact(ContactsPresenter.View.CurrentItem).Firstname]);
 end;
 
 procedure TMainForm.AddContactClick(Sender: TObject);

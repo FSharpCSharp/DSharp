@@ -60,6 +60,7 @@ type
 
   TTreeViewPresenter = class(TCustomPresenter)
   private
+    FAction: TBasicAction;
     FAllowMove: Boolean;
     FCheckedItems: IList<TObject>;
     FCheckSupport: TCheckSupport;
@@ -160,6 +161,7 @@ type
     property SelectedItem: TObject read GetSelectedItem write SetSelectedItem;
     property SelectedItems: IList<TObject> read GetSelectedItems write SetSelectedItems;
   published
+    property Action: TBasicAction read FAction write FAction;
     property AllowMove: Boolean read FAllowMove write FAllowMove default True;
     property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
     property ListMode: Boolean read FListMode write SetListMode default False;
@@ -315,6 +317,15 @@ begin
     if ([hiOnItemButton..hiOnItemCheckbox] * LHitInfo.HitPositions = [])
       and Assigned(LHitInfo.HitNode) then
     begin
+      if Assigned(FOnDoubleClick) and Assigned(FAction)
+        and not DelegatesEqual(@FOnDoubleClick, @FAction.OnExecute) then
+      begin
+        FOnDoubleClick(Self);
+      end else
+      if not (csDesigning in ComponentState) and Assigned(FAction) then
+      begin
+        FAction.Execute();
+      end else
       if Assigned(FOnDoubleClick) then
       begin
         FOnDoubleClick(Self);
@@ -538,6 +549,17 @@ var
   LAllowed: Boolean;
   LNodes: TNodeArray;
 begin
+  if Key = VK_RETURN then
+  begin
+    if Assigned(FAction) then
+    begin
+      if FTreeView.SelectedCount > 0 then
+      begin
+        FAction.Execute();
+      end;
+    end;
+  end;
+
   // moving elements with Ctrl+Up and Ctrl+Down only when sorting is off
   if (ssCtrl in Shift) and (FTreeView.Header.SortColumn = -1) then
   begin

@@ -6,7 +6,6 @@ program Sample10;
 uses
   Sample10.Main,
   Sample10.Message,
-  DSharp.ComponentModel.Composition.BaseCatalog,
   DSharp.ComponentModel.Composition.Catalog,
   DSharp.ComponentModel.Composition.Container,
   DSharp.ComponentModel.Composition.Primitives,

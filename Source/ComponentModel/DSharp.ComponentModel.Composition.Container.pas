@@ -98,7 +98,8 @@ type
     function GetExport<T>(const Name: string): T; overload;
     function GetExports<T>(const Name: string): T; overload;
 
-    function Resolve(TypeInfo: PTypeInfo; const Name: string): TValue;
+    function Resolve(TypeInfo: PTypeInfo; const Name: string): TValue; overload;
+    function Resolve<T>(const Name: string = ''): T; overload;
     procedure SatisfyImportsOnce(Instance: TObject);
   end;
 
@@ -619,6 +620,11 @@ end;
 function TCompositionContainer.Resolve(TypeInfo: PTypeInfo; const Name: string): TValue;
 begin
   Result := GetExport(Name, TypeInfo);
+end;
+
+function TCompositionContainer.Resolve<T>(const Name: string): T;
+begin
+  Result := Resolve(TypeInfo(T), Name).AsType<T>;
 end;
 
 procedure TCompositionContainer.SatisfyImportsOnce(Instance: TObject);

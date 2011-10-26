@@ -13,7 +13,7 @@ uses
 
 var
   main: TMain;
-  catalog: TCustomCatalog;
+  catalog: TBaseCatalog;
   container: TCompositionContainer;
 begin
   ReportMemoryLeaksOnShutdown := True;

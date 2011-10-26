@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, ExtCtrls, StdCtrls, ComCtrls, Grids, DSharp.Bindings.VCLControls,
-  DSharp.Bindings, Sample1.Settings;
+  DSharp.Bindings, Sample1.Settings, DSharp.Core.Editable;
 
 type
   TMainForm = class(TForm, IEditable)

@@ -47,7 +47,7 @@ uses
   SysUtils;
 
 type
-  TBindingMode = (bmOneWay, bmTwoWay, bmOneWayToSource);
+  TBindingMode = (bmOneWay, bmTwoWay, bmOneWayToSource, bmOneTime);
 
 const
   BindingModeDefault = bmTwoWay;
@@ -61,6 +61,7 @@ type
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
+    function GetUpdating: Boolean;
   protected
     FActive: Boolean;
     FBindingGroup: TBindingGroup;
@@ -110,7 +111,7 @@ type
     destructor Destroy; override;
 
     procedure Assign(Source: TPersistent); override;
-    procedure UpdateTarget; virtual; abstract;
+    procedure UpdateTarget(IgnoreBindingMode: Boolean = True); virtual; abstract;
     function Validate: Boolean; virtual; abstract;
 
     procedure BeginEdit; virtual; abstract;
@@ -124,6 +125,7 @@ type
       read GetOnPropertyChanged;
     property OnValidation: TEvent<TValidationEvent> read GetOnValidation;
     property TargetProperty: IMemberExpression read FTargetProperty;
+    property Updating: Boolean read GetUpdating;
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
     property ValidationRules: IList<IValidationRule> read GetValidationRules;
   published
@@ -177,8 +179,8 @@ type
     destructor Destroy; override;
 
     procedure Assign(Source: TPersistent); override;
-    procedure UpdateSource;
-    procedure UpdateTarget; override;
+    procedure UpdateSource(IgnoreBindingMode: Boolean = True);
+    procedure UpdateTarget(IgnoreBindingMode: Boolean = True); override;
     function Validate: Boolean; override;
 
     procedure BeginEdit; override;
@@ -242,8 +244,8 @@ type
 
     function TryGetValue(AItem: TObject; APropertyName: string;
       out AValue: TValue): Boolean;
-    procedure UpdateSources;
-    procedure UpdateTargets;
+    procedure UpdateSources(IgnoreBindingMode: Boolean = True);
+    procedure UpdateTargets(IgnoreBindingMode: Boolean = True);
     function Validate: Boolean;
 
     property Bindings: TBindingCollection read FBindings write SetBindings;
@@ -434,6 +436,11 @@ begin
   Result := FOnValidation.EventHandler;
 end;
 
+function TBindingBase.GetUpdating: Boolean;
+begin
+  Result := FUpdateCount > 0;
+end;
+
 function TBindingBase.GetValidationErrors: IList<IValidationResult>;
 begin
   Result := FValidationErrors;
@@ -495,7 +502,7 @@ begin
   begin
     FConverter := Value;
 
-    UpdateTarget();
+    UpdateTarget(True);
   end;
   InitConverter();
 end;
@@ -540,7 +547,7 @@ begin
       end;
     end;
 
-    UpdateTarget();
+    UpdateTarget(True);
   end;
 end;
 
@@ -552,7 +559,7 @@ begin
     if Assigned(FTarget) then
     begin
       FTargetProperty := TPropertyExpression.Create(FTarget, FTargetPropertyName);
-      UpdateTarget();
+      UpdateTarget(True);
     end;
   end;
 end;
@@ -630,7 +637,7 @@ begin
   SetConverter(AConverter);
   FActive := True;
 
-  UpdateTarget();
+  UpdateTarget(True);
 end;
 
 destructor TBinding.Destroy;
@@ -667,7 +674,7 @@ begin
     try
       DoTargetUpdated(ASender, APropertyName, AUpdateTrigger);
 
-      UpdateTarget();
+      UpdateTarget(True);
     finally
       EndUpdate();
     end;
@@ -696,7 +703,7 @@ begin
       begin
         DoSourceUpdated(ASender, APropertyName, AUpdateTrigger);
 
-        UpdateSource();
+        UpdateSource(True);
       end
       else
       begin
@@ -719,7 +726,7 @@ end;
 
 function TBinding.GetDisplayName: string;
 const
-  BindingModeNames: array[TBindingMode] of string = ('->', '<->', '<-');
+  BindingModeNames: array[TBindingMode] of string = ('-->', '<->', '<--', '*->');
 begin
   Result := inherited;
   if Assigned(FSource) and (FSource is TComponent)
@@ -835,7 +842,7 @@ begin
       end;
     end;
 
-    UpdateTarget();
+    UpdateTarget(True);
   end;
 end;
 
@@ -879,17 +886,17 @@ begin
     begin
       SetSourceProperty(FSource, FSourcePropertyName);
 
-      UpdateTarget();
+      UpdateTarget(True);
     end;
   end;
 end;
 
-procedure TBinding.UpdateSource;
+procedure TBinding.UpdateSource(IgnoreBindingMode: Boolean = True);
 var
   LSourceValue: TValue;
   LTargetValue: TValue;
 begin
-  if FActive
+  if FActive and (IgnoreBindingMode or (FBindingMode in [bmTwoWay..bmOneWayToSource]))
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
     and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsWritable then
@@ -899,7 +906,14 @@ begin
       LTargetValue := FTargetProperty.Value;
 
       InitConverter();
-      LSourceValue := FConverter.ConvertBack(LTargetValue);
+      if Assigned(FConverter) then
+      begin
+        LSourceValue := FConverter.ConvertBack(LTargetValue);
+      end
+      else
+      begin
+        LSourceValue := LTargetValue;
+      end;
 
       FSourceProperty.Value := LSourceValue;
       FValidationErrors.Clear();
@@ -909,14 +923,14 @@ begin
   end;
 end;
 
-procedure TBinding.UpdateTarget;
+procedure TBinding.UpdateTarget(IgnoreBindingMode: Boolean = True);
 var
   LSourceValue: TValue;
   LTargetValue: TValue;
   LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
-  if FActive and (not Assigned(FBindingGroup)
-    or not (csLoading in FBindingGroup.ComponentState))
+  if FActive and (IgnoreBindingMode or (FBindingMode in [bmOneWay..bmTwoWay]))
+    and (not Assigned(FBindingGroup) or not (csLoading in FBindingGroup.ComponentState))
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
     and FTargetProperty.Member.IsWritable and FSourceProperty.Member.IsReadable then
@@ -942,7 +956,13 @@ begin
 
       InitConverter();
       if Assigned(FConverter) then
-        LTargetValue := FConverter.Convert(LSourceValue);
+      begin
+        LTargetValue := FConverter.Convert(LSourceValue)
+      end
+      else
+      begin
+        LTargetValue := LSourceValue;
+      end;
 
       FTargetProperty.Value := LTargetValue;
       FValidationErrors.Clear();
@@ -990,6 +1010,10 @@ begin
         if Assigned(FConverter) then
         begin
           LSourceValue := FConverter.ConvertBack(LTargetValue);
+        end
+        else
+        begin
+          LSourceValue := LTargetValue;
         end;
 
         for LValidationRule in FValidationRules do
@@ -1197,7 +1221,7 @@ begin
   begin
     if LBinding.Active then
     begin
-      LBinding.UpdateTarget;
+      LBinding.UpdateTarget(True);
     end;
   end;
 end;
@@ -1244,7 +1268,7 @@ begin
   end;
 end;
 
-procedure TBindingGroup.UpdateSources;
+procedure TBindingGroup.UpdateSources(IgnoreBindingMode: Boolean = True);
 var
   LBinding: TBinding;
 begin
@@ -1252,18 +1276,18 @@ begin
   begin
     for LBinding in FBindings do
     begin
-      LBinding.UpdateSource();
+      LBinding.UpdateSource(IgnoreBindingMode);
     end;
   end;
 end;
 
-procedure TBindingGroup.UpdateTargets;
+procedure TBindingGroup.UpdateTargets(IgnoreBindingMode: Boolean = True);
 var
   LBinding: TBinding;
 begin
   for LBinding in FBindings do
   begin
-    LBinding.UpdateTarget();
+    LBinding.UpdateTarget(IgnoreBindingMode);
   end;
 end;
 

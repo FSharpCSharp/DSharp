@@ -221,19 +221,25 @@ begin
     lkEnterMethod:
     begin
       LMessage := REnterMethod;
-      if ALogEntry.Value.IsClass then
-        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
-      else if ALogEntry.Value.IsObject then
-        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+      if not ALogEntry.Value.IsEmpty then
+      begin
+        if ALogEntry.Value.IsClass then
+          LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
+        else if ALogEntry.Value.IsObject then
+          LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+      end;
       LMessage := LMessage + ALogEntry.Name;
     end;
     lkLeaveMethod:
     begin
       LMessage := RLeaveMethod;
-      if ALogEntry.Value.IsClass then
-        LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
-      else if ALogEntry.Value.IsObject then
-        LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+      if not ALogEntry.Value.IsEmpty then
+      begin
+        if ALogEntry.Value.IsClass then
+          LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
+        else if ALogEntry.Value.IsObject then
+          LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+      end;
       LMessage := LMessage + ALogEntry.Name;
     end;
     lkMessage:

@@ -421,53 +421,60 @@ type
     property Expressions: TArray<IExpression> read GetExpressions;
   end;
 
-  TPropertyExpression = class(TExpression, IMemberExpression, IValueExpression)
+  TMemberExpression = class abstract(TExpression, IMemberExpression)
   private
     FExpression: IExpression;
-    FIndex: Integer;
     FName: string;
-    FPropertyName: string;
     function GetExpression: IExpression;
-    function GetIndexedValue(const Instance: TValue): TValue;
-    function GetMember: TRttiMember;
     function GetName: string;
     function GetObject: TObject;
-    function GetValue: TValue;
-    procedure SetIndexedValue(const Instance, Value: TValue);
-    procedure SetValue(const Value: TValue);
+  protected
+    function GetMember: TRttiMember; virtual; abstract;
+    function GetValue: TValue; virtual; abstract;
+    procedure SetValue(const Value: TValue); virtual; abstract;
   public
-    constructor Create(AExpression: IExpression; const APropertyName: string); overload;
-    constructor Create(AComponent: TComponent; const APropertyName: string); overload;
-    constructor Create(AObject: TObject; const APropertyName: string); overload;
-    function Compile: TFunc<TValue>; override;
-    function ToString: string; override;
     property Expression: IExpression read FExpression;
     property Member: TRttiMember read GetMember;
     property Name: string read GetName;
     property Value: TValue read GetValue write SetValue;
   end;
 
-  TMethodExpression = class(TExpression, IMemberExpression)
+  TPropertyExpression = class(TMemberExpression, IValueExpression)
   private
-    FExpression: IExpression;
-    FName: string;
-    FParameters: TArray<IExpression>;
-    function CompileArguments: TArray<TFunc<TValue>>;
-    function GetExpression: IExpression;
-    function GetMember: TRttiMember;
-    function GetMethod: TRttiMethod;
-    function GetName: string;
-    function GetObject: TObject;
-    function GetValue: TValue;
-    procedure SetValue(const Value: TValue);
+    FIndex: Integer;
+    FPropertyName: string;
+    function GetIndexedValue(const Instance: TValue): TValue;
+    procedure SetIndexedValue(const Instance, Value: TValue);
+  protected
+    function GetMember: TRttiMember; override;
+    function GetValue: TValue; override;
+    procedure SetValue(const Value: TValue); override;
   public
-    constructor Create(AExpression: IExpression; const AMethodName: string;
-      const AParameters: array of IExpression);
+    constructor Create(AExpression: IExpression; const APropertyName: string); overload;
+    constructor Create(AComponent: TComponent; const APropertyName: string); overload;
+    constructor Create(AObject: TObject; const APropertyName: string); overload;
     function Compile: TFunc<TValue>; override;
     function ToString: string; override;
-    property Expression: IExpression read GetExpression;
-    property Member: TRttiMember read GetMember;
-    property Name: string read FName;
+  end;
+
+  TMethodExpression = class(TMemberExpression)
+  private
+    FParameters: TArray<IExpression>;
+    function CompileArguments: TArray<TFunc<TValue>>;
+    function GetMethod: TRttiMethod;
+  protected
+    function GetMember: TRttiMember; override;
+    function GetValue: TValue; override;
+    procedure SetValue(const Value: TValue); override;
+  public
+    constructor Create(AExpression: IExpression; const AMethodName: string;
+      const AParameters: array of IExpression); overload;
+    constructor Create(AComponent: TComponent; const AMethodName: string;
+      const AParameters: array of IExpression); overload;
+    constructor Create(AObject: TObject; const AMethodName: string;
+      const AParameters: array of IExpression); overload;
+    function Compile: TFunc<TValue>; override;
+    function ToString: string; override;
   end;
 
   TLoopExpression = class(TUnaryExpression)
@@ -1878,6 +1885,33 @@ begin
   Result := BuildString('>=');
 end;
 
+{ TMemberExpression }
+
+function TMemberExpression.GetExpression: IExpression;
+begin
+  Result := FExpression
+end;
+
+function TMemberExpression.GetName: string;
+begin
+  Result := FName;
+end;
+
+function TMemberExpression.GetObject: TObject;
+var
+  Delegate: TFunc<TValue>;
+begin
+  if Assigned(FExpression) then
+  begin
+    Delegate := FExpression.Compile();
+    Result := Delegate().CastAsObject();
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
 { TPropertyExpression }
 
 constructor TPropertyExpression.Create(AExpression: IExpression;
@@ -1931,7 +1965,7 @@ end;
 
 function TPropertyExpression.Compile: TFunc<TValue>;
 var
-  Expression: IValueExpression;
+  Expression: IMemberExpression;
 begin
   Expression := Self;
 
@@ -1940,11 +1974,6 @@ begin
     begin
       Result := Expression.Value;
     end;
-end;
-
-function TPropertyExpression.GetExpression: IExpression;
-begin
-  Result := FExpression;
 end;
 
 function TPropertyExpression.GetIndexedValue(const Instance: TValue): TValue;
@@ -2028,32 +2057,12 @@ begin
   end;
 end;
 
-function TPropertyExpression.GetName: string;
-begin
-  Result := FName;
-end;
-
 function TPropertyExpression.GetMember: TRttiMember;
 var
   LObject: TObject;
 begin
   LObject := GetObject();
   LObject.TryGetMember(FPropertyName, Result);
-end;
-
-function TPropertyExpression.GetObject: TObject;
-var
-  Delegate: TFunc<TValue>;
-begin
-  if Assigned(FExpression) then
-  begin
-    Delegate := FExpression.Compile();
-    Result := Delegate().CastAsObject();
-  end
-  else
-  begin
-    Result := nil;
-  end;
 end;
 
 function TPropertyExpression.GetValue: TValue;
@@ -2208,9 +2217,11 @@ end;
 
 function TMethodExpression.Compile: TFunc<TValue>;
 var
-  LArgumentDelegates: TArray<TFunc<TValue>>;
+  Expression: IMemberExpression;
+  ArgumentDelegates: TArray<TFunc<TValue>>;
 begin
-  LArgumentDelegates := CompileArguments();
+  Expression := Self;
+  ArgumentDelegates := CompileArguments();
 
   Result :=
     function: TValue
@@ -2220,14 +2231,16 @@ begin
       LArguments: TArray<TValue>;
       i: Integer;
     begin
+      if Assigned(Expression) then;
+
       Result := TValue.Empty;
       LMethod := GetMethod();
       if Assigned(LMethod) then
       begin
         LObject := GetObject();
-        SetLength(LArguments, Length(LArgumentDelegates));
-        for i := Low(LArgumentDelegates) to High(LArgumentDelegates) do
-          LArguments[i] := LArgumentDelegates[i]();
+        SetLength(LArguments, Length(ArgumentDelegates));
+        for i := Low(ArgumentDelegates) to High(ArgumentDelegates) do
+          LArguments[i] := ArgumentDelegates[i]();
         if LMethod.IsClassMethod then
         begin
           Result := LMethod.Invoke(LObject.ClassType, LArguments);
@@ -2240,6 +2253,24 @@ begin
     end;
 end;
 
+constructor TMethodExpression.Create(AComponent: TComponent;
+  const AMethodName: string; const AParameters: array of IExpression);
+var
+  LExpression: IExpression;
+begin
+  LExpression := TComponentExpression.Create(AComponent);
+  Create(LExpression, AMethodName, AParameters);
+end;
+
+constructor TMethodExpression.Create(AObject: TObject;
+  const AMethodName: string; const AParameters: array of IExpression);
+var
+  LExpression: IExpression;
+begin
+  LExpression := TConstantExpression.Create(AObject);
+  Create(LExpression, AMethodName, AParameters);
+end;
+
 function TMethodExpression.CompileArguments: TArray<TFunc<TValue>>;
 var
   i: Integer;
@@ -2249,11 +2280,6 @@ begin
   begin
     Result[i] := FParameters[i].Compile();
   end;
-end;
-
-function TMethodExpression.GetExpression: IExpression;
-begin
-  Result := FExpression;
 end;
 
 function TMethodExpression.GetMember: TRttiMember;
@@ -2269,26 +2295,6 @@ begin
   Result := LObject.GetMethod(FName);
 end;
 
-function TMethodExpression.GetName: string;
-begin
-  Result := FName;
-end;
-
-function TMethodExpression.GetObject: TObject;
-var
-  Delegate: TFunc<TValue>;
-begin
-  if Assigned(FExpression) then
-  begin
-    Delegate := FExpression.Compile();
-    Result := Delegate().AsObject;
-  end
-  else
-  begin
-    Result := nil;
-  end;
-end;
-
 function TMethodExpression.GetValue: TValue;
 begin
   Result := Execute();
@@ -2296,7 +2302,7 @@ end;
 
 procedure TMethodExpression.SetValue(const Value: TValue);
 begin
-
+  // nothing to do
 end;
 
 function TMethodExpression.ToString: string;

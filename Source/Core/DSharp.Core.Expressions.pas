@@ -38,7 +38,7 @@ uses
   SysUtils;
 
 type
-  TLambda = TFunc<TValue>;
+  TCompiledExpression = TFunc<TValue>;
 
   IExpression = interface
     ['{B6748486-F9E5-40E3-92E7-9DC2C5BFB3F7}']
@@ -47,14 +47,14 @@ type
     function ToString: string;
   end;
 
-  IDefaultExpression = interface(IExpression)
-    ['{B583DD48-1CC5-4990-A3B2-ABDC7DFCD873}']
-  end;
-
   IConstantExpression = interface(IExpression)
     ['{4138745A-9BC4-4BF5-9C7D-992664AEDEB7}']
     function GetValue: TValue;
     property Value: TValue read GetValue;
+  end;
+
+  IDefaultExpression = interface(IConstantExpression)
+    ['{B583DD48-1CC5-4990-A3B2-ABDC7DFCD873}']
   end;
 
   IValueExpression = interface(IConstantExpression)
@@ -107,6 +107,8 @@ type
     property Member: TRttiMember read GetMember;
   end;
 
+  TConvertFunc = reference to function(const Value: TValue): TValue;
+
   Expression = record
   public
     class function Add(Left, Right: IExpression): IBinaryExpression; static;
@@ -116,6 +118,7 @@ type
     class function Break: IExpression; static;
     class function Condition(Test, IfTrue, IfFalse: IExpression): IConditionalExpression; static;
     class function Constant<T>(Value: T): IConstantExpression; static;
+    class function Convert(Left, Right: IExpression; Convert: TConvertFunc = nil): IBinaryExpression; static;
     class function Default(TypeInfo: Pointer = nil): IDefaultExpression; static;
     class function Divide(Left, Right: IExpression): IBinaryExpression; static;
     class function DivideAssign(Left, Right: IExpression): IBinaryExpression; static;
@@ -155,19 +158,21 @@ type
 
   TBooleanExpression = record
   private
-    FValue: IExpression;
+    FExpression: IExpression;
   public
-    constructor Create(Value: IExpression);
+    constructor Create(Expression: IExpression);
     class operator Equal(const Left, Right: TBooleanExpression): TBooleanExpression;
     class operator LogicalAnd(const Left, Right: TBooleanExpression): TBooleanExpression;
     class operator LogicalOr(const Left, Right: TBooleanExpression): TBooleanExpression;
+    class operator LogicalNot(const Value: TBooleanExpression): TBooleanExpression;
     class operator LogicalXor(const Left, Right: TBooleanExpression): TBooleanExpression;
     class operator Negative(const Value: TBooleanExpression): TBooleanExpression;
     class operator NotEqual(const Left, Right: TBooleanExpression): TBooleanExpression;
-    class operator Implicit(Value: Boolean): TBooleanExpression;
-    class operator Implicit(Value: TBooleanExpression): Boolean;
-    class operator Implicit(Value: TBooleanExpression): TFunc<Boolean>;
-    class operator Implicit(Value: TBooleanExpression): TFunc<TObject, Boolean>;
+    class operator Implicit(const Value: Boolean): TBooleanExpression;
+    class operator Implicit(const Value: TBooleanExpression): Boolean;
+    class operator Implicit(const Value: TBooleanExpression): TFunc<Boolean>;
+    class operator Implicit(const Value: TBooleanExpression): TFunc<TObject, Boolean>;
+    class operator Implicit(const Value: TBooleanExpression): IExpression;
     function Compile: TFunc<TValue>;
     function Execute: TValue;
     function ToString: string;
@@ -175,7 +180,7 @@ type
 
   TValueExpression = record
   private
-    FValue: IExpression;
+    FExpression: IExpression;
   public
     class operator Add(const Left, Right: TValueExpression): TValueExpression;
     class operator Subtract(const Left, Right: TValueExpression): TValueExpression;
@@ -209,15 +214,6 @@ type
     function Execute: TValue;
   end;
 
-  TDefaultExpression = class(TExpression, IDefaultExpression)
-  private
-    FValue: TValue;
-  public
-    constructor Create(TypeInfo: Pointer);
-    function Compile: TFunc<TValue>; override;
-    function ToString: string; override;
-  end;
-
   TConstantExpression = class(TExpression, IConstantExpression)
   private
     FValue: TValue;
@@ -232,6 +228,11 @@ type
     property Value: TValue read GetValue;
   end;
 
+  TDefaultExpression = class(TConstantExpression, IDefaultExpression)
+  public
+    constructor Create(TypeInfo: Pointer);
+  end;
+
   TParameterExpression = class(TConstantExpression, IParameterExpression, IValueExpression)
   private
     FName: string;
@@ -239,9 +240,15 @@ type
     procedure SetValue(const Value: TValue);
   public
     constructor Create(const AName: string);
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
     property Name: string read GetName;
+  end;
+
+  TComponentExpression = class(TConstantExpression)
+  public
+    constructor Create(const Value: TComponent); overload;
+    function Compile: TFunc<TValue>; override;
+    function ToString: string; override;
   end;
 
   TUnaryExpression = class(TExpression, IUnaryExpression)
@@ -378,6 +385,14 @@ type
     function ToString: string; override;
   end;
 
+  TConvertExpression = class(TAssignExpression)
+  private
+    FConvert: TConvertFunc;
+  public
+    constructor Create(Left, Right: IExpression; Convert: TConvertFunc = nil);
+    function Compile: TFunc<TValue>; override;
+  end;
+
   TConditionalExpression = class(TExpression, IConditionalExpression)
   private
     FTest: IExpression;
@@ -406,16 +421,7 @@ type
     property Expressions: TArray<IExpression> read GetExpressions;
   end;
 
-  TComponentExpression = class(TConstantExpression)
-  public
-    FValue: TComponent;
-  public
-    constructor Create(const Value: TComponent); overload;
-    function Compile: TFunc<TValue>; override;
-    function ToString: string; override;
-  end;
-
-  TPropertyExpression = class(TExpression, IMemberExpression)
+  TPropertyExpression = class(TExpression, IMemberExpression, IValueExpression)
   private
     FExpression: IExpression;
     FIndex: Integer;
@@ -423,7 +429,7 @@ type
     FPropertyName: string;
     function GetExpression: IExpression;
     function GetIndexedValue(const Instance: TValue): TValue;
-    function GetMember: TRttiMember; //override;
+    function GetMember: TRttiMember;
     function GetName: string;
     function GetObject: TObject;
     function GetValue: TValue;
@@ -476,8 +482,10 @@ type
     function ToString: string; override;
   end;
 
+function AsBoolean(const Value: Boolean): TBooleanExpression;
 function ExpressionParams: IList<IValueExpression>;
 function ExpressionStack: IStack<IExpression>;
+procedure ForceStack;
 
 implementation
 
@@ -491,12 +499,14 @@ type
 type
   ExpressionManager = record
   class threadvar
+    FForceStack: Boolean;
     FIndentLevel: Integer;
     FParams: TList<IValueExpression>;
     FStack: TStack<IExpression>;
   class var
     FManagedObjects: IList<IEnumerable>;
     FUseParentheses: Boolean;
+    class function GetForceStack: Boolean; static;
     class function GetIndentLevel: Integer; static;
     class function GetParams: IList<IValueExpression>; static;
     class function GetStack: IStack<IExpression>; static;
@@ -506,11 +516,17 @@ type
     class procedure Indent; static;
     class procedure Unindent; static;
 
+    class property ForceStack: Boolean read GetForceStack;
     class property IndentLevel: Integer read GetIndentLevel;
     class property Params: IList<IValueExpression> read GetParams;
     class property Stack: IStack<IExpression> read GetStack;
     class property UseParentheses: Boolean read FUseParentheses write FUseParentheses;
   end;
+
+function AsBoolean(const Value: Boolean): TBooleanExpression;
+begin
+  Result := Value;
+end;
 
 function ExpressionParams: IList<IValueExpression>;
 begin
@@ -520,6 +536,11 @@ end;
 function ExpressionStack: IStack<IExpression>;
 begin
   Result := ExpressionManager.Stack;
+end;
+
+procedure ForceStack;
+begin
+  ExpressionManager.FForceStack := True;
 end;
 
 function GetIndentation: string;
@@ -532,6 +553,12 @@ end;
 class constructor ExpressionManager.Create;
 begin
   FManagedObjects := TList<IEnumerable>.Create();
+end;
+
+class function ExpressionManager.GetForceStack: Boolean;
+begin
+  Result := FForceStack;
+  FForceStack := False;
 end;
 
 class function ExpressionManager.GetIndentLevel: Integer;
@@ -608,6 +635,11 @@ end;
 class function Expression.Constant<T>(Value: T): IConstantExpression;
 begin
   Result := TConstantExpression.Create<T>(Value);
+end;
+
+class function Expression.Convert(Left, Right: IExpression; Convert: TConvertFunc = nil): IBinaryExpression;
+begin
+  Result := TConvertExpression.Create(Left, Right, Convert);
 end;
 
 class function Expression.Default(TypeInfo: Pointer): IDefaultExpression;
@@ -783,62 +815,73 @@ end;
 
 { TBooleanExpression }
 
-constructor TBooleanExpression.Create(Value: IExpression);
+constructor TBooleanExpression.Create(Expression: IExpression);
 begin
-  FValue := Value;
-  ExpressionStack.Push(FValue);
+  FExpression := Expression;
+  ExpressionStack.Push(FExpression);
 end;
 
 class operator TBooleanExpression.Equal(const Left,
   Right: TBooleanExpression): TBooleanExpression;
 begin
-  Result.FValue := TEqualExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TEqualExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TBooleanExpression.Implicit(
-  Value: TBooleanExpression): TFunc<Boolean>;
+  const Value: TBooleanExpression): TFunc<Boolean>;
 var
-  Expr: IExpression;
+  Expression: IExpression;
   Delegate: TFunc<TValue>;
 begin
-  Expr := ExpressionStack.Pop();
+  Expression := ExpressionStack.Pop();
 
-  Delegate := Expr.Compile();
+  Delegate := Expression.Compile();
   Result :=
     function: Boolean
     begin
+      if Assigned(Expression) then;
+
       Result := Delegate().AsBoolean;
     end;
 end;
 
 class operator TBooleanExpression.Implicit(
-  Value: TBooleanExpression): TFunc<TObject, Boolean>;
+  const Value: TBooleanExpression): TFunc<TObject, Boolean>;
 var
-  Expr: IExpression;
+  Expression: IExpression;
   Param1: IValueExpression;
   Delegate: TFunc<TValue>;
 begin
-  Expr := ExpressionStack.Pop();
+  Expression := ExpressionStack.Pop();
   Param1 := ExpressionParams[0];
 
-  Delegate := Expr.Compile();
+  Delegate := Expression.Compile();
   Result :=
     function(Arg1: TObject): Boolean
     begin
+      if Assigned(Expression) then;
+
       Param1.SetValue(Arg1);
       Result := Delegate().AsBoolean;
     end;
 end;
 
-class operator TBooleanExpression.Implicit(Value: Boolean): TBooleanExpression;
+class operator TBooleanExpression.Implicit(const Value: Boolean): TBooleanExpression;
 begin
-  Result.FValue := TConstantExpression.Create<Boolean>(Value); //TBooleanConstantExpression.Create(Value);
+  if ExpressionManager.ForceStack then
+    Result.FExpression := ExpressionStack.Pop()
+  else
+    Result.FExpression := TConstantExpression.Create<Boolean>(Value);
+  ExpressionStack.Push(Result.FExpression);
 end;
 
-class operator TBooleanExpression.Implicit(Value: TBooleanExpression): Boolean;
+class operator TBooleanExpression.Implicit(const Value: TBooleanExpression): Boolean;
 var
   Delegate: TFunc<TValue>;
 begin
+  ExpressionStack.Pop();
   Delegate := Value.Compile();
   Result := Delegate().AsBoolean;
 end;
@@ -846,111 +889,135 @@ end;
 class operator TBooleanExpression.LogicalAnd(const Left,
   Right: TBooleanExpression): TBooleanExpression;
 begin
-  Result.FValue := TLogicalAndExpression.Create(Left.FValue, Right.FValue);
-  ExpressionStack.Pop();
-  ExpressionStack.Pop();
-  ExpressionStack.Push(Result.FValue);
+  Result.FExpression := TLogicalAndExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
+end;
+
+class operator TBooleanExpression.LogicalNot(
+  const Value: TBooleanExpression): TBooleanExpression;
+begin
+  Result.FExpression := TLogicalNotExpression.Create(Value.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TBooleanExpression.LogicalOr(const Left,
   Right: TBooleanExpression): TBooleanExpression;
 begin
-  Result.FValue := TLogicalOrExpression.Create(Left.FValue, Right.FValue);
-  ExpressionStack.Pop();
-  ExpressionStack.Pop();
-  ExpressionStack.Push(Result.FValue);
+  Result.FExpression := TLogicalOrExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TBooleanExpression.LogicalXor(const Left,
   Right: TBooleanExpression): TBooleanExpression;
 begin
-  Result.FValue := TLogicalExclusiveOrExpression.Create(Left.FValue, Right.FValue);
-  ExpressionStack.Pop();
-  ExpressionStack.Pop();
-  ExpressionStack.Push(Result.FValue);
+  Result.FExpression := TLogicalExclusiveOrExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TBooleanExpression.Negative(
   const Value: TBooleanExpression): TBooleanExpression;
 begin
-  Result.FValue := TNegativeExpression.Create(Value.FValue);
-  ExpressionStack.Pop();
-  ExpressionStack.Push(Result.FValue);
+  Result.FExpression := TNegativeExpression.Create(Value.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TBooleanExpression.NotEqual(const Left,
   Right: TBooleanExpression): TBooleanExpression;
 begin
-  Result.FValue := TNotEqualExpression.Create(Left.FValue, Right.FValue);
-  ExpressionStack.Pop();
-  ExpressionStack.Pop();
-  ExpressionStack.Push(Result.FValue);
+  Result.FExpression := TNotEqualExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 function TBooleanExpression.Compile: TFunc<TValue>;
 begin
-  Result := FValue.Compile;
+  Result := FExpression.Compile;
 end;
 
 function TBooleanExpression.Execute: TValue;
 begin
-  Result := FValue.Execute;
+  Result := FExpression.Execute;
 end;
 
 function TBooleanExpression.ToString: string;
 begin
-  Result := FValue.ToString;
+  Result := FExpression.ToString;
+end;
+
+class operator TBooleanExpression.Implicit(
+  const Value: TBooleanExpression): IExpression;
+begin
+  Result := Value.FExpression;
 end;
 
 { TValueExpression }
 
 class operator TValueExpression.Add(const Left, Right: TValueExpression): TValueExpression;
 begin
-  Result.FValue := TAdditionExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TAdditionExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Divide(const Left,
   Right: TValueExpression): TValueExpression;
 begin
-  Result.FValue := TDivisionExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TDivisionExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Equal(const Left, Right: TValueExpression): TBooleanExpression;
 begin
-  Result.FValue := TEqualExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TEqualExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.GreaterThan(const Left,
   Right: TValueExpression): TBooleanExpression;
 begin
-  Result.FValue := TGreaterThanExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TGreaterThanExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.GreaterThanOrEqual(const Left,
   Right: TValueExpression): TBooleanExpression;
 begin
-  Result.FValue := TGreaterThanOrEqualExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TGreaterThanOrEqualExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Implicit(const Value: Extended): TValueExpression;
 begin
-  Result.FValue := TConstantExpression.Create<Extended>(Value);
+  Result.FExpression := TConstantExpression.Create<Extended>(Value);
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Implicit(const Value: Integer): TValueExpression;
 begin
-  Result.FValue := TConstantExpression.Create<Integer>(Value);
+  Result.FExpression := TConstantExpression.Create<Integer>(Value);
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Implicit(const Value: string): TValueExpression;
 begin
-  Result.FValue := TConstantExpression.Create<string>(Value);
+  Result.FExpression := TConstantExpression.Create<string>(Value);
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Implicit(const Value: TValueExpression): Extended;
 var
   Delegate: TFunc<TValue>;
 begin
+  ExpressionStack.Pop();
   Delegate := Value.Compile();
   Result := Delegate().AsExtended;
 end;
@@ -959,6 +1026,7 @@ class operator TValueExpression.Implicit(const Value: TValueExpression): Int64;
 var
   Delegate: TFunc<TValue>;
 begin
+  ExpressionStack.Pop();
   Delegate := Value.Compile();
   Result := Trunc(Delegate().AsExtended);
 end;
@@ -968,77 +1036,96 @@ begin
   case TVarData(Value).VType of
     varByRef or varVariant:
     begin
-      Result.FValue := IExpression(TVarData(Value).VPointer);
-      Result.FValue._Release;
+      Result.FExpression := IExpression(TVarData(Value).VPointer);
+      Result.FExpression._Release;
     end;
   else
     if ExpressionStack.Count > 0 then
     begin
-      Result.FValue := ExpressionStack.Pop();
+      Result.FExpression := ExpressionStack.Pop();
     end
     else
     begin
-      Result.FValue := TConstantExpression.Create(Value);
+      Result.FExpression := TConstantExpression.Create(Value);
     end;
   end;
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Implicit(const Value: TBooleanExpression): TValueExpression;
 begin
-  Result.FValue := Value.FValue;
+  Result.FExpression := Value.FExpression;
+  ExpressionStack.Pop;
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.IntDivide(const Left,
   Right: TValueExpression): TValueExpression;
 begin
-  Result.FValue := TIntegerDivisionExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TIntegerDivisionExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.LessThan(const Left,
   Right: TValueExpression): TBooleanExpression;
 begin
-  Result.FValue := TLessThanExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TLessThanExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.LessThanOrEqual(const Left,
   Right: TValueExpression): TBooleanExpression;
 begin
-  Result.FValue := TLessThanOrEqualExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TLessThanOrEqualExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Modulus(const Left, Right: TValueExpression): TValueExpression;
 begin
-  Result.FValue := TModulusExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TModulusExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Multiply(const Left,
   Right: TValueExpression): TValueExpression;
 begin
-  Result.FValue := TMultiplicationExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TMultiplicationExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Negative(const Value: TValueExpression): TValueExpression;
 begin
-  Result.FValue := TNegativeExpression.Create(Value.FValue);
+  Result.FExpression := TNegativeExpression.Create(Value.FExpression);
+  ExpressionStack.Pop();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.NotEqual(const Left,
   Right: TValueExpression): TBooleanExpression;
 begin
-  Result.FValue := TNotEqualExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TNotEqualExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 class operator TValueExpression.Subtract(const Left,
   Right: TValueExpression): TValueExpression;
 begin
-  Result.FValue := TSubtractionExpression.Create(Left.FValue, Right.FValue);
+  Result.FExpression := TSubtractionExpression.Create(Left.FExpression, Right.FExpression);
+  ExpressionStack.Clear();
+  ExpressionStack.Push(Result.FExpression);
 end;
 
 function TValueExpression.Compile: TFunc<TValue>;
 begin
-  if Assigned(FValue) then
+  if Assigned(FExpression) then
   begin
-    Result := FValue.Compile();
+    Result := FExpression.Compile();
   end
   else
   begin
@@ -1052,9 +1139,9 @@ end;
 
 function TValueExpression.Execute: TValue;
 begin
-  if Assigned(FValue) then
+  if Assigned(FExpression) then
   begin
-    Result := FValue.Execute;
+    Result := FExpression.Execute();
   end
   else
   begin
@@ -1064,9 +1151,9 @@ end;
 
 function TValueExpression.ToString: string;
 begin
-  if Assigned(FValue) then
+  if Assigned(FExpression) then
   begin
-    Result := FValue.ToString;
+    Result := FExpression.ToString;
   end
   else
   begin
@@ -1077,7 +1164,7 @@ end;
 class operator TValueExpression.Implicit(
   const Value: TValueExpression): IExpression;
 begin
-  Result := Value.FValue;
+  Result := Value.FExpression;
 end;
 
 { TExpression }
@@ -1090,41 +1177,16 @@ begin
   Result := Delegate();
 end;
 
-{ TDefaultExpression }
-
-constructor TDefaultExpression.Create(TypeInfo: Pointer);
-begin
-  TValue.Make(nil, TypeInfo, FValue);
-end;
-
-function TDefaultExpression.Compile: TFunc<TValue>;
-var
-  Value: TValue;
-begin
-  Value := FValue;
-
-  Result :=
-    function: TValue
-    begin
-      Result := Value;
-    end;
-end;
-
-function TDefaultExpression.ToString: string;
-begin
-  Result := FValue.ToString;
-end;
-
 { TConstantExpression }
-
-constructor TConstantExpression.Create(const Value: TValue);
-begin
-  FValue := Value;
-end;
 
 constructor TConstantExpression.Create(const Value: TObject);
 begin
   FValue := TValue.From<TObject>(Value);
+end;
+
+constructor TConstantExpression.Create(const Value: TValue);
+begin
+  FValue := Value;
 end;
 
 constructor TConstantExpression.Create(const Value: Variant);
@@ -1140,14 +1202,14 @@ end;
 
 function TConstantExpression.Compile: TFunc<TValue>;
 var
-  Value: TValue;
+  Expression: IConstantExpression;
 begin
-  Value := FValue;
+  Expression := Self;
 
   Result :=
     function: TValue
     begin
-      Result := Value;
+      Result := Expression.Value;
     end;
 end;
 
@@ -1165,6 +1227,60 @@ begin
     Result := FValue.AsType<TComponent>.Name
   else
     Result := FValue.ToString;
+end;
+
+{ TDefaultExpression }
+
+constructor TDefaultExpression.Create(TypeInfo: Pointer);
+begin
+  inherited Create(TValue.From(nil, TypeInfo));
+end;
+
+{ TParameterExpression }
+
+constructor TParameterExpression.Create(const AName: string);
+begin
+  FName := AName;
+end;
+
+function TParameterExpression.GetName: string;
+begin
+  Result := FName;
+end;
+
+procedure TParameterExpression.SetValue(const Value: TValue);
+begin
+  FValue := Value;
+end;
+
+function TParameterExpression.ToString: string;
+begin
+  Result := FName;
+end;
+
+{ TComponentExpression }
+
+constructor TComponentExpression.Create(const Value: TComponent);
+begin
+  inherited Create(Value);
+end;
+
+function TComponentExpression.Compile: TFunc<TValue>;
+var
+  Expression: IConstantExpression;
+begin
+  Expression := Self;
+
+  Result :=
+    function: TValue
+    begin
+      Result := Expression.Value.AsType<TComponent>;
+    end;
+end;
+
+function TComponentExpression.ToString: string;
+begin
+  Result := FValue.AsType<TComponent>.Name;
 end;
 
 { TUnaryExpression }
@@ -1188,8 +1304,10 @@ end;
 
 function TNegativeExpression.Compile: TFunc<TValue>;
 var
+  Expression: IExpression;
   Delegate: TFunc<TValue>;
 begin
+  Expression := Self;
   Delegate := FExpression.Compile();
 
   Result :=
@@ -1197,6 +1315,8 @@ begin
     var
       LValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LValue := Delegate();
 
       if LValue.IsOrdinal  then
@@ -1223,6 +1343,13 @@ begin
   FRight := Right;
 end;
 
+function TBinaryExpression.BuildString(const OperatorString: string): string;
+begin
+  Result := FLeft.ToString + ' ' + OperatorString + ' ' + FRight.ToString;
+  if ExpressionManager.UseParentheses then
+    Result := '(' + Result + ')';
+end;
+
 function TBinaryExpression.GetLeft: IExpression;
 begin
   Result := FLeft;
@@ -1233,19 +1360,14 @@ begin
   Result := FRight;
 end;
 
-function TBinaryExpression.BuildString(const OperatorString: string): string;
-begin
-  Result := FLeft.ToString + ' ' + OperatorString + ' ' + FRight.ToString;
-  if ExpressionManager.UseParentheses then
-    Result := '(' + Result + ')';
-end;
-
 { TAdditionExpression }
 
 function TAdditionExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1254,6 +1376,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1280,8 +1404,10 @@ end;
 
 function TSubtractionExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1290,6 +1416,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1313,8 +1441,10 @@ end;
 
 function TMultiplicationExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1323,6 +1453,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1346,8 +1478,10 @@ end;
 
 function TDivisionExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1356,6 +1490,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1375,8 +1511,10 @@ end;
 
 function TIntegerDivisionExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1385,6 +1523,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1404,8 +1544,10 @@ end;
 
 function TModulusExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1414,6 +1556,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1433,8 +1577,10 @@ end;
 
 function TLogicalAndExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1443,6 +1589,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1459,8 +1607,10 @@ end;
 
 function TLogicalExclusiveOrExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1469,6 +1619,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1485,8 +1637,10 @@ end;
 
 function TLogicalOrExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1495,6 +1649,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1511,8 +1667,10 @@ end;
 
 function TEqualExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1521,6 +1679,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1537,8 +1697,10 @@ end;
 
 function TNotEqualExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1547,6 +1709,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1570,8 +1734,10 @@ end;
 
 function TLessThanExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1580,6 +1746,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1603,8 +1771,10 @@ end;
 
 function TLessThanOrEqualExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1613,8 +1783,11 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
+
       if LeftValue.IsNumeric and RightValue.IsNumeric then
       begin
         Result := TValue.From<Boolean>(LeftValue.AsExtended <= RightValue.AsExtended);
@@ -1635,8 +1808,10 @@ end;
 
 function TGreaterThanExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1645,6 +1820,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1668,8 +1845,10 @@ end;
 
 function TGreaterThanOrEqualExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   LeftDelegate := FLeft.Compile();
   RightDelegate := FRight.Compile();
 
@@ -1678,6 +1857,8 @@ begin
     var
       LeftValue, RightValue: TValue;
     begin
+      if Assigned(Expression) then;
+
       LeftValue := LeftDelegate();
       RightValue := RightDelegate();
 
@@ -1697,68 +1878,7 @@ begin
   Result := BuildString('>=');
 end;
 
-{ TComponentExpression }
-
-constructor TComponentExpression.Create(const Value: TComponent);
-begin
-  FValue := Value;
-end;
-
-function TComponentExpression.Compile: TFunc<TValue>;
-begin
-  Result :=
-    function: TValue
-    begin
-      Result := TValue.From<TComponent>(FValue);
-    end;
-end;
-
-function TComponentExpression.ToString: string;
-begin
-  Result := FValue.Name;
-end;
-
-{ TParameterExpression }
-
-constructor TParameterExpression.Create(const AName: string);
-begin
-  FName := AName;
-end;
-
-function TParameterExpression.Compile: TFunc<TValue>;
-begin
-  Result :=
-    function: TValue
-    begin
-      Result := FValue;
-    end;
-end;
-
-function TParameterExpression.GetName: string;
-begin
-  Result := FName;
-end;
-
-procedure TParameterExpression.SetValue(const Value: TValue);
-begin
-  FValue := Value;
-end;
-
-function TParameterExpression.ToString: string;
-begin
-  Result := FName;
-end;
-
 { TPropertyExpression }
-
-function TPropertyExpression.Compile: TFunc<TValue>;
-begin
-  Result :=
-    function: TValue
-    begin
-      Result := Value;
-    end;
-end;
 
 constructor TPropertyExpression.Create(AExpression: IExpression;
   const APropertyName: string);
@@ -1807,6 +1927,19 @@ var
 begin
   LExpression := TConstantExpression.Create(AObject);
   Create(LExpression, APropertyName);
+end;
+
+function TPropertyExpression.Compile: TFunc<TValue>;
+var
+  Expression: IValueExpression;
+begin
+  Expression := Self;
+
+  Result :=
+    function: TValue
+    begin
+      Result := Expression.Value;
+    end;
 end;
 
 function TPropertyExpression.GetExpression: IExpression;
@@ -2188,17 +2321,21 @@ end;
 
 function TAssignExpression.Compile: TFunc<TValue>;
 var
+  Expression: IBinaryExpression;
   LeftDelegate, RightDelegate: TFunc<TValue>;
   LeftExpr: IValueExpression;
 begin
   if Supports(FLeft, IValueExpression, LeftExpr) then
   begin
+    Expression := Self;
     LeftDelegate := LeftExpr.Compile();
     RightDelegate := FRight.Compile();
 
     Result :=
       function: TValue
       begin
+        if Assigned(Expression) then;
+
         LeftExpr.Value := RightDelegate();
         Result := LeftDelegate();
       end;
@@ -2212,13 +2349,73 @@ begin
   Result := FLeft.ToString + ' := ' + FRight.ToString + ';';
 end;
 
+{ TConvertExpression }
+
+constructor TConvertExpression.Create(Left, Right: IExpression;
+  Convert: TConvertFunc);
+begin
+  inherited Create(Left, Right);
+  FConvert := Convert;
+end;
+
+function TConvertExpression.Compile: TFunc<TValue>;
+var
+  Expression: IBinaryExpression;
+  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftExpr: IValueExpression;
+  Convert: TConvertFunc;
+begin
+  if Supports(Left, IValueExpression, LeftExpr) then
+  begin
+    Expression := Self;
+    LeftDelegate := LeftExpr.Compile();
+    RightDelegate := Right.Compile();
+    Convert := FConvert;
+
+    Result :=
+      function: TValue
+      var
+        LeftValue, RightValue: TValue;
+      begin
+        if Assigned(Expression) then
+
+        RightValue := RightDelegate();
+        if Assigned(Convert) then
+        begin
+          LeftValue := Convert(RightValue);
+        end
+        else
+        begin
+          RightValue.TryConvert(LeftExpr.Value.TypeInfo, LeftValue);
+        end;
+        LeftExpr.Value := LeftValue;
+        Result := LeftDelegate();
+      end;
+  end
+  else
+  begin
+    Result :=
+      function: TValue
+      begin
+        raise EArgumentException.Create('Left side cannot be assigned to');
+      end;
+  end
+end;
+
 { TBlockExpression }
+
+constructor TBlockExpression.Create(Expressions: array of IExpression);
+begin
+  FExpressions := TArray.Copy<IExpression>(Expressions);
+end;
 
 function TBlockExpression.Compile: TFunc<TValue>;
 var
-  i: Integer;
+  Expression: IBlockExpression;
   Delegates: TArray<TFunc<TValue>>;
+  i: Integer;
 begin
+  Expression := Self;
   SetLength(Delegates, Length(FExpressions));
 
   for i := 0 to High(FExpressions) do
@@ -2231,17 +2428,14 @@ begin
     var
      i: Integer;
     begin
+      if Assigned(Expression) then;
+
       Result := TValue.Empty;
       for i := 0 to High(Delegates) do
       begin
         Result := Delegates[i]();
       end;
     end;
-end;
-
-constructor TBlockExpression.Create(Expressions: array of IExpression);
-begin
-  FExpressions := TArray.Copy<IExpression>(Expressions);
 end;
 
 function TBlockExpression.GetExpressions: TArray<IExpression>;
@@ -2274,8 +2468,10 @@ end;
 
 function TConditionalExpression.Compile: TFunc<TValue>;
 var
+  Expression: IConditionalExpression;
   TestDelegate, IfTrueDelegate, IfFalseDelegate: TFunc<TValue>;
 begin
+  Expression := Self;
   TestDelegate := FTest.Compile();
   IfTrueDelegate := FIfTrue.Compile();
   IfFalseDelegate := FIfFalse.Compile();
@@ -2283,6 +2479,8 @@ begin
   Result :=
     function: TValue
     begin
+      if Assigned(Expression) then;
+
       if TestDelegate().AsBoolean then
       begin
         Result := IfTrueDelegate();
@@ -2332,13 +2530,17 @@ end;
 
 function TLogicalNotExpression.Compile: TFunc<TValue>;
 var
+  Expression: IUnaryExpression;
   Delegate: TFunc<TValue>;
 begin
+  Expression := Self;
   Delegate := FExpression.Compile();
 
   Result :=
     function: TValue
     begin
+      if Assigned(Expression) then;
+
       Result := not Delegate().AsBoolean;
     end;
 end;
@@ -2351,10 +2553,16 @@ end;
 { TBreakExpression }
 
 function TBreakExpression.Compile: TFunc<TValue>;
+var
+  Expression: IExpression;
 begin
+  Expression := Self;
+
   Result :=
     function: TValue
     begin
+      if Assigned(Expression) then;
+
       raise EBreak.Create('');
     end;
 end;
@@ -2368,13 +2576,17 @@ end;
 
 function TLoopExpression.Compile: TFunc<TValue>;
 var
+  Expression: IUnaryExpression;
   Delegate: TFunc<TValue>;
 begin
+  Expression := Self;
   Delegate := FExpression.Compile();
 
   Result :=
     function: TValue
     begin
+      if Assigned(Expression) then;
+
       try
         repeat
           Result := Delegate();

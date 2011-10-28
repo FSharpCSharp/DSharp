@@ -32,9 +32,11 @@ unit DSharp.Core.Variants;
 interface
 
 uses
+  Classes,
   DSharp.Core.Expressions;
 
 function AsDynamic(AExpression: IExpression): Variant; overload;
+function AsDynamic(AComponent: TComponent): Variant; overload;
 function AsDynamic(AObject: TObject): Variant; overload;
 function AsDynamic(AValue: Variant): Variant; overload;
 
@@ -59,6 +61,8 @@ uses
 
 type
   TExpressionVariantType = class(TInvokeableVariantType)
+  protected
+    function FixupIdent(const AText: string): string; override;
   public
     procedure Cast(var Dest: TVarData; const Source: TVarData); override;
     procedure Clear(var V: TVarData); override;
@@ -96,6 +100,21 @@ begin
     VType := ExpressionVariantType.VarType;
     VExpressionInfo := TExpressionInfo.Create;
     VExpressionInfo.Expression := AExpression;
+
+    ExpressionStack.Push(VExpressionInfo.Expression);
+  end;
+end;
+
+function AsDynamic(AComponent: TComponent): Variant;
+begin
+  VarClear(Result);
+
+  with TExpressionVarData(Result) do
+  begin
+    VType := ExpressionVariantType.VarType;
+    VExpressionInfo := TExpressionInfo.Create;
+    VExpressionInfo.Expression := TComponentExpression.Create(AComponent);
+    VExpressionInfo.Instance := AComponent;
 
     ExpressionStack.Push(VExpressionInfo.Expression);
   end;
@@ -140,8 +159,6 @@ begin
   if (Right.VType = VarType) and (Left.VType = VarType) then
   begin
     ExpressionStack.Clear();
-//    LLeft := ExpressionStack.Pop();
-//    LRight := ExpressionStack.Pop();
     LLeft := TExpressionVarData(Left).VExpressionInfo.Expression;
     LRight := TExpressionVarData(Right).VExpressionInfo.Expression;
     TExpressionVarData(Left).VExpressionInfo.Expression :=
@@ -182,6 +199,7 @@ begin
     LRight := ExpressionStack.Pop();
     LLeft := ExpressionStack.Pop();
     ExpressionStack.Push(OperatorExpressions[Operator].Create(LLeft, LRight));
+    ForceStack();
     Result := False; // does not matter
   end
   else
@@ -241,6 +259,11 @@ begin
   end;
 end;
 
+function TExpressionVariantType.FixupIdent(const AText: string): string;
+begin
+  Result := AText;
+end;
+
 function TExpressionVariantType.GetProperty(var Dest: TVarData;
   const V: TVarData; const Name: string): Boolean;
 var
@@ -252,7 +275,8 @@ begin
 
     Result := True;
     Dest.VType := VarType;
-    VExpressionInfo.Expression := TPropertyExpression.Create(LParameter, Name);
+    VExpressionInfo.Expression := TPropertyExpression.Create(VExpressionInfo.Expression, Name);
+//    VExpressionInfo.Expression := TPropertyExpression.Create(LParameter, Name);
     ExpressionStack.Push(VExpressionInfo.Expression);
     Copy(Dest, V, False);
   end;

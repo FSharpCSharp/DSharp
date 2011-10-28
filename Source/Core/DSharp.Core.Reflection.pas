@@ -277,6 +277,7 @@ type
     class function ToString(const Values: TArray<TValue>): string; overload; static;
     class function Equals(const Left, Right: TArray<TValue>): Boolean; overload; static;
 
+    class function From(ABuffer: Pointer; ATypeInfo: PTypeInfo): TValue; overload; static;
     class function FromBoolean(const Value: Boolean): TValue; static;
     class function FromString(const Value: string): TValue; static;
 
@@ -326,7 +327,6 @@ implementation
 
 uses
   Classes,
-  ComObj,
   Math,
   StrUtils,
   SysUtils;
@@ -1268,6 +1268,12 @@ begin
       end;
     end
   end;
+end;
+
+class function TValueHelper.From(ABuffer: Pointer;
+  ATypeInfo: PTypeInfo): TValue;
+begin
+  TValue.Make(ABuffer, ATypeInfo, Result);
 end;
 
 class function TValueHelper.FromBoolean(const Value: Boolean): TValue;

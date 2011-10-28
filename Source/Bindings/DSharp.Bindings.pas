@@ -84,6 +84,7 @@ type
     class var DataErrorValidationRule: IValidationRule;
     procedure BeginUpdate;
     procedure EndUpdate;
+    procedure CompileExpressions; virtual; abstract;
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoTargetPropertyChanged(ASender: TObject;
@@ -98,13 +99,13 @@ type
     function GetOnValidation: TEvent<TValidationEvent>;
     function GetValidationErrors: IList<IValidationResult>;
     function GetValidationRules: IList<IValidationRule>;
-    procedure InitConverter; virtual; abstract;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
     procedure SetActive(const Value: Boolean);
     procedure SetBindingGroup(const Value: TBindingGroup);
     procedure SetConverter(const Value: IValueConverter);
     procedure SetTarget(const Value: TObject);
-    procedure SetTargetPropertyName(const AValue: string);
+    procedure SetTargetProperty(AObject: TObject; const APropertyName: string);
+    procedure SetTargetPropertyName(const Value: string);
   public
     class constructor Create;
     constructor Create(Collection: TCollection); override;
@@ -155,6 +156,9 @@ type
     FSourceProperty: IMemberExpression;
     FSourcePropertyName: string;
     FSourceUpdateTrigger: TUpdateTrigger;
+    FUpdateSourceExpression: TCompiledExpression;
+    FUpdateTargetExpression: TCompiledExpression;
+    procedure CompileExpressions; override;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction);
     procedure DoSourcePropertyChanged(ASender: TObject;
@@ -164,11 +168,10 @@ type
     procedure DoTargetPropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger); override;
     function GetDisplayName: string; override;
-    procedure InitConverter; override;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); override;
     procedure RaiseValidationError;
     procedure SetSource(const Value: TObject);
-    procedure SetSourceProperty(AObject: TObject; APropertyName: string);
+    procedure SetSourceProperty(AObject: TObject; const APropertyName: string);
     procedure SetSourcePropertyName(const Value: string);
     function ValidateCommitted: Boolean;
   public
@@ -501,10 +504,9 @@ begin
   if FConverter <> Value then
   begin
     FConverter := Value;
-
+    CompileExpressions();
     UpdateTarget(True);
   end;
-  InitConverter();
 end;
 
 procedure TBindingBase.SetTarget(const Value: TObject);
@@ -528,13 +530,10 @@ begin
       end;
     end;
 
-    FTarget := Value;
-    FTargetProperty := nil;
+    SetTargetProperty(Value, FTargetPropertyName);
 
     if Assigned(FTarget) then
     begin
-      FTargetProperty := TPropertyExpression.Create(FTarget, FTargetPropertyName);
-
       if FTarget is TComponent then
       begin
         TComponent(FTarget).FreeNotification(FNotificationHandler);
@@ -551,14 +550,23 @@ begin
   end;
 end;
 
-procedure TBindingBase.SetTargetPropertyName(const AValue: string);
+procedure TBindingBase.SetTargetProperty(AObject: TObject;
+  const APropertyName: string);
 begin
-  if not SameText(FTargetPropertyName, AValue) then
+  FTarget := AObject;
+  FTargetProperty := TPropertyExpression.Create(FTarget, FTargetPropertyName);
+  CompileExpressions();
+end;
+
+procedure TBindingBase.SetTargetPropertyName(const Value: string);
+begin
+  if not SameText(FTargetPropertyName, Value) then
   begin
-    FTargetPropertyName := AValue;
+    FTargetPropertyName := Value;
     if Assigned(FTarget) then
     begin
-      FTargetProperty := TPropertyExpression.Create(FTarget, FTargetPropertyName);
+      SetTargetProperty(FTarget, FTargetPropertyName);
+
       UpdateTarget(True);
     end;
   end;
@@ -617,6 +625,50 @@ begin
     and Supports(FSource, IEditable, LEditable) then
   begin
     LEditable.EndEdit();
+  end;
+end;
+
+procedure TBinding.CompileExpressions;
+begin
+  if Assigned(FSourceProperty) and Assigned(FTargetProperty) then
+  begin
+    if Assigned(FConverter) then
+    begin
+      FUpdateSourceExpression :=
+        Expression.Convert(
+          FSourceProperty,
+          FTargetProperty,
+          function(const Value: TValue): TValue
+          begin
+            Result := FConverter.ConvertBack(Value);
+          end).Compile();
+
+      FUpdateTargetExpression :=
+        Expression.Convert(
+          FTargetProperty,
+          FSourceProperty,
+          function(const Value: TValue): TValue
+          begin
+            Result := FConverter.Convert(Value);
+          end).Compile();
+    end
+    else
+    begin
+      FUpdateSourceExpression :=
+        Expression.Convert(
+          FSourceProperty,
+          FTargetProperty).Compile();
+
+      FUpdateTargetExpression :=
+        Expression.Convert(
+          FTargetProperty,
+          FSourceProperty).Compile();
+    end;
+  end
+  else
+  begin
+    FUpdateSourceExpression := Expression.Empty.Compile();
+    FUpdateTargetExpression := Expression.Empty.Compile();
   end;
 end;
 
@@ -744,28 +796,6 @@ begin
   end;
 end;
 
-procedure TBinding.InitConverter;
-begin
-  if (not Assigned(FConverter) or ((FConverter as TObject) is TDefaultConverter))
-    and Assigned(FTargetProperty) and Assigned(FTargetProperty.Member)
-    and Assigned(FSourceProperty) and Assigned(FSourceProperty.Member) then
-  begin
-    if (FTargetProperty.Member.RttiType.TypeKind = tkMethod)
-      and (FSourceProperty.Member is TRttiMethod) then
-    begin
-      FConverter := TDefaultConverter.Create(
-        TypeInfo(TMethod),
-        FTargetProperty.Member.RttiType.Handle);
-    end
-    else
-    begin
-      FConverter := TDefaultConverter.Create(
-        FSourceProperty.Member.RttiType.Handle,
-        FTargetProperty.Member.RttiType.Handle);
-    end;
-  end;
-end;
-
 procedure TBinding.Notification(AComponent: TComponent; AOperation: TOperation);
 begin
   inherited;
@@ -846,7 +876,7 @@ begin
   end;
 end;
 
-procedure TBinding.SetSourceProperty(AObject: TObject; APropertyName: string);
+procedure TBinding.SetSourceProperty(AObject: TObject; const APropertyName: string);
 var
   LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
@@ -857,18 +887,10 @@ begin
   end;
 
   FSource := AObject;
+  FSourceProperty := TPropertyExpression.Create(FSource, FSourcePropertyName);
+  CompileExpressions();
 
-  if Assigned(FSource) then
-  begin
-    FSourceProperty := TPropertyExpression.Create(FSource, FSourcePropertyName);
-  end
-  else
-  begin
-    FSourceProperty := nil;
-  end;
-
-  if Assigned(FSource) and Assigned(FSourceProperty)
-    and FSourceProperty.Value.IsObject and FSourceProperty.Member.IsReadable
+  if Assigned(FSourceProperty) and FSourceProperty.Value.IsObject
     and Supports(FSourceProperty.Value.AsObject,
     INotifyCollectionChanged, FSourceCollectionChanged) then
   begin
@@ -892,9 +914,6 @@ begin
 end;
 
 procedure TBinding.UpdateSource(IgnoreBindingMode: Boolean = True);
-var
-  LSourceValue: TValue;
-  LTargetValue: TValue;
 begin
   if FActive and (IgnoreBindingMode or (FBindingMode in [bmTwoWay..bmOneWayToSource]))
     and Assigned(FTarget) and Assigned(FTargetProperty)
@@ -903,19 +922,7 @@ begin
   begin
     BeginUpdate();
     try
-      LTargetValue := FTargetProperty.Value;
-
-      InitConverter();
-      if Assigned(FConverter) then
-      begin
-        LSourceValue := FConverter.ConvertBack(LTargetValue);
-      end
-      else
-      begin
-        LSourceValue := LTargetValue;
-      end;
-
-      FSourceProperty.Value := LSourceValue;
+      FUpdateSourceExpression();
       FValidationErrors.Clear();
     finally
       EndUpdate();
@@ -926,7 +933,6 @@ end;
 procedure TBinding.UpdateTarget(IgnoreBindingMode: Boolean = True);
 var
   LSourceValue: TValue;
-  LTargetValue: TValue;
   LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   if FActive and (IgnoreBindingMode or (FBindingMode in [bmOneWay..bmTwoWay]))
@@ -954,17 +960,7 @@ begin
         LSourceCollectionChanged.Add(DoSourceCollectionChanged);
       end;
 
-      InitConverter();
-      if Assigned(FConverter) then
-      begin
-        LTargetValue := FConverter.Convert(LSourceValue)
-      end
-      else
-      begin
-        LTargetValue := LSourceValue;
-      end;
-
-      FTargetProperty.Value := LTargetValue;
+      FUpdateTargetExpression();
       FValidationErrors.Clear();
     finally
       EndUpdate();
@@ -1006,7 +1002,6 @@ begin
 
       if Result then
       begin
-        InitConverter();
         if Assigned(FConverter) then
         begin
           LSourceValue := FConverter.ConvertBack(LTargetValue);

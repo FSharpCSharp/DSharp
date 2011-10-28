@@ -34,6 +34,7 @@ unit DSharp.Core.Lambda;
 interface
 
 uses
+  Classes,
   DSharp.Core.Expressions,
   SysUtils;
 
@@ -74,6 +75,7 @@ type
       Expression: IExpression): Boolean; static;
   end;
 
+function Arg(AComponent: TComponent): Variant; overload;
 function Arg(AObject: TObject): Variant; overload;
 function Arg(const AValue: Variant): Variant; overload;
 function Arg1: Variant; overload;
@@ -100,6 +102,11 @@ type
     destructor Destroy; override;
     function ToString: string; override;
   end;
+
+function Arg(AComponent: TComponent): Variant;
+begin
+  Result := AsDynamic(AComponent);
+end;
 
 function Arg(AObject: TObject): Variant;
 begin
@@ -142,7 +149,7 @@ begin
   Result := AsDynamic(ExpressionStack.Peek());
 end;
 
-{ TLambda }
+{ Lambda }
 
 class function Lambda.InitExpression(Expression: IExpression): IExpression;
 begin

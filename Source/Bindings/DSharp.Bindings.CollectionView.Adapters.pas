@@ -37,7 +37,7 @@ uses
   DSharp.Collections,
   DSharp.Bindings.CollectionView,
   DSharp.Bindings.Notifications,
-  Grids;
+  DSharp.Bindings.VCLControls;
 
 type
   TCollectionViewAdapter = class abstract(TCollectionView)
@@ -56,6 +56,7 @@ type
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction); override;
     function GetOwner: TPersistent; override;
+    procedure SetItemsSource(const Value: IList<TObject>); override;
     procedure UpdateItemIndex(ACurrentItem: TObject);
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
@@ -99,6 +100,25 @@ type
   public
     constructor Create(AOwner: TPersistent; AItems: TListItems;
       AColumns: TListColumns);
+    destructor Destroy; override;
+  end;
+
+  TCollectionViewPageControlAdapter = class(TCollectionViewAdapter)
+  private
+    FPageControl: TPageControl;
+  protected
+    function AddDisplayItem: NativeInt; override;
+    procedure ClearDisplayItems; override;
+    function GetDisplayItemsCount: NativeInt; override;
+    function FindDisplayItem(AItem: TObject): NativeInt; override;
+    procedure RemoveDisplayItem(AIndex: NativeInt); override;
+    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); override;
+
+    function GetCurrentItem: TObject; override;
+    procedure SetItemIndex(const Value: NativeInt); override;
+    procedure UpdateItems(AClearItems: Boolean = False); override;
+  public
+    constructor Create(AOwner: TPersistent; APageControl: TPageControl);
     destructor Destroy; override;
   end;
 
@@ -210,16 +230,26 @@ begin
     caRemove:
     begin
       LIndex := FindDisplayItem(Item);
-      RemoveDisplayItem(LIndex);
+      if LIndex > 0 then
+      begin
+        RemoveDisplayItem(LIndex);
+      end;
     end;
   end;
 
   NotifyPropertyChanged(FOwner, Self, 'View');
+  FOnCollectionChanged.Invoke(FOwner, Item, Action);
 end;
 
 function TCollectionViewAdapter.GetOwner: TPersistent;
 begin
   Result := FOwner;
+end;
+
+procedure TCollectionViewAdapter.SetItemsSource(const Value: IList<TObject>);
+begin
+  inherited;
+  NotifyPropertyChanged(FOwner, Self, 'View');
 end;
 
 procedure TCollectionViewAdapter.UpdateItemIndex(ACurrentItem: TObject);
@@ -287,7 +317,6 @@ destructor TCollectionViewListItemsAdapter.Destroy;
 begin
   FColumns := nil;
   FItems := nil;
-  SetItemsSource(nil);
   inherited;
 end;
 
@@ -306,7 +335,7 @@ end;
 
 function TCollectionViewListItemsAdapter.GetCurrentItem: TObject;
 begin
-  if ItemIndex > -1 then
+  if Assigned(FItems) and(ItemIndex > -1) then
   begin
     Result := FItems[ItemIndex].Data;
   end
@@ -394,6 +423,106 @@ begin
   end;
 end;
 
+{ TCollectionViewPageControlAdapter }
+
+constructor TCollectionViewPageControlAdapter.Create(AOwner: TPersistent;
+  APageControl: TPageControl);
+begin
+  inherited Create(AOwner);
+  FPageControl := APageControl;
+end;
+
+destructor TCollectionViewPageControlAdapter.Destroy;
+begin
+  FPageControl := nil;
+  inherited;
+end;
+
+function TCollectionViewPageControlAdapter.AddDisplayItem: NativeInt;
+var
+  LTabSheet: TTabSheet;
+begin
+  LTabSheet := TTabSheet.Create(FPageControl);
+  LTabSheet.PageControl := FPageControl;
+  Result := LTabSheet.TabIndex;
+end;
+
+procedure TCollectionViewPageControlAdapter.ClearDisplayItems;
+begin
+  while FPageControl.PageCount > 0 do
+  begin
+    RemoveDisplayItem(FPageControl.PageCount - 1);
+  end;
+end;
+
+function TCollectionViewPageControlAdapter.FindDisplayItem(
+  AItem: TObject): NativeInt;
+var
+  i: NativeInt;
+begin
+  Result := -1;
+  for i := 0 to Pred(FPageControl.PageCount) do
+  begin
+    if TObject(FPageControl.Pages[i].Tag) = AItem then
+    begin
+      Result := i;
+      Break;
+    end;
+  end;
+end;
+
+function TCollectionViewPageControlAdapter.GetCurrentItem: TObject;
+begin
+  if Assigned(FPageControl) and (ItemIndex > -1) then
+  begin
+    Result := TObject(FPageControl.Pages[ItemIndex].Tag);
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TCollectionViewPageControlAdapter.GetDisplayItemsCount: NativeInt;
+begin
+  Result := FPageControl.PageCount;
+end;
+
+procedure TCollectionViewPageControlAdapter.RemoveDisplayItem(
+  AIndex: NativeInt);
+begin
+  FPageControl.Pages[AIndex].Free;
+end;
+
+procedure TCollectionViewPageControlAdapter.SetItemIndex(
+  const Value: NativeInt);
+var
+  LProperty: TRttiProperty;
+begin
+  inherited;
+
+  if FOwner.TryGetProperty('TabIndex', LProperty) then
+  begin
+    LProperty.SetValue(FOwner, Value);
+  end;
+
+  NotifyPropertyChanged(FOwner, Self, 'View');
+end;
+
+procedure TCollectionViewPageControlAdapter.UpdateDisplayItem(AIndex: NativeInt;
+  AItem: TObject);
+begin
+  FPageControl.Pages[AIndex].Tag := NativeInt(AItem);
+end;
+
+procedure TCollectionViewPageControlAdapter.UpdateItems(AClearItems: Boolean);
+begin
+  if Assigned(FPageControl) then
+  begin
+    inherited;
+  end;
+end;
+
 { TCollectionViewStringGridAdapter }
 
 constructor TCollectionViewStringGridAdapter.Create(AOwner: TPersistent;
@@ -406,7 +535,6 @@ end;
 destructor TCollectionViewStringGridAdapter.Destroy;
 begin
   FGrid := nil;
-  SetItemsSource(nil);
   inherited;
 end;
 
@@ -464,7 +592,7 @@ end;
 
 function TCollectionViewStringGridAdapter.GetCurrentItem: TObject;
 begin
-  if FItemIndex > -1 then
+  if Assigned(FGrid) and (FItemIndex > -1) then
   begin
     Result := FGrid.Cols[0].Objects[FItemIndex + FGrid.FixedRows];
   end
@@ -545,7 +673,6 @@ end;
 destructor TCollectionViewStringsAdapter.Destroy;
 begin
   FItems := nil;
-  SetItemsSource(nil);
   inherited;
 end;
 
@@ -566,7 +693,7 @@ end;
 
 function TCollectionViewStringsAdapter.GetCurrentItem: TObject;
 begin
-  if FItemIndex > -1 then
+  if Assigned(FItems) and (FItemIndex > -1) then
   begin
     Result := FItems.Objects[FItemIndex];
   end
@@ -636,7 +763,6 @@ end;
 destructor TCollectionViewTreeNodesAdapter.Destroy;
 begin
   FItems := nil;
-  SetItemsSource(nil);
   inherited;
 end;
 
@@ -668,7 +794,7 @@ end;
 
 function TCollectionViewTreeNodesAdapter.GetCurrentItem: TObject;
 begin
-  if FItemIndex > 0 then
+  if Assigned(FItems) and (FItemIndex > 0) then
   begin
     Result := TTreeNode(FItemIndex).Data;
   end

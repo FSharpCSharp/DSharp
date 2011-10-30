@@ -44,6 +44,7 @@ uses
 type
   TCollectionView = class(TPropertyChangedBase, ICollectionView, ICollectionViewNavigation)
   private
+    FOnCurrentChanged: TNotifyEvent;
     FUpdateCount: Integer;
     function GetUpdating: Boolean;
   protected
@@ -53,6 +54,7 @@ type
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 
+    procedure DoCurrentChanged;
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); virtual;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
@@ -91,6 +93,7 @@ type
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent>
       read GetOnCollectionChanged;
+    property OnCurrentChanged: TNotifyEvent read FOnCurrentChanged write FOnCurrentChanged;
     property Updating: Boolean read GetUpdating;
   end;
 
@@ -117,6 +120,14 @@ end;
 procedure TCollectionView.BeginUpdate;
 begin
   Inc(FUpdateCount);
+end;
+
+procedure TCollectionView.DoCurrentChanged;
+begin
+  if Assigned(FOnCurrentChanged) then
+  begin
+    FOnCurrentChanged(Self);
+  end;
 end;
 
 procedure TCollectionView.DoItemPropertyChanged(ASender: TObject;
@@ -254,6 +265,8 @@ end;
 procedure TCollectionView.SetItemIndex(const Value: NativeInt);
 begin
   FItemIndex := Value;
+
+  DoCurrentChanged();
 
   DoPropertyChanged('CurrentItem');
   DoPropertyChanged('ItemIndex');

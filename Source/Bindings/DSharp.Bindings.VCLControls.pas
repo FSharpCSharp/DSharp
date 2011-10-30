@@ -51,6 +51,11 @@ uses
   SysUtils;
 
 type
+  TButton = class(StdCtrls.TButton)
+  public
+    procedure Click; override;
+  end;
+
   TCheckBox = class(StdCtrls.TCheckBox, INotifyPropertyChanged)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
@@ -160,6 +165,8 @@ type
     property BindingSource: TObject read FBindingSource write SetBindingSource;
   end;
 
+  TLabel = class(StdCtrls.TLabel);
+
   TLabeledEdit = class(ExtCtrls.TLabeledEdit, INotifyPropertyChanged)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
@@ -226,6 +233,28 @@ type
     constructor Create(AOwner: TComponent); override;
   end;
 
+  TTabSheet = class;
+
+  TPageControl = class(ComCtrls.TPageControl, INotifyPropertyChanged, ICollectionView)
+  private
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    FView: TCollectionView;
+    function GetActivePage: TTabSheet;
+    procedure SetActivePage(const Value: TTabSheet);
+    function GetPage(Index: Integer): TTabSheet;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
+  protected
+    procedure SetTabIndex(Value: Integer); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property Pages[Index: Integer]: TTabSheet read GetPage;
+    property View: TCollectionView read FView implements ICollectionView;
+  published
+    property ActivePage: TTabSheet read GetActivePage write SetActivePage;
+  end;
+
   TPanel = class(ExtCtrls.TPanel, INotifyPropertyChanged)
   private
     FBindingSource: TObject;
@@ -278,6 +307,33 @@ type
     property View: TCollectionView read FView implements ICollectionView;
   end;
 
+  TTabSheet = class(ComCtrls.TTabSheet, INotifyPropertyChanged)
+  private
+    FBindingSource: TObject;
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    FOnClose: TCloseEvent;
+    FOnCloseQuery: TCloseQueryEvent;
+    FModalResult: TModalResult;
+    procedure DoClose(var Action: TCloseAction);
+    procedure SetModalResult(const Value: TModalResult);
+    function GetPageControl: TPageControl;
+    procedure SetPageControl(const Value: TPageControl);
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
+    procedure SetBindingSource(const Value: TObject);
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Close;
+    function CloseQuery: Boolean;
+    property BindingSource: TObject read FBindingSource write SetBindingSource;
+    property ModalResult: TModalResult read FModalResult write SetModalResult;
+    property PageControl: TPageControl read GetPageControl write SetPageControl;
+  published
+    property OnClose: TCloseEvent read FOnClose write FOnClose;
+    property OnCloseQuery: TCloseQueryEvent read FOnCloseQuery write FOnCloseQuery;
+  end;
+
   TTrackBar = class(ComCtrls.TTrackBar, INotifyPropertyChanged)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
@@ -309,6 +365,26 @@ implementation
 uses
   DSharp.Bindings.CollectionView.Adapters,
   DSharp.Bindings.Exceptions;
+
+{ TButton }
+
+procedure TButton.Click;
+var
+  Control: TWinControl;
+begin
+  inherited;
+
+  Control := Parent;
+  while Assigned(Control) do
+  begin
+    if Control is TTabSheet then
+    begin
+      TTabSheet(Control).ModalResult := ModalResult;
+      Break;
+    end;
+    Control := Control.Parent;
+  end;
+end;
 
 { TCheckBox }
 
@@ -722,6 +798,48 @@ begin
   end;
 end;
 
+{ TPageControl }
+
+constructor TPageControl.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+  FView := TCollectionViewPageControlAdapter.Create(Self, Self);
+end;
+
+destructor TPageControl.Destroy;
+begin
+  FView.Free();
+  inherited;
+end;
+
+function TPageControl.GetActivePage: TTabSheet;
+begin
+  Result := inherited ActivePage as TTabSheet;
+end;
+
+function TPageControl.GetPage(Index: Integer): TTabSheet;
+begin
+  Result := inherited Pages[Index] as TTabSheet;
+end;
+
+procedure TPageControl.SetActivePage(const Value: TTabSheet);
+begin
+  inherited ActivePage := Value;
+end;
+
+procedure TPageControl.SetTabIndex(Value: Integer);
+begin
+  inherited;
+  if (FView.ItemIndex <> Value) and (Value > -1) then
+  begin
+    FView.ItemIndex := Value;
+  end;
+  NotifyPropertyChanged.DoPropertyChanged('ActivePage');
+  NotifyPropertyChanged.DoPropertyChanged('ActivePageIndex');
+  NotifyPropertyChanged.DoPropertyChanged('TabIndex');
+end;
+
 { TPanel }
 
 constructor TPanel.Create(AOwner: TComponent);
@@ -830,6 +948,80 @@ begin
   finally
     FView.EndUpdate;
   end;
+end;
+
+{ TTabSheet }
+
+constructor TTabSheet.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+end;
+
+procedure TTabSheet.Close;
+var
+  CloseAction: TCloseAction;
+begin
+  if CloseQuery then
+  begin
+    CloseAction := caFree;
+    DoClose(CloseAction);
+    if CloseAction = caFree then
+    begin
+      Free;
+    end;
+  end;
+end;
+
+function TTabSheet.CloseQuery: Boolean;
+begin
+  Result := True;
+  if Assigned(FOnCloseQuery) then
+  begin
+    FOnCloseQuery(Self, Result);
+  end;
+end;
+
+destructor TTabSheet.Destroy;
+begin
+  if Assigned(PageControl) and Assigned(PageControl.View.ItemsSource) then
+  begin
+    PageControl.View.ItemsSource.Remove(TObject(Tag));
+  end;
+  inherited;
+end;
+
+procedure TTabSheet.DoClose(var Action: TCloseAction);
+begin
+  if Assigned(FOnClose) then
+  begin
+    FOnClose(Self, Action);
+  end;
+end;
+
+function TTabSheet.GetPageControl: TPageControl;
+begin
+  Result := inherited PageControl as TPageControl;
+end;
+
+procedure TTabSheet.SetBindingSource(const Value: TObject);
+begin
+  FBindingSource := Value;
+  NotifyPropertyChanged.DoPropertyChanged('BindingSource');
+end;
+
+procedure TTabSheet.SetModalResult(const Value: TModalResult);
+begin
+  FModalResult := Value;
+  if FModalResult <> mrNone then
+  begin
+    Close;
+  end;
+end;
+
+procedure TTabSheet.SetPageControl(const Value: TPageControl);
+begin
+  inherited PageControl := Value;
 end;
 
 { TTrackBar }

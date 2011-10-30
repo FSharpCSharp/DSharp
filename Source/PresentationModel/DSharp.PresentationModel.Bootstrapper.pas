@@ -39,20 +39,15 @@ uses
   TypInfo;
 
 type
-  IBootstrapper<T> = interface
-    ['{F0946EB3-A0B0-4AB8-A3CA-E72419A52D9D}']
-    procedure StartRuntime;
-  end;
-
-  TBootstrapper<T> = class(TInterfacedObject, IBootstrapper<T>)
+  TBootstrapper<T> = class
   private
     FServiceLocator: IServiceLocator;
     FViewModel: Lazy<T>;
     FWindowManager: IWindowManager;
-    function GetInstance(TypeInfo: PTypeInfo; Name: string): TValue;
-    procedure StartRuntime;
+    function GetInstance(TypeInfo: PTypeInfo; const Name: string): TValue;
   public
     constructor Create(ServiceLocator: IServiceLocator);
+    procedure StartRuntime;
   end;
 
 implementation
@@ -69,7 +64,7 @@ begin
   Composition.GetInstance := GetInstance;
 end;
 
-function TBootstrapper<T>.GetInstance(TypeInfo: PTypeInfo; Name: string): TValue;
+function TBootstrapper<T>.GetInstance(TypeInfo: PTypeInfo; const Name: string): TValue;
 begin
   Result := FServiceLocator.Resolve(TypeInfo, Name);
 end;

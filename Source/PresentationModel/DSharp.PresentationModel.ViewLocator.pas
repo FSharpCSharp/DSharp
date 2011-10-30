@@ -53,12 +53,14 @@ uses
 
 class function ViewLocator.GetOrCreateViewType(ModelType: TClass): TControl;
 var
-  LViewTypeName: string;
+  LViewTypeNameLong: string;
+  LViewTypeNameShort: string;
   LType: TRttiType;
 begin
-  LViewTypeName := ReplaceText(ModelType.UnitName + '.' + ModelType.ClassName, 'Model', '');
+  LViewTypeNameLong := ReplaceText(ModelType.UnitName + '.' + ModelType.ClassName, 'Model', '');
+  LViewTypeNameShort := ReplaceText(ModelType.ClassName, 'Model', '');
 
-  if FindType(LViewTypeName, LType) then
+  if FindType(LViewTypeNameLong, LType) or FindType(LViewTypeNameShort, LType) then
   begin
     Result := Composition.GetInstance(LType.Handle, '').AsType<TControl>;
   end

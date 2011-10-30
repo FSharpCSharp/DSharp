@@ -71,7 +71,8 @@ type
 
     property WindowManager: IWindowManager read FWindowManager;
   public
-    constructor Create(WindowManager: IWindowManager);
+    constructor Create; overload; virtual;
+    constructor Create(WindowManager: IWindowManager); overload;
 
     procedure VerifyPropertyName(const APropertyName: string);
     property DisplayName: string read GetDisplayName;
@@ -90,9 +91,14 @@ uses
 
 { TViewModelBase }
 
-constructor TViewModelBase.Create(WindowManager: IWindowManager);
+constructor TViewModelBase.Create;
 begin
   FValidationErrors := TList<IValidationResult>.Create();
+end;
+
+constructor TViewModelBase.Create(WindowManager: IWindowManager);
+begin
+  Create();
   FWindowManager := WindowManager
 end;
 

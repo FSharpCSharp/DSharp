@@ -44,7 +44,7 @@ uses
   TypInfo;
 
 type
-  TSpringContainer = class(TContainer, IServiceLocator)
+  TSpringContainer = class(TContainer, IServiceLocator, IInterface)
   private
     FExportedProperties: TDictionary<string, TRttiProperty>;
     FInterfaces: TDictionary<TGUID, TRttiInterfaceType>;

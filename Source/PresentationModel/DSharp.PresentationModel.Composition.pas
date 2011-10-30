@@ -37,24 +37,39 @@ uses
   TypInfo;
 
 type
+  TGetInstanceFunc = reference to function(TypeInfo: PTypeInfo; const Name: string): TValue;
+
   Composition = record
   private
-    class var FGetInstance: TFunc<PTypeInfo, string, TValue>;
+    class var FGetInstance: TGetInstanceFunc;
   public
+    class constructor Create;
+
     class function Get<T>: T; overload; static;
     class function Get<T>(const Name: string): T; overload; static;
 
-    class property GetInstance: TFunc<PTypeInfo, string, TValue>
-      read FGetInstance write FGetInstance;
+    class property GetInstance: TGetInstanceFunc read FGetInstance write FGetInstance;
   end;
 
 implementation
+
+uses
+  DSharp.Core.Reflection;
 
 { Composition }
 
 class function Composition.Get<T>: T;
 begin
   Result := Get<T>('');
+end;
+
+class constructor Composition.Create;
+begin
+  FGetInstance :=
+    function(TypeInfo: PTypeInfo; const Name: string): TValue
+    begin
+      raise Exception.Create('GetInstance() not assigned');
+    end;
 end;
 
 class function Composition.Get<T>(const Name: string): T;

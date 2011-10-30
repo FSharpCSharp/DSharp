@@ -310,7 +310,7 @@ end;
 procedure TEventHandler.InternalNotify(Sender: TObject; const Item: TMethod;
   Action: TCollectionNotification);
 begin
-  if not IsValid(Item.Data) then
+  if Assigned(Item.Data) and not IsValid(Item.Data) then
   begin
     case Action of
       cnAdded: IInterface(Item.Data)._AddRef();

@@ -1316,6 +1316,9 @@ end;
 function TValueHelper.IsCardinal: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(Cardinal);
+{$IFNDEF CPUX64}
+  Result := Result or (TypeInfo = System.TypeInfo(NativeUInt));
+{$ENDIF}
 end;
 
 function TValueHelper.IsCurrency: Boolean;
@@ -1346,11 +1349,17 @@ end;
 function TValueHelper.IsInt64: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(Int64);
+{$IFDEF CPUX64}
+  Result := Result or (TypeInfo = System.TypeInfo(NativeInt));
+{$ENDIF}
 end;
 
 function TValueHelper.IsInteger: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(Integer);
+{$IFNDEF CPUX64}
+  Result := Result or (TypeInfo = System.TypeInfo(NativeInt));
+{$ENDIF}
 end;
 
 function TValueHelper.IsInterface: Boolean;
@@ -1396,6 +1405,9 @@ end;
 function TValueHelper.IsUInt64: Boolean;
 begin
   Result := TypeInfo = System.TypeInfo(UInt64);
+{$IFDEF CPUX64}
+  Result := Result or (TypeInfo = System.TypeInfo(NativeInt));
+{$ENDIF}
 end;
 
 function TValueHelper.IsWord: Boolean;
@@ -1467,49 +1479,50 @@ begin
           begin
             AResult := TValue.FromString(BoolToStr(AsBoolean, True));
             Result := True;
-          end
-          else
+          end else
+          if IsInt64 then
           begin
-            if IsInt64 then
-            begin
-              AResult := TValue.FromString(IntToStr(AsInt64));
-              Result := True;
-            end else
-            if IsInteger then
-            begin
-              AResult := TValue.FromString(IntToStr(AsInteger));
-              Result := True;
-            end else
-            if IsSmallInt then
-            begin
-              AResult := TValue.FromString(IntToStr(AsSmallInt));
-              Result := True;
-            end else
-            if IsShortInt then
-            begin
-              AResult := TValue.FromString(IntToStr(AsShortInt));
-              Result := True;
-            end else
-            if IsUInt64 then
-            begin
-              AResult := TValue.FromString(UIntToStr(AsUInt64));
-              Result := True;
-            end else
-            if IsCardinal then
-            begin
-              AResult := TValue.FromString(UIntToStr(AsCardinal));
-              Result := True;
-            end else
-            if IsWord then
-            begin
-              AResult := TValue.FromString(UIntToStr(AsWord));
-              Result := True;
-            end else
-            if IsByte then
-            begin
-              AResult := TValue.FromString(UIntToStr(AsByte));
-              Result := True;
-            end;
+            AResult := TValue.FromString(IntToStr(AsInt64));
+            Result := True;
+          end else
+          if IsInteger then
+          begin
+            AResult := TValue.FromString(IntToStr(AsInteger));
+            Result := True;
+          end else
+          if IsSmallInt then
+          begin
+            AResult := TValue.FromString(IntToStr(AsSmallInt));
+            Result := True;
+          end else
+          if IsShortInt then
+          begin
+            AResult := TValue.FromString(IntToStr(AsShortInt));
+            Result := True;
+          end else
+          if IsUInt64 then
+          begin
+            AResult := TValue.FromString(UIntToStr(AsUInt64));
+            Result := True;
+          end else
+          if IsCardinal then
+          begin
+            AResult := TValue.FromString(UIntToStr(AsCardinal));
+            Result := True;
+          end else
+          if IsWord then
+          begin
+            AResult := TValue.FromString(UIntToStr(AsWord));
+            Result := True;
+          end else
+          if IsByte then
+          begin
+            AResult := TValue.FromString(UIntToStr(AsByte));
+            Result := True;
+          end else
+          begin
+            AResult := TValue.FromString(ToString);
+            Result := True;
           end;
         end;
       end;
@@ -1555,18 +1568,22 @@ begin
     tkUString:
     begin
       case ATypeInfo.Kind of
-        tkInteger, tkEnumeration, tkChar, tkInt64:
+        tkEnumeration:
         begin
           if ATypeInfo = System.TypeInfo(Boolean) then
           begin
             AResult := TValue.FromBoolean(StrToBoolDef(AsString, False));
             Result := True;
-          end
-          else
+          end else
           begin
-            AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
+            AResult := TValue.FromOrdinal(ATypeInfo, GetEnumValue(ATypeInfo, AsString));
             Result := True;
           end;
+        end;
+        tkInteger, tkChar, tkInt64:
+        begin
+          AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
+          Result := True;
         end;
         tkWChar:
         begin
@@ -1619,6 +1636,14 @@ begin
             Result := True;
           end;
         end;
+        tkClass:
+        begin
+          if IsTypeCovariantTo(TypeInfo, ATypeInfo) then
+          begin
+            AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
+            Result := True;
+          end;
+        end;
       end;
     end;
     tkRecord:
@@ -1629,6 +1654,19 @@ begin
           if TypeInfo = System.TypeInfo(System.TMethod) then
           begin
             TValue.Make(GetReferenceToRawData, ATypeInfo, AResult);
+            Result := True;
+          end;
+        end;
+      end;
+    end;
+    tkInterface:
+    begin
+      case ATypeInfo.Kind of
+        tkInterface:
+        begin
+          if IsTypeCovariantTo(TypeInfo, ATypeInfo) then
+          begin
+            AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
             Result := True;
           end;
         end;

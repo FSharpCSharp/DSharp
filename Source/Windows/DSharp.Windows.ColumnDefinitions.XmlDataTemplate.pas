@@ -105,17 +105,14 @@ begin
     if Assigned(FColumnDefinitions)
       and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
     begin
-      with FColumnDefinitions[ColumnIndex].Binding do
+      if Assigned(FColumnDefinitions[ColumnIndex].OnGetText) then
       begin
-        if Assigned(FColumnDefinitions[ColumnIndex].OnGetText) then
-        begin
-          Result := FColumnDefinitions[ColumnIndex].OnGetText(
-            FColumnDefinitions.Owner, FColumnDefinitions[ColumnIndex], Item);
-        end
-        else
-        begin
-          Result := TXNode(Item).SelectValue(SourcePropertyName);
-        end;
+        Result := FColumnDefinitions[ColumnIndex].OnGetText(
+          FColumnDefinitions.Owner, FColumnDefinitions[ColumnIndex], Item);
+      end
+      else
+      begin
+        Result := TXNode(Item).SelectValue(FColumnDefinitions[ColumnIndex].TextPropertyName);
       end;
     end
     else

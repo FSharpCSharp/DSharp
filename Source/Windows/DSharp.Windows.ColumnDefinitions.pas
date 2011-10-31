@@ -33,10 +33,10 @@ interface
 
 uses
   Classes,
-  DSharp.Bindings,
   DSharp.Collections,
   DSharp.Core.Collections,
   DSharp.Core.DataTemplates,
+  DSharp.Core.Expressions,
   SysUtils;
 
 const
@@ -48,6 +48,8 @@ type
   TCustomDrawEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject; TargetCanvas: TCanvas; CellRect: TRect;
     ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean of object;
+  TGetImageIndexEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
+    Item: TObject): Integer of object;
   TGetTextEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject): string of object;
   TSetTextEvent = procedure(Sender: TObject; ColumnDefinition: TColumnDefinition;
@@ -55,28 +57,36 @@ type
 
   TColumnDefinition = class(TCollectionItem)
   private
-    FBinding: TBinding;
     FCaption: string;
     FCustomFilter: string;
     FFilter: TPredicate<TObject>;
+    FImageIndexPropertyExpression: IMemberExpression;
+    FImageIndexPropertyName: string;
     FOnCustomDraw: TCustomDrawEvent;
+    FOnGetImageIndex: TGetImageIndexEvent;
     FOnGetText: TGetTextEvent;
     FOnSetText: TSetTextEvent;
+    FTextPropertyExpression: IMemberExpression;
+    FTextPropertyName: string;
     FWidth: Integer;
-    procedure SetCaption(const Value: string);
     procedure SetCustomFilter(const Value: string);
+    procedure SetImageIndexPropertyName(const Value: string);
+    procedure SetTextPropertyName(const Value: string);
   public
     constructor Create(Collection: TCollection); override;
-    destructor Destroy; override;
     procedure Assign(Source: TPersistent); override;
+    property ImageIndexPropertyExpression: IMemberExpression read FImageIndexPropertyExpression;
+    property TextPropertyExpression: IMemberExpression read FTextPropertyExpression;
   published
-    property Binding: TBinding read FBinding write FBinding;
-    property Caption: string read FCaption write SetCaption;
+    property Caption: string read FCaption write FCaption;
     property CustomFilter: string read FCustomFilter write SetCustomFilter;
     property Filter: TPredicate<TObject> read FFilter;
+    property ImageIndexPropertyName: string read FImageIndexPropertyName write SetImageIndexPropertyName;
     property OnCustomDraw: TCustomDrawEvent read FOnCustomDraw write FOnCustomDraw;
+    property OnGetImageIndex: TGetImageIndexEvent read FOnGetImageIndex write FOnGetImageIndex;
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
+    property TextPropertyName: string read FTextPropertyName write SetTextPropertyName;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;
 
@@ -100,16 +110,7 @@ uses
 constructor TColumnDefinition.Create(Collection: TCollection);
 begin
   inherited;
-  FBinding := TBinding.Create();
-  FBinding.BindingMode := bmOneWay;
-  FBinding.TargetUpdateTrigger := utExplicit;
   FWidth := CDefaultWidth;
-end;
-
-destructor TColumnDefinition.Destroy;
-begin
-  FBinding.Free();
-  inherited;
 end;
 
 procedure TColumnDefinition.Assign(Source: TPersistent);
@@ -119,26 +120,18 @@ begin
   if Source is TColumnDefinition then
   begin
     LSource := TColumnDefinition(Source);
-    Binding.SourcePropertyName := LSource.Binding.SourcePropertyName;
     Caption := LSource.Caption;
     CustomFilter := LSource.CustomFilter;
+    ImageIndexPropertyName := LSource.ImageIndexPropertyName;
     OnCustomDraw := LSource.OnCustomDraw;
     OnGetText := LSource.OnGetText;
+    TextPropertyName := LSource.TextPropertyName;
     Width := LSource.Width;
   end
   else
   begin
     inherited;
   end;
-end;
-
-procedure TColumnDefinition.SetCaption(const Value: string);
-begin
-  if FCaption = FBinding.SourcePropertyName then
-  begin
-    FBinding.SourcePropertyName := Value;
-  end;
-  FCaption := Value;
 end;
 
 procedure TColumnDefinition.SetCustomFilter(const Value: string);
@@ -154,9 +147,8 @@ begin
       FFilter :=
         function(Item: TObject): Boolean
         begin
-          Binding.Source := Item;
-          Result := ContainsText(Binding.SourceProperty.Value.ToString, FCustomFilter);
-          Binding.Source := nil;
+          IParameterExpression(FTextPropertyExpression.Expression).Value := Item;
+          Result := ContainsText(FTextPropertyExpression.Value.ToString, FCustomFilter);
         end;
     end
     else
@@ -170,6 +162,20 @@ begin
       LCollectionView.Filter := LCollectionView.Filter;
     end;
   end;
+end;
+
+procedure TColumnDefinition.SetImageIndexPropertyName(const Value: string);
+begin
+  FImageIndexPropertyName := Value;
+  FImageIndexPropertyExpression := TPropertyExpression.Create(
+    TParameterExpression.Create('Instance') as IExpression, FImageIndexPropertyName);
+end;
+
+procedure TColumnDefinition.SetTextPropertyName(const Value: string);
+begin
+  FTextPropertyName := Value;
+  FTextPropertyExpression := TPropertyExpression.Create(
+    TParameterExpression.Create('Instance') as IExpression, FTextPropertyName);
 end;
 
 { TColumnDefinitions }

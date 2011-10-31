@@ -45,6 +45,8 @@ type
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
       DrawMode: TDrawMode): Boolean; override;
+    function GetImageIndex(const Item: TObject;
+      const ColumnIndex: Integer): Integer; override;
 
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
@@ -54,6 +56,9 @@ type
   end;
 
 implementation
+
+uses
+  DSharp.Core.Expressions;
 
 { TColumnDefinitionsDataTemplate }
 
@@ -88,6 +93,36 @@ begin
   end;
 end;
 
+function TColumnDefinitionsDataTemplate.GetImageIndex(const Item: TObject;
+  const ColumnIndex: Integer): Integer;
+var
+  LColumnDefinition: TColumnDefinition;
+begin
+  if Assigned(Item) and Assigned(FColumnDefinitions)
+    and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
+  begin
+    LColumnDefinition := FColumnDefinitions[ColumnIndex];
+
+    if Assigned(LColumnDefinition.OnGetImageIndex) then
+    begin
+      Result := LColumnDefinition.OnGetImageIndex(
+        FColumnDefinitions.Owner, LColumnDefinition, Item);
+    end else
+    if Assigned(LColumnDefinition.ImageIndexPropertyExpression) then
+    begin
+      (LColumnDefinition.ImageIndexPropertyExpression.Expression as IParameterExpression).Value := Item;
+      Result := LColumnDefinition.ImageIndexPropertyExpression.Value.AsOrdinal;
+    end else
+    begin
+      Result := inherited;
+    end;
+  end
+  else
+  begin
+    Result := inherited;
+  end;
+end;
+
 function TColumnDefinitionsDataTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
 var
@@ -97,22 +132,19 @@ begin
     and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
   begin
     LColumnDefinition := FColumnDefinitions[ColumnIndex];
-    with LColumnDefinition.Binding do
+
+    if Assigned(LColumnDefinition.OnGetText) then
     begin
-      if Assigned(LColumnDefinition.OnGetText) then
-      begin
-        Result := LColumnDefinition.OnGetText(
-          FColumnDefinitions.Owner, LColumnDefinition, Item);
-      end
-      else
-      begin
-        Source := Item;
-        try
-          Result := SourceProperty.Value.ToString;
-        finally
-          Source := nil;
-        end;
-      end;
+      Result := LColumnDefinition.OnGetText(
+        FColumnDefinitions.Owner, LColumnDefinition, Item);
+    end else
+    if Assigned(LColumnDefinition.TextPropertyExpression) then
+    begin
+      (LColumnDefinition.TextPropertyExpression.Expression as IParameterExpression).Value := Item;
+      Result := LColumnDefinition.TextPropertyExpression.Value.ToString;
+    end else
+    begin
+      Result := inherited;
     end;
   end
   else
@@ -129,23 +161,17 @@ begin
   if Assigned(Item) and Assigned(FColumnDefinitions)
     and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
   begin
-    with FColumnDefinitions[ColumnIndex].Binding do
+    LColumnDefinition := FColumnDefinitions[ColumnIndex];
+
+    if Assigned(LColumnDefinition.OnSetText) then
     begin
-      LColumnDefinition := FColumnDefinitions[ColumnIndex];
-      if Assigned(LColumnDefinition.OnSetText) then
-      begin
-        LColumnDefinition.OnSetText(
-          FColumnDefinitions.Owner, LColumnDefinition, Item, Value);
-      end
-      else
-      begin
-        Source := Item;
-        try
-          SourceProperty.Value := Value;
-        finally
-          Source := nil;
-        end;
-      end;
+      LColumnDefinition.OnSetText(
+        FColumnDefinitions.Owner, LColumnDefinition, Item, Value);
+    end else
+    if Assigned(LColumnDefinition.TextPropertyExpression) then
+    begin
+      (LColumnDefinition.TextPropertyExpression.Expression as IParameterExpression).Value := Item;
+      LColumnDefinition.TextPropertyExpression.Value := Value;
     end;
   end;
 end;

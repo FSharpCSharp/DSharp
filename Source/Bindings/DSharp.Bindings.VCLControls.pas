@@ -548,10 +548,14 @@ end;
 
 procedure TDateTimePicker.WMLButtonDown(var Message: TWMLButtonDown);
 begin
-  inherited;
+  SetFocus;
   if not Focused then
   begin
     Perform(WM_KILLFOCUS, 0, 0);
+  end
+  else
+  begin
+    inherited;
   end;
 end;
 

@@ -44,8 +44,6 @@ type
     FFinalized: Boolean;
     FInstance: ^T;
 
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-    function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
 
     function GetInstance: Pointer;
@@ -60,10 +58,7 @@ type
 
 implementation
 
-uses
-  Windows;
-
-{ TRecordHandler<T> }
+{ TCopyOperator<T> }
 
 constructor TCopyOperator<T>.Create(AValue: Pointer);
 begin
@@ -87,23 +82,6 @@ begin
   Result := not FFinalized;
 end;
 
-function TCopyOperator<T>.QueryInterface(const IID: TGUID; out Obj): HResult;
-begin
-  if GetInterface(IID, Obj) then
-  begin
-    Result := 0
-  end
-  else
-  begin
-    Result := E_NOINTERFACE;
-  end;
-end;
-
-function TCopyOperator<T>._AddRef: Integer;
-begin
-  Result := InterlockedIncrement(FRefCount);
-end;
-
 function TCopyOperator<T>._Release: Integer;
 begin
   if not FFinalized then
@@ -111,11 +89,7 @@ begin
     Copy();
   end;
 
-  Result := InterlockedDecrement(FRefCount);
-  if Result = 0 then
-  begin
-    Destroy();
-  end;
+  Result := inherited;
 end;
 
 end.

@@ -179,7 +179,8 @@ type
 implementation
 
 uses
-  DSharp.Windows.ColumnDefinitions.DataTemplate,
+  DSharp.Windows.ColumnDefinitions.ControlTemplate,
+  DSharp.Windows.ControlTemplates,
   Windows;
 
 const
@@ -229,11 +230,10 @@ procedure TTreeViewPresenter.DoAfterCellPaint(Sender: TBaseVirtualTree;
   CellRect: TRect);
 var
   LItem: TObject;
-  LItemTemplate: IDataTemplate;
+  LItemTemplate: IControlTemplate;
 begin
   LItem := GetNodeItem(Sender, Node);
-  LItemTemplate := GetItemTemplate(LItem);
-  if Assigned(LItemTemplate) then
+  if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
     LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList, dmAfterCellPaint);
   end;
@@ -244,11 +244,10 @@ procedure TTreeViewPresenter.DoBeforeCellPaint(Sender: TBaseVirtualTree;
   CellPaintMode: TVTCellPaintMode; CellRect: TRect; var ContentRect: TRect);
 var
   LItem: TObject;
-  LItemTemplate: IDataTemplate;
+  LItemTemplate: IControlTemplate;
 begin
   LItem := GetNodeItem(Sender, Node);
-  LItemTemplate := GetItemTemplate(LItem);
-  if Assigned(LItemTemplate) then
+  if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
     LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList, dmBeforeCellPaint);
   end;
@@ -672,11 +671,10 @@ procedure TTreeViewPresenter.DoPaintText(Sender: TBaseVirtualTree;
   TextType: TVSTTextType);
 var
   LItem: TObject;
-  LItemTemplate: IDataTemplate;
+  LItemTemplate: IControlTemplate;
 begin
   LItem := GetNodeItem(Sender, Node);
-  LItemTemplate := GetItemTemplate(LItem);
-  if Assigned(LItemTemplate) then
+  if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
     LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CDefaultCellRect, ImageList, dmPaintText);
   end;

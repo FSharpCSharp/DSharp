@@ -37,7 +37,6 @@ uses
   cxTL,
   cxTLData,
   DSharp.Collections,
-  DSharp.Core.DataTemplates,
   DSharp.DevExpress.PresenterDataSource,
   DSharp.Windows.CustomPresenter,
   ImgList;
@@ -70,6 +69,10 @@ type
 
 implementation
 
+uses
+  DSharp.Core.DataTemplates,
+  DSharp.Windows.ControlTemplates;
+
 { TTreeListPresenter }
 
 constructor TTreeListPresenter.Create(AOwner: TComponent);
@@ -89,11 +92,10 @@ procedure TTreeListPresenter.DoCustomDrawDataCell(Sender: TcxCustomTreeList;
   var ADone: Boolean);
 var
   LItem: TObject;
-  LItemTemplate: IDataTemplate;
+  LItemTemplate: IControlTemplate;
 begin
   LItem := TcxVirtualTreeListNode(AViewInfo.Node).RecordHandle;
-  LItemTemplate := GetItemTemplate(LItem);
-  if Assigned(LItemTemplate) then
+  if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
     ADone := LItemTemplate.CustomDraw(LItem, AViewInfo.Column.ItemIndex,
       ACanvas.Canvas, AViewInfo.VisibleRect, ImageList, dmAfterCellPaint);

@@ -85,9 +85,10 @@
 			<DCCReference Include="DataBindings.dcp"/>
 			<DCCReference Include="VirtualTreesR.dcp"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.pas"/>
-			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.DataTemplate.pas"/>
+			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.ControlTemplate.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.RttiDataTemplate.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.XmlDataTemplate.pas"/>
+			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.ControlTemplates.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.CustomPresenter.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.pas"/>
 			<BuildConfiguration Include="Release">

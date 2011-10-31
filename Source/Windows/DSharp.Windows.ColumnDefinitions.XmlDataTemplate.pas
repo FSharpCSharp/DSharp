@@ -34,10 +34,10 @@ interface
 uses
   DSharp.Collections,
   DSharp.Core.XNode,
-  DSharp.Windows.ColumnDefinitions.DataTemplate;
+  DSharp.Windows.ColumnDefinitions.ControlTemplate;
 
 type
-  TXmlDataTemplate = class(TColumnDefinitionsDataTemplate)
+  TXmlDataTemplate = class(TColumnDefinitionsControlTemplate)
   public
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
 

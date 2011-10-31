@@ -35,14 +35,23 @@ uses
   Classes,
   DSharp.Collections,
   DSharp.Core.Collections,
-  DSharp.Core.DataTemplates,
   DSharp.Core.Expressions,
-  SysUtils;
+  DSharp.Windows.ControlTemplates,
+  Graphics,
+  ImgList,
+  SysUtils,
+  Types;
 
 const
   CDefaultWidth = 100;
 
 type
+  TCanvas = Graphics.TCanvas;
+  TCustomImageList = ImgList.TCustomImageList;
+  TRect = Types.TRect;
+
+  TDrawMode = DSharp.Windows.ControlTemplates.TDrawMode;
+
   TColumnDefinition = class;
 
   TCustomDrawEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;

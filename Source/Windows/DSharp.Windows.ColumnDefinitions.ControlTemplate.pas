@@ -27,16 +27,16 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Windows.ColumnDefinitions.DataTemplate;
+unit DSharp.Windows.ColumnDefinitions.ControlTemplate;
 
 interface
 
 uses
-  DSharp.Core.DataTemplates,
-  DSharp.Windows.ColumnDefinitions;
+  DSharp.Windows.ColumnDefinitions,
+  DSharp.Windows.ControlTemplates;
 
 type
-  TColumnDefinitionsDataTemplate = class(TDataTemplate)
+  TColumnDefinitionsControlTemplate = class(TControlTemplate)
   protected
     FColumnDefinitions: TColumnDefinitions;
   public
@@ -60,16 +60,16 @@ implementation
 uses
   DSharp.Core.Expressions;
 
-{ TColumnDefinitionsDataTemplate }
+{ TColumnDefinitionsControlTemplate }
 
-constructor TColumnDefinitionsDataTemplate.Create(
+constructor TColumnDefinitionsControlTemplate.Create(
   AColumnDefinitions: TColumnDefinitions);
 begin
   inherited Create;
   FColumnDefinitions := AColumnDefinitions;
 end;
 
-function TColumnDefinitionsDataTemplate.CustomDraw(const Item: TObject;
+function TColumnDefinitionsControlTemplate.CustomDraw(const Item: TObject;
   const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
   ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
 begin
@@ -93,7 +93,7 @@ begin
   end;
 end;
 
-function TColumnDefinitionsDataTemplate.GetImageIndex(const Item: TObject;
+function TColumnDefinitionsControlTemplate.GetImageIndex(const Item: TObject;
   const ColumnIndex: Integer): Integer;
 var
   LColumnDefinition: TColumnDefinition;
@@ -123,7 +123,7 @@ begin
   end;
 end;
 
-function TColumnDefinitionsDataTemplate.GetText(const Item: TObject;
+function TColumnDefinitionsControlTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
 var
   LColumnDefinition: TColumnDefinition;
@@ -153,7 +153,7 @@ begin
   end;
 end;
 
-procedure TColumnDefinitionsDataTemplate.SetText(const Item: TObject;
+procedure TColumnDefinitionsControlTemplate.SetText(const Item: TObject;
   const ColumnIndex: Integer; const Value: string);
 var
   LColumnDefinition: TColumnDefinition;

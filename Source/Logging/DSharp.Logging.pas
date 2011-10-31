@@ -86,10 +86,6 @@ procedure UnregisterLogging(ALogging: TBaseLogging);
 implementation
 
 uses
-{$IFDEF DEBUG}
-//  DSharp.Logging.Console,
-//  DSharp.Logging.SmartInspect,
-{$ENDIF}
   DSharp.Core.Reflection;
 
 type

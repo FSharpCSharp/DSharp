@@ -31,8 +31,7 @@ package DSharp.Core;
 {$IMPLICITBUILD OFF}
 
 requires
-  rtl,
-  vcl;
+  rtl;
 
 contains
   DSharp.Collections in '..\..\Source\Collections\DSharp.Collections.pas',
@@ -41,10 +40,10 @@ contains
   DSharp.Collections.Yield in '..\..\Source\Collections\DSharp.Collections.Yield.pas',
   DSharp.Core.Collections in '..\..\Source\Core\DSharp.Core.Collections.pas',
   DSharp.Core.CopyOperator in '..\..\Source\Core\DSharp.Core.CopyOperator.pas',
-  DSharp.Core.DataConversion.Default in '..\..\Source\Core\DSharp.Core.DataConversion.Default.pas',
   DSharp.Core.DataConversion in '..\..\Source\Core\DSharp.Core.DataConversion.pas',
-  DSharp.Core.DataTemplates.Default in '..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas',
+  DSharp.Core.DataConversion.Default in '..\..\Source\Core\DSharp.Core.DataConversion.Default.pas',
   DSharp.Core.DataTemplates in '..\..\Source\Core\DSharp.Core.DataTemplates.pas',
+  DSharp.Core.DataTemplates.Default in '..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas',
   DSharp.Core.Editable in '..\..\Source\Core\DSharp.Core.Editable.pas',
   DSharp.Core.Events in '..\..\Source\Core\DSharp.Core.Events.pas',
   DSharp.Core.Expressions in '..\..\Source\Core\DSharp.Core.Expressions.pas',
@@ -59,7 +58,6 @@ contains
   DSharp.Core.Utils in '..\..\Source\Core\DSharp.Core.Utils.pas',
   DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
   DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas',
-  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
-  DSharp.Logging.Console in '..\..\Source\Logging\DSharp.Logging.Console.pas';
+  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas';
 
 end.

@@ -58,9 +58,6 @@ type
 
 implementation
 
-uses
-  Windows;
-
 { TEnumeratorThread }
 
 constructor TEnumeratorThread.Create(const AProc: TProc);

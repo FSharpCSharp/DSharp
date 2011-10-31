@@ -32,23 +32,11 @@ unit DSharp.Core.DataTemplates;
 interface
 
 uses
-  DSharp.Collections,
-  Graphics,
-  ImgList,
-  Types;
+  DSharp.Collections;
 
 type
-  TCanvas = Graphics.TCanvas;
-  TCustomImageList = ImgList.TCustomImageList;
-  TRect = Types.TRect;
-
-  TDrawMode = (dmBeforeCellPaint, dmAfterCellPaint, dmPaintText);
-
   IDataTemplate = interface
     // methods to display items
-    function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
-      TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean;
     function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer;
     function GetText(const Item: TObject; const ColumnIndex: Integer): string;
 
@@ -76,9 +64,6 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
-      TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean; virtual;
     function GetImageIndex(const Item: TObject;
       const ColumnIndex: Integer): Integer; virtual;
     function GetText(const Item: TObject;
@@ -99,12 +84,6 @@ type
 
   TDataTemplate<T: class> = class(TDataTemplate)
   public
-    function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
-      TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean; overload; override; final;
-    function CustomDraw(const Item: T; const ColumnIndex: Integer;
-      TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean; reintroduce; overload; virtual;
     function GetImageIndex(const Item: TObject;
       const ColumnIndex: Integer): Integer; overload; override; final;
     function GetImageIndex(const Item: T;
@@ -144,13 +123,6 @@ end;
 destructor TDataTemplate.Destroy;
 begin
   inherited;
-end;
-
-function TDataTemplate.CustomDraw(const Item: TObject;
-  const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
-  ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
-begin
-  Result := False;
 end;
 
 function TDataTemplate.GetImageIndex(const Item: TObject;
@@ -225,22 +197,6 @@ begin
 end;
 
 { TDataTemplate<T> }
-
-function TDataTemplate<T>.CustomDraw(const Item: TObject;
-  const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
-  ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
-begin
-  Result := CustomDraw(T(Item), ColumnIndex,
-    TargetCanvas, CellRect, ImageList, DrawMode);
-end;
-
-function TDataTemplate<T>.CustomDraw(const Item: T; const ColumnIndex: Integer;
-  TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-  DrawMode: TDrawMode): Boolean;
-begin
-  Result := inherited CustomDraw(Item, ColumnIndex,
-    TargetCanvas, CellRect, ImageList, DrawMode);
-end;
 
 function TDataTemplate<T>.GetImageIndex(const Item: TObject;
   const ColumnIndex: Integer): Integer;

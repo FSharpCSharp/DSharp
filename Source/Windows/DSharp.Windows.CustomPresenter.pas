@@ -102,7 +102,7 @@ type
 implementation
 
 uses
-  DSharp.Windows.ColumnDefinitions.DataTemplate;
+  DSharp.Windows.ColumnDefinitions.ControlTemplate;
 
 { TCustomPresenter }
 
@@ -113,7 +113,7 @@ begin
   FView := TCollectionViewPresenterAdapter.Create(Self);
 
   FColumnDefinitions := TColumnDefinitions.Create(Self);
-  FView.ItemTemplate := TColumnDefinitionsDataTemplate.Create(FColumnDefinitions);
+  FView.ItemTemplate := TColumnDefinitionsControlTemplate.Create(FColumnDefinitions);
 end;
 
 destructor TCustomPresenter.Destroy;
@@ -192,8 +192,8 @@ procedure TCustomPresenter.SetColumnDefinitions(
 begin
   if Assigned(FColumnDefinitions) and (FColumnDefinitions.Owner = Self) then
   begin
-    if (FView.ItemTemplate is TColumnDefinitionsDataTemplate)
-      and ((FView.ItemTemplate as TColumnDefinitionsDataTemplate).ColumnDefinitions = FColumnDefinitions) then
+    if (FView.ItemTemplate is TColumnDefinitionsControlTemplate)
+      and ((FView.ItemTemplate as TColumnDefinitionsControlTemplate).ColumnDefinitions = FColumnDefinitions) then
     begin
       FView.ItemTemplate := nil;
     end;

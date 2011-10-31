@@ -101,17 +101,16 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Fibers.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Threading.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Yield.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Collections.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.CopyOperator.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.Default.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.Default.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Editable.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
@@ -127,7 +126,6 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Variants.pas"/>
 			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.pas"/>
-			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.Console.pas"/>
 			<BuildConfiguration Include="Debug">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

@@ -233,16 +233,12 @@ object MainForm: TMainForm
   object ContactsPresenter: TTreeViewPresenter
     ColumnDefinitions = <
       item
-        Binding.BindingMode = bmOneWay
-        Binding.TargetUpdateTrigger = utExplicit
-        Binding.SourcePropertyName = 'Lastname'
         Caption = 'Lastname'
+        TextPropertyName = 'Lastname'
       end
       item
-        Binding.BindingMode = bmOneWay
-        Binding.TargetUpdateTrigger = utExplicit
-        Binding.SourcePropertyName = 'Firstname'
         Caption = 'Firstname'
+        TextPropertyName = 'Firstname'
       end>
     Action = ContactAction
     ListMode = True
@@ -314,8 +310,6 @@ object MainForm: TMainForm
   object InventoryPresenter: TTreeViewPresenter
     ColumnDefinitions = <
       item
-        Binding.BindingMode = bmOneWay
-        Binding.TargetUpdateTrigger = utExplicit
         OnGetText = InventoryPresenterColumnDefinitions0GetText
         Width = 300
       end>

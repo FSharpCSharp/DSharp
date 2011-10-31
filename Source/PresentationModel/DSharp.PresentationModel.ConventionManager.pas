@@ -208,6 +208,27 @@ begin
       LCollectionChanged := TPageControl(AViewElement).View.OnCollectionChanged;
       LCollectionChanged.Add(Manager.PageControlCollectionChanged);
     end;
+  AddElementConvention<TPanel>('BindingSource', '').ApplyBinding :=
+    procedure(AViewModel: TObject; APropertyName: string;
+      AViewElement: TComponent; ABindingType: TBindingType;
+      AConvention: TElementConvention)
+    var
+      LProperty: TRttiProperty;
+      LView: TControl;
+      LViewModel: TObject;
+    begin
+      SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
+
+      if AViewModel.TryGetProperty(APropertyName, LProperty)
+        and LProperty.PropertyType.IsInstance then
+      begin
+        LViewModel := LProperty.GetValue(AViewModel).AsObject;
+        LView := ViewLocator.GetOrCreateViewType(LViewModel.ClassType);
+        LView.Parent := TPanel(AViewElement);
+        ViewModelBinder.Bind(LViewModel, LView);
+      end;
+    end;
+
   AddElementConvention<TRadioButton>('Checked', 'OnClick');
   AddElementConvention<TRadioGroup>('ItemIndex', 'OnClick');
   AddElementConvention<TTrackBar>('Position', 'OnChange');

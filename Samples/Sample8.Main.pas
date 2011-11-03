@@ -38,22 +38,22 @@ var
   func: TFunc<Boolean>;
   i: Integer;
 begin
-  e := TMethodExpression.Create(
-    TConstantExpression.Create(Self),
+  e := Expression.MethodCall(
+    Expression.Constant(Self),
     'ShowMessage',
-    [TConstantExpression.Create('Hello world')]);
+    [Expression.Constant('Hello world')]);
   func := Lambda.Make<Boolean>(e);
   func();
 
   Result := Expression.Parameter('Result');
   e := Expression.Block([
-    Expression.Assign(Result, TConstantExpression.Create(1)),
+    Expression.Assign(Result, Expression.Constant(1)),
     Expression.Loop(
       Expression.IfThenElse(
-        Expression.GreaterThan(ExpressionParams[0], TConstantExpression.Create(0)),
+        Expression.GreaterThan(ExpressionParams[0], Expression.Constant(0)),
         Expression.Block([
           Expression.MultiplyAssign(Result, ExpressionParams[0]),
-          Expression.SubtractAssign(ExpressionParams[0], TConstantExpression.Create(1))
+          Expression.SubtractAssign(ExpressionParams[0], Expression.Constant(1))
         ]),
         Expression.Break
       )

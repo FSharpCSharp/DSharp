@@ -971,22 +971,25 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
 begin
-  FTreeView.BeginUpdate();
-  FTreeView.ClearSelection();
-  if Assigned(Value) then
+  if Assigned(FTreeView) and not (csDestroying in FTreeView.ComponentState) then
   begin
-    LNode := FTreeView.GetFirst();
-    while Assigned(LNode) do
+    FTreeView.BeginUpdate();
+    FTreeView.ClearSelection();
+    if Assigned(Value) and (Value.Count > 0) then
     begin
-      LItem := GetNodeItem(FTreeView, LNode);
-      if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
+      LNode := FTreeView.GetFirst();
+      while Assigned(LNode) do
       begin
-        FTreeView.Selected[LNode] := True;
+        LItem := GetNodeItem(FTreeView, LNode);
+        if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
+        begin
+          FTreeView.Selected[LNode] := True;
+        end;
+        LNode := FTreeView.GetNext(LNode);
       end;
-      LNode := FTreeView.GetNext(LNode);
     end;
+    FTreeView.EndUpdate();
   end;
-  FTreeView.EndUpdate();
 end;
 
 procedure TTreeViewPresenter.SetTreeView(const Value: TVirtualStringTree);

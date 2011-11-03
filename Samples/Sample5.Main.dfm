@@ -156,6 +156,18 @@ object MainForm: TMainForm
         TargetPropertyName = 'OnClick'
         Source = ListBox1
         SourcePropertyName = 'View.MoveCurrentToFirst'
+      end
+      item
+        Target = DeleteContact
+        TargetPropertyName = 'Enabled'
+        Source = ListBox1
+        SourcePropertyName = 'View.CurrentItem'
+      end
+      item
+        Target = SelectFirst
+        TargetPropertyName = 'Enabled'
+        Source = ListBox1
+        SourcePropertyName = 'View.CanMoveCurrentToPrevious'
       end>
   end
 end

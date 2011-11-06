@@ -364,6 +364,7 @@ implementation
 
 uses
   DSharp.Bindings.CollectionView.Adapters,
+  DSharp.Bindings.CollectionView.VCLAdapters,
   DSharp.Bindings.Exceptions;
 
 { TButton }

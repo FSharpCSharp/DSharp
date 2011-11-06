@@ -46,11 +46,6 @@ type
       const ASelectionProperties: IInterfaceList);
   end;
 
-  TBindingGroupSelectionEditor = class(TSelectionEditor)
-  public
-    procedure RequiresUnits(Proc: TGetStrProc); override;
-  end;
-
   TBindingGroupComponentEditor = class(TComponentEditor)
   public
     procedure ExecuteVerb(Index: Integer); override;
@@ -108,13 +103,6 @@ var
 implementation
 
 uses
-  ComCtrls,
-  CommCtrl,
-  ExtCtrls,
-  Forms,
-  Grids,
-  StdCtrls,
-
   ColnEdit,
   Consts,
   RTLConsts,
@@ -126,7 +114,6 @@ procedure Register;
 var
   LClass: TClass;
 begin
-  RegisterSelectionEditor(TBindingGroup, TBindingGroupSelectionEditor);
   for LClass in SupportedClasses.Keys do
   begin
     RegisterSelectionEditor(LClass, TBindingSelectionEditor);
@@ -210,21 +197,6 @@ begin
   end;
 end;
 
-{ TBindingGroupSelectionEditor }
-
-procedure TBindingGroupSelectionEditor.RequiresUnits(Proc: TGetStrProc);
-var
-  LClass: TClass;
-begin
-  inherited;
-  for LClass in SupportedClasses.Keys do
-  begin
-    Proc(LClass.UnitName);
-  end;
-  Proc(TStringGrid.UnitName);
-  Proc('DSharp.Bindings.VCLControls');
-end;
-
 { TBindingGroupComponentEditor }
 
 procedure TBindingGroupComponentEditor.ExecuteVerb(Index: Integer);
@@ -298,10 +270,7 @@ end;
 procedure TSourceProperty.GetValues(Proc: TGetStrProc);
 begin
   inherited;
-  if Designer.Root is TForm then
-  begin
-    Proc(Designer.Root.Name);
-  end;
+  Proc(Designer.Root.Name);
 end;
 
 procedure TSourceProperty.SetValue(const Value: string);
@@ -366,10 +335,7 @@ end;
 procedure TTargetProperty.GetValues(Proc: TGetStrProc);
 begin
   inherited;
-  if Designer.Root is TForm then
-  begin
-    Proc(Designer.Root.Name);
-  end;
+  Proc(Designer.Root.Name);
 end;
 
 procedure TTargetProperty.SetValue(const Value: string);
@@ -431,22 +397,6 @@ end;
 
 initialization
   SupportedClasses := TDictionary<TClass, string>.Create();
-  SupportedClasses.Add(TCheckBox, 'Checked');
-  SupportedClasses.Add(TColorBox, 'Selected');
-  SupportedClasses.Add(TComboBox, 'Text');
-  SupportedClasses.Add(TDateTimePicker, 'Date'); // need some review to change binding property depending on state
-  SupportedClasses.Add(TEdit, 'Text');
-  SupportedClasses.Add(TGroupBox, 'BindingSource');
-  SupportedClasses.Add(TLabel, 'Caption');
-  SupportedClasses.Add(TLabeledEdit, 'Text');
-  SupportedClasses.Add(TListBox, 'ItemsSource');
-  SupportedClasses.Add(TMemo, 'Text');
-  SupportedClasses.Add(TMonthCalendar, 'Date');
-  SupportedClasses.Add(TPanel, 'BindingSource');
-  SupportedClasses.Add(TRadioButton, 'Checked');
-  SupportedClasses.Add(TRadioGroup, 'ItemIndex');
-//  SupportedClasses.Add(TStatusPanel, 'Text'); // does not work (yet)
-  SupportedClasses.Add(TTrackBar, 'Position');
 
 finalization
   SupportedClasses.Free();

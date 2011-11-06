@@ -7,7 +7,7 @@
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>VCL</FrameworkType>
+			<FrameworkType>None</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -53,8 +53,7 @@
 			<DCCReference Include="..\..\Resources\DSharp.Windows.TreeViewPresenter.dcr"/>
 			<DCCReference Include="designide.dcp"/>
 			<DCCReference Include="TreeViewPresenter.dcp"/>
-			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="vcl.dcp"/>
+			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.CustomPresenter.Designtime.pas"/>
 			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.Designtime.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
@@ -102,7 +101,6 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Excluded_Packages/>
 					<Source>
 						<Source Name="MainSource">dclTreeViewPresenter.dpk</Source>
 					</Source>

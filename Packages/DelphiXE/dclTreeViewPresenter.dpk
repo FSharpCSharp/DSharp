@@ -30,11 +30,10 @@ package dclTreeViewPresenter;
 
 requires
   designide,
-  TreeViewPresenter,
-  rtl,
-  vcl;
+  TreeViewPresenter;
 
 contains
+  DSharp.Windows.CustomPresenter.Designtime in '..\..\Source\Windows\DSharp.Windows.CustomPresenter.Designtime.pas',
   DSharp.Windows.TreeViewPresenter.Designtime in '..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.Designtime.pas';
 
 end.

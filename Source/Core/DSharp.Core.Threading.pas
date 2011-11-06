@@ -29,10 +29,15 @@
 
 unit DSharp.Core.Threading;
 
+{$IFNDEF MSWINDOWS}
+{$MESSAGE WARN 'Unit only supports Windows'}
+{$ENDIF}
+
 interface
 
 uses
   Classes,
+  SyncObjs,
   SysUtils;
 
 type
@@ -63,11 +68,14 @@ type
 
   TAbstractFutureThread = class(TThread)
   strict private
-    FFinishedOrYielded: array[0..1] of THandle;
-    FTerminatedOrResumed: array[0..1] of THandle;
-    FResumed: THandle;
-    FTerminated: THandle;
-    FYielded: THandle;
+    FFinishedOrYielded: THandleObjectArray;
+    FTerminatedOrResumed: THandleObjectArray;
+    FFinished: TEvent;
+    FResumed: TEvent;
+    FTerminated: TEvent;
+    FYielded: TEvent;
+  protected
+    procedure DoTerminate; override;
   public
     constructor Create;
     destructor Destroy; override;
@@ -110,9 +118,6 @@ type
   end;
 
 implementation
-
-uses
-  Windows;
 
 { TAbstractFuture }
 
@@ -159,10 +164,13 @@ end;
 constructor TAbstractFutureThread.Create;
 begin
   inherited Create(True);
-  FResumed := CreateEvent(nil, False, False, nil);
-  FTerminated := CreateEvent(nil, False, False, nil);
-  FYielded := CreateEvent(nil, False, False, nil);
-  FFinishedOrYielded[0] := Handle;
+  FFinished := TEvent.Create(nil, False, False, '');
+  FResumed := TEvent.Create(nil, False, False, '');
+  FTerminated := TEvent.Create(nil, False, False, '');
+  FYielded := TEvent.Create(nil, False, False, '');
+  SetLength(FFinishedOrYielded, 2);
+  SetLength(FTerminatedOrResumed, 2);
+  FFinishedOrYielded[0] := FFinished;
   FFinishedOrYielded[1] := FYielded;
   FTerminatedOrResumed[0] := FTerminated;
   FTerminatedOrResumed[1] := FResumed;
@@ -173,32 +181,56 @@ begin
   if not Finished and not Terminated then
   begin
     Terminate;
-    SetEvent(FTerminated);
-    WaitForSingleObject(Handle, INFINITE);
+    FTerminated.SetEvent;
+    WaitFor;
   end;
+
+  FFinished.Free;
+  FResumed.Free;
+  FTerminated.Free;
+  FYielded.Free;
+
   inherited;
 end;
 
+procedure TAbstractFutureThread.DoTerminate;
+begin
+  inherited;
+  FFinished.SetEvent;
+end;
+
 procedure TAbstractFutureThread.Continue;
+{$IFDEF MSWINDOWS}
+var
+  LSignaledObject: THandleObject;
+{$ENDIF}
 begin
   if not Finished and not Terminated then
   begin
     if Suspended then
     begin
-      Start();
+      Start;
     end
     else
     begin
-      SetEvent(FResumed);
+      FResumed.SetEvent;
     end;
-    WaitForMultipleObjects(2, @FFinishedOrYielded, False, INFINITE);
+{$IFDEF MSWINDOWS}
+    THandleObject.WaitForMultiple(FFinishedOrYielded, INFINITE, False, LSignaledObject);
+{$ENDIF}
   end;
 end;
 
 procedure TAbstractFutureThread.Yield;
+{$IFDEF MSWINDOWS}
+var
+  LSignaledObject: THandleObject;
+{$ENDIF}
 begin
-  SetEvent(FYielded);
-  WaitForMultipleObjects(2, @FTerminatedOrResumed, False, INFINITE);
+  FYielded.SetEvent;
+{$IFDEF MSWINDOWS}
+  THandleObject.WaitForMultiple(FTerminatedOrResumed, INFINITE, False, LSignaledObject);
+{$ENDIF}
   if Terminated then
     Abort;
 end;
@@ -262,4 +294,3 @@ begin
 end;
 
 end.
-

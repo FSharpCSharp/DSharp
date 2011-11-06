@@ -29,6 +29,10 @@
 
 unit DSharp.Core.Fibers;
 
+{$IFNDEF MSWINDOWS}
+{$MESSAGE WARN 'Unit only supports Windows'}
+{$ENDIF}
+
 interface
 
 uses
@@ -83,6 +87,7 @@ type
 
 implementation
 
+{$IFDEF MSWINDOWS}
 uses
   Windows;
 
@@ -93,6 +98,7 @@ function CreateFiber(dwStackSize: Cardinal; lpStartAddress: Pointer;
   lpParameter: Pointer): Pointer; stdcall; external kernel32;
 function DeleteFiber(lpFiber: Pointer): Boolean; stdcall; external kernel32;
 function SwitchToFiber(lpFiber: Pointer): Boolean; stdcall; external kernel32;
+{$ENDIF}
 
 function GetCurrentFiber: Pointer;
 asm
@@ -106,7 +112,11 @@ end;
 
 function GetFiberData: Pointer; inline;
 begin
+{$IFDEF MSWINDOWS}
   Result := PPointer(GetCurrentFiber()^);
+{$ELSE}
+  Result := nil;
+{$ENDIF}
 end;
 
 procedure GlobalStartFiber;
@@ -140,7 +150,10 @@ var
 constructor TFiber.Create;
 begin
   Initialize;
+  FHandle := nil;
+{$IFDEF MSWINDOWS}
   FHandle := CreateFiber(0, @GlobalStartFiber, Self);
+{$ENDIF}
   FBaseHandle := GetCurrentFiber;
 end;
 
@@ -149,12 +162,14 @@ begin
   Dec(FiberCount);
   if not FFreeOnTerminate then
   begin
+{$IFDEF MSWINDOWS}
     DeleteFiber(FHandle);
     if Assigned(ThreadFiber) and (FiberCount = 0) then
     begin
       ConvertFiberToThread;
       ThreadFiber := nil;
     end;
+{$ENDIF}
   end;
   inherited;
 end;
@@ -187,7 +202,9 @@ class procedure TFiber.Initialize;
 begin
   if not Assigned(ThreadFiber) then
   begin
+{$IFDEF MSWINDOWS}
     ThreadFiber := ConvertThreadToFiber(nil);
+{$ENDIF}
     if not Assigned(MainFiber) then
     begin
       MainFiber := ThreadFiber;
@@ -200,7 +217,9 @@ procedure TFiber.Resume;
 begin
   if not FFinished then
   begin
+{$IFDEF MSWINDOWS}
     SwitchToFiber(FHandle);
+{$ENDIF}
   end;
 end;
 
@@ -224,22 +243,26 @@ end;
 
 procedure TFiber.SwitchToMainThread;
 begin
+{$IFDEF MSWINDOWS}
   if Assigned(FThread) and (GetCurrentThreadId = FThread.ThreadID) then
   begin
     FThread.Terminate;
     FThread := nil;
     SwitchToFiber(ThreadFiber);
   end;
+{$ENDIF}
 end;
 
 procedure TFiber.SwitchToWorkerThread;
 begin
+{$IFDEF MSWINDOWS}
   if GetCurrentThreadID = MainThreadID then
   begin
     FThread := TFiberThread.Create(Self);
     FThread.FreeOnTerminate := True;
     Yield;
   end;
+{$ENDIF}
 end;
 
 procedure TFiber.Synchronize(AThreadProc: TThreadProcedure);
@@ -249,7 +272,9 @@ end;
 
 procedure TFiber.Yield;
 begin
+{$IFDEF MSWINDOWS}
   SwitchToFiber(FBaseHandle);
+{$ENDIF}
 end;
 
 { TFiberThread }

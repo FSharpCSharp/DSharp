@@ -227,7 +227,8 @@ type
     function IsCovariantTo(OtherType: PTypeInfo): Boolean; overload;
     function IsGenericTypeDefinition: Boolean;
     function IsGenericTypeOf(const BaseTypeName: string): Boolean;
-    function IsInheritedFrom(OtherType: TRttiType): Boolean;
+    function IsInheritedFrom(OtherType: TRttiType): Boolean; overload;
+    function IsInheritedFrom(const OtherTypeName: string): Boolean; overload;
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
 
     function TryGetField(const AName: string; out AField: TRttiField): Boolean;
@@ -1104,13 +1105,31 @@ begin
     and (Copy(Name, Length(Name), 1) = '>');
 end;
 
+function TRttiTypeHelper.IsInheritedFrom(const OtherTypeName: string): Boolean;
+var
+  LType: TRttiType;
+begin
+  Result := SameText(Name, OtherTypeName)
+    or (IsPublicType and SameText(QualifiedName, OtherTypeName));
+
+  if not Result then
+  begin
+    LType := BaseType;
+    while Assigned(LType) and not Result do
+    begin
+      Result := SameText(LType.Name, OtherTypeName)
+        or (LType.IsPublicType and SameText(QualifiedName, OtherTypeName));
+      LType := LType.BaseType;
+    end;
+  end;
+end;
+
 function TRttiTypeHelper.IsInheritedFrom(OtherType: TRttiType): Boolean;
 var
   LType: TRttiType;
 begin
   Result := Self.Handle = OtherType.Handle;
 
-  if not Result then
   if not Result then
   begin
     LType := BaseType;

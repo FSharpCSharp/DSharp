@@ -245,6 +245,8 @@ type
     procedure CancelEdit;
     procedure CommitEdit;
 
+    procedure NotifyPropertyChanged(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     function TryGetValue(AItem: TObject; APropertyName: string;
       out AValue: TValue): Boolean;
     procedure UpdateSources(IgnoreBindingMode: Boolean = True);
@@ -271,7 +273,6 @@ uses
   DSharp.Core.DataConversion.Default,
   DSharp.Core.Reflection,
   DSharp.Core.Utils,
-  Forms,
   StrUtils,
   TypInfo;
 
@@ -279,6 +280,7 @@ function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 var
   i: Integer;
   LOwner: TPersistent;
+  LType: TRttiType;
 begin
   Result := nil;
   if AComponent is TCollectionItem then
@@ -291,7 +293,8 @@ begin
     LOwner := GetUltimateOwner(TCollection(AComponent));
   end
   else
-  if (AComponent is TForm) or (AComponent is TFrame) or (AComponent is TDataModule) then
+  if TryGetRttiType(AComponent.ClassInfo, LType) and (LType.IsInheritedFrom('TForm')
+    or LType.IsInheritedFrom('TFrame') or LType.IsInheritedFrom('TDataModule')) then
   begin
     LOwner := AComponent;
   end
@@ -768,7 +771,7 @@ begin
       EndUpdate();
     end;
 
-    if not ValidateCommitted() 
+    if not ValidateCommitted()
       and (FSourceUpdateTrigger = utLostFocus) and FPreventFocusChange then
     begin
       RaiseValidationError();
@@ -1217,6 +1220,24 @@ begin
     if LBinding.Active then
     begin
       LBinding.UpdateTarget(True);
+    end;
+  end;
+end;
+
+procedure TBindingGroup.NotifyPropertyChanged(ASender: TObject;
+  APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+var
+  LBinding: TBinding;
+begin
+  for LBinding in FBindings do
+  begin
+    if LBinding.Source = ASender then
+    begin
+      LBinding.DoSourcePropertyChanged(ASender, APropertyName, AUpdateTrigger);
+    end;
+    if LBinding.Target = ASender then
+    begin
+      LBinding.DoTargetPropertyChanged(ASender, APropertyName, AUpdateTrigger);
     end;
   end;
 end;

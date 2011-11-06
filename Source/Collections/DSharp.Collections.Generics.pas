@@ -228,7 +228,7 @@ function TEnumeratorEx<T>.GetCurrent: TObject;
 begin
   if TRttiContext.Create.GetType(TypeInfo(T)).IsInstance then
   begin
-    Result := TObject(DoGetCurrent());
+    Result := TEnumeratorEx<TObject>(Self).DoGetCurrent();
   end
   else
   begin

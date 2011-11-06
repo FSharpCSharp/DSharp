@@ -724,7 +724,7 @@ begin
     begin
       if LType is TRttiInstanceType then
       begin
-        FInternalValue := T(LValue)
+        FInternalValue := TValue.From<TObject>(LValue).AsType<T>;
       end
       else
       begin

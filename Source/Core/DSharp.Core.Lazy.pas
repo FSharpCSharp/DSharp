@@ -88,7 +88,7 @@ begin
     LTypeInfo := TypeInfo(T);
     if LTypeInfo.Kind = tkClass then
     begin
-      TObject(FValue).Free();
+      TLazy<TObject>(Self).FValue.Free();
     end;
   end;
   inherited;

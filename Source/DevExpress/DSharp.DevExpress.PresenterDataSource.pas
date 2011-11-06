@@ -63,6 +63,7 @@ type
 implementation
 
 uses
+  DSharp.Bindings.Notifications,
   DSharp.Core.DataTemplates,
   Variants;
 

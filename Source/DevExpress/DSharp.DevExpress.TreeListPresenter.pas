@@ -48,22 +48,27 @@ type
     FTreeList: TcxVirtualTreeList;
 
     procedure DoCustomDrawDataCell(Sender: TcxCustomTreeList;
-      ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo;
-      var ADone: Boolean);
+      Canvas: TcxCanvas; ViewInfo: TcxTreeListEditCellViewInfo;
+      var Done: Boolean);
+    procedure DoFocusedNodeChanged(Sender: TcxCustomTreeList;
+      PrevFocusedNode, FocusedNode: TcxTreeListNode);
     procedure DoGetNodeImageIndex(Sender: TcxCustomTreeList;
-      ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType;
-      var AIndex: TImageIndex);
+      Node: TcxTreeListNode; IndexType: TcxTreeListImageIndexType;
+      var Index: TImageIndex);
 
     procedure SetTreeList(const Value: TcxVirtualTreeList);
   protected
+    function GetCurrentItem: TObject; override;
     procedure InitColumns; override;
     procedure InitEvents; override;
     procedure InitProperties; override;
+    procedure SetCurrentItem(const Value: TObject); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     procedure Refresh; override;
+  published
     property TreeList: TcxVirtualTreeList read FTreeList write SetTreeList;
   end;
 
@@ -71,7 +76,8 @@ implementation
 
 uses
   DSharp.Core.DataTemplates,
-  DSharp.Windows.ControlTemplates;
+  DSharp.Windows.ControlTemplates,
+  SysUtils;
 
 { TTreeListPresenter }
 
@@ -88,34 +94,61 @@ begin
 end;
 
 procedure TTreeListPresenter.DoCustomDrawDataCell(Sender: TcxCustomTreeList;
-  ACanvas: TcxCanvas; AViewInfo: TcxTreeListEditCellViewInfo;
-  var ADone: Boolean);
+  Canvas: TcxCanvas; ViewInfo: TcxTreeListEditCellViewInfo;
+  var Done: Boolean);
 var
   LItem: TObject;
   LItemTemplate: IControlTemplate;
 begin
-  LItem := TcxVirtualTreeListNode(AViewInfo.Node).RecordHandle;
+  LItem := TcxVirtualTreeListNode(ViewInfo.Node).RecordHandle;
   if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
-    ADone := LItemTemplate.CustomDraw(LItem, AViewInfo.Column.ItemIndex,
-      ACanvas.Canvas, AViewInfo.VisibleRect, ImageList, dmAfterCellPaint);
+    Done := LItemTemplate.CustomDraw(LItem, ViewInfo.Column.ItemIndex,
+      Canvas.Canvas, ViewInfo.VisibleRect, ImageList, dmAfterCellPaint);
   end;
 end;
 
+procedure TTreeListPresenter.DoFocusedNodeChanged(Sender: TcxCustomTreeList;
+  PrevFocusedNode, FocusedNode: TcxTreeListNode);
+begin
+  if Assigned(FocusedNode) then
+  begin
+    View.ItemIndex := FocusedNode.Index;
+  end
+  else
+  begin
+    View.ItemIndex := -1;
+  end;
+
+  DoPropertyChanged('View');
+end;
+
 procedure TTreeListPresenter.DoGetNodeImageIndex(Sender: TcxCustomTreeList;
-  ANode: TcxTreeListNode; AIndexType: TcxTreeListImageIndexType;
-  var AIndex: TImageIndex);
+  Node: TcxTreeListNode; IndexType: TcxTreeListImageIndexType;
+  var Index: TImageIndex);
 var
   LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
-  AIndex := -1;
+  Index := -1;
 
-  LItem := TcxVirtualTreeListNode(ANode).RecordHandle;
+  LItem := TcxVirtualTreeListNode(Node).RecordHandle;
   LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    AIndex := LItemTemplate.GetImageIndex(LItem, 0);
+    Index := LItemTemplate.GetImageIndex(LItem, 0);
+  end;
+end;
+
+function TTreeListPresenter.GetCurrentItem: TObject;
+begin
+  if Assigned(FTreeList) and (View.ItemIndex > -1) then
+  begin
+    Result := TcxVirtualTreeListNode(FTreeList.FocusedNode).RecordHandle;
+  end
+  else
+  begin
+    Result := nil;
   end;
 end;
 
@@ -127,13 +160,12 @@ begin
   begin
     if Assigned(ColumnDefinitions) then
     begin
-      ColumnDefinitions.Clear();
-      for i := 0 to Pred(FTreeList.ColumnCount) do
+      for i := 0 to Pred(ColumnDefinitions.Count) do
       begin
-        with ColumnDefinitions.Add do
+        if i < FTreeList.ColumnCount then
         begin
-          Caption := FTreeList.Columns[i].Caption.Text;
-          Width := FTreeList.Columns[i].Width;
+          FTreeList.Columns[i].Caption.Text := ColumnDefinitions[i].Caption;
+          FTreeList.Columns[i].Width := ColumnDefinitions[i].Width;
         end;
       end;
     end;
@@ -145,6 +177,8 @@ begin
   if Assigned(FTreeList) then
   begin
     FTreeList.OnCustomDrawDataCell := DoCustomDrawDataCell;
+    FTreeList.OnDblClick := DoDblClick;
+    FTreeList.OnFocusedNodeChanged := DoFocusedNodeChanged;
     FTreeList.OnGetNodeImageIndex := DoGetNodeImageIndex;
   end;
 end;
@@ -162,9 +196,17 @@ end;
 
 procedure TTreeListPresenter.Refresh;
 begin
-  if Assigned(FTreeList) then
+  if Assigned(FTreeList) and ([csLoading, csDesigning] * ComponentState = []) then
   begin
     FDataSource.DataChanged;
+  end;
+end;
+
+procedure TTreeListPresenter.SetCurrentItem(const Value: TObject);
+begin
+  if Assigned(FTreeList) then
+  begin
+    FDataSource.DataController.FocusedRecordIndex := FDataSource.GetRecordIndexByHandle(Value);
   end;
 end;
 

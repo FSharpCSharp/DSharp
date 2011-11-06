@@ -33,6 +33,9 @@ interface
 
 uses
   Classes,
+  cxCustomData,
+  cxGraphics,
+  cxGridCustomTableView,
   cxGridCustomView,
   DSharp.Collections,
   DSharp.DevExpress.PresenterDataSource,
@@ -43,16 +46,23 @@ type
   private
     FDataSource: TPresenterDataSource;
     FGridView: TcxCustomGridView;
+
+    procedure DoFocusedRecordChanged(Sender: TcxCustomGridTableView;
+      PrevFocusedRecord, FocusedRecord: TcxCustomGridRecord;
+      NewItemRecordFocusingChanged: Boolean);
     procedure SetGridView(const Value: TcxCustomGridView);
   protected
+    function GetCurrentItem: TObject; override;
     procedure InitColumns; override;
+    procedure InitEvents; override;
     procedure InitProperties; override;
+    procedure SetCurrentItem(const Value: TObject); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     procedure Refresh; override;
-
+  published
     property GridView: TcxCustomGridView read FGridView write SetGridView;
   end;
 
@@ -60,7 +70,9 @@ implementation
 
 uses
   cxGridCardView,
-  cxGridTableView;
+  cxGridTableView,
+  DSharp.Windows.ControlTemplates,
+  SysUtils;
 
 { TGridViewPresenter }
 
@@ -76,6 +88,34 @@ begin
   inherited;
 end;
 
+procedure TGridViewPresenter.DoFocusedRecordChanged(
+  Sender: TcxCustomGridTableView; PrevFocusedRecord,
+  FocusedRecord: TcxCustomGridRecord; NewItemRecordFocusingChanged: Boolean);
+begin
+  if Assigned(FocusedRecord) then
+  begin
+    View.ItemIndex := FocusedRecord.RecordIndex;
+  end
+  else
+  begin
+    View.ItemIndex := -1;
+  end;
+
+  DoPropertyChanged('View');
+end;
+
+function TGridViewPresenter.GetCurrentItem: TObject;
+begin
+  if Assigned(FGridView) and (View.ItemIndex > -1) then
+  begin
+    Result := FDataSource.GetRecordHandleByIndex(View.ItemIndex);
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
 procedure TGridViewPresenter.InitColumns;
 var
   i: Integer;
@@ -86,29 +126,41 @@ begin
   begin
     if Assigned(ColumnDefinitions) then
     begin
-      ColumnDefinitions.Clear();
       if FGridView is TcxGridTableView then
       begin
         LTableView := TcxGridTableView(FGridView);
-        for i := 0 to Pred(LTableView.ColumnCount) do
+        for i := 0 to Pred(ColumnDefinitions.Count) do
         begin
-          with LTableView.Columns[i] do
+          if i < LTableView.ColumnCount then
           begin
-            ColumnDefinitions.Add(Caption, Width);
+            LTableView.Columns[i].Caption := ColumnDefinitions[i].Caption;
+            LTableView.Columns[i].Width := ColumnDefinitions[i].Width;
           end;
         end;
       end else
       if FGridView is TcxGridCardView then
       begin
         LCardView := TcxGridCardView(FGridView);
-        for i := 0 to Pred(LCardView.RowCount) do
+        for i := 0 to Pred(ColumnDefinitions.Count) do
         begin
-          with LCardView.Rows[i] do
+          if i < LCardView.RowCount then
           begin
-            ColumnDefinitions.Add(Caption);
+            LCardView.Rows[i].Caption := ColumnDefinitions[i].Caption;
           end;
         end;
       end;
+    end;
+  end;
+end;
+
+procedure TGridViewPresenter.InitEvents;
+begin
+  if Assigned(FGridView) then
+  begin
+    FGridView.OnDblClick := DoDblClick;
+    if FGridView is TcxCustomGridTableView then
+    begin
+      TcxCustomGridTableView(FGridView).OnFocusedRecordChanged := DoFocusedRecordChanged;
     end;
   end;
 end;
@@ -124,9 +176,17 @@ end;
 
 procedure TGridViewPresenter.Refresh;
 begin
-  if Assigned(FGridView) then
+  if Assigned(FGridView) and ([csLoading, csDesigning] * ComponentState = []) then
   begin
     FDataSource.DataChanged;
+  end;
+end;
+
+procedure TGridViewPresenter.SetCurrentItem(const Value: TObject);
+begin
+  if Assigned(FGridView) then
+  begin
+    FDataSource.DataController.FocusedRecordIndex := FDataSource.GetRecordIndexByHandle(Value);
   end;
 end;
 

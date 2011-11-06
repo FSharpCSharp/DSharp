@@ -5,9 +5,7 @@
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
-			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>VCL</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -24,7 +22,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_DependencyCheckOutputName>..\..\..\..\..\..\..\..\Public\Documents\RAD Studio\7.0\Bpl\dclDataBindings140.bpl</DCC_DependencyCheckOutputName>
+			<DCC_DependencyCheckOutputName>..\..\..\..\..\..\..\..\..\Public\Documents\RAD Studio\7.0\Bpl\dclDataBindings140.bpl</DCC_DependencyCheckOutputName>
 			<DllSuffix>140</DllSuffix>
 			<DesignOnlyPackage>true</DesignOnlyPackage>
 			<GenPackage>true</GenPackage>
@@ -58,8 +56,6 @@
 			<DCCReference Include="..\..\Resources\DSharp.Bindings.dcr"/>
 			<DCCReference Include="designide.dcp"/>
 			<DCCReference Include="DataBindings.dcp"/>
-			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Designtime.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
@@ -115,9 +111,6 @@
 						<Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
 					</Parameters>
 				</Delphi.Personality>
-				<Platforms>
-					<Platform value="Win32">True</Platform>
-				</Platforms>
 			</BorlandProject>
 			<ProjectFileVersion>12</ProjectFileVersion>
 		</ProjectExtensions>

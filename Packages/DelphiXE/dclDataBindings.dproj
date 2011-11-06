@@ -7,7 +7,7 @@
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>VCL</FrameworkType>
+			<FrameworkType>None</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -57,8 +57,6 @@
 			<DCCReference Include="..\..\Resources\DSharp.Bindings.dcr"/>
 			<DCCReference Include="designide.dcp"/>
 			<DCCReference Include="DataBindings.dcp"/>
-			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Designtime.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>

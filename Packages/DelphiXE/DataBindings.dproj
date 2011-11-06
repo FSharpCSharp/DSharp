@@ -7,7 +7,7 @@
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Package</AppType>
-			<FrameworkType>VCL</FrameworkType>
+			<FrameworkType>None</FrameworkType>
 			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
@@ -50,8 +50,6 @@
 			<DelphiCompile Include="DataBindings.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="rtl.dcp"/>
-			<DCCReference Include="vcl.dcp"/>
 			<DCCReference Include="xmlrtl.dcp"/>
 			<DCCReference Include="DSharp.Core.dcp"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.pas"/>
@@ -61,8 +59,6 @@
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Exceptions.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Notifications.pas"/>
 			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Validations.pas"/>
-			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
-			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.ObservableCollection.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.XNode.pas"/>
@@ -112,7 +108,6 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Excluded_Packages/>
 					<Source>
 						<Source Name="MainSource">DataBindings.dpk</Source>
 					</Source>

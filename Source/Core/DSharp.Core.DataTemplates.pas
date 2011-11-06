@@ -162,15 +162,21 @@ function TDataTemplate.GetItemTemplate(const Item: TObject): IDataTemplate;
 var
   LTemplate: IDataTemplate;
 begin
-  Result := Self;
+  Result := nil;
+
   for LTemplate in FTemplates do
   begin
-    if Assigned(Item) and (Item.InheritsFrom(LTemplate.GetTemplateDataClass)
-      or IsClassCovariantTo(Item.ClassType, LTemplate.GetTemplateDataClass)) then
+    Result := LTemplate.GetItemTemplate(Item);
+    if Assigned(Result) then
     begin
-      Result := LTemplate.GetItemTemplate(Item);
       Break;
     end;
+  end;
+
+  if not Assigned(Result) and Assigned(Item) and (Item.InheritsFrom(GetTemplateDataClass)
+    or IsClassCovariantTo(Item.ClassType, GetTemplateDataClass)) then
+  begin
+    Result := Self;
   end;
 end;
 

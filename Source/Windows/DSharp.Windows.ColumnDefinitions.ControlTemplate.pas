@@ -32,6 +32,7 @@ unit DSharp.Windows.ColumnDefinitions.ControlTemplate;
 interface
 
 uses
+  DSharp.Core.DataTemplates,
   DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.ControlTemplates;
 
@@ -47,6 +48,7 @@ type
       DrawMode: TDrawMode): Boolean; override;
     function GetImageIndex(const Item: TObject;
       const ColumnIndex: Integer): Integer; override;
+    function GetItemTemplate(const Item: TObject): IDataTemplate; override;
 
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
@@ -120,6 +122,17 @@ begin
   else
   begin
     Result := inherited;
+  end;
+end;
+
+function TColumnDefinitionsControlTemplate.GetItemTemplate(
+  const Item: TObject): IDataTemplate;
+begin
+  Result := inherited;
+
+  if not Assigned(Result) then
+  begin
+    Result := Self;
   end;
 end;
 

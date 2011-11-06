@@ -59,16 +59,15 @@ type
   TCheckSupport = (csNone, csSimple, csTriState);
 
   TTreeViewPresenter = class(TCustomPresenter)
-  private
-    FAction: TBasicAction;
+  private    
     FAllowMove: Boolean;
     FCheckedItems: IList<TObject>;
     FCheckSupport: TCheckSupport;
+    FCurrentNode: PVirtualNode;
     FExpandedItems: IList<TObject>;
     FListMode: Boolean;
     FMultiSelect: Boolean;
     FOnCompare: TCompareEvent;
-    FOnDoubleClick: TNotifyEvent;
     FOnDragBegin: TDragBeginEvent;
     FOnDragDrop: TDragDropEvent;
     FOnDragOver: TDragOverEvent;
@@ -85,7 +84,6 @@ type
     procedure DoChecked(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoCompareNodes(Sender: TBaseVirtualTree;
       Node1, Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
-    procedure DoDblClick(Sender: TObject);
     procedure DoDragAllowed(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; var Allowed: Boolean);
     procedure DoDragDrop(Sender: TBaseVirtualTree; Source: TObject;
@@ -120,6 +118,7 @@ type
     procedure GetItemNode(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Data: Pointer; var Abort: Boolean);
     function GetNodeItem(Tree: TBaseVirtualTree; Node: PVirtualNode): TObject;
+    function GetParentItem(const Level: Integer): TObject;
     function GetSelectedItem: TObject;
     function GetSelectedItems: IList<TObject>;
 
@@ -138,6 +137,7 @@ type
     procedure UpdateExpandedItems;
     procedure UpdateSelectedItems;
   protected
+    procedure DoDblClick(Sender: TObject); override;
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction); override;
     function GetCurrentItem: TObject; override;
@@ -158,16 +158,15 @@ type
 
     property CheckedItems: IList<TObject> read GetCheckedItems;
     property ExpandedItems: IList<TObject> read GetExpandedItems write SetExpandedItems;
+    property ParentItem[const Level: Integer]: TObject read GetParentItem;
     property SelectedItem: TObject read GetSelectedItem write SetSelectedItem;
     property SelectedItems: IList<TObject> read GetSelectedItems write SetSelectedItems;
-  published
-    property Action: TBasicAction read FAction write FAction;
+  published    
     property AllowMove: Boolean read FAllowMove write FAllowMove default True;
     property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
     property ListMode: Boolean read FListMode write SetListMode default False;
     property MultiSelect: Boolean read FMultiSelect write SetMultiSelect default False;
     property OnCompare: TCompareEvent read FOnCompare write FOnCompare;
-    property OnDoubleClick: TNotifyEvent read FOnDoubleClick write FOnDoubleClick;
     property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
     property OnDragDrop: TDragDropEvent read FOnDragDrop write FOnDragDrop;
     property OnDragOver: TDragOverEvent read FOnDragOver write FOnDragOver;
@@ -307,7 +306,7 @@ begin
   FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
 
   if not FListMode and ((hiOnNormalIcon in LHitInfo.HitPositions)
-    or not Assigned(FOnDoubleClick)) then
+    or not Assigned(OnDoubleClick)) then
   begin
     FTreeView.ToggleNode(LHitInfo.HitNode);
   end
@@ -316,19 +315,7 @@ begin
     if ([hiOnItemButton..hiOnItemCheckbox] * LHitInfo.HitPositions = [])
       and Assigned(LHitInfo.HitNode) then
     begin
-      if Assigned(FOnDoubleClick) and Assigned(FAction)
-        and not DelegatesEqual(@FOnDoubleClick, @FAction.OnExecute) then
-      begin
-        FOnDoubleClick(Self);
-      end else
-      if not (csDesigning in ComponentState) and Assigned(FAction) then
-      begin
-        FAction.Execute();
-      end else
-      if Assigned(FOnDoubleClick) then
-      begin
-        FOnDoubleClick(Self);
-      end;
+      inherited;
     end;
   end;
 end;
@@ -471,6 +458,9 @@ var
   LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
+  FCurrentNode := Node;
+  DoPropertyChanged('ParentItem');
+
   LItem := GetNodeItem(Sender, Node);
   LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
@@ -506,6 +496,9 @@ var
   LItemTemplate: IDataTemplate;
   LParentItem: TObject;
 begin
+  FCurrentNode := Node;
+  DoPropertyChanged('ParentItem');
+
   if FCheckSupport = csTriState then
   begin
     Node.CheckType := ctTriStateCheckbox;
@@ -550,11 +543,11 @@ var
 begin
   if Key = VK_RETURN then
   begin
-    if Assigned(FAction) then
+    if Assigned(Action) then
     begin
       if FTreeView.SelectedCount > 0 then
       begin
-        FAction.Execute();
+        Action.Execute();
       end;
     end;
   end;
@@ -739,13 +732,30 @@ end;
 function TTreeViewPresenter.GetNodeItem(Tree: TBaseVirtualTree;
   Node: PVirtualNode): TObject;
 begin
-  if Assigned(Tree) and Assigned(Node) then
+  if Assigned(Tree) and Assigned(Node) and (Node <> FTreeView.RootNode) then
   begin
     Result := PObject(Tree.GetNodeData(Node))^;
   end
   else
   begin
     Result := nil;
+  end;
+end;
+
+function TTreeViewPresenter.GetParentItem(const Level: Integer): TObject;
+var
+  LLevel: Integer;
+  LNode: PVirtualNode;
+begin
+  Result := GetNodeItem(FTreeView, FCurrentNode);
+
+  LLevel := 0;
+  LNode := FCurrentNode;
+  while Assigned(LNode) and (LLevel < Level) do
+  begin
+    LNode := LNode.Parent;
+    Result := GetNodeItem(FTreeView, LNode);
+    Inc(LLevel);
   end;
 end;
 

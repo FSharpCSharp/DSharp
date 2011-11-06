@@ -39,9 +39,9 @@ uses
 type
   TColumnDefinitionsControlTemplate = class(TControlTemplate)
   protected
-    FColumnDefinitions: TColumnDefinitions;
+    FColumnDefinitions: IColumnDefinitions;
   public
-    constructor Create(AColumnDefinitions: TColumnDefinitions);
+    constructor Create(AColumnDefinitions: IColumnDefinitions);
 
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
@@ -54,7 +54,7 @@ type
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
       const Value: string); override;
 
-    property ColumnDefinitions: TColumnDefinitions read FColumnDefinitions;
+    property ColumnDefinitions: IColumnDefinitions read FColumnDefinitions;
   end;
 
 implementation
@@ -65,7 +65,7 @@ uses
 { TColumnDefinitionsControlTemplate }
 
 constructor TColumnDefinitionsControlTemplate.Create(
-  AColumnDefinitions: TColumnDefinitions);
+  AColumnDefinitions: IColumnDefinitions);
 begin
   inherited Create;
   FColumnDefinitions := AColumnDefinitions;

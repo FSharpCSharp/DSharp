@@ -47,17 +47,23 @@ uses
 type
   TCustomPresenter = class(TComponent, ICollectionView, INotifyPropertyChanged)
   private
-    FColumnDefinitions: TColumnDefinitions;
+    FAction: TBasicAction;
+    FColumnDefinitions: IColumnDefinitions;
     FImageList: TImageList;
     FNotifyPropertyChanged: INotifyPropertyChanged;
+    FOnDoubleClick: TNotifyEvent;
     FPopupMenu: TPopupMenu;
     FView: TCollectionView;
-    procedure SetColumnDefinitions(const Value: TColumnDefinitions);
+    procedure ReadColumnDefinitions(Reader: TReader);
+    procedure SetColumnDefinitions(const Value: IColumnDefinitions);
     procedure SetImageList(const Value: TImageList);
     procedure SetPopupMenu(const Value: TPopupMenu);
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
+    procedure WriteColumnDefinitions(Writer: TWriter);
   protected
+    procedure DefineProperties(Filer: TFiler); override;
+    procedure DoDblClick(Sender: TObject); virtual;
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
@@ -76,11 +82,13 @@ type
     function GetItemTemplate(const Item: TObject): IDataTemplate; overload;
     procedure Refresh; virtual;
 
+    property ColumnDefinitions: IColumnDefinitions
+      read FColumnDefinitions write SetColumnDefinitions;
     property View: TCollectionView read FView implements ICollectionView;
   published
-    property ColumnDefinitions: TColumnDefinitions
-      read FColumnDefinitions write SetColumnDefinitions;
+    property Action: TBasicAction read FAction write FAction;
     property ImageList: TImageList read FImageList write SetImageList;
+    property OnDoubleClick: TNotifyEvent read FOnDoubleClick write FOnDoubleClick;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
   end;
 
@@ -118,12 +126,31 @@ end;
 
 destructor TCustomPresenter.Destroy;
 begin
-  if Assigned(FColumnDefinitions) and (FColumnDefinitions.Owner = Self) then
-  begin
-    FColumnDefinitions.Free();
-  end;
   FView.Free();
   inherited;
+end;
+
+procedure TCustomPresenter.DefineProperties(Filer: TFiler);
+begin
+  inherited;
+  Filer.DefineProperty('ColumnDefinitions', ReadColumnDefinitions, WriteColumnDefinitions, True);
+end;
+
+procedure TCustomPresenter.DoDblClick(Sender: TObject);
+begin
+  if Assigned(FOnDoubleClick) and Assigned(FAction)
+    and not DelegatesEqual(@FOnDoubleClick, @FAction.OnExecute) then
+  begin
+    FOnDoubleClick(Self);
+  end else
+  if not (csDesigning in ComponentState) and Assigned(FAction) then
+  begin
+    FAction.Execute();
+  end else
+  if Assigned(FOnDoubleClick) then
+  begin
+    FOnDoubleClick(Self);
+  end;
 end;
 
 procedure TCustomPresenter.DoPropertyChanged(const APropertyName: string;
@@ -180,6 +207,13 @@ procedure TCustomPresenter.Loaded;
 begin
   inherited;
   InitColumns();
+  Refresh();
+end;
+
+procedure TCustomPresenter.ReadColumnDefinitions(Reader: TReader);
+begin
+  Reader.ReadValue();
+  Reader.ReadCollection(FColumnDefinitions as TCollection);
 end;
 
 procedure TCustomPresenter.Refresh;
@@ -188,7 +222,7 @@ begin
 end;
 
 procedure TCustomPresenter.SetColumnDefinitions(
-  const Value: TColumnDefinitions);
+  const Value: IColumnDefinitions);
 begin
   if Assigned(FColumnDefinitions) and (FColumnDefinitions.Owner = Self) then
   begin
@@ -197,8 +231,6 @@ begin
     begin
       FView.ItemTemplate := nil;
     end;
-
-    FColumnDefinitions.Free();
   end;
   FColumnDefinitions := Value;
   InitColumns();
@@ -221,10 +253,16 @@ begin
   InitControl();
 end;
 
+procedure TCustomPresenter.WriteColumnDefinitions(Writer: TWriter);
+begin
+  Writer.WriteCollection(FColumnDefinitions as TColumnDefinitions);
+end;
+
 { TCollectionViewPresenterAdapter }
 
 constructor TCollectionViewPresenterAdapter.Create(Presenter: TCustomPresenter);
 begin
+  inherited Create;
   FPresenter := Presenter;
 end;
 
@@ -263,9 +301,9 @@ begin
   if not (csDestroying in FPresenter.ComponentState) then
   begin
     FPresenter.Refresh();
-  end;
 
-  NotifyPropertyChanged(FPresenter, Self, 'View');
+    NotifyPropertyChanged(FPresenter, Self, 'View');
+  end;
 end;
 
 end.

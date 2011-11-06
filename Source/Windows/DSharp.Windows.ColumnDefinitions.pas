@@ -99,9 +99,25 @@ type
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;
 
-  TColumnDefinitions = class(TOwnedCollection<TColumnDefinition>)
+  IColumnDefinitions = interface
+    function GetCount: Integer;
+    function GetItem(Index: Integer): TColumnDefinition;
+    function GetOwner: TPersistent;
+    procedure SetItem(Index: Integer; Value: TColumnDefinition);
+    property Count: Integer read GetCount;
+    property Items[Index: Integer]: TColumnDefinition read GetItem write SetItem; default;
+    property Owner: TPersistent read GetOwner;
+  end;
+
+  TColumnDefinitions = class(TOwnedCollection<TColumnDefinition>, IColumnDefinitions)
+  private
+    FRefCount: Integer;
   protected
     procedure Initialize; virtual;
+
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   public
     constructor Create(AOwner: TPersistent = nil); override;
     function Add(const Caption: string; const Width: Integer = CDefaultWidth): TColumnDefinition; overload;
@@ -198,6 +214,28 @@ end;
 procedure TColumnDefinitions.Initialize;
 begin
   // implemented by descendants
+end;
+
+function TColumnDefinitions.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TColumnDefinitions._AddRef: Integer;
+begin
+  Inc(FRefCount);
+  Result := FRefCount;
+end;
+
+function TColumnDefinitions._Release: Integer;
+begin
+  Dec(FRefCount);
+  Result := FRefCount;
+  if Result = 0 then
+    Destroy;
 end;
 
 function TColumnDefinitions.Add(const Caption: string; const Width: Integer): TColumnDefinition;

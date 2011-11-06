@@ -47,10 +47,11 @@ type
   TCollection<T: TCollectionItem> = class(TCollection)
   private
     FOnNotify: TCollectionNotifyEvent<T>;
-    function GetItem(Index: Integer): T;
-    procedure SetItem(Index: Integer; Value: T);
   protected
+    function GetCount: Integer;
+    function GetItem(Index: Integer): T;
     procedure Notify(Item: TCollectionItem; Action: TCollectionNotification); override;
+    procedure SetItem(Index: Integer; Value: T);
   public
     constructor Create;
     function Add: T;
@@ -88,6 +89,11 @@ end;
 constructor TCollection<T>.Create;
 begin
   inherited Create(T);
+end;
+
+function TCollection<T>.GetCount: Integer;
+begin
+  Result := inherited Count;
 end;
 
 function TCollection<T>.GetEnumerator: TCollectionEnumerator<T>;

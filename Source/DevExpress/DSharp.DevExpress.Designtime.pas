@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Windows.TreeViewPresenter.Designtime;
+unit DSharp.DevExpress.Designtime;
 
 interface
 
@@ -38,15 +38,16 @@ implementation
 uses
   Classes,
   DesignIntf,
-  DSharp.Windows.CustomPresenter,
-  DSharp.Windows.CustomPresenter.Designtime,
-  DSharp.Windows.TreeViewPresenter;
+  DSharp.DevExpress.GridViewPresenter,
+  DSharp.DevExpress.TreeListPresenter;
 
 procedure Register;
 begin
-  RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
-  RegisterComponentEditor(TCustomPresenter, TCustomPresenterComponentEditor);
-  RegisterSelectionEditor(TCustomPresenter, TCustomPresenterSelectionEditor);
+  RegisterComponents('DSharp', [TGridViewPresenter, TTreeListPresenter]);
+//  RegisterComponentEditor(TGridViewPresenter, TCustomPresenterComponentEditor);
+//  RegisterSelectionEditor(TGridViewPresenter, TCustomPresenterSelectionEditor);
+//  RegisterComponentEditor(TTreeListPresenter, TCustomPresenterComponentEditor);
+//  RegisterSelectionEditor(TTreeListPresenter, TCustomPresenterSelectionEditor);
 end;
 
 end.

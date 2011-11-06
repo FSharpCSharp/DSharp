@@ -27,26 +27,57 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Windows.TreeViewPresenter.Designtime;
+unit DSharp.Windows.CustomPresenter.Designtime;
 
 interface
 
-procedure Register;
+uses
+  Classes,
+  ColnEdit,
+  DesignEditors;
+
+type
+  TCustomPresenterComponentEditor = class(TComponentEditor)
+  public
+    procedure ExecuteVerb(Index: Integer); override;
+    function GetVerb(Index: Integer): string; override;
+    function GetVerbCount: Integer; override;
+  end;
+
+  TCustomPresenterSelectionEditor = class(TSelectionEditor)
+  public
+    procedure RequiresUnits(Proc: TGetStrProc); override;
+  end;
 
 implementation
 
 uses
-  Classes,
-  DesignIntf,
-  DSharp.Windows.CustomPresenter,
-  DSharp.Windows.CustomPresenter.Designtime,
-  DSharp.Windows.TreeViewPresenter;
+  DSharp.Windows.CustomPresenter;
 
-procedure Register;
+{ TCustomPresenterComponentEditor }
+
+procedure TCustomPresenterComponentEditor.ExecuteVerb(Index: Integer);
 begin
-  RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
-  RegisterComponentEditor(TCustomPresenter, TCustomPresenterComponentEditor);
-  RegisterSelectionEditor(TCustomPresenter, TCustomPresenterSelectionEditor);
+  ShowCollectionEditorClass(Designer, TCollectionEditor, Component,
+    (Component as TCustomPresenter).ColumnDefinitions as TCollection, 'ColumnDefinitions');
+end;
+
+function TCustomPresenterComponentEditor.GetVerb(Index: Integer): string;
+begin
+  Result := 'Column definitions...';
+end;
+
+function TCustomPresenterComponentEditor.GetVerbCount: Integer;
+begin
+  Result := 1;
+end;
+
+{ TCustomPresenterSelectionEditor }
+
+procedure TCustomPresenterSelectionEditor.RequiresUnits(Proc: TGetStrProc);
+begin
+  inherited;
+  Proc('DSharp.Windows.ColumnDefinitions');
 end;
 
 end.

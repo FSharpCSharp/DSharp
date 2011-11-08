@@ -67,6 +67,7 @@ type
     FBindingGroup: TBindingGroup;
     FBindingMode: TBindingMode;
     FConverter: IValueConverter;
+    FManaged: Boolean;
     FNotificationHandler: TNotificationHandler<TBindingBase>;
     FNotifyOnTargetUpdated: Boolean;
     FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
@@ -132,6 +133,7 @@ type
   published
     property BindingMode: TBindingMode read FBindingMode write FBindingMode
       default BindingModeDefault;
+    property Managed: Boolean read FManaged write FManaged default True;
     property NotifyOnTargetUpdated: Boolean read FNotifyOnTargetUpdated
       write FNotifyOnTargetUpdated default False;
     property OnTargetUpdated: TPropertyChangedEvent read FOnTargetUpdated
@@ -383,6 +385,7 @@ begin
   if Assigned(Collection) then
   begin
     FBindingGroup := TBindingGroup(Collection.Owner);
+    FManaged := Assigned(FBindingGroup);
     FActive := Assigned(FBindingGroup) and not (csDesigning in FBindingGroup.ComponentState);
   end;
 end;
@@ -465,7 +468,7 @@ begin
     if AComponent = FTarget then
     begin
       FTarget := nil;
-      if not Assigned(FBindingGroup) then
+      if not FManaged then
       begin
         Free;
       end;
@@ -557,7 +560,8 @@ procedure TBindingBase.SetTargetProperty(AObject: TObject;
   const APropertyName: string);
 begin
   FTarget := AObject;
-  FTargetProperty := TPropertyExpression.Create(FTarget, FTargetPropertyName);
+  FTargetProperty := Expression.PropertyAccess(
+    Expression.Constant(FTarget), FTargetPropertyName);
   CompileExpressions();
 end;
 
@@ -808,7 +812,7 @@ begin
     if AComponent = FSource then
     begin
       FSource := nil;
-      if not Assigned(FBindingGroup) then
+      if not FManaged then
       begin
         Free;
       end;
@@ -890,7 +894,8 @@ begin
   end;
 
   FSource := AObject;
-  FSourceProperty := TPropertyExpression.Create(FSource, FSourcePropertyName);
+  FSourceProperty := Expression.PropertyAccess(
+    Expression.Constant(FSource), FSourcePropertyName);
   CompileExpressions();
 
   if Assigned(FSourceProperty) and FSourceProperty.Value.IsObject

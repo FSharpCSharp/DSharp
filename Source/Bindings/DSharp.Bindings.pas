@@ -241,6 +241,12 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+
+    function AddBinding(ASource: TObject = nil; ASourcePropertyName: string = '';
+      ATarget: TObject = nil; ATargetPropertyName: string = '';
+      ABindingMode: TBindingMode = BindingModeDefault;
+      AConverter: IValueConverter = nil): TBinding;
+
     function GetBindingForTarget(ATarget: TObject): TBinding;
 
     procedure BeginEdit;
@@ -1063,6 +1069,19 @@ end;
 
 { TBindingGroup }
 
+function TBindingGroup.AddBinding(ASource: TObject; ASourcePropertyName: string;
+  ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
+  AConverter: IValueConverter): TBinding;
+begin
+  Result := Bindings.Add();
+  Result.Source := ASource;
+  Result.SourcePropertyName := ASourcePropertyName;
+  Result.Target := ATarget;
+  Result.TargetPropertyName := ATargetPropertyName;
+  Result.BindingMode := ABindingMode;
+  Result.Converter := AConverter;
+end;
+
 procedure TBindingGroup.BeginEdit;
 var
   LBinding: TBinding;
@@ -1168,15 +1187,14 @@ begin
   begin
     if LBinding.Target = ATarget then
     begin
-      Result := LBinding as TBinding;
+      Result := LBinding;
       Break;
     end;
   end;
   if not Assigned(Result) then
   begin
-    Result := TBinding.Create(nil);
+    Result := Bindings.Add;
     Result.Active := False;
-    Result.BindingGroup := Self;
     Result.Target := ATarget;
   end;
 end;

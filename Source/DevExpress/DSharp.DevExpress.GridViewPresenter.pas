@@ -33,6 +33,7 @@ interface
 
 uses
   Classes,
+  Controls,
   cxCustomData,
   cxGraphics,
   cxGridCustomTableView,
@@ -47,9 +48,13 @@ type
     FDataSource: TPresenterDataSource;
     FGridView: TcxCustomGridView;
 
+    procedure DoCellDblClick(Sender: TcxCustomGridTableView;
+      CellViewInfo: TcxGridTableDataCellViewInfo; Button: TMouseButton;
+      Shift: TShiftState; var Handled: Boolean);
     procedure DoFocusedRecordChanged(Sender: TcxCustomGridTableView;
       PrevFocusedRecord, FocusedRecord: TcxCustomGridRecord;
       NewItemRecordFocusingChanged: Boolean);
+
     procedure SetGridView(const Value: TcxCustomGridView);
   protected
     function GetCurrentItem: TObject; override;
@@ -86,6 +91,13 @@ destructor TGridViewPresenter.Destroy;
 begin
   FDataSource.Free();
   inherited;
+end;
+
+procedure TGridViewPresenter.DoCellDblClick(Sender: TcxCustomGridTableView;
+  CellViewInfo: TcxGridTableDataCellViewInfo; Button: TMouseButton;
+  Shift: TShiftState; var Handled: Boolean);
+begin
+  DoDblClick(Sender);
 end;
 
 procedure TGridViewPresenter.DoFocusedRecordChanged(
@@ -157,10 +169,10 @@ procedure TGridViewPresenter.InitEvents;
 begin
   if Assigned(FGridView) then
   begin
-    FGridView.OnDblClick := DoDblClick;
     if FGridView is TcxCustomGridTableView then
     begin
       TcxCustomGridTableView(FGridView).OnFocusedRecordChanged := DoFocusedRecordChanged;
+      TcxCustomGridTableView(FGridView).OnCellDblClick := DoCellDblClick;
     end;
   end;
 end;

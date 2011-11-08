@@ -58,6 +58,7 @@ type
 
     procedure SetTreeList(const Value: TcxVirtualTreeList);
   protected
+    procedure DoDblClick(Sender: TObject); override;
     function GetCurrentItem: TObject; override;
     procedure InitColumns; override;
     procedure InitEvents; override;
@@ -105,6 +106,14 @@ begin
   begin
     Done := LItemTemplate.CustomDraw(LItem, ViewInfo.Column.ItemIndex,
       Canvas.Canvas, ViewInfo.VisibleRect, ImageList, dmAfterCellPaint);
+  end;
+end;
+
+procedure TTreeListPresenter.DoDblClick(Sender: TObject);
+begin
+  if FTreeList.HitTest.HitAtColumn and not FTreeList.IsEditing then
+  begin
+    inherited;
   end;
 end;
 

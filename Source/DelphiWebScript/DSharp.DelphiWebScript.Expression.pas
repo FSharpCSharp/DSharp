@@ -53,12 +53,35 @@ type
     property Text: string read FText write FText;
   end;
 
+function ScriptExpression(const ExpressionText: string; Scope: TComponent = nil): IExpression;
+
 implementation
 
 uses
   DSharp.DelphiWebScript.Connector,
   dwsExprs,
   dwsRTTIConnector;
+
+function ScriptExpression(const ExpressionText: string; Scope: TComponent): IExpression;
+var
+  i: Integer;
+  LExpression: TDelphiWebScriptExpression;
+begin
+  LExpression := TDelphiWebScriptExpression.Create;
+  LExpression.Text := ExpressionText;
+
+  if Assigned(Scope) then
+  begin
+    LExpression.BindObject(Scope, 'Self');
+
+    for i := 0 to Pred(Scope.ComponentCount) do
+    begin
+      LExpression.BindObject(Scope.Components[i]);
+    end;
+  end;
+
+  Result := LExpression;
+end;
 
 { TDelphiWebScriptExpression }
 
@@ -74,33 +97,51 @@ end;
 
 procedure TDelphiWebScriptExpression.BindObject(AObject: TObject;
   const AVariableName: string);
+
+  function FindUniqueName(Component: TComponent): string;
+  var
+    i: Integer;
+    s: string;
+  begin
+    i := 0;
+    s := Copy(Component.ClassName, 2, Length(Component.ClassName));
+    repeat
+      Inc(i);
+      Result := Format('%s%d', [s, i]);
+    until IsUniqueGlobalComponentName(Result);
+  end;
+
 var
   LVariableName: string;
 begin
   LVariableName := AVariableName;
   if (LVariableName = '') and (AObject is TComponent) then
   begin
-    LVariableName := TComponent(AObject).Name;
+    if TComponent(AObject).Name = '' then
+      LVariableName := FindUniqueName(TComponent(AObject))
+    else
+      LVariableName := TComponent(AObject).Name;
   end;
   FObjects.AddObject(LVariableName, AObject);
-  FObjects.AddObject('Self', AObject);
 end;
 
 function TDelphiWebScriptExpression.BuildScript: string;
 var
   i: Integer;
 begin
-  Result := Format('var Result := %s', [FText]);
   for i := 0 to Pred(FObjects.Count) do
   begin
-    Result := Format('var %s: RttiVariant;', [FObjects[i]]) + Result;
+    Result := Result + Format('var %s: RttiVariant;', [FObjects[i]]) + sLineBreak;
   end;
+  Result := Result + Format('var Result: RttiVariant := %s', [FText]);
 end;
 
 function TDelphiWebScriptExpression.Compile: TFunc<TValue>;
 var
+  Expression: IExpression;
   LProgram: IdwsProgram;
 begin
+  Expression := Self;
   LProgram := TDelphiWebScriptConnector.Compile(BuildScript());
   if not LProgram.Msgs.HasErrors then
   begin
@@ -110,6 +151,8 @@ begin
         i: Integer;
         LExecution: IdwsProgramExecution;
       begin
+        if Assigned(Expression) then;
+
         LExecution := LProgram.BeginNewExecution;
         try
           for i := 0 to Pred(FObjects.Count) do

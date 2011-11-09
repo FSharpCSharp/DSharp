@@ -35,6 +35,7 @@ uses
   Classes,
   ComCtrls,
   DSharp.Bindings.CollectionView.Adapters,
+  DSharp.Bindings.VCLControls,
   Grids;
 
 type

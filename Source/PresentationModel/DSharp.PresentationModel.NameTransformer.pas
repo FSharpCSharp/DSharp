@@ -27,66 +27,72 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ViewLocator;
+unit DSharp.PresentationModel.NameTransformer;
 
 interface
 
 uses
-  Controls,
-  DSharp.PresentationModel.NameTransformer;
+  DSharp.Collections;
 
 type
-  ViewLocator = record
+  TRule = class
   private
-    class var FNameTransformer: INameTransformer;
+    FReplacePattern: string;
+    FReplacementValue: string;
   public
-    class constructor Create;
-    class function GetOrCreateViewType(ModelType: TClass): TControl; static;
+    constructor Create(const ReplacePattern, ReplacementValue: string);
+    property ReplacePattern: string read FReplacePattern;
+    property ReplacementValue: string read FReplacementValue;
+  end;
+
+  INameTransformer = interface
+    procedure AddRule(const ReplacePattern, ReplacementValue: string);
+    function Transform(const Source: string): IEnumerable<string>;
+  end;
+
+  TNameTransformer = class(TObjectList<TRule>, INameTransformer)
+  public
+    procedure AddRule(const ReplacePattern, ReplacementValue: string);
+    function Transform(const Source: string): IEnumerable<string>;
   end;
 
 implementation
 
 uses
-  DSharp.Core.Reflection,
-  DSharp.PresentationModel.Composition,
-  Rtti,
-  StrUtils,
-  SysUtils;
+  RegularExpressions;
 
-{ ViewLocator }
+{ TRule }
 
-class constructor ViewLocator.Create;
+constructor TRule.Create(const ReplacePattern, ReplacementValue: string);
 begin
-  FNameTransformer := TNameTransformer.Create();
-
-  FNameTransformer.AddRule('Model$', '');
-  FNameTransformer.AddRule('ViewModel$', 'View');
-  FNameTransformer.AddRule('ViewModel$', 'ViewForm');
-  FNameTransformer.AddRule('ViewModel$', 'ViewFrame');
-  FNameTransformer.AddRule('ViewModel$', 'Form');
-  FNameTransformer.AddRule('ViewModel$', 'Frame');
+  FReplacePattern := ReplacePattern;
+  FReplacementValue := ReplacementValue
 end;
 
-class function ViewLocator.GetOrCreateViewType(ModelType: TClass): TControl;
-var
-  LViewTypeName: string;
-  LType: TRttiType;
-begin
-  Result := nil;
+{ TNameTransformer }
 
-  for LViewTypeName in FNameTransformer.Transform(ModelType.ClassName) do
+procedure TNameTransformer.AddRule(const ReplacePattern,
+  ReplacementValue: string);
+begin
+  Add(TRule.Create(ReplacePattern, ReplacementValue));
+end;
+
+function TNameTransformer.Transform(const Source: string): IEnumerable<string>;
+var
+  LNameList: TList<string>;
+  LRule: TRule;
+begin
+  LNameList := TList<string>.Create;
+
+  for LRule in Self do
   begin
-    if FindType(LViewTypeName, LType) then
+    if TRegEx.IsMatch(Source, LRule.ReplacePattern) then
     begin
-      Result := Composition.GetInstance(LType.Handle, '').AsType<TControl>;
-      Break;
+      LNameList.Add(TRegEx.Replace(Source, LRule.ReplacePattern, LRule.ReplacementValue));
     end;
   end;
 
-  if Result = nil then
-  begin
-    raise Exception.CreateFmt('Cannot find view for %0:s.', [ModelType.ClassName]);
-  end;
+  Result := LNameList;
 end;
 
 end.

@@ -47,9 +47,11 @@ type
     function GetMock: IMock<T>;
     property Mock: IMock<T> read GetMock;
   public
-    procedure Clear;
+    class function Create: Mock<T>; static;
+    procedure Free;
     class operator Implicit(var Value: Mock<T>): IMock<T>;
     class operator Implicit(var Value: Mock<T>): T;
+    class operator Implicit(Value: T): Mock<T>;
     procedure Verify;
     function WillExecute<TAction>(const Action: TAction): IExpect<T>;
     function WillRaise(const ExceptionClass: ExceptClass;
@@ -68,7 +70,12 @@ uses
 
 { Mock<T> }
 
-procedure Mock<T>.Clear;
+class function Mock<T>.Create: Mock<T>;
+begin
+  Result.Instance;
+end;
+
+procedure Mock<T>.Free;
 begin
   FMock := nil;
 end;
@@ -95,6 +102,11 @@ end;
 class operator Mock<T>.Implicit(var Value: Mock<T>): T;
 begin
   Result := Value.Mock.Instance;
+end;
+
+class operator Mock<T>.Implicit(Value: T): Mock<T>;
+begin
+  Result.FMock := nil;
 end;
 
 procedure Mock<T>.Verify;

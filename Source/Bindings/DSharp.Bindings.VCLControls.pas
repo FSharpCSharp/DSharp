@@ -291,6 +291,20 @@ type
     constructor Create(AOwner: TComponent); override;
   end;
 
+  TScrollBox = class(Forms.TScrollBox, INotifyPropertyChanged, ICollectionView)
+  private
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    FView: TCollectionView;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
+  protected
+    procedure AutoScrollInView(AControl: TControl); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property View: TCollectionView read FView implements ICollectionView;
+  end;
+
   TStringGrid = class(Grids.TStringGrid, INotifyPropertyChanged, ICollectionView)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
@@ -911,6 +925,38 @@ begin
       SetFocus;
     end;
   end;
+end;
+
+{ TScrollBox }
+
+constructor TScrollBox.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+  FView := TCollectionViewAdapter.Create(Self);
+end;
+
+destructor TScrollBox.Destroy;
+begin
+  FView.Free();
+  inherited;
+end;
+
+procedure TScrollBox.AutoScrollInView(AControl: TControl);
+var
+  i: Integer;
+begin
+  inherited;
+  for i := 0 to Pred(ControlCount) do
+  begin
+    if AControl.Owner = Controls[i] then
+    begin
+      FView.ItemIndex := FView.ItemsSource.IndexOf(TObject(AControl.Owner.Tag));
+      Break;
+    end;
+  end;
+
+  NotifyPropertyChanged.DoPropertyChanged('View');
 end;
 
 { TStringGrid }

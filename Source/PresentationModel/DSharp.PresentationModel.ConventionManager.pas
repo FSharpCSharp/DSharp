@@ -34,7 +34,6 @@ interface
 uses
   Classes,
   DSharp.Bindings,
-  DSharp.Collections,
   DSharp.PresentationModel.ElementConvention,
   Generics.Collections,
   Rtti;
@@ -64,20 +63,9 @@ type
 implementation
 
 uses
-  ActnList,
-  Controls,
-  DSharp.Bindings.Collections,
-  DSharp.Bindings.VCLControls,
-  DSharp.Core.Events,
   DSharp.Core.Reflection,
-  DSharp.PresentationModel.Screen,
-  DSharp.PresentationModel.TabSheetConductor,
   DSharp.PresentationModel.Validations,
-  DSharp.PresentationModel.ViewLocator,
-  DSharp.PresentationModel.ViewModelBinder,
-  DSharp.Windows.CustomPresenter,
-  StrUtils,
-  SysUtils;
+  StrUtils;
 
 function Singularize(const AName: string): string;
 begin
@@ -100,17 +88,7 @@ begin
     'Current' + LSingular);
 end;
 
-type
-  TConventionManager = class
-  private
-    procedure PageControlCollectionChanged(Sender, Item: TObject;
-      Action: TCollectionChangedAction);
-  end;
-
-var
-  Manager: TConventionManager = nil;
-
-{ TConventionManager }
+{ ConventionManager }
 
 class function ConventionManager.AddElementConvention<T>(APropertyName,
   AEventName: string): TElementConvention;
@@ -163,75 +141,6 @@ end;
 class constructor ConventionManager.Create;
 begin
   FConventions := TObjectDictionary<TClass, TElementConvention>.Create([doOwnsValues]);
-
-  AddElementConvention<TAction>('Caption', 'OnExecute');
-  AddElementConvention<TButton>('Caption', 'OnClick');
-  AddElementConvention<TCheckBox>('Checked', 'OnClick');
-  AddElementConvention<TColorBox>('Selected', 'OnChange');
-  AddElementConvention<TComboBox>('Text', 'OnChange');
-  AddElementConvention<TCustomPresenter>('View.ItemsSource', 'OnCurrentChanged')
-    .ApplyBinding :=
-    procedure(AViewModel: TObject; APropertyName: string;
-      AViewElement: TComponent; ABindingType: TBindingType;
-      AConvention: TElementConvention)
-    begin
-      SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
-      ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
-    end;
-  AddElementConvention<TEdit>('Text', 'OnChange');
-  AddElementConvention<TLabel>('Caption', 'OnClick');
-  AddElementConvention<TLabeledEdit>('Text', 'OnChange');
-  AddElementConvention<TMemo>('Text', 'OnChange');
-  AddElementConvention<TMonthCalendar>('Date', 'OnClick');
-  AddElementConvention<TPageControl>('View.ItemsSource', 'OnCurrentChanged')
-    .ApplyBinding :=
-    procedure(AViewModel: TObject; APropertyName: string;
-      AViewElement: TComponent; ABindingType: TBindingType;
-      AConvention: TElementConvention)
-    var
-      LCollectionChanged: TEvent<TCollectionChangedEvent>;
-      LItems: IList<TObject>;
-      LItem: TObject;
-    begin
-      SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
-      ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
-
-      LItems := TPageControl(AViewElement).View.ItemsSource;
-      if Assigned(LItems) then
-      begin
-        for LItem in LItems do
-        begin
-          Manager.PageControlCollectionChanged(AViewElement, LItem, caAdd);
-        end;
-      end;
-
-      LCollectionChanged := TPageControl(AViewElement).View.OnCollectionChanged;
-      LCollectionChanged.Add(Manager.PageControlCollectionChanged);
-    end;
-  AddElementConvention<TPanel>('BindingSource', '').ApplyBinding :=
-    procedure(AViewModel: TObject; APropertyName: string;
-      AViewElement: TComponent; ABindingType: TBindingType;
-      AConvention: TElementConvention)
-    var
-      LProperty: TRttiProperty;
-      LView: TControl;
-      LViewModel: TObject;
-    begin
-      SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
-
-      if AViewModel.TryGetProperty(APropertyName, LProperty)
-        and LProperty.PropertyType.IsInstance then
-      begin
-        LViewModel := LProperty.GetValue(AViewModel).AsObject;
-        LView := ViewLocator.GetOrCreateViewType(LViewModel.ClassType);
-        LView.Parent := TPanel(AViewElement);
-        ViewModelBinder.Bind(LViewModel, LView);
-      end;
-    end;
-
-  AddElementConvention<TRadioButton>('Checked', 'OnClick');
-  AddElementConvention<TRadioGroup>('ItemIndex', 'OnClick');
-  AddElementConvention<TTrackBar>('Position', 'OnChange');
 end;
 
 class destructor ConventionManager.Destroy;
@@ -282,25 +191,5 @@ begin
   end;
 end;
 
-{ TConventionManager }
-
-procedure TConventionManager.PageControlCollectionChanged(Sender,
-  Item: TObject; Action: TCollectionChangedAction);
-var
-  LView: TControl;
-  LTabSheet: TTabSheet;
-begin
-  LView := ViewLocator.GetOrCreateViewType(Item.ClassType);
-  LTabSheet := TPageControl(Sender).Pages[TPageControl(Sender).View.ItemsSource.IndexOf(Item)];
-  LView.Parent := LTabSheet;
-  TTabSheetConductor.Create(Item, LTabSheet);
-  ViewModelBinder.Bind(Item, LView);
-
-  if Supports(Item, IHaveDisplayName) then
-  begin
-    TBinding.Create(Item, 'DisplayName', LTabSheet, 'Caption', bmOneWay);
-  end;
-end;
-
-end.
+end.
 

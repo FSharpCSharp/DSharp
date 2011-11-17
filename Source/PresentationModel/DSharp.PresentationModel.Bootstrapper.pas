@@ -53,12 +53,18 @@ type
 implementation
 
 uses
-  DSharp.PresentationModel.Composition;
+  DSharp.PresentationModel.Composition,
+  SysUtils;
 
 { TBootstrapper<T> }
 
 constructor TBootstrapper<T>.Create(ServiceLocator: IServiceLocator);
 begin
+  if not (PTypeInfo(TypeInfo(T)).Kind in [tkClass, tkInterface]) then
+  begin
+    raise Exception.CreateFmt('"%s" is not a valid class or interface type', [PTypeInfo(TypeInfo(T)).Name]);
+  end;
+
   FServiceLocator := ServiceLocator;
 
   Composition.GetInstance := GetInstance;
@@ -79,7 +85,14 @@ begin
         Result := Composition.Get<T>;
       end);
 
-    FWindowManager.ShowWindow(TValue.From<T>(FViewModel.Value).AsObject);
+    if PTypeInfo(TypeInfo(T)).Kind = tkClass then
+    begin
+      FWindowManager.ShowWindow(TValue.From<T>(FViewModel.Value).AsObject);
+    end
+    else
+    begin
+      FWindowManager.ShowWindow(TValue.From<T>(FViewModel.Value).AsInterface);
+    end;
   except
   end;
 end;

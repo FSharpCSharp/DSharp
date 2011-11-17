@@ -32,135 +32,92 @@ unit DSharp.PresentationModel.WindowManager;
 interface
 
 uses
-  Classes,
-  Controls,
-  DSharp.ComponentModel.Composition,
-  Forms;
+{$IF COMPILERVERSION > 22}
+  System.UITypes,
+{$IFEND}
+  DSharp.ComponentModel.Composition;
 
 type
+{$IF COMPILERVERSION > 22}
+  TMsgDlgType = System.UITypes.TMsgDlgType;
+  TMsgDlgButtons = System.UITypes.TMsgDlgButtons;
+{$ELSE}
+  TMsgDlgType = (mtWarning, mtError, mtInformation, mtConfirmation, mtCustom);
+  TMsgDlgBtn = (mbYes, mbNo, mbOK, mbCancel, mbAbort, mbRetry, mbIgnore,
+    mbAll, mbNoToAll, mbYesToAll, mbHelp, mbClose);
+  TMsgDlgButtons = set of TMsgDlgBtn;
+{$IFEND}
+
   [InheritedExport]
   IWindowManager = interface
     ['{61AB99D7-E09D-4D94-B1EC-EA154959809D}']
-    function ShowDialog(Model: TObject): Integer;
-    procedure ShowWindow(Model: TObject);
+    function MessageDlg(const Msg: string; DlgType: TMsgDlgType;
+      Buttons: TMsgDlgButtons; HelpCtx: LongInt = 0): Integer;
+
+    function ShowDialog(Model: IInterface): Integer; overload;
+    function ShowDialog(Model: TObject): Integer; overload;
+    procedure ShowWindow(Model: IInterface); overload;
+    procedure ShowWindow(Model: TObject); overload;
   end;
 
-  [PartCreationPolicy(cpShared)]
-  TWindowManager = class(TInterfacedObject, IWindowManager)
-  private
-    FRunning: Boolean;
-  protected
-    function CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
-    function EnsureWindow(Model: TObject; View: TControl): TForm;
-  public
-    constructor Create;
+const
+{$IF COMPILERVERSION > 22}
+  mtWarning = System.UITypes.TMsgDlgType.mtWarning;
+  mtError = System.UITypes.TMsgDlgType.mtError;
+  mtInformation = System.UITypes.TMsgDlgType.mtInformation;
+  mtConfirmation = System.UITypes.TMsgDlgType.mtConfirmation;
+  mtCustom = System.UITypes.TMsgDlgType.mtCustom;
 
-    function ShowDialog(Model: TObject): Integer;
-    procedure ShowWindow(Model: TObject);
-  end;
+  mbYes = System.UITypes.TMsgDlgBtn.mbYes;
+  mbNo = System.UITypes.TMsgDlgBtn.mbNo;
+  mbOK = System.UITypes.TMsgDlgBtn.mbOK;
+  mbCancel = System.UITypes.TMsgDlgBtn.mbCancel;
+  mbAbort = System.UITypes.TMsgDlgBtn.mbAbort;
+  mbRetry = System.UITypes.TMsgDlgBtn.mbRetry;
+  mbIgnore= System.UITypes.TMsgDlgBtn.mbIgnore;
+  mbAll = System.UITypes.TMsgDlgBtn.mbAll;
+  mbNoToAll = System.UITypes.TMsgDlgBtn.mbNoToAll;
+  mbYesToAll = System.UITypes.TMsgDlgBtn.mbYesToAll;
+  mbHelp = System.UITypes.TMsgDlgBtn.mbHelp;
+  mbClose = System.UITypes.TMsgDlgBtn.mbClose;
+
+  mrNone = System.UITypes.mrNone;
+  mrOk = System.UITypes.mrOk;
+  mrCancel = System.UITypes.mrCancel;
+  mrAbort = System.UITypes.mrAbort;
+  mrRetry = System.UITypes.mrRetry;
+  mrIgnore = System.UITypes.mrIgnore;
+  mrYes = System.UITypes.mrYes;
+  mrNo = System.UITypes.mrNo;
+  mrClose = System.UITypes.mrClose;
+  mrHelp = System.UITypes.mrHelp;
+  mrTryAgain = System.UITypes.mrTryAgain;
+  mrContinue = System.UITypes.mrContinue;
+  mrAll = System.UITypes.mrAll;
+  mrNoToAll = System.UITypes.mrNoToAll;
+  mrYesToAll = System.UITypes.mrYesToAll;
+{$ELSE}
+  mrNone = 0;
+  mrOk = 1;
+  mrCancel = 2;
+  mrAbort = 3;
+  mrRetry = 4;
+  mrIgnore = 5;
+  mrYes = 6;
+  mrNo = 7;
+  mrAll = 8;
+  mrNoToAll = 9;
+  mrYesToAll = 10;
+  mrClose = 11;
+{$IFEND}
+
+  mbYesNo = [mbYes, mbNo];
+  mbYesNoCancel = [mbYes, mbNo, mbCancel];
+  mbYesAllNoAllCancel = [mbYes, mbYesToAll, mbNo, mbNoToAll, mbCancel];
+  mbOKCancel = [mbOK, mbCancel];
+  mbAbortRetryIgnore = [mbAbort, mbRetry, mbIgnore];
+  mbAbortIgnore = [mbAbort, mbIgnore];
 
 implementation
-
-uses
-  DSharp.Bindings,
-  DSharp.PresentationModel.ChildForm,
-  DSharp.PresentationModel.Screen,
-  DSharp.PresentationModel.ViewLocator,
-  DSharp.PresentationModel.ViewModelBinder,
-  DSharp.PresentationModel.WindowConductor,
-  SysUtils;
-
-{ TWindowManager }
-
-constructor TWindowManager.Create;
-begin
-  // Following line should be here -
-  // but if this line is missing in project file the runtime themes cannot be set
-//  Application.Initialize;
-  Application.MainFormOnTaskbar := True;
-end;
-
-function TWindowManager.CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
-var
-  LView: TControl;
-  LWindow: TForm;
-begin
-  LView := ViewLocator.GetOrCreateViewType(Model.ClassType);
-  LWindow := EnsureWindow(Model, LView);
-  TWindowConductor.Create(Model, LWindow);
-  ViewModelBinder.Bind(Model, LView);
-
-  if Supports(Model, IHaveDisplayName) then
-  begin
-    TBinding.Create(Model, 'DisplayName', LWindow, 'Caption', bmOneWay);
-  end;
-
-  Result := LWindow;
-end;
-
-function TWindowManager.EnsureWindow(Model: TObject; View: TControl): TForm;
-var
-  LForm: TChildForm;
-begin
-  if View is TForm then
-  begin
-    Result := View as TForm;
-  end
-  else
-  begin
-    if not FRunning then
-    begin
-      Application.CreateForm(TChildForm, LForm);
-      LForm.BorderIcons := [biSystemMenu..biMaximize];
-    end
-    else
-    begin
-      LForm := TChildForm.Create(nil);
-      LForm.BorderIcons := [biSystemMenu];
-      LForm.Position := poOwnerFormCenter;
-    end;
-
-    LForm.Content := View;
-    Result := LForm;
-  end;
-end;
-
-function TWindowManager.ShowDialog(Model: TObject): Integer;
-var
-  LWindow: TForm;
-begin
-  LWindow := CreateWindow(Model, True);
-
-  try
-    Result := LWindow.ShowModal();
-  finally
-    LWindow.Free();
-  end;
-end;
-
-procedure TWindowManager.ShowWindow(Model: TObject);
-var
-  LWindow: TForm;
-begin
-  LWindow := CreateWindow(Model, False);
-
-  if not FRunning then
-  begin
-    LWindow.Caption := Application.Title;
-    LWindow.Position := poScreenCenter;
-    FRunning := True;
-    Application.Run();
-  end
-  else
-  begin
-    LWindow.BorderIcons := [biSystemMenu];
-    LWindow.Position := poOwnerFormCenter;
-
-    LWindow.Show();
-  end;
-end;
-
-initialization
-  TWindowManager.ClassName;
 
 end.

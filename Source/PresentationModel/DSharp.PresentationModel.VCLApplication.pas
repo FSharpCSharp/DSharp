@@ -27,72 +27,42 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ViewLocator;
+unit DSharp.PresentationModel.VCLApplication;
 
 interface
 
 uses
-  DSharp.PresentationModel.NameTransformer;
+  DSharp.ComponentModel.Composition.SpringContainer,
+  DSharp.PresentationModel.Bootstrapper,
+  DSharp.PresentationModel.VCLWindowManager,
+  Forms;
 
 type
-  ViewLocator = record
-  private
-    class var FNameTransformer: INameTransformer;
-  public
-    class constructor Create;
-    class function FindViewType(ModelType: TClass): TClass; static;
-    class function GetOrCreateViewType(ModelType: TClass): TObject; static;
+  TApplicationVCLHelper = class helper for TApplication
+    procedure Start<T>;
   end;
 
 implementation
 
-uses
-  DSharp.Core.Reflection,
-  DSharp.PresentationModel.Composition,
-  Rtti,
-  StrUtils,
-  SysUtils;
+{ TApplicationVCLHelper }
 
-{ ViewLocator }
-
-class constructor ViewLocator.Create;
-begin
-  FNameTransformer := TNameTransformer.Create();
-
-  FNameTransformer.AddRule('Model$', '');
-  FNameTransformer.AddRule('ViewModel$', 'View');
-  FNameTransformer.AddRule('ViewModel$', 'ViewForm');
-  FNameTransformer.AddRule('ViewModel$', 'ViewFrame');
-  FNameTransformer.AddRule('ViewModel$', 'Form');
-  FNameTransformer.AddRule('ViewModel$', 'Frame');
-end;
-
-class function ViewLocator.FindViewType(ModelType: TClass): TClass;
+procedure TApplicationVCLHelper.Start<T>;
 var
-  LViewTypeName: string;
-  LType: TRttiType;
+  LContainer: TSpringContainer;
+  LBootstrapper: TBootstrapper<T>;
 begin
-  Result := nil;
+  LContainer := TSpringContainer.Create();
 
-  for LViewTypeName in FNameTransformer.Transform(ModelType.ClassName) do
-  begin
-    if FindType(LViewTypeName, LType) then
-    begin
-      Result := LType.AsInstance.MetaclassType;
+  try
+    LContainer.ImportRtti();
+    LBootstrapper := TBootstrapper<T>.Create(LContainer);
+    try
+      LBootstrapper.StartRuntime();
+    finally
+      LBootstrapper.Free();
     end;
-  end;
-end;
-
-class function ViewLocator.GetOrCreateViewType(ModelType: TClass): TObject;
-var
-  LViewClass: TClass;
-begin
-  LViewClass := FindViewType(ModelType);
-  Result := Composition.GetInstance(LViewClass.ClassInfo, '').AsObject;
-
-  if Result = nil then
-  begin
-    raise Exception.CreateFmt('Cannot find view for %0:s.', [ModelType.ClassName]);
+  finally
+    LContainer.Free();
   end;
 end;
 

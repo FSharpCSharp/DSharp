@@ -27,73 +27,44 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.ViewLocator;
+unit DSharp.PresentationModel.FMXConventionManager;
 
 interface
-
-uses
-  DSharp.PresentationModel.NameTransformer;
-
-type
-  ViewLocator = record
-  private
-    class var FNameTransformer: INameTransformer;
-  public
-    class constructor Create;
-    class function FindViewType(ModelType: TClass): TClass; static;
-    class function GetOrCreateViewType(ModelType: TClass): TObject; static;
-  end;
 
 implementation
 
 uses
-  DSharp.Core.Reflection,
-  DSharp.PresentationModel.Composition,
-  Rtti,
-  StrUtils,
-  SysUtils;
+  Classes,
+  DSharp.PresentationModel.ConventionManager,
+  FMX.Controls,
+  FMX.Edit,
+  FMX.ExtCtrls,
+  FMX.Memo;
 
-{ ViewLocator }
-
-class constructor ViewLocator.Create;
-begin
-  FNameTransformer := TNameTransformer.Create();
-
-  FNameTransformer.AddRule('Model$', '');
-  FNameTransformer.AddRule('ViewModel$', 'View');
-  FNameTransformer.AddRule('ViewModel$', 'ViewForm');
-  FNameTransformer.AddRule('ViewModel$', 'ViewFrame');
-  FNameTransformer.AddRule('ViewModel$', 'Form');
-  FNameTransformer.AddRule('ViewModel$', 'Frame');
-end;
-
-class function ViewLocator.FindViewType(ModelType: TClass): TClass;
-var
-  LViewTypeName: string;
-  LType: TRttiType;
-begin
-  Result := nil;
-
-  for LViewTypeName in FNameTransformer.Transform(ModelType.ClassName) do
-  begin
-    if FindType(LViewTypeName, LType) then
-    begin
-      Result := LType.AsInstance.MetaclassType;
-    end;
+type
+  ConventionManagerFMXHelper = record helper for ConventionManager
+    class procedure Initialize; static;
   end;
-end;
 
-class function ViewLocator.GetOrCreateViewType(ModelType: TClass): TObject;
-var
-  LViewClass: TClass;
+{ ConventionManagerFMXHelper }
+
+class procedure ConventionManagerFMXHelper.Initialize;
 begin
-  LViewClass := FindViewType(ModelType);
-  Result := Composition.GetInstance(LViewClass.ClassInfo, '').AsObject;
-
-  if Result = nil then
-  begin
-    raise Exception.CreateFmt('Cannot find view for %0:s.', [ModelType.ClassName]);
-  end;
+  ConventionManager.AddElementConvention<TBasicAction>('', 'OnExecute');
+  ConventionManager.AddElementConvention<TButton>('Caption', 'OnClick');
+  ConventionManager.AddElementConvention<TCalendar>('Date', 'OnChange');
+  ConventionManager.AddElementConvention<TCalendarBox>('Date', 'OnChange');
+  ConventionManager.AddElementConvention<TCalendarEdit>('Date', 'OnChange');
+  ConventionManager.AddElementConvention<TCheckBox>('IsChecked', 'OnClick');
+  ConventionManager.AddElementConvention<TComboEdit>('Text', 'OnChange');
+  ConventionManager.AddElementConvention<TEdit>('Text', 'OnChangeTracking');
+  ConventionManager.AddElementConvention<TLabel>('Text', 'OnClick');
+  ConventionManager.AddElementConvention<TMemo>('Text', 'OnChange');
+  ConventionManager.AddElementConvention<TRadioButton>('IsChecked', 'OnClick');
+  ConventionManager.AddElementConvention<TTrackBar>('Value', 'OnChange');
 end;
+
+initialization
+  ConventionManager.Initialize;
 
 end.

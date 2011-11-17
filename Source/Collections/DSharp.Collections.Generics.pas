@@ -225,10 +225,13 @@ begin
 end;
 
 function TEnumeratorEx<T>.GetCurrent: TObject;
+var
+  LCurrent: T;
 begin
   if TRttiContext.Create.GetType(TypeInfo(T)).IsInstance then
   begin
-    Result := TEnumeratorEx<TObject>(Self).DoGetCurrent();
+    LCurrent := DoGetCurrent();
+    Result := PPointer(@LCurrent)^;
   end
   else
   begin

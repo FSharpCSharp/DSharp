@@ -724,7 +724,7 @@ begin
     begin
       if LType is TRttiInstanceType then
       begin
-        FInternalValue := TValue.From<TObject>(LValue).AsType<T>;
+        PPointer(@FInternalValue)^ := LValue;
       end
       else
       begin

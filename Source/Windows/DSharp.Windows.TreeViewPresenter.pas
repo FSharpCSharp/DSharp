@@ -185,9 +185,6 @@ uses
 const
   CDefaultCellRect: TRect = (Left: 0; Top: 0; Right: 0; Bottom: 0);
 
-type
-  PObject = ^TObject;
-
 { TTreeViewPresenter }
 
 constructor TTreeViewPresenter.Create(AOwner: TComponent);
@@ -306,7 +303,7 @@ begin
   FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
 
   if not FListMode and ((hiOnNormalIcon in LHitInfo.HitPositions)
-    or not Assigned(OnDoubleClick)) then
+    or (not Assigned(OnDoubleClick) and not Assigned(Action))) then
   begin
     FTreeView.ToggleNode(LHitInfo.HitNode);
   end
@@ -734,7 +731,7 @@ function TTreeViewPresenter.GetNodeItem(Tree: TBaseVirtualTree;
 begin
   if Assigned(Tree) and Assigned(Node) and (Node <> FTreeView.RootNode) then
   begin
-    Result := PObject(Tree.GetNodeData(Node))^;
+    Result := PPointer(Tree.GetNodeData(Node))^;
   end
   else
   begin
@@ -780,7 +777,7 @@ procedure TTreeViewPresenter.InitColumns;
 var
   i: Integer;
 begin
-  if Assigned(FTreeView) and not (csDesigning in ComponentState) then
+  if Assigned(FTreeView) then
   begin
     FTreeView.Header.Columns.Clear;
     if Assigned(ColumnDefinitions) then
@@ -965,7 +962,7 @@ procedure TTreeViewPresenter.SetNodeItem(Tree: TBaseVirtualTree;
 begin
   if Assigned(Tree) and Assigned(Node) then
   begin
-    PObject(Tree.GetNodeData(Node))^ := Item;
+    PPointer(Tree.GetNodeData(Node))^ := Item;
   end;
 end;
 

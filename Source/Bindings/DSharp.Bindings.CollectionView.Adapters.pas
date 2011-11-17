@@ -38,15 +38,15 @@ uses
   DSharp.Bindings.Notifications;
 
 type
-  TCollectionViewAdapter = class abstract(TCollectionView)
+  TCollectionViewAdapter = class(TCollectionView)
   protected
     FOwner: TPersistent;
-    function AddDisplayItem: NativeInt; virtual; abstract;
-    procedure ClearDisplayItems; virtual; abstract;
-    function FindDisplayItem(AItem: TObject): NativeInt; virtual; abstract;
-    function GetDisplayItemsCount: NativeInt; virtual; abstract;
-    procedure RemoveDisplayItem(AIndex: NativeInt); virtual; abstract;
-    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); virtual; abstract;
+    function AddDisplayItem: NativeInt; virtual;
+    procedure ClearDisplayItems; virtual;
+    function FindDisplayItem(AItem: TObject): NativeInt; virtual;
+    function GetDisplayItemsCount: NativeInt; virtual;
+    procedure RemoveDisplayItem(AIndex: NativeInt); virtual;
+    procedure UpdateDisplayItem(AIndex: NativeInt; AItem: TObject); virtual;
 
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
@@ -124,6 +124,16 @@ begin
   NotifyPropertyChanged(FOwner, Self, 'View');
 end;
 
+function TCollectionViewAdapter.AddDisplayItem: NativeInt;
+begin
+  Result := -1;
+end;
+
+procedure TCollectionViewAdapter.ClearDisplayItems;
+begin
+
+end;
+
 procedure TCollectionViewAdapter.DoSourceCollectionChanged(Sender,
   Item: TObject; Action: TCollectionChangedAction);
 var
@@ -154,15 +164,36 @@ begin
   FOnCollectionChanged.Invoke(FOwner, Item, Action);
 end;
 
+function TCollectionViewAdapter.FindDisplayItem(AItem: TObject): NativeInt;
+begin
+  Result := -1;
+end;
+
+function TCollectionViewAdapter.GetDisplayItemsCount: NativeInt;
+begin
+  Result := 0;
+end;
+
 function TCollectionViewAdapter.GetOwner: TPersistent;
 begin
   Result := FOwner;
+end;
+
+procedure TCollectionViewAdapter.RemoveDisplayItem(AIndex: NativeInt);
+begin
+
 end;
 
 procedure TCollectionViewAdapter.SetItemsSource(const Value: IList<TObject>);
 begin
   inherited;
   NotifyPropertyChanged(FOwner, Self, 'View');
+end;
+
+procedure TCollectionViewAdapter.UpdateDisplayItem(AIndex: NativeInt;
+  AItem: TObject);
+begin
+
 end;
 
 procedure TCollectionViewAdapter.UpdateItemIndex(ACurrentItem: TObject);

@@ -100,8 +100,7 @@ type
 implementation
 
 uses
-  DSharp.Core.DataTemplates.Default,
-  DSharp.Core.Utils;
+  DSharp.Core.DataTemplates.Default;
 
 { TCollectionView }
 
@@ -171,7 +170,14 @@ end;
 
 function TCollectionView.GetCurrentItem: TObject;
 begin
-  Result := nil;
+  if Assigned(FItemsSource) and (FItemIndex > -1) and (FItemIndex < FItemsSource.Count) then
+  begin
+    Result := FItemsSource[FItemIndex];
+  end
+  else
+  begin
+    Result := nil;
+  end;
 end;
 
 function TCollectionView.GetFilter: TPredicate<TObject>;

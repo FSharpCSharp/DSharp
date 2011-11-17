@@ -32,10 +32,12 @@ unit DSharp.PresentationModel.ViewModelBase;
 interface
 
 uses
+  Classes,
+  DSharp.Bindings.Notifications,
   DSharp.Bindings.Validations,
   DSharp.Collections,
   DSharp.ComponentModel.Composition,
-  DSharp.Core.PropertyChangedBase,
+  DSharp.Core.Events,
   DSharp.Core.Validations,
   DSharp.PresentationModel.Screen,
   DSharp.PresentationModel.Validations,
@@ -44,15 +46,26 @@ uses
 type
   [Validation(TDataErrorValidationRule)]
   [InheritedExport]
-  TViewModelBase = class(TPropertyChangedBase,
+  TViewModelBase = class(TComponent, IInterface, INotifyPropertyChanged,
     IValidatable, IDataErrorInfo, ICanClose, IClose, IHaveDisplayName)
   private
+    FPropertyChanged: TEvent<TPropertyChangedEvent>;
     FThrowOnInvalidPropertyName: Boolean;
+    FParent: TObject;
+    FRefCount: Integer;
     FValidationErrors: IList<IValidationResult>;
     FWindowManager: IWindowManager;
 
+    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetValidationErrors: IList<IValidationResult>;
   protected
+    // IInterface
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+
     // ICanClose
     function CanClose: Boolean; virtual;
 
@@ -71,12 +84,16 @@ type
 
     property WindowManager: IWindowManager read FWindowManager;
   public
-    constructor Create; overload; virtual;
-    constructor Create(WindowManager: IWindowManager); overload;
+    constructor Create; reintroduce; overload; virtual;
+    constructor Create(AOwner: TComponent); overload; override;
+    constructor Create(WindowManager: IWindowManager); reintroduce; overload;
+    class function NewInstance: TObject; override;
+    procedure AfterConstruction; override;
 
     procedure VerifyPropertyName(const APropertyName: string);
     property DisplayName: string read GetDisplayName;
     property Error: string read GetError;
+    property Parent: TObject read FParent write FParent;
     property ThrowOnInvalidPropertyName: Boolean
       read FThrowOnInvalidPropertyName write FThrowOnInvalidPropertyName;
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
@@ -93,13 +110,24 @@ uses
 
 constructor TViewModelBase.Create;
 begin
+  Create(nil);
+end;
+
+constructor TViewModelBase.Create(AOwner: TComponent);
+begin
+  inherited;
   FValidationErrors := TList<IValidationResult>.Create();
 end;
 
 constructor TViewModelBase.Create(WindowManager: IWindowManager);
 begin
-  Create();
-  FWindowManager := WindowManager
+  Create(nil);
+  FWindowManager := WindowManager;
+end;
+
+procedure TViewModelBase.AfterConstruction;
+begin
+  Dec(FRefCount);
 end;
 
 function TViewModelBase.CanClose: Boolean;
@@ -110,6 +138,12 @@ end;
 procedure TViewModelBase.Close;
 begin
 
+end;
+
+procedure TViewModelBase.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
 function TViewModelBase.GetDisplayName: string;
@@ -127,9 +161,26 @@ begin
   Result := '';
 end;
 
+function TViewModelBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+begin
+  Result := FPropertyChanged.EventHandler;
+end;
+
 function TViewModelBase.GetValidationErrors: IList<IValidationResult>;
 begin
   Result := FValidationErrors;
+end;
+
+class function TViewModelBase.NewInstance: TObject;
+var
+  LInterfaceTable: PInterfaceTable;
+begin
+  Result := inherited NewInstance;
+  LInterfaceTable := Result.GetInterfaceTable;
+  if Assigned(LInterfaceTable) and (LInterfaceTable.EntryCount > 0) then
+    TViewModelBase(Result).FRefCount := 1
+  else
+    TViewModelBase(Result).FRefCount := 2;
 end;
 
 function TViewModelBase.Validate: Boolean;
@@ -156,8 +207,10 @@ begin
 end;
 
 procedure TViewModelBase.VerifyPropertyName(const APropertyName: string);
+{$IFDEF DEBUG}
 var
   LMessage: string;
+{$ENDIF}
 begin
 {$IFDEF DEBUG}
   if GetProperty(APropertyName) = nil then
@@ -169,6 +222,20 @@ begin
 //      Logging.LogMessage(LMessage);
   end;
 {$ENDIF}
+end;
+
+function TViewModelBase._AddRef: Integer;
+begin
+  Inc(FRefCount);
+  Result := FRefCount;
+end;
+
+function TViewModelBase._Release: Integer;
+begin
+  Dec(FRefCount);
+  Result := FRefCount;
+  if Result = 0 then
+    Destroy;
 end;
 
 end.

@@ -30,7 +30,7 @@
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_E>false</DCC_E>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;WinTypes=Windows;WinProcs=Windows;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_UnitSearchPath>$(BDSPROJECTSDIR)\DSharp\Source\Bindings;$(BDSPROJECTSDIR)\DSharp\Source\Collections;$(BDSPROJECTSDIR)\DSharp\Source\ComponentModel;$(BDSPROJECTSDIR)\DSharp\Source\Core;$(BDSPROJECTSDIR)\DSharp\Source\DevExpress;$(BDSPROJECTSDIR)\DSharp\Source\PresentationModel;$(BDSPROJECTSDIR)\DSharp\Source\Windows;$(BDSPROJECTSDIR)\DSharp\Source\Compatibility;$(BDSPROJECTSDIR)\DelphiSpring\Source\Core\Container;$(BDSPROJECTSDIR)\DelphiSpring\Source\Core\Services;$(BDSPROJECTSDIR)\DelphiSpring\Source\System;$(BDSPROJECTSDIR)\DelphiSpring\Source\System\Collections;$(BDSPROJECTSDIR)\DelphiSpring\Source\System\Reflection;$(BDSPROJECTSDIR)\DelphiSpring\Source\System\Utils;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+			<DCC_UnitSearchPath>..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\PresentationModel;..\..\..\Source\Windows;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_N>false</DCC_N>
 			<DCC_S>false</DCC_S>
 			<DCC_F>false</DCC_F>
@@ -44,10 +44,8 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
 			<DCC_DependencyCheckOutputName>Debug\Win32\Demo.exe</DCC_DependencyCheckOutputName>
-			<DCC_ExeOutput>.\Debug\Win32</DCC_ExeOutput>
 			<DCC_Optimize>false</DCC_Optimize>
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
-			<DCC_DcuOutput>.\Debug\Win32</DCC_DcuOutput>
 			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
 			<DCC_DebugDCUs>true</DCC_DebugDCUs>
 		</PropertyGroup>

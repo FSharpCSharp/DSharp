@@ -1,14 +1,15 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
-			<ProjectGuid>{A66CF88D-A1B5-4559-A045-419CD57690C1}</ProjectGuid>
-			<MainSource>dclTreeViewPresenter.dpk</MainSource>
+			<ProjectGuid>{A3074B81-5338-4D09-AC30-93FF5E0F59AB}</ProjectGuid>
+			<MainSource>DataBindingsVCL.dpk</MainSource>
 			<ProjectVersion>13.4</ProjectVersion>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<AppType>Package</AppType>
-			<FrameworkType>None</FrameworkType>
+			<FrameworkType>VCL</FrameworkType>
+			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
 			<Platform Condition="'$(Platform)'==''">Win32</Platform>
-			<TargetedPlatforms>1</TargetedPlatforms>
+			<TargetedPlatforms>3</TargetedPlatforms>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
 			<Base>true</Base>
@@ -28,37 +29,67 @@
 			<CfgParent>Base</CfgParent>
 			<Base>true</Base>
 		</PropertyGroup>
+		<PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win64)'!=''">
+			<Cfg_1_Win64>true</Cfg_1_Win64>
+			<CfgParent>Cfg_1</CfgParent>
+			<Cfg_1>true</Cfg_1>
+			<Base>true</Base>
+		</PropertyGroup>
+		<PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win32)'!=''">
+			<Cfg_1_Win32>true</Cfg_1_Win32>
+			<CfgParent>Cfg_1</CfgParent>
+			<Cfg_1>true</Cfg_1>
+			<Base>true</Base>
+		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
 			<Cfg_2>true</Cfg_2>
 			<CfgParent>Base</CfgParent>
 			<Base>true</Base>
 		</PropertyGroup>
+		<PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win64)'!=''">
+			<Cfg_2_Win64>true</Cfg_2_Win64>
+			<CfgParent>Cfg_2</CfgParent>
+			<Cfg_2>true</Cfg_2>
+			<Base>true</Base>
+		</PropertyGroup>
+		<PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
+			<Cfg_2_Win32>true</Cfg_2_Win32>
+			<CfgParent>Cfg_2</CfgParent>
+			<Cfg_2>true</Cfg_2>
+			<Base>true</Base>
+		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_Namespace>System;$(DCC_Namespace)</DCC_Namespace>
-			<VerInfo_Locale>1031</VerInfo_Locale>
+			<DCC_Namespace>System;Vcl;Winapi;$(DCC_Namespace)</DCC_Namespace>
 			<VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+			<VerInfo_Locale>1031</VerInfo_Locale>
 			<DllSuffix>160</DllSuffix>
-			<DesignOnlyPackage>true</DesignOnlyPackage>
-			<DCC_Description>DSharp treeview presenter designtime package</DCC_Description>
+			<DCC_Description>DSharp data binding runtime package for VCL</DCC_Description>
+			<RuntimeOnlyPackage>true</RuntimeOnlyPackage>
 			<GenPackage>true</GenPackage>
-			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
 			<GenDll>true</GenDll>
+			<DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_DcuOutput>..\..\Library\DelphiXE2</DCC_DcuOutput>
 			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base_Win64)'!=''">
-			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+			<VerInfo_Locale>1033</VerInfo_Locale>
+			<DCC_DcuOutput>..\..\Library\DelphiXE2\Win64</DCC_DcuOutput>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base_Win32)'!=''">
-			<DCC_UsePackage>TreeViewPresenter;$(DCC_UsePackage)</DCC_UsePackage>
-			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+			<VerInfo_Locale>1033</VerInfo_Locale>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
 			<DCC_Optimize>false</DCC_Optimize>
 			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+			<VerInfo_Locale>1033</VerInfo_Locale>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+			<VerInfo_Locale>1033</VerInfo_Locale>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
 			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -66,15 +97,22 @@
 			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+			<VerInfo_Locale>1033</VerInfo_Locale>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+			<VerInfo_Locale>1033</VerInfo_Locale>
+		</PropertyGroup>
 		<ItemGroup>
 			<DelphiCompile Include="$(MainSource)">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="..\..\Resources\DSharp.Windows.TreeViewPresenter.dcr"/>
-			<DCCReference Include="designide.dcp"/>
-			<DCCReference Include="TreeViewPresenter.dcp"/>
-			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.CustomPresenter.Designtime.pas"/>
-			<DCCReference Include="..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.Designtime.pas"/>
+			<DCCReference Include="rtl.dcp"/>
+			<DCCReference Include="vcl.dcp"/>
+			<DCCReference Include="DataBindings.dcp"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.VCLControls.Extensions.pas"/>
+			<DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.VCLAdapters.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -94,6 +132,9 @@
 			<Borland.ProjectType>Package</Borland.ProjectType>
 			<BorlandProject>
 				<Delphi.Personality>
+					<Source>
+						<Source Name="MainSource">DataBindingsVCL.dpk</Source>
+					</Source>
 					<VersionInfo>
 						<VersionInfo Name="IncludeVerInfo">True</VersionInfo>
 						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
@@ -121,13 +162,9 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Source>
-						<Source Name="MainSource">dclTreeViewPresenter.dpk</Source>
-					</Source>
 				</Delphi.Personality>
 				<Platforms>
-					<Platform value="Win64">False</Platform>
-					<Platform value="OSX32">False</Platform>
+					<Platform value="Win64">True</Platform>
 					<Platform value="Win32">True</Platform>
 				</Platforms>
 			</BorlandProject>

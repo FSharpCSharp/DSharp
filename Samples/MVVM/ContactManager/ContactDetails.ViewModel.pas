@@ -24,9 +24,18 @@ type
 implementation
 
 uses
+  DSharp.Core.RegularExpressions,
   DSharp.PresentationModel.WindowManager,
-  StrUtils,
-  Utils;
+  StrUtils;
+
+function IsValidEmail(const s: string): Boolean;
+const
+  CRegex: string = '^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}' +
+    '\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\' +
+    '.)+))([a-zA-Z]{2,5}|[0-9]{1,3})(\]?)$';
+begin
+  Result := TRegex.Create(CRegex).IsMatch(s);
+end;
 
 { TContactDetailsViewModel }
 
@@ -41,7 +50,7 @@ begin
   end
   else
   begin
-    if IsEmptyStr(Contact.Email) or not IsValidEmail(Contact.Email) then
+    if not IsValidEmail(Contact.Email) then
     begin
       Result := WindowManager.MessageDlg('Email is not valid. Do you want to continue?', mtWarning, [mbYes, mbNo], 0) = mrYes;
     end;

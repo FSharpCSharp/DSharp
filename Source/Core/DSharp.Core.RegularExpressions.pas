@@ -27,72 +27,62 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.PresentationModel.NameTransformer;
+unit DSharp.Core.RegularExpressions;
 
 interface
 
 uses
-  DSharp.Collections;
+{$IF COMPILERVERSION < 22}
+  PerlRegEx; // download from http://www.regular-expressions.info/download/TPerlRegEx.zip
+{$ELSE}
+  RegularExpressions;
+{$IFEND}
 
 type
-  TRule = class
-  private
-    FReplacePattern: string;
-    FReplacementValue: string;
+{$IF COMPILERVERSION < 22}
+  TRegEx = record
   public
-    constructor Create(const ReplacePattern, ReplacementValue: string);
-    property ReplacePattern: string read FReplacePattern;
-    property ReplacementValue: string read FReplacementValue;
+    class function IsMatch(const Input, Pattern: string): Boolean; static;
+    class function Replace(const Input, Pattern, Replacement: string): string; static;
   end;
-
-  INameTransformer = interface
-    procedure AddRule(const ReplacePattern, ReplacementValue: string);
-    function Transform(const Source: string): IEnumerable<string>;
-  end;
-
-  TNameTransformer = class(TObjectList<TRule>, INameTransformer)
-  public
-    procedure AddRule(const ReplacePattern, ReplacementValue: string);
-    function Transform(const Source: string): IEnumerable<string>;
-  end;
+{$ELSE}
+  TRegEx = RegularExpressions.TRegEx;
+{$IFEND}
 
 implementation
 
-uses
-  DSharp.Core.RegularExpressions;
+{ TRegEx }
 
-{ TRule }
-
-constructor TRule.Create(const ReplacePattern, ReplacementValue: string);
-begin
-  FReplacePattern := ReplacePattern;
-  FReplacementValue := ReplacementValue
-end;
-
-{ TNameTransformer }
-
-procedure TNameTransformer.AddRule(const ReplacePattern,
-  ReplacementValue: string);
-begin
-  Add(TRule.Create(ReplacePattern, ReplacementValue));
-end;
-
-function TNameTransformer.Transform(const Source: string): IEnumerable<string>;
+{$IF COMPILERVERSION < 22}
+class function TRegEx.IsMatch(const Input, Pattern: string): Boolean;
 var
-  LNameList: TList<string>;
-  LRule: TRule;
+  LRegEx: TPerlRegEx;
 begin
-  LNameList := TList<string>.Create;
-
-  for LRule in Self do
-  begin
-    if TRegEx.IsMatch(Source, LRule.ReplacePattern) then
-    begin
-      LNameList.Add(TRegEx.Replace(Source, LRule.ReplacePattern, LRule.ReplacementValue));
-    end;
+  LRegEx := TPerlRegEx.Create();
+  try
+    LRegEx.RegEx := UTF8Encode(Pattern);
+    LRegEx.Subject := UTF8Encode(Input);
+    Result := LRegEx.Match();
+  finally
+    LRegEx.Free();
   end;
-
-  Result := LNameList;
 end;
+
+class function TRegEx.Replace(const Input, Pattern, Replacement: string): string;
+var
+  LRegEx: TPerlRegEx;
+begin
+  LRegEx := TPerlRegEx.Create();
+  try
+    LRegEx.RegEx := UTF8Encode(Pattern);
+    LRegEx.Subject := UTF8Encode(Input);
+    LRegEx.Replacement := UTF8Encode(Replacement);
+    LRegEx.ReplaceAll();
+    Result := UTF8ToString(LRegEx.Subject);
+  finally
+    LRegEx.Free();
+  end;
+end;
+{$IFEND}
 
 end.

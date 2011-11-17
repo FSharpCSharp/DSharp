@@ -63,7 +63,7 @@ implementation
 
 uses
   DSharp.Core.Reflection,
-  RegularExpressions;
+  DSharp.Core.RegularExpressions;
 
 { AspectWeaver }
 
@@ -165,7 +165,7 @@ begin
 
   for LMethod in RttiType.GetMethods do
   begin
-    if (LMethod.VirtualIndex >= 0) and TRegEx.IsMatch(LMethod.Name, MethodName, []) then
+    if (LMethod.VirtualIndex >= 0) and TRegEx.IsMatch(LMethod.Name, MethodName) then
     begin
       LIntercept.Add(LMethod, AspectClass);
     end;

@@ -37,10 +37,13 @@ uses
   DSharp.Core.Events;
 
 type
-  TPropertyChangedBase = class abstract(TInterfacedPersistent, INotifyPropertyChanged)
+  TPropertyChangedBase = class abstract(TPersistent, IInterface, INotifyPropertyChanged)
   private
     FPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
   protected
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
@@ -59,6 +62,24 @@ end;
 function TPropertyChangedBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
 begin
   Result := FPropertyChanged.EventHandler;
+end;
+
+function TPropertyChangedBase.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TPropertyChangedBase._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function TPropertyChangedBase._Release: Integer;
+begin
+  Result := -1;
 end;
 
 end.

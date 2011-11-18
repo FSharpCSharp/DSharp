@@ -34,6 +34,8 @@ interface
 uses
 {$IF COMPILERVERSION < 22}
   PerlRegEx; // download from http://www.regular-expressions.info/download/TPerlRegEx.zip
+{$ELSEIF COMPILERVERSION > 22}
+  System.RegularExpressions;
 {$ELSE}
   RegularExpressions;
 {$IFEND}
@@ -45,6 +47,8 @@ type
     class function IsMatch(const Input, Pattern: string): Boolean; static;
     class function Replace(const Input, Pattern, Replacement: string): string; static;
   end;
+{$ELSEIF COMPILERVERSION > 22}
+  TRegEx = System.RegularExpressions.TRegEx;
 {$ELSE}
   TRegEx = RegularExpressions.TRegEx;
 {$IFEND}

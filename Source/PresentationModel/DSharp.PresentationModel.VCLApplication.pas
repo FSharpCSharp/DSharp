@@ -44,6 +44,9 @@ type
 
 implementation
 
+uses
+  Classes;
+
 { TApplicationVCLHelper }
 
 procedure TApplicationVCLHelper.Start<T>;
@@ -52,6 +55,14 @@ var
   LBootstrapper: TBootstrapper<T>;
 begin
   LContainer := TSpringContainer.Create();
+{$IF COMPILERVERSION = 21}
+  {$MESSAGE HINT 'Apply Spring_Delphi2010_Bugfix.patch to Spring\Source\Core\Container'}
+  LContainer.RegisterType<TComponent>.Implements<TComponent>.DelegateTo(
+    function: TComponent
+    begin
+      Result := nil;
+    end);
+{$IFEND}
 
   try
     LContainer.ImportRtti();

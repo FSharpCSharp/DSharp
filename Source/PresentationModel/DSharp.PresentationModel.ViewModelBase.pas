@@ -54,6 +54,7 @@ type
     FParent: TObject;
     FRefCount: Integer;
     FValidationErrors: IList<IValidationResult>;
+    [Import]
     FWindowManager: IWindowManager;
 
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
@@ -86,7 +87,6 @@ type
   public
     constructor Create; reintroduce; overload; virtual;
     constructor Create(AOwner: TComponent); overload; override;
-    constructor Create(WindowManager: IWindowManager); reintroduce; overload;
     class function NewInstance: TObject; override;
     procedure AfterConstruction; override;
 
@@ -117,12 +117,6 @@ constructor TViewModelBase.Create(AOwner: TComponent);
 begin
   inherited;
   FValidationErrors := TList<IValidationResult>.Create();
-end;
-
-constructor TViewModelBase.Create(WindowManager: IWindowManager);
-begin
-  Create(nil);
-  FWindowManager := WindowManager;
 end;
 
 procedure TViewModelBase.AfterConstruction;

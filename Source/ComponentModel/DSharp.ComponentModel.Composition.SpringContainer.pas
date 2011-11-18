@@ -95,6 +95,18 @@ uses
   DSharp.Core.Reflection,
   Spring.Collections;
 
+{$IF COMPILERVERSION = 21}
+type
+  TGuidHelper = record helper for TGUID
+    class function Empty: TGUID; static;
+  end;
+
+class function TGuidHelper.Empty: TGUID;
+begin
+  FillChar(Result, Sizeof(Result), 0)
+end;
+{$IFEND}
+
 { TSpringContainer }
 
 constructor TSpringContainer.Create;

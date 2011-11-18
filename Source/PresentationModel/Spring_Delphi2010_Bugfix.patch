@@ -1,0 +1,36 @@
+Index: Spring.Container.LifetimeManager.pas
+===================================================================
+--- Spring.Container.LifetimeManager.pas	(Revision 378)
++++ Spring.Container.LifetimeManager.pas	(Arbeitskopie)
+@@ -126,7 +126,7 @@
+   end;
+ 
+ begin
+-  Assert(instance <> nil, 'instance should not be nil.');
++  if not Assigned(instance) then Exit(False);
+   Result := GetInterface(instance, IInitializable, intf);
+   Result := Result or (GetInterface(instance, IInterface, localIntf) and
+     (IInterface(localIntf).QueryInterface(IID, intf) = S_OK));
+Index: Spring.Container.Resolvers.pas
+===================================================================
+--- Spring.Container.Resolvers.pas	(Revision 378)
++++ Spring.Container.Resolvers.pas	(Arbeitskopie)
+@@ -145,14 +145,15 @@
+   localInterface: Pointer;
+ begin
+   Assert(dependency <> nil, 'dependency should not be nil.');
+-  Assert(instance <> nil, 'instance should not be nil.');
+   if dependency.IsClass then
+   begin
+-    value := instance;
++    TValue.Make(@instance, dependency.Handle, value);
+   end
+   else if dependency.IsInterface then
+   begin
+-    instance.GetInterface(GetTypeData(dependency.Handle).Guid, localInterface);
++    localInterface := nil;
++    if Assigned(instance) then
++      instance.GetInterface(GetTypeData(dependency.Handle).Guid, localInterface);
+     TValue.MakeWithoutCopy(@localInterface, dependency.Handle, value);
+   end
+   else

@@ -51,7 +51,8 @@ uses
   DSharp.PresentationModel.ViewLocator,
   DSharp.Windows.CustomPresenter,
   Rtti,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 type
   TConventionManager = class
@@ -210,12 +211,24 @@ begin
       SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
 
       if AViewModel.TryGetProperty(APropertyName, LProperty)
-        and LProperty.PropertyType.IsInstance then
+        and (LProperty.PropertyType.TypeKind in [tkClass, tkInterface]) then
       begin
-        LViewModel := LProperty.GetValue(AViewModel).AsObject;
-        LView := ViewLocator.GetOrCreateViewType(LViewModel.ClassType) as TControl;
-        LView.Parent := TPanel(AViewElement);
-        ViewModelBinder.Bind(LViewModel, LView);
+        if LProperty.PropertyType.IsInstance then
+        begin
+          LViewModel := LProperty.GetValue(AViewModel).AsObject;
+        end
+        else
+        begin
+          LViewModel := LProperty.GetValue(AViewModel).AsInterface as TObject;
+        end;
+
+        if Assigned(LViewModel) then
+        begin
+          LView := ViewLocator.GetOrCreateViewType(LViewModel.ClassType) as TControl;
+          LView.Parent := TPanel(AViewElement);
+          LView.Align := alClient;
+          ViewModelBinder.Bind(LViewModel, LView);
+        end;
       end;
     end;
   AddElementConvention<TRadioButton>('Checked', 'OnClick');

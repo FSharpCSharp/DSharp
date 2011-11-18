@@ -48,7 +48,9 @@ type
   private
     FExportedProperties: TDictionary<string, TRttiProperty>;
     FInterfaces: TDictionary<TGUID, TRttiInterfaceType>;
+    function CreateFieldInjectionDelegate(const propertyName: string): TFunc<TValue>;
     function CreatePropertyInjectionDelegate(const propertyName: string): TFunc<TValue>;
+    procedure ImportMember(Model: TComponentModel; Member: TRttiMember);
     function RegisterClass(ClassType: TRttiType): TRegistration;
     procedure RegisterClassImplementingInterface(ClassType: TRttiInstanceType);
     procedure RegisterClassInheritedExport(ClassType: TRttiInstanceType);
@@ -77,6 +79,16 @@ type
       delegate: TFunc<TValue>);
   end;
 
+  TFieldInjectionWithDelegate = class(TFieldInjection)
+  private
+    fDelegate: TFunc<TValue>;
+  protected
+    procedure DoInject(instance: TObject; const arguments: array of TValue); override;
+  public
+    constructor Create(model: TComponentModel; const targetName: string;
+      delegate: TFunc<TValue>);
+  end;
+
 implementation
 
 uses
@@ -89,6 +101,21 @@ constructor TSpringContainer.Create;
 begin
   inherited;
   FExportedProperties := TDictionary<string, TRttiProperty>.Create();
+end;
+
+function TSpringContainer.CreateFieldInjectionDelegate(
+  const propertyName: string): TFunc<TValue>;
+begin
+  Result :=
+    function: TValue
+    var
+      LProperty: TRttiProperty;
+    begin
+      if FExportedProperties.TryGetValue(propertyName, LProperty) then
+        Result := LProperty.GetValue(Resolve(LProperty.Parent.Handle).AsObject)
+      else
+        Result := TValue.Empty;
+    end;
 end;
 
 function TSpringContainer.CreatePropertyInjectionDelegate(const propertyName: string): TFunc<TValue>;
@@ -111,15 +138,68 @@ begin
   inherited;
 end;
 
+procedure TSpringContainer.ImportMember(Model: TComponentModel; Member: TRttiMember);
+var
+  LImportAttribute: ImportAttribute;
+  LInjection: IInjection;
+  LValue: TValue;
+begin
+  if Member.TryGetAttributeOfType<ImportAttribute>(LImportAttribute) then
+  begin
+    if Member.RttiType.IsGenericTypeOf('Lazy') then
+    begin
+      LValue := ResolveLazy(Member.RttiType);
+      if Member is TRttiProperty then
+        Model.InjectProperty(Member.Name, LValue)
+      else if Member is TRttiField then
+        Model.InjectField(Member.Name, LValue);
+    end else
+    if Member.RttiType.IsGenericTypeOf('TArray')
+      and Member.RttiType.GetGenericArguments[0].IsGenericTypeOf('Lazy') then
+    begin
+      LValue := TValue.FromArray(Member.RttiType.Handle,
+        ResolveAllLazy(Member.RttiType.GetGenericArguments[0]));
+      if Member is TRttiProperty then
+        Model.InjectProperty(Member.Name, LValue)
+      else if Member is TRttiField then
+        Model.InjectField(Member.Name, LValue);
+    end else
+    begin
+      if LImportAttribute.Name <> '' then
+      begin
+//        LModel := ComponentRegistry.GetComponent(LType.Handle); ???
+
+        if Member is TRttiProperty then
+        begin
+          LInjection := TPropertyInjectionWithDelegate.Create(Model, Member.Name,
+            CreatePropertyInjectionDelegate(LImportAttribute.Name));
+          LInjection.Initialize(Member);
+          Model.PropertyInjections.Add(LInjection);
+        end else if Member is TRttiField then
+        begin
+          LInjection := TFieldInjectionWithDelegate.Create(Model, Member.Name,
+            CreateFieldInjectionDelegate(LImportAttribute.Name));
+          LInjection.Initialize(Member);
+          Model.FieldInjections.Add(LInjection);
+        end;
+      end else
+      begin
+        if Member is TRttiProperty then
+          Model.InjectProperty(Member.Name)
+        else if Member is TRttiField then
+          Model.InjectField(Member.Name);
+      end;
+    end;
+  end;
+end;
+
 procedure TSpringContainer.ImportRtti;
 var
   LType: TRttiType;
   LExportAttribute: ExportAttribute;
+  LField: TRttiField;
   LProperty: TRttiProperty;
-  LImportAttribute: ImportAttribute;
-  LValue: TValue;
   LModel: TComponentModel;
-  LInjection: IInjection;
 begin
   FInterfaces := TDictionary<TGUID, TRttiInterfaceType>.Create();
   try
@@ -127,7 +207,10 @@ begin
     begin
       if LType is TRttiInterfaceType and LType.HasAttributeOfType<InheritedExportAttribute> then
       begin
-        FInterfaces.Add(TRttiInterfaceType(LType).GUID, TRttiInterfaceType(LType));
+        if not IsEqualGUID(TRttiInterfaceType(LType).GUID, TGUID.Empty) then
+        begin
+          FInterfaces.Add(TRttiInterfaceType(LType).GUID, TRttiInterfaceType(LType));
+        end;
       end;
     end;
 
@@ -149,36 +232,12 @@ begin
 
           for LProperty in LType.GetProperties do
           begin
-            if LProperty.TryGetAttributeOfType<ImportAttribute>(LImportAttribute) then
-            begin
-              if LProperty.PropertyType.IsGenericTypeOf('Lazy') then
-              begin
-                LValue := ResolveLazy(LProperty.PropertyType);
-                LModel.InjectProperty(LProperty.Name, LValue);
-              end else
-              if LProperty.PropertyType.IsGenericTypeOf('TArray')
-                and LProperty.PropertyType.GetGenericArguments[0].IsGenericTypeOf('Lazy') then
-              begin
-                LValue := TValue.FromArray(LProperty.PropertyType.Handle,
-                  ResolveAllLazy(LProperty.PropertyType.GetGenericArguments[0]));
-                LModel.InjectProperty(LProperty.Name, LValue);
-              end else
-              begin
-                if LImportAttribute.Name <> '' then
-                begin
-                  LModel := ComponentRegistry.GetComponent(LType.Handle);
+            ImportMember(LModel, LProperty);
+          end;
 
-                  LInjection := TPropertyInjectionWithDelegate.Create(LModel, LProperty.Name,
-                    CreatePropertyInjectionDelegate(LImportAttribute.Name));
-
-                  LInjection.Initialize(LProperty);
-                  LModel.PropertyInjections.Add(LInjection);
-                end else
-                begin
-                  LModel.InjectProperty(LProperty.Name);
-                end;
-              end;
-            end;
+          for LField in LType.GetFields do
+          begin
+            ImportMember(LModel, LField);
           end;
         end;
 
@@ -371,6 +430,21 @@ begin
 end;
 
 procedure TPropertyInjectionWithDelegate.DoInject(instance: TObject;
+  const arguments: array of TValue);
+begin
+  inherited DoInject(instance, [fDelegate()]);
+end;
+
+{ TFieldInjectionWithDelegate }
+
+constructor TFieldInjectionWithDelegate.Create(model: TComponentModel;
+  const targetName: string; delegate: TFunc<TValue>);
+begin
+  inherited Create(model, targetName);
+  fDelegate := delegate;
+end;
+
+procedure TFieldInjectionWithDelegate.DoInject(instance: TObject;
   const arguments: array of TValue);
 begin
   inherited DoInject(instance, [fDelegate()]);

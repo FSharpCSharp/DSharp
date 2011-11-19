@@ -3,29 +3,31 @@ unit AccountService;
 interface
 
 uses
-  AccountServiceBase, Account, CurrencyServiceBase;
+  Account,
+  AccountServiceIntf,
+  CurrencyServiceIntf;
 
 type
-  TAccountService = class(TAccountServiceBase)
+  TAccountService = class(TInterfacedObject, IAccountService)
   private
-    FCurrencyService: TCurrencyServiceBase;
+    FCurrencyService: ICurrencyService;
   public
-    constructor Create(ACurrencyService: TCurrencyServiceBase);
+    constructor Create(ACurrencyService: ICurrencyService);
 
-    procedure TransferFunds(ASource, ATarget: TAccount; AAmount: Currency); override;
+    procedure TransferFunds(ASource, ATarget: TAccount; AAmount: Double);
   end;
 
 implementation
 
 { TAccountService }
 
-constructor TAccountService.Create(ACurrencyService: TCurrencyServiceBase);
+constructor TAccountService.Create(ACurrencyService: ICurrencyService);
 begin
   FCurrencyService := ACurrencyService;
 end;
 
 procedure TAccountService.TransferFunds(ASource, ATarget: TAccount;
-  AAmount: Currency);
+  AAmount: Double);
 var
   LConversionRate: Double;
   LConvertedAmount: Currency;

@@ -5,8 +5,8 @@ interface
 uses
   DSharp.Collections;
 
-function CreateContactList(): IList<TObject>;
-procedure FillContactList(const AObjectList: IList<TObject>);
+function CreateContactList: IList;
+procedure FillContactList(const AObjectList: IList);
 
 implementation
 
@@ -14,13 +14,13 @@ uses
   Contact,
   DSharp.Collections.ObservableCollection;
 
-function CreateContactList(): IList<TObject>;
+function CreateContactList: IList;
 begin
   Result := TObservableCollection<TObject>.Create(True);
   FillContactList(Result);
 end;
 
-procedure FillContactList(const AObjectList: IList<TObject>);
+procedure FillContactList(const AObjectList: IList);
 var
   LContact: TContact;
 begin

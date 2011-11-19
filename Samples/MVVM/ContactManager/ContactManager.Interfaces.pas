@@ -23,24 +23,16 @@ type
     ['{15AC3244-E2BB-42BE-AB15-61C2DF87FEB8}']
     function GetCanDeleteContact: Boolean;
     function GetCanEditContact: Boolean;
-    function GetContactDetails: Lazy<IContactDetailsViewModel>;
-    function GetContacts: IList<TObject>;
     function GetSelectedContact: TContact;
-    procedure SetContactDetails(const Value: Lazy<IContactDetailsViewModel>);
-    procedure SetContacts(const Value: IList<TObject>);
     procedure SetSelectedContact(const Value: TContact);
 
     procedure AddNewContact;
     procedure EditContact;
     procedure DeleteContact;
 
-    property Contacts: IList<TObject> read GetContacts write SetContacts;
-    property SelectedContact: TContact read GetSelectedContact write SetSelectedContact;
-    property ContactDetails: Lazy<IContactDetailsViewModel> read GetContactDetails
-      write SetContactDetails;
-
     property CanDeleteContact: Boolean read GetCanDeleteContact;
     property CanEditContact: Boolean read GetCanEditContact;
+    property SelectedContact: TContact read GetSelectedContact write SetSelectedContact;
   end;
 
 implementation

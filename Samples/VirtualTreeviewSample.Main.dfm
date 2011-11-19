@@ -36,18 +36,28 @@ object MainForm: TMainForm
         Width = 329
         Height = 194
         Anchors = [akLeft, akTop, akRight, akBottom]
-        Header.AutoSizeIndex = 0
+        Header.AutoSizeIndex = -1
         Header.Font.Charset = DEFAULT_CHARSET
         Header.Font.Color = clWindowText
         Header.Font.Height = -11
         Header.Font.Name = 'Tahoma'
         Header.Font.Style = []
-        Header.MainColumn = -1
+        Header.Options = [hoColumnResize, hoDrag, hoShowSortGlyphs, hoVisible]
         NodeDataSize = 4
         TabOrder = 2
         TreeOptions.MiscOptions = [toAcceptOLEDrop, toEditable, toFullRepaintOnResize, toInitOnSave, toToggleOnDblClick, toWheelPanning, toEditOnClick]
         TreeOptions.SelectionOptions = [toExtendedFocus]
-        Columns = <>
+        Columns = <
+          item
+            Position = 0
+            Width = 100
+            WideText = 'Lastname'
+          end
+          item
+            Position = 1
+            Width = 100
+            WideText = 'Firstname'
+          end>
       end
       object Lastname: TLabeledEdit
         Left = 376
@@ -124,10 +134,14 @@ object MainForm: TMainForm
         Header.Font.Height = -11
         Header.Font.Name = 'Tahoma'
         Header.Font.Style = []
-        Header.MainColumn = -1
+        Header.Options = [hoColumnResize, hoDrag, hoShowSortGlyphs, hoVisible]
         NodeDataSize = 4
         TabOrder = 0
-        Columns = <>
+        Columns = <
+          item
+            Position = 0
+            Width = 300
+          end>
       end
       object NodeName: TLabeledEdit
         Left = 376
@@ -231,6 +245,11 @@ object MainForm: TMainForm
     end
   end
   object ContactsPresenter: TTreeViewPresenter
+    Action = ContactAction
+    ListMode = True
+    TreeView = Contacts
+    Left = 80
+    Top = 80
     ColumnDefinitions = <
       item
         Caption = 'Lastname'
@@ -240,11 +259,6 @@ object MainForm: TMainForm
         Caption = 'Firstname'
         TextPropertyName = 'Firstname'
       end>
-    Action = ContactAction
-    ListMode = True
-    TreeView = Contacts
-    Left = 80
-    Top = 80
   end
   object BindingGroup: TBindingGroup
     Left = 192
@@ -308,14 +322,14 @@ object MainForm: TMainForm
       end>
   end
   object InventoryPresenter: TTreeViewPresenter
+    TreeView = Inventory
+    Left = 80
+    Top = 160
     ColumnDefinitions = <
       item
         OnGetText = InventoryPresenterColumnDefinitions0GetText
         Width = 300
       end>
-    TreeView = Inventory
-    Left = 80
-    Top = 160
   end
   object XMLDocument1: TXMLDocument
     Active = True

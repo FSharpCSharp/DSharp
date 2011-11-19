@@ -4,7 +4,7 @@ object NavigationView: TNavigationView
   Width = 201
   Height = 240
   TabOrder = 0
-  object ListBox1: TListBox
+  object Elements: TListBox
     AlignWithMargins = True
     Left = 3
     Top = 3

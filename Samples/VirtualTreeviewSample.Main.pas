@@ -120,10 +120,10 @@ begin
   xmlItems.AddRange(
     XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
 
-  InventoryPresenter.View.ItemsSource := IList<TObject>(xmlItems);
+  InventoryPresenter.View.ItemsSource := xmlItems.ToList;
   InventoryPresenter.View.ItemTemplate := TXmlDataTemplate.Create(InventoryPresenter.ColumnDefinitions);
 
-  TreeView1.View.ItemsSource := IList<TObject>(xmlItems);
+  TreeView1.View.ItemsSource := xmlItems.ToList;
   TreeView1.View.ItemTemplate := TXmlDataTemplate.Create(nil);
 
   ComboBox1.View.ItemsSource := ContactsPresenter.View.ItemsSource;

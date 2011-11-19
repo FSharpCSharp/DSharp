@@ -4,11 +4,11 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, 
-  Dialogs, StdCtrls;
+  Dialogs, StdCtrls, DSharp.Bindings.VCLControls;
 
 type
   TNavigationView = class(TFrame)
-    ListBox1: TListBox;
+    Elements: TListBox;
   private
     { Private declarations }
   public

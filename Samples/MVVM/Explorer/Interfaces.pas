@@ -3,6 +3,7 @@ unit Interfaces;
 interface
 
 uses
+  DSharp.Collections,
   DSharp.ComponentModel.Composition;
 
 type
@@ -12,13 +13,18 @@ type
   end;
 
   [InheritedExport]
-  INavigationViewModel = interface
-    ['{E95E8143-E718-4603-B658-DDF2DAD757D5}']
+  IWorkingAreaViewModel = interface
+    ['{060A761D-21FD-473E-9B9A-91F62FCE4467}']
   end;
 
   [InheritedExport]
-  IWorkingAreaViewModel = interface
-    ['{060A761D-21FD-473E-9B9A-91F62FCE4467}']
+  INavigationViewModel = interface
+    ['{E95E8143-E718-4603-B658-DDF2DAD757D5}']
+    function GetElements: IList<IWorkingAreaViewModel>;
+    function GetSelectedElement: IWorkingAreaViewModel;
+    procedure SetElements(const Value: IList<IWorkingAreaViewModel>);
+    property SelectedElement: IWorkingAreaViewModel read GetSelectedElement;
+    property Elements: IList<IWorkingAreaViewModel> read GetElements write SetElements;
   end;
 
 implementation

@@ -3,16 +3,16 @@ unit TestMain;
 interface
 
 uses
-  AccountServiceBase,
-  CurrencyServiceBase,
+  AccountServiceIntf,
+  CurrencyServiceIntf,
   DSharp.Testing.Mock,
   TestFramework;
 
 type
   TCurrencyServiceTest = class(TTestCase)
   private
-    FMockCurrencyService: Mock<TCurrencyServiceBase>;
-    FAccountService: TAccountServiceBase;
+    FMockCurrencyService: Mock<ICurrencyService>;
+    FAccountService: IAccountService;
   public
     procedure SetUp; override;
     procedure TearDown; override;
@@ -29,13 +29,14 @@ uses
 
 procedure TCurrencyServiceTest.SetUp;
 begin
+  FMockCurrencyService := Mock<ICurrencyService>.Create;
   FAccountService := TAccountService.Create(FMockCurrencyService);
 end;
 
 procedure TCurrencyServiceTest.TearDown;
 begin
-  FAccountService.Free();
-  FMockCurrencyService.Clear();
+  FAccountService := nil;
+  FMockCurrencyService := nil;
 end;
 
 procedure TCurrencyServiceTest.TransferFunds_UsesCurrencyService;
@@ -47,12 +48,12 @@ begin
   LGermanAccount := TAccount.Create('54321', 'EUR');
   LGermanAccount.Deposit(100);
 
-  FMockCurrencyService.WillReturn<Double>(1.38).Once.WhenCalling.GetConversionRate('EUR', 'USD');
+  FMockCurrencyService.WillReturn<Double>(1.38).Exactly(1).WhenCalling.GetConversionRate('EUR', 'USD');
   try
     FAccountService.TransferFunds(LGermanAccount, LAmericanAccount, 100);
 
     Verify.That(LGermanAccount.Balance, ShouldBe.EqualTo<Double>(0));
-    Verify.That(LAmericanAccount.Balance, ShouldBe.EqualTo<Double>(138), 'this fails in 64-bit (see QC 99028)');
+    Verify.That(LAmericanAccount.Balance, ShouldBe.EqualTo<Double>(138), 'american account has wrong balance');
 
     FMockCurrencyService.Verify();
   finally

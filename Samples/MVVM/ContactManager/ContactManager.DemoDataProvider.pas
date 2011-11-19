@@ -11,12 +11,12 @@ type
   [PartCreationPolicy(cpShared)]
   TDemoDataProvider = class
   private
-    FContacts: IList<TObject>;
-    function GetContacts: IList<TObject>;
+    FContacts: IList;
+    function GetContacts: IList;
   public
     constructor Create;
     [Export('DemoData.Contacts')]
-    property Contacts: IList<TObject> read GetContacts;
+    property Contacts: IList read GetContacts;
   end;
 
 implementation
@@ -33,7 +33,7 @@ begin
   FillContactList(FContacts);
 end;
 
-function TDemoDataProvider.GetContacts: IList<TObject>;
+function TDemoDataProvider.GetContacts: IList;
 begin
   Result := FContacts;
 end;

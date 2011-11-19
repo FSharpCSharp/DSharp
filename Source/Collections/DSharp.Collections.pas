@@ -47,6 +47,7 @@ type
     class function Copy<T>(Values: array of T): TArray<T>; static;
   end;
 
+  {$M+}
   IEnumerator = interface
     function GetCurrent: TValue;
     function MoveNext: Boolean;
@@ -64,6 +65,36 @@ type
 
   IEnumerable<T> = interface(IEnumerable)
     function GetEnumerator: IEnumerator<T>;
+  end;
+
+  IList = interface(IEnumerable)
+    function GetCapacity: NativeInt;
+    function GetCount: NativeInt;
+    procedure SetCapacity(const Value: NativeInt);
+
+    function Add(const Value: TValue): NativeInt;
+    procedure AddRange(const Values: array of TValue);
+    procedure Clear;
+    function Contains(const Value: TValue): Boolean;
+    procedure Delete(const Index: NativeInt);
+    procedure DeleteRange(const Index, Count: NativeInt);
+    function First: TValue;
+    function GetItem(const Index: NativeInt): TValue;
+    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent<TValue>>;
+    function IndexOf(const Value: TValue): NativeInt;
+    procedure Insert(const Index: NativeInt; const Value: TValue);
+    procedure InsertRange(const Index: NativeInt; const Values: array of TValue); overload;
+    function Last: TValue;
+    function LastIndexOf(const Value: TValue): NativeInt;
+    procedure Move(const OldIndex, NewIndex: NativeInt);
+    function Remove(const Value: TValue): NativeInt;
+    procedure SetItem(const Index: NativeInt; const Value: TValue);
+
+    property Capacity: NativeInt read GetCapacity write SetCapacity;
+    property Count: NativeInt read GetCount;
+    property Items[const Index: NativeInt]: TValue read GetItem write SetItem; default;
+    property OnCollectionChanged: TEvent<TCollectionChangedEvent<TValue>>
+      read GetOnCollectionChanged;
   end;
 
   IList<T> = interface(IEnumerable<T>)
@@ -91,8 +122,8 @@ type
     function Remove(const Value: T): NativeInt;
     procedure SetItem(const Index: NativeInt; const Value: T);
 
-    function AsObjectList: IList<TObject>;
     function ToArray: TArray<T>;
+    function ToList: IList;
 
     property Capacity: NativeInt read GetCapacity write SetCapacity;
     property Count: NativeInt read GetCount;
@@ -148,7 +179,7 @@ type
     function GetEnumerator: IEnumerator<T>; reintroduce; virtual;
   end;
 
-  TList<T> = class(TEnumerable<T>, IList<T>)
+  TList<T> = class(TEnumerable<T>, IList<T>, IList)
   private
     FItems: TArray<T>;
     FCount: NativeInt;
@@ -156,37 +187,55 @@ type
     FOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
     function GetCapacity: NativeInt;
     function GetCount: NativeInt;
+    function FirstBase: TValue;
     function GetItem(const Index: NativeInt): T;
+    function GetItemBase(const Index: NativeInt): TValue;
+    function LastBase: TValue;
+    function IList.First = FirstBase;
+    function IList.GetItem = GetItemBase;
+    function IList.Last = LastBase;
     procedure Grow;
     procedure SetCapacity(const Value: NativeInt);
-    procedure SetItem(const Index: NativeInt; const Value: T);
+    procedure SetItem(const Index: NativeInt; const Value: T); overload;
+    procedure SetItem(const Index: NativeInt; const Value: TValue); overload;
   protected
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
+    function GetOnCollectionChangedBase: TEvent<TCollectionChangedEvent<TValue>>;
+    function IList.GetOnCollectionChanged = GetOnCollectionChangedBase;
+
     procedure Notify(const Value: T; const Action: TCollectionChangedAction); virtual;
   public
     constructor Create;
     destructor Destroy; override;
 
-    function Add(const Value: T): NativeInt;
+    function Add(const Value: T): NativeInt; overload;
+    function Add(const Value: TValue): NativeInt; overload;
     procedure AddRange(const Values: array of T); overload;
+    procedure AddRange(const Values: array of TValue); overload;
     procedure AddRange(Values: IEnumerable<T>); overload;
     procedure Clear;
-    function Contains(const Value: T): Boolean;
+    function Contains(const Value: TValue): Boolean; overload;
+    function Contains(const Value: T): Boolean; overload;
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
     function First: T;
-    function IndexOf(const Value: T): NativeInt;
-    procedure Insert(const Index: NativeInt; const Value: T);
+    function IndexOf(const Value: T): NativeInt; overload;
+    function IndexOf(const Value: TValue): NativeInt; overload;
+    procedure Insert(const Index: NativeInt; const Value: T); overload;
+    procedure Insert(const Index: NativeInt; const Value: TValue); overload;
     procedure InsertRange(const Index: NativeInt; const Values: array of T); overload;
+    procedure InsertRange(const Index: NativeInt; const Values: array of TValue); overload;
     procedure InsertRange(const Index: NativeInt; Values: IEnumerable<T>); overload;
     function Last: T;
-    function LastIndexOf(const Value: T): NativeInt;
+    function LastIndexOf(const Value: T): NativeInt; overload;
+    function LastIndexOf(const Value: TValue): NativeInt; overload;
     procedure Move(const OldIndex, NewIndex: NativeInt);
-    function Remove(const Value: T): NativeInt;
+    function Remove(const Value: T): NativeInt; overload;
+    function Remove(const Value: TValue): NativeInt; overload;
 
-    function AsObjectList: IList<TObject>;
     function GetEnumerator: IEnumerator<T>; override;
     function ToArray: TArray<T>;
+    function ToList: IList;
 
     type
       TEnumerator = class(TEnumerator<T>)
@@ -307,7 +356,17 @@ begin
   Insert(FCount, Value);
 end;
 
+function TList<T>.Add(const Value: TValue): NativeInt;
+begin
+  Add(Value.AsType<T>);
+end;
+
 procedure TList<T>.AddRange(const Values: array of T);
+begin
+  InsertRange(FCount, Values);
+end;
+
+procedure TList<T>.AddRange(const Values: array of TValue);
 begin
   InsertRange(FCount, Values);
 end;
@@ -317,18 +376,18 @@ begin
   InsertRange(FCount, Values);
 end;
 
-function TList<T>.AsObjectList: IList<TObject>;
-begin
-  Result := TList<TObject>(Self);
-end;
-
 procedure TList<T>.Clear;
 var
-  i: Integer;
+  i: NativeInt;
 begin
   for i := FCount - 1 downto 0 do
     Delete(i);
   SetLength(FItems, 0);
+end;
+
+function TList<T>.Contains(const Value: TValue): Boolean;
+begin
+
 end;
 
 function TList<T>.Contains(const Value: T): Boolean;
@@ -383,6 +442,11 @@ begin
   Result := Items[0];
 end;
 
+function TList<T>.FirstBase: TValue;
+begin
+  Result := TValue.From<T>(First);
+end;
+
 function TList<T>.GetCapacity: NativeInt;
 begin
   Result := Length(FItems);
@@ -405,9 +469,19 @@ begin
   Result := FItems[Index];
 end;
 
+function TList<T>.GetItemBase(const Index: NativeInt): TValue;
+begin
+  Result := TValue.From<T>(GetItem(Index));
+end;
+
 function TList<T>.GetOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
 begin
   Result := FOnCollectionChanged.EventHandler;
+end;
+
+function TList<T>.GetOnCollectionChangedBase: TEvent<TCollectionChangedEvent<TValue>>;
+begin
+  Result := TEvent<TCollectionChangedEvent<TValue>>(OnCollectionChanged);
 end;
 
 procedure TList<T>.Grow;
@@ -426,6 +500,11 @@ begin
     if FComparer.Compare(FItems[i], Value) = 0 then
       Exit(i);
   Result := -1;
+end;
+
+function TList<T>.IndexOf(const Value: TValue): NativeInt;
+begin
+  Result := IndexOf(Value.AsType<T>);
 end;
 
 procedure TList<T>.Insert(const Index: NativeInt; const Value: T);
@@ -447,10 +526,29 @@ begin
   Notify(Value, caAdd);
 end;
 
+procedure TList<T>.Insert(const Index: NativeInt; const Value: TValue);
+begin
+  Insert(Index, Value.AsType<T>);
+end;
+
 procedure TList<T>.InsertRange(const Index: NativeInt; const Values: array of T);
 var
   i: NativeInt;
   LItem: T;
+begin
+  i := Index;
+  for LItem in Values do
+  begin
+    Insert(i, LItem);
+    Inc(i);
+  end;
+end;
+
+procedure TList<T>.InsertRange(const Index: NativeInt;
+  const Values: array of TValue);
+var
+  i: NativeInt;
+  LItem: TValue;
 begin
   i := Index;
   for LItem in Values do
@@ -478,6 +576,11 @@ begin
   Result := Items[Count - 1];
 end;
 
+function TList<T>.LastBase: TValue;
+begin
+  Result := TValue.From<T>(Last);
+end;
+
 function TList<T>.LastIndexOf(const Value: T): NativeInt;
 var
   i: Integer;
@@ -486,6 +589,11 @@ begin
     if FComparer.Compare(FItems[i], Value) = 0 then
       Exit(i);
   Result := -1;
+end;
+
+function TList<T>.LastIndexOf(const Value: TValue): NativeInt;
+begin
+  Result := LastIndexOf(Value.AsType<T>);
 end;
 
 procedure TList<T>.Move(const OldIndex, NewIndex: NativeInt);
@@ -520,11 +628,21 @@ begin
     Delete(Result);
 end;
 
+function TList<T>.Remove(const Value: TValue): NativeInt;
+begin
+  Result := Remove(Value.AsType<T>);
+end;
+
 procedure TList<T>.SetCapacity(const Value: NativeInt);
 begin
   if Value < Count then
     DeleteRange(Value, Count - Value);
   SetLength(FItems, Value);
+end;
+
+procedure TList<T>.SetItem(const Index: NativeInt; const Value: TValue);
+begin
+
 end;
 
 procedure TList<T>.SetItem(const Index: NativeInt; const Value: T);
@@ -550,6 +668,11 @@ begin
   begin
     Result[i] := FItems[i];
   end;
+end;
+
+function TList<T>.ToList: IList;
+begin
+  Result := Self;
 end;
 
 { TList<T>.TEnumerator }

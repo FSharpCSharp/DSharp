@@ -53,7 +53,7 @@ type
     procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
       Action: TCollectionChangedAction); override;
     function GetOwner: TPersistent; override;
-    procedure SetItemsSource(const Value: IList<TObject>); override;
+    procedure SetItemsSource(const Value: IList); override;
     procedure UpdateItemIndex(ACurrentItem: TObject);
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
@@ -184,7 +184,7 @@ begin
 
 end;
 
-procedure TCollectionViewAdapter.SetItemsSource(const Value: IList<TObject>);
+procedure TCollectionViewAdapter.SetItemsSource(const Value: IList);
 begin
   inherited;
   NotifyPropertyChanged(FOwner, Self, 'View');
@@ -216,7 +216,7 @@ procedure TCollectionViewAdapter.UpdateItems(AClearItems: Boolean);
 var
   LCurrentItem: TObject;
   LIndex: NativeInt;
-  LItem: TObject;
+  LItem: TValue;
 begin
   LCurrentItem := CurrentItem;
 
@@ -229,15 +229,15 @@ begin
   begin
     for LItem in FItemsSource do
     begin
-      LIndex := FindDisplayItem(LItem);
-      if not Assigned(FFilter) or FFilter(LItem) then
+      LIndex := FindDisplayItem(LItem.ToObject);
+      if not Assigned(FFilter) or FFilter(LItem.ToObject) then
       begin
         if LIndex = -1 then
         begin
           LIndex := AddDisplayItem();
         end;
 
-        UpdateDisplayItem(LIndex, LItem);
+        UpdateDisplayItem(LIndex, LItem.ToObject);
       end;
     end;
   end;

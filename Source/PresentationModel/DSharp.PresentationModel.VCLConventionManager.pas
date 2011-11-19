@@ -174,6 +174,15 @@ begin
   AddElementConvention<TEdit>('Text', 'OnChange');
   AddElementConvention<TLabel>('Caption', 'OnClick');
   AddElementConvention<TLabeledEdit>('Text', 'OnChange');
+  AddElementConvention<TListBox>('View.ItemsSource', 'OnClick')
+    .ApplyBinding :=
+      procedure(AViewModel: TObject; APropertyName: string;
+        AViewElement: TComponent; ABindingType: TBindingType;
+        AConvention: TElementConvention)
+      begin
+        SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
+        ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
+      end;
   AddElementConvention<TMemo>('Text', 'OnChange');
   AddElementConvention<TMonthCalendar>('Date', 'OnClick');
   AddElementConvention<TPageControl>('View.ItemsSource', 'OnCurrentChanged')
@@ -183,8 +192,8 @@ begin
       AConvention: TElementConvention)
     var
       LCollectionChanged: TEvent<TCollectionChangedEvent>;
-      LItems: IList<TObject>;
-      LItem: TObject;
+      LItems: IList;
+      LItem: TValue;
     begin
       SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
       ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
@@ -193,7 +202,7 @@ begin
       begin
         for LItem in LItems do
         begin
-          Manager.PageControlCollectionChanged(AViewElement, LItem, caAdd);
+          Manager.PageControlCollectionChanged(AViewElement, LItem.ToObject, caAdd);
         end;
       end;
       LCollectionChanged := TPageControl(AViewElement).View.OnCollectionChanged;
@@ -239,8 +248,8 @@ begin
       AConvention: TElementConvention)
     var
       LCollectionChanged: TEvent<TCollectionChangedEvent>;
-      LItems: IList<TObject>;
-      LItem: TObject;
+      LItems: IList;
+      LItem: TValue;
     begin
       SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
       ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
@@ -249,7 +258,7 @@ begin
       begin
         for LItem in LItems do
         begin
-          Manager.ScrollBoxCollectionChanged(AViewElement, LItem, caAdd);
+          Manager.ScrollBoxCollectionChanged(AViewElement, LItem.ToObject, caAdd);
         end;
       end;
       LCollectionChanged := TScrollBox(AViewElement).View.OnCollectionChanged;

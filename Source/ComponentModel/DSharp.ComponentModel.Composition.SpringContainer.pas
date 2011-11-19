@@ -166,21 +166,44 @@ begin
       else if Member is TRttiField then
         Model.InjectField(Member.Name, LValue);
     end else
-    if Member.RttiType.IsGenericTypeOf('TArray')
-      and Member.RttiType.GetGenericArguments[0].IsGenericTypeOf('Lazy') then
+    if Member.RttiType.IsGenericTypeOf('TArray') then
     begin
-      LValue := TValue.FromArray(Member.RttiType.Handle,
-        ResolveAllLazy(Member.RttiType.GetGenericArguments[0]));
-      if Member is TRttiProperty then
-        Model.InjectProperty(Member.Name, LValue)
-      else if Member is TRttiField then
-        Model.InjectField(Member.Name, LValue);
+      if Member.RttiType.GetGenericArguments[0].IsGenericTypeOf('Lazy') then
+      begin
+        LValue := TValue.FromArray(Member.RttiType.Handle,
+          ResolveAllLazy(Member.RttiType.GetGenericArguments[0]));
+        if Member is TRttiProperty then
+          Model.InjectProperty(Member.Name, LValue)
+        else if Member is TRttiField then
+          Model.InjectField(Member.Name, LValue);
+      end else
+      begin
+        if Member is TRttiProperty then
+        begin
+          LInjection := TPropertyInjectionWithDelegate.Create(Model, Member.Name,
+            function: TValue
+            begin
+              Result := TValue.FromArray(Member.RttiType.Handle,
+                ResolveAll(Member.RttiType.GetGenericArguments[0].Handle));
+            end);
+          LInjection.Initialize(Member);
+          Model.PropertyInjections.Add(LInjection);
+        end else if Member is TRttiField then
+        begin
+          LInjection := TFieldInjectionWithDelegate.Create(Model, Member.Name,
+            function: TValue
+            begin
+              Result := TValue.FromArray(Member.RttiType.Handle,
+                ResolveAll(Member.RttiType.GetGenericArguments[0].Handle));
+            end);
+          LInjection.Initialize(Member);
+          Model.FieldInjections.Add(LInjection);
+        end;
+      end;
     end else
     begin
       if LImportAttribute.Name <> '' then
       begin
-//        LModel := ComponentRegistry.GetComponent(LType.Handle); ???
-
         if Member is TRttiProperty then
         begin
           LInjection := TPropertyInjectionWithDelegate.Create(Model, Member.Name,

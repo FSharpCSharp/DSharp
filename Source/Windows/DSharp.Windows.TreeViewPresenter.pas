@@ -178,6 +178,7 @@ type
 implementation
 
 uses
+  DSharp.Core.Reflection,
   DSharp.Windows.ColumnDefinitions.ControlTemplate,
   DSharp.Windows.ControlTemplates,
   Windows;
@@ -513,7 +514,7 @@ begin
   end
   else
   begin
-    LItem := View.ItemsSource[Node.Index];
+    LItem := View.ItemsSource[Node.Index].ToObject;
   end;
 
   SetNodeItem(Sender, Node, LItem);

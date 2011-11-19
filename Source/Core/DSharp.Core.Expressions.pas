@@ -1904,7 +1904,7 @@ begin
   if Assigned(FExpression) then
   begin
     Delegate := FExpression.Compile();
-    Result := Delegate().CastAsObject();
+    Result := Delegate().ToObject();
   end
   else
   begin
@@ -2383,7 +2383,7 @@ begin
       var
         LeftValue, RightValue: TValue;
       begin
-        if Assigned(Expression) then
+        if Assigned(Expression) then;
 
         RightValue := RightDelegate();
         if Assigned(Convert) then

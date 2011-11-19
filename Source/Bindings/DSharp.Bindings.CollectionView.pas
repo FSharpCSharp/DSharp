@@ -50,7 +50,7 @@ type
   protected
     FFilter: TPredicate<TObject>;
     FItemIndex: NativeInt;
-    FItemsSource: IList<TObject>;
+    FItemsSource: IList;
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
 
@@ -63,13 +63,13 @@ type
     function GetCanMoveCurrentToPrevious: Boolean; virtual;
     function GetCurrentItem: TObject; virtual;
     function GetFilter: TPredicate<TObject>; virtual;
-    function GetItemsSource: IList<TObject>; virtual;
+    function GetItemsSource: IList; virtual;
     function GetItemTemplate: IDataTemplate; virtual;
     function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
     procedure SetCurrentItem(const Value: TObject); virtual;
     procedure SetFilter(const Value: TPredicate<TObject>); virtual;
     procedure SetItemIndex(const Value: NativeInt); virtual;
-    procedure SetItemsSource(const Value: IList<TObject>); virtual;
+    procedure SetItemsSource(const Value: IList); virtual;
     procedure SetItemTemplate(const Value: IDataTemplate); virtual;
     procedure UpdateItems(AClearItems: Boolean = False); virtual;
   public
@@ -89,7 +89,7 @@ type
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property Filter: TPredicate<TObject> read GetFilter write SetFilter;
     property ItemIndex: NativeInt read FItemIndex write SetItemIndex;
-    property ItemsSource: IList<TObject> read GetItemsSource write SetItemsSource;
+    property ItemsSource: IList read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
     property OnCollectionChanged: TEvent<TCollectionChangedEvent>
       read GetOnCollectionChanged;
@@ -100,7 +100,8 @@ type
 implementation
 
 uses
-  DSharp.Core.DataTemplates.Default;
+  DSharp.Core.DataTemplates.Default,
+  DSharp.Core.Reflection;
 
 { TCollectionView }
 
@@ -172,7 +173,7 @@ function TCollectionView.GetCurrentItem: TObject;
 begin
   if Assigned(FItemsSource) and (FItemIndex > -1) and (FItemIndex < FItemsSource.Count) then
   begin
-    Result := FItemsSource[FItemIndex];
+    Result := FItemsSource[FItemIndex].ToObject;
   end
   else
   begin
@@ -185,7 +186,7 @@ begin
   Result := FFilter;
 end;
 
-function TCollectionView.GetItemsSource: IList<TObject>;
+function TCollectionView.GetItemsSource: IList;
 begin
   Result := FItemsSource;
 end;
@@ -280,7 +281,7 @@ begin
   DoPropertyChanged('CanMoveCurrentToPrevious');
 end;
 
-procedure TCollectionView.SetItemsSource(const Value: IList<TObject>);
+procedure TCollectionView.SetItemsSource(const Value: IList);
 var
   LCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin

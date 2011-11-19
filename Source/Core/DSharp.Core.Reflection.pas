@@ -272,7 +272,7 @@ type
     function AsUInt64: UInt64;
     function AsWord: Word;
 
-    function CastAsObject: TObject;
+    function ToObject: TObject;
 
     class function ToString(const Value: TValue): string; overload; static;
     class function ToString(const Values: TArray<TValue>): string; overload; static;
@@ -1263,14 +1263,6 @@ begin
   Result := AsType<Word>;
 end;
 
-function TValueHelper.CastAsObject: TObject;
-begin
-  if IsInterface then
-    Result := AsInterface as TObject
-  else
-    Result := AsObject;
-end;
-
 class function TValueHelper.Equals(const Left, Right: TArray<TValue>): Boolean;
 var
   i: Integer;
@@ -1434,6 +1426,14 @@ begin
   Result := TypeInfo = System.TypeInfo(Word);
 end;
 
+function TValueHelper.ToObject: TObject;
+begin
+  if IsInterface then
+    Result := AsInterface as TObject
+  else
+    Result := AsObject;
+end;
+
 class function TValueHelper.ToString(const Values: TArray<TValue>): string;
 var
   i: Integer;
@@ -1476,6 +1476,10 @@ end;
 
 function TValueHelper.TryConvert(ATypeInfo: PTypeInfo;
   out AResult: TValue): Boolean;
+var
+  LType: TRttiType;
+  LMethod: TRttiMethod;
+  LInterface: IInterface;
 begin
   Result := False;
   case Kind of
@@ -1686,6 +1690,12 @@ begin
           if IsTypeCovariantTo(TypeInfo, ATypeInfo) then
           begin
             AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
+            Result := True;
+          end else if TryGetRttiType(TypeInfo, LType) and (ATypeInfo.Name = 'IList')
+            and LType.IsGenericTypeOf('IList') and LType.TryGetMethod('ToList', LMethod) then
+          begin
+            LInterface := LMethod.Invoke(Self, []).AsInterface;
+            TValue.Make(@LInterface, ATypeInfo, AResult);
             Result := True;
           end;
         end;

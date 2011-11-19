@@ -379,7 +379,8 @@ implementation
 uses
   DSharp.Bindings.CollectionView.Adapters,
   DSharp.Bindings.CollectionView.VCLAdapters,
-  DSharp.Bindings.Exceptions;
+  DSharp.Bindings.Exceptions,
+  DSharp.Core.Reflection;
 
 { TButton }
 
@@ -994,7 +995,7 @@ begin
     if (FView.ItemsSource <> nil) and (FView.ItemTemplate <> nil)
       and (FView.ItemsSource.Count > ARow - FixedRows) then
     begin
-      FView.ItemTemplate.SetText(FView.ItemsSource[ARow - FixedRows], ACol - FixedCols, Value);
+      FView.ItemTemplate.SetText(FView.ItemsSource[ARow - FixedRows].ToObject, ACol - FixedCols, Value);
     end;
   finally
     FView.EndUpdate;

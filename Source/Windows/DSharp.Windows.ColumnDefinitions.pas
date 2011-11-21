@@ -69,6 +69,7 @@ type
     FCaption: string;
     FCustomFilter: string;
     FFilter: TPredicate<TObject>;
+    FImageIndexOffset: Integer;
     FImageIndexPropertyExpression: IMemberExpression;
     FImageIndexPropertyName: string;
     FOnCustomDraw: TCustomDrawEvent;
@@ -90,6 +91,7 @@ type
     property Caption: string read FCaption write FCaption;
     property CustomFilter: string read FCustomFilter write SetCustomFilter;
     property Filter: TPredicate<TObject> read FFilter;
+    property ImageIndexOffset: Integer read FImageIndexOffset write FImageIndexOffset default 0;
     property ImageIndexPropertyName: string read FImageIndexPropertyName write SetImageIndexPropertyName;
     property OnCustomDraw: TCustomDrawEvent read FOnCustomDraw write FOnCustomDraw;
     property OnGetImageIndex: TGetImageIndexEvent read FOnGetImageIndex write FOnGetImageIndex;

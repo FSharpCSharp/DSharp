@@ -118,6 +118,8 @@ begin
     begin
       Result := inherited;
     end;
+
+    Result := Result + LColumnDefinition.ImageIndexOffset;
   end
   else
   begin

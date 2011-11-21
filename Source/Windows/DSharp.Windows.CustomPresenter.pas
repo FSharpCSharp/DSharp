@@ -33,7 +33,6 @@ interface
 
 uses
   Classes,
-  Controls,
   DSharp.Bindings.Collections,
   DSharp.Bindings.CollectionView,
   DSharp.Bindings.Notifications,
@@ -49,14 +48,14 @@ type
   private
     FAction: TBasicAction;
     FColumnDefinitions: IColumnDefinitions;
-    FImageList: TImageList;
+    FImageList: TCustomImageList;
     FNotifyPropertyChanged: INotifyPropertyChanged;
     FOnDoubleClick: TNotifyEvent;
     FPopupMenu: TPopupMenu;
     FView: TCollectionView;
     procedure ReadColumnDefinitions(Reader: TReader);
     procedure SetColumnDefinitions(const Value: IColumnDefinitions);
-    procedure SetImageList(const Value: TImageList);
+    procedure SetImageList(const Value: TCustomImageList);
     procedure SetPopupMenu(const Value: TPopupMenu);
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
@@ -87,7 +86,7 @@ type
     property View: TCollectionView read FView implements ICollectionView;
   published
     property Action: TBasicAction read FAction write FAction;
-    property ImageList: TImageList read FImageList write SetImageList;
+    property ImageList: TCustomImageList read FImageList write SetImageList;
     property OnDoubleClick: TNotifyEvent read FOnDoubleClick write FOnDoubleClick;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
   end;
@@ -241,7 +240,7 @@ begin
   DoPropertyChanged('View');
 end;
 
-procedure TCustomPresenter.SetImageList(const Value: TImageList);
+procedure TCustomPresenter.SetImageList(const Value: TCustomImageList);
 begin
   FImageList := Value;
   InitControl();

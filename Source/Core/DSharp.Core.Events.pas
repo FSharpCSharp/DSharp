@@ -223,7 +223,7 @@ var
 begin
   if FMethods.Count > 0 then
   begin
-    LOffset := 0;
+    LOffset := StackSize;
     SetLength(LArgs, Length(FParameters) + 1);
 
     for i := Low(FParameters) to High(FParameters) do
@@ -242,17 +242,16 @@ begin
       end
       else
       begin
+        Dec(LOffset, PointerSize);
         if FParameters[i].Flags * [pfVar, pfConst, pfOut] <> [] then
         begin
-          TValue.Make(Pointer(PNativeInt(@Params.Stack[LOffset])^),
-            FParameters[i].ParamType.Handle, LArgs[i + 1]);
+          LArgs[i + 1] := TValue.From<Pointer>(PPointer(@Params.Stack[LOffset])^);
         end
         else
         begin
-          TValue.Make(PNativeInt(@Params.Stack[LOffset])^,
+          TValue.Make(Pointer(@Params.Stack[LOffset]),
             FParameters[i].ParamType.Handle, LArgs[i + 1]);
         end;
-        Inc(LOffset, FParameters[i].ParamType.TypeSize);
       end;
     end;
 
@@ -278,19 +277,18 @@ var
 begin
   if FMethods.Count > 0 then
   begin
-    LOffset := 8;
+    LOffset := PointerSize;
     SetLength(LArgs, Length(FParameters) + 1);
 
     for i := Low(FParameters) to High(FParameters) do
     begin
       if FParameters[i].Flags * [pfVar, pfConst, pfOut] <> [] then
       begin
-        LArgs[i + 1] := TValue.From<Pointer>(
-          Pointer(PNativeInt(@Params.Stack[LOffset])^));
+        LArgs[i + 1] := TValue.From<Pointer>(PPointer(@Params.Stack[LOffset])^);
       end
       else
       begin
-        TValue.Make(PNativeInt(@Params.Stack[LOffset])^,
+        TValue.Make(Pointer(@Params.Stack[LOffset]),
           FParameters[i].ParamType.Handle, LArgs[i + 1]);
       end;
       Inc(LOffset, PointerSize);

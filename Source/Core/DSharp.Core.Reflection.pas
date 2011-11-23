@@ -1482,252 +1482,255 @@ var
   LInterface: IInterface;
 begin
   Result := False;
-  case Kind of
-    tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
-    begin
-      case ATypeInfo.Kind of
-        tkInteger, tkEnumeration, tkChar, tkInt64:
-        begin
-          AResult := TValue.FromOrdinal(ATypeInfo, AsOrdinal);
-          Result := True;
-        end;
-        tkFloat:
-        begin
-          AResult := TValue.FromFloat(ATypeInfo, AsOrdinal);
-          Result := True;
-        end;
-        tkUString:
-        begin
-          if IsBoolean then
-          begin
-            AResult := TValue.FromString(BoolToStr(AsBoolean, True));
-            Result := True;
-          end else
-          if IsInt64 then
-          begin
-            AResult := TValue.FromString(IntToStr(AsInt64));
-            Result := True;
-          end else
-          if IsInteger then
-          begin
-            AResult := TValue.FromString(IntToStr(AsInteger));
-            Result := True;
-          end else
-          if IsSmallInt then
-          begin
-            AResult := TValue.FromString(IntToStr(AsSmallInt));
-            Result := True;
-          end else
-          if IsShortInt then
-          begin
-            AResult := TValue.FromString(IntToStr(AsShortInt));
-            Result := True;
-          end else
-          if IsUInt64 then
-          begin
-            AResult := TValue.FromString(UIntToStr(AsUInt64));
-            Result := True;
-          end else
-          if IsCardinal then
-          begin
-            AResult := TValue.FromString(UIntToStr(AsCardinal));
-            Result := True;
-          end else
-          if IsWord then
-          begin
-            AResult := TValue.FromString(UIntToStr(AsWord));
-            Result := True;
-          end else
-          if IsByte then
-          begin
-            AResult := TValue.FromString(UIntToStr(AsByte));
-            Result := True;
-          end else
-          begin
-            AResult := TValue.FromString(ToString);
-            Result := True;
-          end;
-        end;
-      end;
-    end;
-    tkFloat:
-    begin
-      case ATypeInfo.Kind of
-        tkInteger, tkInt64:
-        begin
-          Result := Frac(AsExtended) = 0;
-          if Result then
-          begin
-            AResult := TValue.FromOrdinal(ATypeInfo, Trunc(AsExtended));
-          end;
-        end;
-        tkUString:
-        begin
-          if IsDate then
-          begin
-            AResult := TValue.FromString(DateToStr(AsDate));
-            Result := True;
-          end
-          else
-          if IsDateTime then
-          begin
-            AResult := TValue.FromString(DateTimeToStr(AsDateTime));
-            Result := True;
-          end
-          else
-          if IsTime then
-          begin
-            AResult := TValue.FromString(TimeToStr(AsTime));
-            Result := True;
-          end
-          else
-          begin
-            AResult := TValue.FromString(FloatToStr(AsExtended));
-            Result := True;
-          end;
-        end;
-      end;
-    end;
-    tkUString:
-    begin
-      case ATypeInfo.Kind of
-        tkEnumeration:
-        begin
-          if ATypeInfo = System.TypeInfo(Boolean) then
-          begin
-            AResult := TValue.FromBoolean(StrToBoolDef(AsString, False));
-            Result := True;
-          end else
-          begin
-            AResult := TValue.FromOrdinal(ATypeInfo, GetEnumValue(ATypeInfo, AsString));
-            Result := True;
-          end;
-        end;
-        tkInteger, tkChar, tkInt64:
-        begin
-          AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
-          Result := True;
-        end;
-        tkWChar:
-        begin
-          Result := Length(AsString) = 1;
-          if Result then
-          begin
-            AResult := TValue.From<Char>(AsString[1]);
-          end;
-        end;
-        tkFloat:
-        begin
-          if ATypeInfo = System.TypeInfo(TDate) then
-          begin
-            AResult := TValue.From<TDate>(StrToDateDef(AsString, 0));
-            Result := True;
-          end
-          else
-          if ATypeInfo = System.TypeInfo(TDateTime) then
-          begin
-            AResult := TValue.From<TDateTime>(StrToDateTimeDef(AsString, 0));
-            Result := True;
-          end
-          else
-          if ATypeInfo = System.TypeInfo(TTime) then
-          begin
-            AResult := TValue.From<TTime>(StrToTimeDef(AsString, 0));
-            Result := True;
-          end
-          else
-          begin
-            AResult := TValue.FromFloat(ATypeInfo, StrToFloatDef(AsString, 0));
-            Result := True;
-          end;
-        end;
-      end;
-    end;
-    tkClass:
-    begin
-      case ATypeInfo.Kind of
-        tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
-        begin
-          if ATypeInfo = System.TypeInfo(Boolean) then
-          begin
-            AResult := TValue.FromBoolean(AsObject <> nil);
-            Result := True;
-          end
-          else
-          begin
-            AResult := TValue.FromOrdinal(ATypeInfo, Int64(AsObject));
-            Result := True;
-          end;
-        end;
-        tkClass:
-        begin
-          if IsTypeCovariantTo(TypeInfo, ATypeInfo) then
-          begin
-            AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
-            Result := True;
-          end;
-        end;
-      end;
-    end;
-    tkRecord:
-    begin
-      case ATypeInfo.Kind of
-        tkMethod:
-        begin
-          if TypeInfo = System.TypeInfo(System.TMethod) then
-          begin
-            TValue.Make(GetReferenceToRawData, ATypeInfo, AResult);
-            Result := True;
-          end;
-        end;
-      end;
-    end;
-    tkInterface:
-    begin
-      case ATypeInfo.Kind of
-        tkInterface:
-        begin
-          if IsTypeCovariantTo(TypeInfo, ATypeInfo) then
-          begin
-            AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
-            Result := True;
-          end else if TryGetRttiType(TypeInfo, LType) and (ATypeInfo.Name = 'IList')
-            and LType.IsGenericTypeOf('IList') and LType.TryGetMethod('ToList', LMethod) then
-          begin
-            LInterface := LMethod.Invoke(Self, []).AsInterface;
-            TValue.Make(@LInterface, ATypeInfo, AResult);
-            Result := True;
-          end;
-        end;
-      end;
-    end;
-{$IFDEF VER210}
-    // workaround for bug in RTTI.pas (fixed in XE)
-    tkUnknown:
-    begin
-      case ATypeInfo.Kind of
-        tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
-        begin
-          AResult := TValue.FromOrdinal(ATypeInfo, 0);
-          Result := True;
-        end;
-        tkFloat:
-        begin
-          AResult := TValue.From<Extended>(0);
-          Result := True;
-        end;
-        tkUString:
-        begin
-          AResult := TValue.FromString('');
-          Result := True;
-        end;
-      end;
-    end;
-{$ENDIF}
-  end;
-  if not Result then
+  if Assigned(ATypeInfo) then
   begin
-    Result := TryCast(ATypeInfo, AResult);
+    case Kind of
+      tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+      begin
+        case ATypeInfo.Kind of
+          tkInteger, tkEnumeration, tkChar, tkInt64:
+          begin
+            AResult := TValue.FromOrdinal(ATypeInfo, AsOrdinal);
+            Result := True;
+          end;
+          tkFloat:
+          begin
+            AResult := TValue.FromFloat(ATypeInfo, AsOrdinal);
+            Result := True;
+          end;
+          tkUString:
+          begin
+            if IsBoolean then
+            begin
+              AResult := TValue.FromString(BoolToStr(AsBoolean, True));
+              Result := True;
+            end else
+            if IsInt64 then
+            begin
+              AResult := TValue.FromString(IntToStr(AsInt64));
+              Result := True;
+            end else
+            if IsInteger then
+            begin
+              AResult := TValue.FromString(IntToStr(AsInteger));
+              Result := True;
+            end else
+            if IsSmallInt then
+            begin
+              AResult := TValue.FromString(IntToStr(AsSmallInt));
+              Result := True;
+            end else
+            if IsShortInt then
+            begin
+              AResult := TValue.FromString(IntToStr(AsShortInt));
+              Result := True;
+            end else
+            if IsUInt64 then
+            begin
+              AResult := TValue.FromString(UIntToStr(AsUInt64));
+              Result := True;
+            end else
+            if IsCardinal then
+            begin
+              AResult := TValue.FromString(UIntToStr(AsCardinal));
+              Result := True;
+            end else
+            if IsWord then
+            begin
+              AResult := TValue.FromString(UIntToStr(AsWord));
+              Result := True;
+            end else
+            if IsByte then
+            begin
+              AResult := TValue.FromString(UIntToStr(AsByte));
+              Result := True;
+            end else
+            begin
+              AResult := TValue.FromString(ToString);
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkFloat:
+      begin
+        case ATypeInfo.Kind of
+          tkInteger, tkInt64:
+          begin
+            Result := Frac(AsExtended) = 0;
+            if Result then
+            begin
+              AResult := TValue.FromOrdinal(ATypeInfo, Trunc(AsExtended));
+            end;
+          end;
+          tkUString:
+          begin
+            if IsDate then
+            begin
+              AResult := TValue.FromString(DateToStr(AsDate));
+              Result := True;
+            end
+            else
+            if IsDateTime then
+            begin
+              AResult := TValue.FromString(DateTimeToStr(AsDateTime));
+              Result := True;
+            end
+            else
+            if IsTime then
+            begin
+              AResult := TValue.FromString(TimeToStr(AsTime));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.FromString(FloatToStr(AsExtended));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkUString:
+      begin
+        case ATypeInfo.Kind of
+          tkEnumeration:
+          begin
+            if ATypeInfo = System.TypeInfo(Boolean) then
+            begin
+              AResult := TValue.FromBoolean(StrToBoolDef(AsString, False));
+              Result := True;
+            end else
+            begin
+              AResult := TValue.FromOrdinal(ATypeInfo, GetEnumValue(ATypeInfo, AsString));
+              Result := True;
+            end;
+          end;
+          tkInteger, tkChar, tkInt64:
+          begin
+            AResult := TValue.FromOrdinal(ATypeInfo, StrToIntDef(AsString, 0));
+            Result := True;
+          end;
+          tkWChar:
+          begin
+            Result := Length(AsString) = 1;
+            if Result then
+            begin
+              AResult := TValue.From<Char>(AsString[1]);
+            end;
+          end;
+          tkFloat:
+          begin
+            if ATypeInfo = System.TypeInfo(TDate) then
+            begin
+              AResult := TValue.From<TDate>(StrToDateDef(AsString, 0));
+              Result := True;
+            end
+            else
+            if ATypeInfo = System.TypeInfo(TDateTime) then
+            begin
+              AResult := TValue.From<TDateTime>(StrToDateTimeDef(AsString, 0));
+              Result := True;
+            end
+            else
+            if ATypeInfo = System.TypeInfo(TTime) then
+            begin
+              AResult := TValue.From<TTime>(StrToTimeDef(AsString, 0));
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.FromFloat(ATypeInfo, StrToFloatDef(AsString, 0));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkClass:
+      begin
+        case ATypeInfo.Kind of
+          tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+          begin
+            if ATypeInfo = System.TypeInfo(Boolean) then
+            begin
+              AResult := TValue.FromBoolean(AsObject <> nil);
+              Result := True;
+            end
+            else
+            begin
+              AResult := TValue.FromOrdinal(ATypeInfo, Int64(AsObject));
+              Result := True;
+            end;
+          end;
+          tkClass:
+          begin
+            if IsTypeCovariantTo(TypeInfo, ATypeInfo) then
+            begin
+              AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkRecord:
+      begin
+        case ATypeInfo.Kind of
+          tkMethod:
+          begin
+            if TypeInfo = System.TypeInfo(System.TMethod) then
+            begin
+              TValue.Make(GetReferenceToRawData, ATypeInfo, AResult);
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkInterface:
+      begin
+        case ATypeInfo.Kind of
+          tkInterface:
+          begin
+            if IsTypeCovariantTo(TypeInfo, ATypeInfo) then
+            begin
+              AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
+              Result := True;
+            end else if TryGetRttiType(TypeInfo, LType) and (ATypeInfo.Name = 'IList')
+              and LType.IsGenericTypeOf('IList') and LType.TryGetMethod('ToList', LMethod) then
+            begin
+              LInterface := LMethod.Invoke(Self, []).AsInterface;
+              TValue.Make(@LInterface, ATypeInfo, AResult);
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+{$IFDEF VER210}
+      // workaround for bug in RTTI.pas (fixed in XE)
+      tkUnknown:
+      begin
+        case ATypeInfo.Kind of
+          tkInteger, tkEnumeration, tkChar, tkWChar, tkInt64:
+          begin
+            AResult := TValue.FromOrdinal(ATypeInfo, 0);
+            Result := True;
+          end;
+          tkFloat:
+          begin
+            AResult := TValue.From<Extended>(0);
+            Result := True;
+          end;
+          tkUString:
+          begin
+            AResult := TValue.FromString('');
+            Result := True;
+          end;
+        end;
+      end;
+{$ENDIF}
+    end;
+    if not Result then
+    begin
+      Result := TryCast(ATypeInfo, AResult);
+    end;
   end;
 end;
 

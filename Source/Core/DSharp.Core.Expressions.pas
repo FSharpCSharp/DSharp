@@ -429,9 +429,9 @@ type
     function GetName: string;
     function GetObject: TObject;
   protected
-    function GetMember: TRttiMember; virtual; abstract;
-    function GetValue: TValue; virtual; abstract;
-    procedure SetValue(const Value: TValue); virtual; abstract;
+    function GetMember: TRttiMember; virtual;
+    function GetValue: TValue; virtual;
+    procedure SetValue(const Value: TValue); virtual;
   public
     property Expression: IExpression read FExpression;
     property Member: TRttiMember read GetMember;
@@ -464,8 +464,6 @@ type
     function GetMethod: TRttiMethod;
   protected
     function GetMember: TRttiMember; override;
-    function GetValue: TValue; override;
-    procedure SetValue(const Value: TValue); override;
   public
     constructor Create(AExpression: IExpression; const AMethodName: string;
       const AParameters: array of IExpression); overload;
@@ -1230,7 +1228,7 @@ begin
   if FValue.IsString then
     Result := '"' + FValue.ToString + '"'
   else
-  if FValue.TypeInfo = TypeInfo(TComponent) then
+  if FValue.IsObject and (FValue.AsObject is TComponent) then
     Result := FValue.AsType<TComponent>.Name
   else
     Result := FValue.ToString;
@@ -1892,6 +1890,11 @@ begin
   Result := FExpression
 end;
 
+function TMemberExpression.GetMember: TRttiMember;
+begin
+  Result := nil;
+end;
+
 function TMemberExpression.GetName: string;
 begin
   Result := FName;
@@ -1910,6 +1913,16 @@ begin
   begin
     Result := nil;
   end;
+end;
+
+function TMemberExpression.GetValue: TValue;
+begin
+  Result := Execute();
+end;
+
+procedure TMemberExpression.SetValue(const Value: TValue);
+begin
+  // nothing to do
 end;
 
 { TPropertyExpression }
@@ -2293,16 +2306,6 @@ var
 begin
   LObject := GetObject();
   Result := LObject.GetMethod(FName);
-end;
-
-function TMethodExpression.GetValue: TValue;
-begin
-  Result := Execute();
-end;
-
-procedure TMethodExpression.SetValue(const Value: TValue);
-begin
-  // nothing to do
 end;
 
 function TMethodExpression.ToString: string;

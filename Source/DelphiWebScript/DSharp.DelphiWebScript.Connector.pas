@@ -32,21 +32,23 @@ unit DSharp.DelphiWebScript.Connector;
 interface
 
 uses
+  DSharp.DelphiWebScript.Scope,
   dwsComp,
   dwsExprs,
-  dwsRTTIConnector;
+  dwsRTTIConnector,
+  Rtti;
 
 type
   TDelphiWebScriptConnector = record
   private
     class var
-      RTTIConnector: TdwsRTTIConnector;
+      RttiConnector: TdwsRTTIConnector;
       Script: TDelphiWebScript;
   public
     class constructor Create;
     class destructor Destroy;
 
-    class function Compile(const Text: string): IdwsProgram; static;
+    class function Compile(const Text: string; Scope: TScope): IdwsProgram; static;
   end;
 
 implementation
@@ -62,12 +64,16 @@ end;
 
 class destructor TDelphiWebScriptConnector.Destroy;
 begin
-  RttiConnector.Free();
-  Script.Free();
+  Script.Extensions.Clear;
+  RttiConnector.Free;
+  Script.Free;
 end;
 
-class function TDelphiWebScriptConnector.Compile(const Text: string): IdwsProgram;
+class function TDelphiWebScriptConnector.Compile(const Text: string;
+  Scope: TScope): IdwsProgram;
 begin
+  Script.Extensions.Clear;
+  Script.Extensions.Add(Scope);
   Result := Script.Compile(Text);
 end;
 

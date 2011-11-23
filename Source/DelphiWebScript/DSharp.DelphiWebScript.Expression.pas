@@ -34,106 +34,88 @@ interface
 uses
   Classes,
   DSharp.Core.Expressions,
+  DSharp.DelphiWebScript.Scope,
   Rtti,
   SysUtils;
 
 type
-  TDelphiWebScriptExpression = class(TExpression)
+  TDelphiWebScriptExpression = class(TMemberExpression, IValueExpression)
   private
+    FExpression: IExpression;
+    FScope: TScope;
     FText: string;
-    FObjects: TStrings;
-
-    function BuildScript: string;
+  protected
+    procedure SetValue(const Value: TValue); override;
   public
-    constructor Create;
+    constructor Create(AExpression: IExpression; const AText: string); overload;
+    constructor Create(AObject: TObject; const AText: string); overload;
     destructor Destroy; override;
 
-    procedure BindObject(AObject: TObject; const AVariableName: string = '');
     function Compile: TFunc<TValue>; override;
-    property Text: string read FText write FText;
+    function ToString: string; override;
   end;
 
-function ScriptExpression(const ExpressionText: string; Scope: TComponent = nil): IExpression;
+function ScriptExpression(const ExpressionText: string; Scope: TObject = nil): IExpression;
 
 implementation
 
 uses
   DSharp.DelphiWebScript.Connector,
   dwsExprs,
-  dwsRTTIConnector;
+  dwsRTTIConnector,
+  StrUtils,
+  TypInfo;
 
-function ScriptExpression(const ExpressionText: string; Scope: TComponent): IExpression;
-var
-  i: Integer;
-  LExpression: TDelphiWebScriptExpression;
+function ScriptExpression(const ExpressionText: string; Scope: TObject = nil): IExpression;
 begin
-  LExpression := TDelphiWebScriptExpression.Create;
-  LExpression.Text := ExpressionText;
-
-  if Assigned(Scope) then
-  begin
-    LExpression.BindObject(Scope, 'Self');
-
-    for i := 0 to Pred(Scope.ComponentCount) do
-    begin
-      LExpression.BindObject(Scope.Components[i]);
-    end;
-  end;
-
-  Result := LExpression;
+  Result := TDelphiWebScriptExpression.Create(Scope, ExpressionText);
 end;
 
 { TDelphiWebScriptExpression }
 
-constructor TDelphiWebScriptExpression.Create;
+constructor TDelphiWebScriptExpression.Create(AExpression: IExpression;
+  const AText: string);
 begin
-  FObjects := TStringList.Create();
+  FExpression := AExpression;
+  FScope := TScope.Create;
+  FText := AText;
+end;
+
+constructor TDelphiWebScriptExpression.Create(AObject: TObject; const AText: string);
+var
+  LExpression: IExpression;
+begin
+  LExpression := TConstantExpression.Create(AObject);
+  Create(LExpression, AText);
 end;
 
 destructor TDelphiWebScriptExpression.Destroy;
 begin
-  FObjects.Free();
+  FScope.Free;
 end;
 
-procedure TDelphiWebScriptExpression.BindObject(AObject: TObject;
-  const AVariableName: string);
-
-  function FindUniqueName(Component: TComponent): string;
-  var
-    i: Integer;
-    s: string;
-  begin
-    i := 0;
-    s := Copy(Component.ClassName, 2, Length(Component.ClassName));
-    repeat
-      Inc(i);
-      Result := Format('%s%d', [s, i]);
-    until IsUniqueGlobalComponentName(Result);
-  end;
-
+procedure TDelphiWebScriptExpression.SetValue(const Value: TValue);
 var
-  LVariableName: string;
+  LProgram: IdwsProgram;
+  LExecution: IdwsProgramExecution;
+  LVariant: Variant;
 begin
-  LVariableName := AVariableName;
-  if (LVariableName = '') and (AObject is TComponent) then
+  if FText <> EmptyStr then
   begin
-    if TComponent(AObject).Name = '' then
-      LVariableName := FindUniqueName(TComponent(AObject))
-    else
-      LVariableName := TComponent(AObject).Name;
+    FScope.Value := FExpression.Execute();
+    LProgram := TDelphiWebScriptConnector.Compile('var Value: RttiVariant; ' + FText + ' := Value', FScope);
+    if not LProgram.Msgs.HasErrors then
+    begin
+      LExecution := LProgram.BeginNewExecution;
+      try
+        LVariant := ValueToVariant(Value);
+        LExecution.Info.Vars['Value'].Value := LVariant;
+        LExecution.RunProgram(0);
+      finally
+        LExecution.EndProgram;
+      end;
+    end;
   end;
-  FObjects.AddObject(LVariableName, AObject);
-end;
-
-function TDelphiWebScriptExpression.BuildScript: string;
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(FObjects.Count) do
-  begin
-    Result := Result + Format('var %s: RttiVariant;', [FObjects[i]]) + sLineBreak;
-  end;
-  Result := Result + Format('var Result: RttiVariant := %s', [FText]);
 end;
 
 function TDelphiWebScriptExpression.Compile: TFunc<TValue>;
@@ -142,30 +124,62 @@ var
   LProgram: IdwsProgram;
 begin
   Expression := Self;
-  LProgram := TDelphiWebScriptConnector.Compile(BuildScript());
-  if not LProgram.Msgs.HasErrors then
+  if FText <> EmptyStr then
   begin
-    Result :=
-      function: TValue
-      var
-        i: Integer;
-        LExecution: IdwsProgramExecution;
+    FScope.Value := FExpression.Execute();
+    if not FScope.Value.IsEmpty then
+    begin
+      // very simple check if the expression is not an assignment already
+      if ContainsText(FText, ':=') then
       begin
-        if Assigned(Expression) then;
-
-        LExecution := LProgram.BeginNewExecution;
-        try
-          for i := 0 to Pred(FObjects.Count) do
-          begin
-            LExecution.Info.Vars[FObjects[i]].Value := TdwsRTTIVariant.FromObject(FObjects.Objects[i]);
-          end;
-          LExecution.RunProgram(0);
-          Result := TValue.FromVariant(LExecution.Info.Vars['Result'].Value);
-        finally
-          LExecution.EndProgram;
-        end;
+        LProgram := TDelphiWebScriptConnector.Compile(FText, FScope);
+      end
+      else
+      begin
+        LProgram := TDelphiWebScriptConnector.Compile('var Result := ' + FText, FScope);
       end;
+      if not LProgram.Msgs.HasErrors then
+      begin
+        Result :=
+          function: TValue
+          var
+            LExecution: IdwsProgramExecution;
+            LVariant: TdwsRTTIVariant;
+          begin
+            if Assigned(Expression) then;
+
+            Result := TValue.Empty;
+            LExecution := LProgram.BeginNewExecution;
+            try
+              LExecution.RunProgram(0);
+              if not ContainsText(FText, ':=') then
+              begin
+                Result := TValue.FromVariant(LExecution.Info.Vars['Result'].Value);
+                if (Result.Kind = tkInterface) and ((Result.AsInterface as TObject) is TdwsRTTIVariant) then
+                begin
+                  LVariant := Result.AsInterface as TdwsRTTIVariant;
+                  TValue.Make(@LVariant.Instance, LVariant.RTTIType.Handle, Result);
+                end;
+              end;
+            finally
+              LExecution.EndProgram;
+            end;
+          end;
+        Exit;
+      end;
+    end
   end;
+  // return empty
+  Result :=
+    function: TValue
+    begin
+      Result := TValue.Empty;
+    end;
+end;
+
+function TDelphiWebScriptExpression.ToString: string;
+begin
+  Result := FText;
 end;
 
 end.

@@ -34,6 +34,9 @@ interface
 uses
   Generics.Collections,
   Rtti,
+{$IF COMPILERVERSION = 22}
+  RttiSaveArgumentsPatch,
+{$IFEND}
   TypInfo;
 
 type

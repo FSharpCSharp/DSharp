@@ -36,6 +36,9 @@ uses
   DSharp.Core.NotificationHandler,
   Generics.Collections,
   ObjAuto,
+{$IF CompilerVersion < 23}
+  ObjAutoPatch,
+{$IFEND}
   Rtti,
   TypInfo;
 

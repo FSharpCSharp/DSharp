@@ -77,6 +77,8 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Variants.pas"/>
 			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.pas"/>
+			<DCCReference Include="..\..\Source\Core\ObjAutoPatch.pas"/>
+			<DCCReference Include="..\..\Source\Core\PatchUtils.pas"/>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>

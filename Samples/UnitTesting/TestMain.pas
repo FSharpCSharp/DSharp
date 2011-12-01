@@ -50,7 +50,7 @@ begin
 
   FMockCurrencyService.WillReturn<Double>(1.38).Exactly(1).WhenCalling.GetConversionRate('EUR', 'USD');
   try
-    FAccountService.TransferFunds(LGermanAccount, LAmericanAccount, 104);
+    FAccountService.TransferFunds(LGermanAccount, LAmericanAccount, 100);
 
     Verify.That(LGermanAccount.Balance, ShouldBe.EqualTo<Double>(0), 'german account has wrong balance');
     Verify.That(LAmericanAccount.Balance, ShouldBe.EqualTo<Double>(138), 'american account has wrong balance');

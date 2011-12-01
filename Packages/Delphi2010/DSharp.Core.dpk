@@ -54,6 +54,8 @@ contains
   DSharp.Core.Utils in '..\..\Source\Core\DSharp.Core.Utils.pas',
   DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
   DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas',
-  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas';
+  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
+  ObjAutoPatch in '..\..\Source\Core\ObjAutoPatch.pas',
+  PatchUtils in '..\..\Source\Core\PatchUtils.pas';
 
 end.

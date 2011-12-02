@@ -32,6 +32,9 @@ unit DSharp.PresentationModel.VCLApplication;
 interface
 
 uses
+{$IF COMPILERVERSION > 21}
+  DSharp.Aspects.Weaver,
+{$IFEND}
   DSharp.ComponentModel.Composition.SpringContainer,
   DSharp.PresentationModel.Bootstrapper,
   DSharp.PresentationModel.VCLWindowManager,
@@ -55,6 +58,9 @@ var
   LBootstrapper: TBootstrapper<T>;
 begin
   LContainer := TSpringContainer.Create();
+{$IF COMPILERVERSION > 21}
+  LContainer.AspectWeaver := TAspectWeaver.Create();
+{$IFEND}
 {$IF COMPILERVERSION = 21}
   {$MESSAGE HINT 'Apply Spring_Delphi2010_Bugfix.patch to Spring\Source\Core\Container'}
   LContainer.RegisterType<TComponent>.Implements<TComponent>.DelegateTo(

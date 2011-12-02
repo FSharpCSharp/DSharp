@@ -61,6 +61,11 @@ type
     class function Proxify<T: IInterface>(Instance: T): T; overload; static;
   end;
 
+  TAspectWeaver = class(TInterfacedObject, IAspectWeaver)
+  public
+    function Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
+  end;
+
 implementation
 
 uses
@@ -191,6 +196,13 @@ end;
 class function AspectWeaver.Proxify<T>(Instance: T): T;
 begin
   Result := T(AspectWeaver.Proxify(Instance, TypeInfo(T)));
+end;
+
+{ TAspectWeaver }
+
+function TAspectWeaver.Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
+begin
+  Result := AspectWeaver.Proxify(Instance, TypeInfo)
 end;
 
 initialization

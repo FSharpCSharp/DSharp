@@ -33,9 +33,14 @@ interface
 
 uses
   Rtti,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 type
+  IAspectWeaver = interface
+    function Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
+  end;
+
   TAspect = class
   public
     class procedure DoAfter(Instance: TObject; Method: TRttiMethod;

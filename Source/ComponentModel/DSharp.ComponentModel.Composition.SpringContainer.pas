@@ -32,7 +32,7 @@ unit DSharp.ComponentModel.Composition.SpringContainer;
 interface
 
 uses
-  DSharp.Aspects.Weaver,
+  DSharp.Aspects,
   DSharp.ComponentModel.Composition,
   DSharp.Core.Lazy,
   Generics.Collections,
@@ -47,6 +47,7 @@ uses
 type
   TSpringContainer = class(TContainer, IServiceLocator, IInterface)
   private
+    FAspectWeaver: IAspectWeaver;
     FExportedProperties: TDictionary<string, TRttiProperty>;
     FInterfaces: TDictionary<TGUID, TRttiInterfaceType>;
     function CreateFieldInjectionDelegate(const propertyName: string): TFunc<TValue>; overload;
@@ -69,6 +70,8 @@ type
     function ResolveLazy(LazyType: TRttiType): TValue; overload;
     function ResolveAllLazy<TServiceType>: TArray<ILazy<TServiceType>>; overload;
     function ResolveAllLazy(LazyType: TRttiType): TArray<TValue>; overload;
+
+    property AspectWeaver: IAspectWeaver read FAspectWeaver write FAspectWeaver;
   end;
 
 type
@@ -416,7 +419,8 @@ begin
   else
     LResult := Resolve(Name);
 
-  if (LResult.Kind = tkInterface) and (LResult.AsInterface <> nil) then
+  if Assigned(FAspectWeaver)
+    and (LResult.Kind = tkInterface) and (LResult.AsInterface <> nil) then
   begin
     LIntf := AspectWeaver.Proxify(LResult.AsInterface, LResult.TypeInfo);
     TValue.Make(@LIntf, LResult.TypeInfo, Result);

@@ -32,6 +32,7 @@ unit DSharp.ComponentModel.Composition.SpringContainer;
 interface
 
 uses
+  DSharp.Aspects.Weaver,
   DSharp.ComponentModel.Composition,
   DSharp.Core.Lazy,
   Generics.Collections,
@@ -48,8 +49,10 @@ type
   private
     FExportedProperties: TDictionary<string, TRttiProperty>;
     FInterfaces: TDictionary<TGUID, TRttiInterfaceType>;
-    function CreateFieldInjectionDelegate(const propertyName: string): TFunc<TValue>;
-    function CreatePropertyInjectionDelegate(const propertyName: string): TFunc<TValue>;
+    function CreateFieldInjectionDelegate(const propertyName: string): TFunc<TValue>; overload;
+    function CreateFieldInjectionDelegate(rttiField: TRttiField): TFunc<TValue>; overload;
+    function CreatePropertyInjectionDelegate(const propertyName: string): TFunc<TValue>; overload;
+    function CreatePropertyInjectionDelegate(rttiProperty: TRttiProperty): TFunc<TValue>; overload;
     procedure ImportMember(Model: TComponentModel; Member: TRttiMember);
     function RegisterClass(ClassType: TRttiType): TRegistration;
     procedure RegisterClassImplementingInterface(ClassType: TRttiInstanceType);
@@ -130,6 +133,15 @@ begin
     end;
 end;
 
+function TSpringContainer.CreateFieldInjectionDelegate(rttiField: TRttiField): TFunc<TValue>;
+begin
+  Result :=
+    function: TValue
+    begin
+      Result := Resolve(rttiField.FieldType.Handle, '');
+    end;
+end;
+
 function TSpringContainer.CreatePropertyInjectionDelegate(const propertyName: string): TFunc<TValue>;
 begin
   Result :=
@@ -141,6 +153,15 @@ begin
         Result := LProperty.GetValue(Resolve(LProperty.Parent.Handle).AsObject)
       else
         Result := TValue.Empty;
+    end;
+end;
+
+function TSpringContainer.CreatePropertyInjectionDelegate(rttiProperty: TRttiProperty): TFunc<TValue>;
+begin
+  Result :=
+    function: TValue
+    begin
+      Result := Resolve(rttiProperty.PropertyType.Handle, '');
     end;
 end;
 
@@ -220,9 +241,18 @@ begin
       end else
       begin
         if Member is TRttiProperty then
-          Model.InjectProperty(Member.Name)
-        else if Member is TRttiField then
-          Model.InjectField(Member.Name);
+        begin
+          LInjection := TPropertyInjectionWithDelegate.Create(Model, Member.Name,
+            CreatePropertyInjectionDelegate(TRttiProperty(Member)));
+          LInjection.Initialize(Member);
+          Model.PropertyInjections.Add(LInjection);
+        end else if Member is TRttiField then
+        begin
+          LInjection := TFieldInjectionWithDelegate.Create(Model, Member.Name,
+            CreateFieldInjectionDelegate(TRttiField(Member)));
+          LInjection.Initialize(Member);
+          Model.FieldInjections.Add(LInjection);
+        end;
       end;
     end;
   end;
@@ -377,11 +407,24 @@ end;
 
 function TSpringContainer.Resolve(TypeInfo: PTypeInfo;
   const Name: string): TValue;
+var
+  LResult: TValue;
+  LIntf: IInterface;
 begin
   if Name = '' then
-    Result := Resolve(TypeInfo)
+    LResult := Resolve(TypeInfo)
   else
-    Result := Resolve(Name);
+    LResult := Resolve(Name);
+
+  if (LResult.Kind = tkInterface) and (LResult.AsInterface <> nil) then
+  begin
+    LIntf := AspectWeaver.Proxify(LResult.AsInterface, LResult.TypeInfo);
+    TValue.Make(@LIntf, LResult.TypeInfo, Result);
+  end
+  else
+  begin
+    Result := LResult;
+  end;
 end;
 
 function TSpringContainer.ResolveAllLazy(LazyType: TRttiType): TArray<TValue>;

@@ -2079,6 +2079,10 @@ begin
 end;
 
 function TPropertyExpression.GetValue: TValue;
+type
+  PPVtable = ^PVtable;
+  PVtable = ^TVtable;
+  TVtable = array[0..MaxInt div 4 - 1] of Pointer;
 var
   LField: TRttiField;
   LMethod: TRttiMethod;
@@ -2106,7 +2110,19 @@ begin
     end
     else
     begin
-      LResult.Code := LMethod.CodeAddress;
+      if LMethod.IsStatic then
+      begin
+        LResult.Code := LMethod.CodeAddress;
+      end
+      else
+      begin
+        case LMethod.DispatchKind of
+          dkVtable: LResult.Code := PVtable(LObject.ClassType)^[LMethod.VirtualIndex];
+          dkDynamic: LResult.Code := GetDynaMethod(LObject.ClassType, LMethod.VirtualIndex);
+        else
+         LResult.Code := LMethod.CodeAddress;
+        end;
+      end;
       LResult.Data := LObject;
       Result := TValue.From(LResult);
     end;

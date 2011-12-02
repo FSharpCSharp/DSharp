@@ -32,9 +32,7 @@ unit DSharp.Core.Dynamics;
 interface
 
 uses
-{$IF COMPILERVERSION < 23}
   DSharp.Core.VirtualInterface,
-{$IFEND}
   Generics.Collections,
   Rtti,
   SysUtils,
@@ -43,6 +41,8 @@ uses
 function Supports(const ModuleName: string; IID: TGUID; out Intf): Boolean; overload;
 
 type
+  TVirtualInterface = DSharp.Core.VirtualInterface.TVirtualInterface;
+
   TVirtualObjectInterface = class(TVirtualInterface)
   private
     FInstance: TObject;
@@ -401,6 +401,7 @@ begin
         end;
       end);
 
+    LVirtualInterface.Instance := Instance;
     Supports(LVirtualInterface, FGuid, Result);
   end
   else

@@ -63,6 +63,7 @@ type
       FContext: TRttiContext;
   private
     FVirtualMethodTable: Pointer;
+    FInstance: IInterface;
     FInterfaceID: TGUID;
     FMethodIntercepts: TObjectList<TMethodIntercept>;
     FOnInvoke: TVirtualInterfaceInvokeEvent;
@@ -83,6 +84,7 @@ type
     constructor Create(TypeInfo: PTypeInfo;
       InvokeEvent: TVirtualInterfaceInvokeEvent); overload;
     destructor Destroy; override;
+    property Instance: IInterface read FInstance write FInstance;
     property OnInvoke: TVirtualInterfaceInvokeEvent read FOnInvoke write FOnInvoke;
   end;
 
@@ -178,7 +180,14 @@ begin
   end
   else
   begin
-    Result := inherited;
+    if Assigned(FInstance) then
+    begin
+      Result := FInstance.QueryInterface(IID, Obj);
+    end
+    else
+    begin
+      Result := inherited;
+    end;
   end;
 end;
 

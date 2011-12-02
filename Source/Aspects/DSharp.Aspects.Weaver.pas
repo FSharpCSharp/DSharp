@@ -35,7 +35,8 @@ uses
   DSharp.Aspects,
   DSharp.Aspects.Intercepts,
   Generics.Collections,
-  Rtti;
+  Rtti,
+  TypInfo;
 
 type
   AspectWeaver = record
@@ -56,7 +57,8 @@ type
     class procedure AddAspect(ARttiType: TRttiType; AAspectClass: TAspectClass;
       const AMethodName: string; AIncludeDerivedTypes: Boolean = True); overload; static;
 
-    class function Proxify<T: IInterface>(Instance: T): T; static;
+    class function Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface; overload; static;
+    class function Proxify<T: IInterface>(Instance: T): T; overload; static;
   end;
 
 implementation
@@ -172,18 +174,23 @@ begin
   end;
 end;
 
-class function AspectWeaver.Proxify<T>(Instance: T): T;
+class function AspectWeaver.Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
 var
   LType: TRttiType;
   LIntercept: TIntercept;
 begin
-  if TryGetRttiType(TypeInfo(T), LType) and FIntercepts.TryGetValue(LType, LIntercept) then
+  if TryGetRttiType(TypeInfo, LType) and FIntercepts.TryGetValue(LType, LIntercept) then
   begin
-    Result := T((LIntercept as TInterfaceIntercept).Proxify(Instance));
+    Result := (LIntercept as TInterfaceIntercept).Proxify(Instance);
   end else
   begin
     Result := Instance;
   end;
+end;
+
+class function AspectWeaver.Proxify<T>(Instance: T): T;
+begin
+  Result := T(AspectWeaver.Proxify(Instance, TypeInfo(T)));
 end;
 
 initialization

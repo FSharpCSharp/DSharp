@@ -27,65 +27,68 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Aspects;
+unit DSharp.Aspects.Security;
 
 interface
 
 uses
-  Rtti,
-  SysUtils;
+  DSharp.Aspects,
+  Rtti;
 
 type
-  TAspect = class
+  TSecurityAspect = class(TAspect)
   public
-    class procedure DoAfter(Instance: TObject; Method: TRttiMethod;
-      const Args: TArray<TValue>; var Result: TValue); virtual;
+//    class procedure DoAfter(Instance: TObject; Method: TRttiMethod;
+//      const Args: TArray<TValue>; var Result: TValue); override;
     class procedure DoBefore(Instance: TObject; Method: TRttiMethod;
       const Args: TArray<TValue>; out DoInvoke: Boolean;
-      out Result: TValue); virtual;
-    class procedure DoException(Instance: TObject; Method: TRttiMethod;
-      const Args: TArray<TValue>; out RaiseException: Boolean;
-      Exception: Exception; out Result: TValue); virtual;
+      out Result: TValue); override;
+//    class procedure DoException(Instance: TObject; Method: TRttiMethod;
+//      const Args: TArray<TValue>; out RaiseException: Boolean;
+//      Exception: Exception; out Result: TValue); override;
   end;
 
-  TAspectClass = class of TAspect;
-
-  AspectAttribute = class(TCustomAttribute)
+  SecurityAttribute = class(AspectAttribute)
   private
-    FAspectClass: TAspectClass;
+    FPassword: string;
   public
-    constructor Create(AspectClass: TAspectClass);
-    property AspectClass: TAspectClass read FAspectClass;
+    constructor Create(const Password: string);
+    property Password: string read FPassword;
   end;
 
 implementation
 
-{ TAspect }
+uses
+  DSharp.Core.Reflection,
+  DSharp.PresentationModel.Composition,
+  DSharp.PresentationModel.WindowManager;
 
-class procedure TAspect.DoAfter(Instance: TObject; Method: TRttiMethod;
-  const Args: TArray<TValue>; var Result: TValue);
-begin
-  // implemented by descendants
-end;
+{ TSecurityAspect }
 
-class procedure TAspect.DoBefore(Instance: TObject; Method: TRttiMethod;
+class procedure TSecurityAspect.DoBefore(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
+var
+  LAttribute: SecurityAttribute;
 begin
-  // implemented by descendants
+  if Method.TryGetAttributeOfType<SecurityAttribute>(LAttribute)
+    or Method.Parent.TryGetAttributeOfType<SecurityAttribute>(LAttribute) then
+  begin
+    DoInvoke := Composition.Get<IWindowManager>.InputBox('Password', 'Enter password', '', True) =
+      LAttribute.Password;
+  end;
+
+  if not DoInvoke then
+    Result := TValue.Empty;
 end;
 
-class procedure TAspect.DoException(Instance: TObject; Method: TRttiMethod;
-  const Args: TArray<TValue>; out RaiseException: Boolean; Exception: Exception;
-  out Result: TValue);
-begin
-  // implemented by descendants
-end;
+{ SecurityAttribute }
 
-{ AspectAttribute }
-
-constructor AspectAttribute.Create(AspectClass: TAspectClass);
+constructor SecurityAttribute.Create(const Password: string);
 begin
-  FAspectClass := AspectClass;
+  inherited Create(TSecurityAspect);
+  // we just passing in the password for demo purpose here
+  // in a real world scenario we would delegate the security check
+  FPassword := Password;
 end;
 
 end.

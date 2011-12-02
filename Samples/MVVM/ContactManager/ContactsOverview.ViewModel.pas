@@ -23,9 +23,9 @@ type
     function GetSelectedContact: TContact;
     procedure SetSelectedContact(const Value: TContact);
   public
-    procedure AddNewContact;
-    procedure EditContact;
-    procedure DeleteContact;
+    procedure AddNewContact; virtual;
+    procedure EditContact; virtual;
+    procedure DeleteContact; virtual;
 
     property CanDeleteContact: Boolean read GetCanDeleteContact;
     property CanEditContact: Boolean read GetCanEditContact;

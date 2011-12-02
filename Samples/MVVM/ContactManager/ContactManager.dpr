@@ -7,6 +7,9 @@ uses
   ContactManager.Interfaces in 'ContactManager.Interfaces.pas',
   ContactsOverview.View in 'ContactsOverview.View.pas' {ContactsOverviewView: TFrame},
   ContactsOverview.ViewModel in 'ContactsOverview.ViewModel.pas',
+  // uncomment one or add your own logging to see the AOP do its work (XE and higher only)
+//  DSharp.Logging.CodeSite,
+//  DSharp.Logging.SmartInspect,
   DSharp.PresentationModel.VCLApplication,
   Forms;
 

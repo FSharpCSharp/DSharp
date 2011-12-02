@@ -4,12 +4,14 @@ interface
 
 uses
   Contact,
+  DSharp.Aspects.Logging,
   DSharp.Collections,
   DSharp.ComponentModel.Composition,
   DSharp.Core.Lazy;
 
 type
   [InheritedExport]
+  [Logging]
   IContactDetailsViewModel = interface
     ['{04FC1B4C-5B2A-4C41-BB84-39E69816F7D6}']
     function GetContact: TContact;
@@ -19,6 +21,7 @@ type
   end;
 
   [InheritedExport]
+  [Logging]
   IContactsOverviewViewModel = interface
     ['{15AC3244-E2BB-42BE-AB15-61C2DF87FEB8}']
     function GetCanDeleteContact: Boolean;

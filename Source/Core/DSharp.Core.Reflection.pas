@@ -252,6 +252,7 @@ type
     function IsPointer: Boolean;
     function IsString: Boolean;
 
+    function IsInstance: Boolean;
     function IsInterface: Boolean;
 
     // conversion for almost all standard types
@@ -1355,6 +1356,11 @@ end;
 function TValueHelper.IsFloat: Boolean;
 begin
   Result := Kind = tkFloat;
+end;
+
+function TValueHelper.IsInstance: Boolean;
+begin
+  Result := Kind in [tkClass, tkInterface];
 end;
 
 function TValueHelper.IsInt64: Boolean;

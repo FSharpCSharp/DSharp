@@ -103,6 +103,7 @@ type
     procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
     procedure SetActive(const Value: Boolean);
     procedure SetBindingGroup(const Value: TBindingGroup);
+    procedure SetBindingMode(const Value: TBindingMode); virtual;
     procedure SetConverter(const Value: IValueConverter);
     procedure SetTarget(const Value: TObject);
     procedure SetTargetProperty(AObject: TObject; const APropertyName: string);
@@ -131,7 +132,7 @@ type
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
     property ValidationRules: IList<IValidationRule> read GetValidationRules;
   published
-    property BindingMode: TBindingMode read FBindingMode write FBindingMode
+    property BindingMode: TBindingMode read FBindingMode write SetBindingMode
       default BindingModeDefault;
     property Managed: Boolean read FManaged write FManaged default True;
     property NotifyOnTargetUpdated: Boolean read FNotifyOnTargetUpdated
@@ -172,6 +173,7 @@ type
     function GetDisplayName: string; override;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); override;
     procedure RaiseValidationError;
+    procedure SetBindingMode(const Value: TBindingMode); override;
     procedure SetSource(const Value: TObject);
     procedure SetSourceProperty(AObject: TObject; const APropertyName: string);
     procedure SetSourcePropertyName(const Value: string);
@@ -494,6 +496,11 @@ begin
   if FActive <> Value then
   begin
     FActive := Value;
+
+    if FActive then
+    begin
+      UpdateTarget(True);
+    end;
   end;
 end;
 
@@ -508,6 +515,13 @@ begin
       Collection := FBindingGroup.Bindings;
     end;
   end;
+end;
+
+procedure TBindingBase.SetBindingMode(const Value: TBindingMode);
+begin
+  FBindingMode := Value;
+
+  SetTargetProperty(FTarget, FTargetPropertyName);
 end;
 
 procedure TBindingBase.SetConverter(const Value: IValueConverter);
@@ -565,8 +579,10 @@ procedure TBindingBase.SetTargetProperty(AObject: TObject;
   const APropertyName: string);
 begin
   FTarget := AObject;
+
   FTargetProperty := Expression.PropertyAccess(
     Expression.Constant(FTarget), FTargetPropertyName);
+
   CompileExpressions();
 end;
 
@@ -688,7 +704,7 @@ constructor TBinding.Create(ASource: TObject; ASourcePropertyName: string;
   ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
   AConverter: IValueConverter);
 begin
-  inherited Create(nil);
+  Create(nil);
   FActive := False;
 
   FBindingMode := ABindingMode;
@@ -830,6 +846,13 @@ begin
   raise EValidationError.Create(Self);
 end;
 
+procedure TBinding.SetBindingMode(const Value: TBindingMode);
+begin
+  inherited;
+
+  SetSourceProperty(FSource, FSourcePropertyName);
+end;
+
 procedure TBinding.SetSource(const Value: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
@@ -899,11 +922,13 @@ begin
   end;
 
   FSource := AObject;
+
   FSourceProperty := Expression.PropertyAccess(
     Expression.Constant(FSource), FSourcePropertyName);
+
   CompileExpressions();
 
-  if Assigned(FSourceProperty) and FSourceProperty.Value.IsObject
+  if Assigned(FSourceProperty) and FSourceProperty.Member.RttiType.IsInstance
     and Supports(FSourceProperty.Value.AsObject,
     INotifyCollectionChanged, FSourceCollectionChanged) then
   begin
@@ -945,7 +970,6 @@ end;
 
 procedure TBinding.UpdateTarget(IgnoreBindingMode: Boolean = True);
 var
-  LSourceValue: TValue;
   LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
   if FActive and (IgnoreBindingMode or (FBindingMode in [bmOneWay..bmTwoWay]))
@@ -956,8 +980,6 @@ begin
   begin
     BeginUpdate();
     try
-      LSourceValue := FSourceProperty.Value;
-
       if Assigned(FSourceCollectionChanged) then
       begin
         LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
@@ -966,7 +988,8 @@ begin
 
       FSourceCollectionChanged := nil;
 
-      if LSourceValue.IsObject and Supports(LSourceValue.AsObject,
+      if FSourceProperty.Member.RttiType.IsInstance
+        and Supports(FSourceProperty.Value.AsObject,
         INotifyCollectionChanged, FSourceCollectionChanged) then
       begin
         LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
@@ -1003,12 +1026,15 @@ begin
         if LValidationRule.ValidationStep = vsRawProposedValue then
         begin
           LValidationResult := LValidationRule.Validate(LTargetValue);
-          FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
-          if not LValidationResult.IsValid then
+          if Assigned(LValidationResult) then
           begin
-            FValidationErrors.Add(LValidationResult);
-            Result := False;
-            Break;
+            FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
+            if not LValidationResult.IsValid then
+            begin
+              FValidationErrors.Add(LValidationResult);
+              Result := False;
+              Break;
+            end;
           end;
         end;
       end;
@@ -1251,15 +1277,18 @@ procedure TBindingGroup.NotifyPropertyChanged(ASender: TObject;
 var
   LBinding: TBinding;
 begin
-  for LBinding in FBindings do
+  if Assigned(Self) then
   begin
-    if LBinding.Source = ASender then
+    for LBinding in FBindings do
     begin
-      LBinding.DoSourcePropertyChanged(ASender, APropertyName, AUpdateTrigger);
-    end;
-    if LBinding.Target = ASender then
-    begin
-      LBinding.DoTargetPropertyChanged(ASender, APropertyName, AUpdateTrigger);
+      if LBinding.Source = ASender then
+      begin
+        LBinding.DoSourcePropertyChanged(ASender, APropertyName, AUpdateTrigger);
+      end;
+      if LBinding.Target = ASender then
+      begin
+        LBinding.DoTargetPropertyChanged(ASender, APropertyName, AUpdateTrigger);
+      end;
     end;
   end;
 end;

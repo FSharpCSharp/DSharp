@@ -32,6 +32,7 @@ unit DSharp.PresentationModel.FMXApplication;
 interface
 
 uses
+  DSharp.Aspects.Weaver,
   DSharp.ComponentModel.Composition.SpringContainer,
   DSharp.PresentationModel.Bootstrapper,
   DSharp.PresentationModel.FMXWindowManager,
@@ -52,6 +53,7 @@ var
   LBootstrapper: TBootstrapper<T>;
 begin
   LContainer := TSpringContainer.Create();
+  LContainer.AspectWeaver := TAspectWeaver.Create();
 
   try
     LContainer.ImportRtti();

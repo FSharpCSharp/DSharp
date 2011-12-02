@@ -48,11 +48,15 @@ type
   public
     constructor Create;
 
+    function InputBox(const ACaption, APrompt, ADefault: string;
+      AShowPasswordChar: Boolean): string;
     function MessageDlg(const Msg: string; DlgType: TMsgDlgType;
       Buttons: TMsgDlgButtons; HelpCtx: LongInt = 0): Integer;
 
-    function ShowDialog(Model: TObject): Integer;
-    procedure ShowWindow(Model: TObject);
+    function ShowDialog(Model: IInterface): Integer; overload;
+    function ShowDialog(Model: TObject): Integer; overload;
+    procedure ShowWindow(Model: IInterface); overload;
+    procedure ShowWindow(Model: TObject); overload;
   end;
 
 implementation
@@ -103,10 +107,24 @@ begin
   Result := LView;
 end;
 
+function TWindowManager.InputBox(const ACaption, APrompt, ADefault: string;
+  AShowPasswordChar: Boolean): string;
+begin
+  if AShowPasswordChar then
+    Result := FMX.Dialogs.InputBox(ACaption, #0+APrompt, ADefault)
+  else
+    Result := FMX.Dialogs.InputBox(ACaption, APrompt, ADefault);
+end;
+
 function TWindowManager.MessageDlg(const Msg: string; DlgType: TMsgDlgType;
   Buttons: TMsgDlgButtons; HelpCtx: Integer): Integer;
 begin
   Result := FMX.Dialogs.MessageDlg(Msg, DlgType, Buttons, HelpCtx);
+end;
+
+function TWindowManager.ShowDialog(Model: IInterface): Integer;
+begin
+  Result := ShowDialog(Model as TObject);
 end;
 
 function TWindowManager.ShowDialog(Model: TObject): Integer;
@@ -120,6 +138,11 @@ begin
   finally
     LWindow.Free();
   end;
+end;
+
+procedure TWindowManager.ShowWindow(Model: IInterface);
+begin
+  ShowWindow(Model as TObject);
 end;
 
 procedure TWindowManager.ShowWindow(Model: TObject);

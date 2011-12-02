@@ -2078,11 +2078,12 @@ begin
   LObject.TryGetMember(FPropertyName, Result);
 end;
 
-function TPropertyExpression.GetValue: TValue;
 type
   PPVtable = ^PVtable;
   PVtable = ^TVtable;
-  TVtable = array[0..MaxInt div 4 - 1] of Pointer;
+  TVtable = array[0..MaxInt div SizeOf(Pointer) - 1] of Pointer;
+
+function TPropertyExpression.GetValue: TValue;
 var
   LField: TRttiField;
   LMethod: TRttiMethod;
@@ -2120,7 +2121,7 @@ begin
           dkVtable: LResult.Code := PVtable(LObject.ClassType)^[LMethod.VirtualIndex];
           dkDynamic: LResult.Code := GetDynaMethod(LObject.ClassType, LMethod.VirtualIndex);
         else
-         LResult.Code := LMethod.CodeAddress;
+          LResult.Code := LMethod.CodeAddress;
         end;
       end;
       LResult.Data := LObject;

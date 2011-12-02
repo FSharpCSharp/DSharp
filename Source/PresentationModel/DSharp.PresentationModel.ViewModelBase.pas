@@ -33,6 +33,7 @@ interface
 
 uses
   Classes,
+  DSharp.Aspects.Logging,
   DSharp.Bindings.Notifications,
   DSharp.Bindings.Validations,
   DSharp.Collections,
@@ -44,8 +45,10 @@ uses
   DSharp.PresentationModel.WindowManager;
 
 type
-  [Validation(TDataErrorValidationRule)]
   [InheritedExport]
+  [Logging]
+  [Validation(TDataErrorValidationRule)]
+  {$RTTI EXPLICIT METHODS([vcProtected..vcPublished])}
   TViewModelBase = class(TComponent, IInterface, INotifyPropertyChanged,
     IValidatable, IDataErrorInfo, ICanClose, IClose, IHaveDisplayName)
   private
@@ -81,7 +84,7 @@ type
     function GetDisplayName: string; virtual;
 
     // IValidatable
-    function Validate: Boolean;
+    function Validate: Boolean; virtual;
 
     property WindowManager: IWindowManager read FWindowManager;
   public

@@ -37,19 +37,24 @@ uses
   Dialogs,
   DSharp.ComponentModel.Composition,
   DSharp.PresentationModel.WindowManager,
-  Forms;
+  Forms,
+  Messages;
 
 type
   [PartCreationPolicy(cpShared)]
   TWindowManager = class(TInterfacedObject, IWindowManager)
   private
     FRunning: Boolean;
+    function WindowHook(var Message: TMessage): Boolean;
   protected
     function CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
     function EnsureWindow(Model: TObject; View: TControl): TForm;
   public
     constructor Create;
+    destructor Destroy; override;
 
+    function InputBox(const ACaption, APrompt, ADefault: string;
+      AShowPasswordChar: Boolean = False): string;
     function MessageDlg(const Msg: string; DlgType: TMsgDlgType;
       Buttons: TMsgDlgButtons; HelpCtx: LongInt = 0): Integer;
 
@@ -69,7 +74,8 @@ uses
   DSharp.PresentationModel.ViewLocator,
   DSharp.PresentationModel.ViewModelBinder,
   DSharp.PresentationModel.WindowConductor,
-  SysUtils;
+  SysUtils,
+  Windows;
 
 { TWindowManager }
 
@@ -79,6 +85,7 @@ begin
   // but if this line is missing in project file the runtime themes cannot be set
 //  Application.Initialize;
   Application.MainFormOnTaskbar := True;
+  Application.HookMainWindow(WindowHook);
 end;
 
 function TWindowManager.CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
@@ -111,6 +118,11 @@ begin
   Result := LWindow;
 end;
 
+destructor TWindowManager.Destroy;
+begin
+  Application.UnhookMainWindow(WindowHook);
+end;
+
 function TWindowManager.EnsureWindow(Model: TObject; View: TControl): TForm;
 var
   LForm: TChildForm;
@@ -136,6 +148,14 @@ begin
     LForm.Content := View;
     Result := LForm;
   end;
+end;
+
+function TWindowManager.InputBox(const ACaption, APrompt, ADefault: string;
+  AShowPasswordChar: Boolean): string;
+begin
+  if AShowPasswordChar then
+    PostMessage(Application.Handle, WM_USER + EM_SETPASSWORDCHAR, 0, 0);
+  Result := Dialogs.InputBox(ACaption, APrompt, ADefault);
 end;
 
 function TWindowManager.MessageDlg(const Msg: string; DlgType: TMsgDlgType;
@@ -191,6 +211,26 @@ begin
     LWindow.Position := poOwnerFormCenter;
 
     LWindow.Show();
+  end;
+end;
+
+function TWindowManager.WindowHook(var Message: TMessage): Boolean;
+var
+  LInputForm, LEdit: HWND;
+begin
+  case Message.Msg of
+    WM_USER + EM_SETPASSWORDCHAR:
+    begin
+      LInputForm := Screen.Forms[0].Handle;
+      if LInputForm <> 0 then
+      begin
+        LEdit := FindWindowEx(LInputForm, 0, 'TEdit', nil);
+        SendMessage(LEdit, EM_SETPASSWORDCHAR, Ord('*'), 0);
+      end;
+      Result := True;
+    end
+  else
+    Result := False;
   end;
 end;
 

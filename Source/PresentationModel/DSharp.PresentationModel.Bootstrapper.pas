@@ -79,6 +79,7 @@ procedure TBootstrapper<T>.StartRuntime;
 begin
   try
     FWindowManager := Composition.Get<IWindowManager>;
+
     FViewModel := Lazy<T>(
       function: T
       begin
@@ -98,4 +99,3 @@ begin
 end;
 
 end.
-

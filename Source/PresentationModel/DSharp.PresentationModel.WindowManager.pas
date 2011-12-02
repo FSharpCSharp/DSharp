@@ -35,6 +35,7 @@ uses
 {$IF COMPILERVERSION > 22}
   System.UITypes,
 {$IFEND}
+  DSharp.Aspects.Logging,
   DSharp.ComponentModel.Composition;
 
 type
@@ -49,8 +50,11 @@ type
 {$IFEND}
 
   [InheritedExport]
-  IWindowManager = interface
+  [Logging]
+  IWindowManager = interface(IInvokable)
     ['{61AB99D7-E09D-4D94-B1EC-EA154959809D}']
+    function InputBox(const ACaption, APrompt, ADefault: string;
+      AShowPasswordChar: Boolean): string;
     function MessageDlg(const Msg: string; DlgType: TMsgDlgType;
       Buttons: TMsgDlgButtons; HelpCtx: LongInt = 0): Integer;
 

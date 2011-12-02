@@ -84,15 +84,17 @@ type
         function MoveNext: Boolean; override;
 {$ENDIF}
       public
-        constructor Create(const AEnumeration: TProc);
+        constructor Create(const Enumeration: TProc);
         destructor Destroy; override;
 {$IFDEF USE_COLLECTIONS}
         function GetCurrent: T;
         function MoveNext: Boolean;
 {$ENDIF}
       end;
+    class function GetCurrent: T; static;
   protected
-    class procedure Yield(const AValue: T);
+    class procedure Yield(const Value: T);
+    class property Current: T read GetCurrent;
   public
     constructor Create(const AEnumeration: TProc);
     function GetEnumerator: IEnumerator<T>; override;
@@ -106,16 +108,22 @@ type
 {$HINTS ON}
 {$ENDIF}
   public
-    class operator Implicit(AValue: T): Yield<T>; inline;
+    class operator Implicit(const Value: T): Yield<T>; inline;
+    class operator Implicit(const Value: Yield<T>): T; inline;
   end;
 
 implementation
 
 { Yield<T> }
 
-class operator Yield<T>.Implicit(AValue: T): Yield<T>;
+class operator Yield<T>.Implicit(const Value: T): Yield<T>;
 begin
-  TDelegateEnumerable<T>.Yield(AValue);
+  TDelegateEnumerable<T>.Yield(Value);
+end;
+
+class operator Yield<T>.Implicit(const Value: Yield<T>): T;
+begin
+  Result := TDelegateEnumerable<T>.Current;
 end;
 
 { TDelegateEnumerable<T> }
@@ -126,28 +134,37 @@ begin
   FEnumeration := AEnumeration;
 end;
 
+class function TDelegateEnumerable<T>.GetCurrent: T;
+begin
+{$IFDEF USE_FIBERS}
+  Result := TEnumeratorFiber<T>(TFiber.CurrentFiber).Result;
+{$ELSE}
+  Result := TEnumeratorThread<T>(TThread.CurrentThread).Result;
+{$ENDIF}
+end;
+
 function TDelegateEnumerable<T>.GetEnumerator: IEnumerator<T>;
 begin
   Result := TEnumerator.Create(FEnumeration);
 end;
 
-class procedure TDelegateEnumerable<T>.Yield(const AValue: T);
+class procedure TDelegateEnumerable<T>.Yield(const Value: T);
 begin
 {$IFDEF USE_FIBERS}
-  TEnumeratorFiber<T>(TFiber.CurrentFiber).Yield(AValue);
+  TEnumeratorFiber<T>(TFiber.CurrentFiber).Yield(Value);
 {$ELSE}
-  TEnumeratorThread<T>(TThread.CurrentThread).Yield(AValue);
+  TEnumeratorThread<T>(TThread.CurrentThread).Yield(Value);
 {$ENDIF}
 end;
 
 { TDelegateEnumerable<T>.TEnumerator }
 
-constructor TDelegateEnumerable<T>.TEnumerator.Create(const AEnumeration: TProc);
+constructor TDelegateEnumerable<T>.TEnumerator.Create(const Enumeration: TProc);
 begin
 {$IFDEF USE_FIBERS}
-  FFiber := TEnumeratorFiber<T>.Create(AEnumeration);
+  FFiber := TEnumeratorFiber<T>.Create(Enumeration);
 {$ELSE}
-  FThread := TEnumeratorThread<T>.Create(AEnumeration);
+  FThread := TEnumeratorThread<T>.Create(Enumeration);
 {$ENDIF}
 end;
 

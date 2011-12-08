@@ -39,13 +39,17 @@ uses
 
 type
   TCompiledExpression = TFunc<TValue>;
+  TCompiledExpressionArray = TArray<TCompiledExpression>;
+  TConvertFunc = reference to function(const Value: TValue): TValue;
 
   IExpression = interface
     ['{B6748486-F9E5-40E3-92E7-9DC2C5BFB3F7}']
-    function Compile: TFunc<TValue>;
+    function Compile: TCompiledExpression;
     function Execute: TValue;
     function ToString: string;
   end;
+
+  TExpressionArray = TArray<IExpression>;
 
   IConstantExpression = interface(IExpression)
     ['{4138745A-9BC4-4BF5-9C7D-992664AEDEB7}']
@@ -95,8 +99,8 @@ type
 
   IBlockExpression = interface(IExpression)
     ['{9C9D1F1E-1F99-4671-933A-DDC0266C1091}']
-    function GetExpressions: TArray<IExpression>;
-    property Expressions: TArray<IExpression> read GetExpressions;
+    function GetExpressions: TExpressionArray;
+    property Expressions: TExpressionArray read GetExpressions;
   end;
 
   IMemberExpression = interface(IParameterExpression)
@@ -107,8 +111,6 @@ type
     property Member: TRttiMember read GetMember;
   end;
 
-  TConvertFunc = reference to function(const Value: TValue): TValue;
-
   Expression = record
   public
     class function Add(Left, Right: IExpression): IBinaryExpression; static;
@@ -118,7 +120,7 @@ type
     class function Break: IExpression; static;
     class function Condition(Test, IfTrue, IfFalse: IExpression): IConditionalExpression; static;
     class function Constant<T>(Value: T): IConstantExpression; static;
-    class function Convert(Left, Right: IExpression; Convert: TConvertFunc = nil): IBinaryExpression; static;
+    class function Convert(Left, Right: IExpression; ConvertFunc: TConvertFunc = nil): IBinaryExpression; static;
     class function Default(TypeInfo: Pointer = nil): IDefaultExpression; static;
     class function Divide(Left, Right: IExpression): IBinaryExpression; static;
     class function DivideAssign(Left, Right: IExpression): IBinaryExpression; static;
@@ -173,7 +175,7 @@ type
     class operator Implicit(const Value: TBooleanExpression): TFunc<Boolean>;
     class operator Implicit(const Value: TBooleanExpression): TFunc<TObject, Boolean>;
     class operator Implicit(const Value: TBooleanExpression): IExpression;
-    function Compile: TFunc<TValue>;
+    function Compile: TCompiledExpression;
     function Execute: TValue;
     function ToString: string;
   end;
@@ -203,14 +205,16 @@ type
     class operator Implicit(const Value: TValueExpression): Extended;
     class operator Implicit(const Value: TValueExpression): Int64;
     class operator Implicit(const Value: TValueExpression): IExpression;
-    function Compile: TFunc<TValue>;
+    function Compile: TCompiledExpression;
     function Execute: TValue;
     function ToString: string;
   end;
 
   TExpression = class abstract(TInterfacedObject, IExpression)
+  protected
+    function CompileExpression: TCompiledExpression; virtual; abstract;
   public
-    function Compile: TFunc<TValue>; virtual; abstract;
+    function Compile: TCompiledExpression;
     function Execute: TValue;
   end;
 
@@ -218,12 +222,13 @@ type
   private
     FValue: TValue;
     function GetValue: TValue;
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
     constructor Create(const Value: TObject); overload;
     constructor Create(const Value: TValue); overload;
     constructor Create(const Value: Variant); overload;
     class function Create<T>(const Value: T): TConstantExpression; overload;
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
     property Value: TValue read GetValue;
   end;
@@ -245,9 +250,10 @@ type
   end;
 
   TComponentExpression = class(TConstantExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
     constructor Create(const Value: TComponent); overload;
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
@@ -255,15 +261,17 @@ type
   private
     FExpression: IExpression;
     function GetExpression: IExpression;
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
     constructor Create(Expression: IExpression);
-    function Compile: TFunc<TValue>; override;
     property Expression: IExpression read GetExpression;
   end;
 
   TNegativeExpression = class(TUnaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
@@ -284,113 +292,131 @@ type
   TBinaryExpressionClass = class of TBinaryExpression;
 
   TAdditionExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TSubtractionExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TMultiplicationExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TDivisionExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TIntegerDivisionExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TModulusExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TLogicalAndExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TLogicalExclusiveOrExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TLogicalOrExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TLogicalNotExpression = class(TUnaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TEqualExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TNotEqualExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TLessThanExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TLessThanOrEqualExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TGreaterThanExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TGreaterThanOrEqualExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TAssignExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TConvertExpression = class(TAssignExpression)
   private
-    FConvert: TConvertFunc;
+    FConvertFunc: TConvertFunc;
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    constructor Create(Left, Right: IExpression; Convert: TConvertFunc = nil);
-    function Compile: TFunc<TValue>; override;
+    constructor Create(Left, Right: IExpression; ConvertFunc: TConvertFunc = nil);
   end;
 
   TConditionalExpression = class(TExpression, IConditionalExpression)
@@ -401,9 +427,10 @@ type
     function GetIfFalse: IExpression;
     function GetIfTrue: IExpression;
     function GetTest: IExpression;
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
     constructor Create(ATest, AIfTrue, AIfFalse: IExpression);
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
     property IfTrue: IExpression read GetIfTrue;
     property IfFalse: IExpression read GetIfFalse;
@@ -412,13 +439,14 @@ type
 
   TBlockExpression = class(TExpression, IBlockExpression)
   private
-    FExpressions: TArray<IExpression>;
-    function GetExpressions: TArray<IExpression>;
+    FExpressions: TExpressionArray;
+    function GetExpressions: TExpressionArray;
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
     constructor Create(Expressions: array of IExpression);
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
-    property Expressions: TArray<IExpression> read GetExpressions;
+    property Expressions: TExpressionArray read GetExpressions;
   end;
 
   TMemberExpression = class abstract(TExpression, IMemberExpression)
@@ -446,6 +474,7 @@ type
     function GetIndexedValue(const Instance: TValue): TValue;
     procedure SetIndexedValue(const Instance, Value: TValue);
   protected
+    function CompileExpression: TCompiledExpression; override;
     function GetMember: TRttiMember; override;
     function GetValue: TValue; override;
     procedure SetValue(const Value: TValue); override;
@@ -453,16 +482,16 @@ type
     constructor Create(AExpression: IExpression; const APropertyName: string); overload;
     constructor Create(AComponent: TComponent; const APropertyName: string); overload;
     constructor Create(AObject: TObject; const APropertyName: string); overload;
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TMethodExpression = class(TMemberExpression)
   private
-    FParameters: TArray<IExpression>;
-    function CompileArguments: TArray<TFunc<TValue>>;
+    FParameters: TExpressionArray;
+    function CompileArguments: TCompiledExpressionArray;
     function GetMethod: TRttiMethod;
   protected
+    function CompileExpression: TCompiledExpression; override;
     function GetMember: TRttiMember; override;
   public
     constructor Create(AExpression: IExpression; const AMethodName: string;
@@ -471,19 +500,20 @@ type
       const AParameters: array of IExpression); overload;
     constructor Create(AObject: TObject; const AMethodName: string;
       const AParameters: array of IExpression); overload;
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TLoopExpression = class(TUnaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
   TBreakExpression = class(TExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
@@ -642,9 +672,9 @@ begin
   Result := TConstantExpression.Create<T>(Value);
 end;
 
-class function Expression.Convert(Left, Right: IExpression; Convert: TConvertFunc = nil): IBinaryExpression;
+class function Expression.Convert(Left, Right: IExpression; ConvertFunc: TConvertFunc = nil): IBinaryExpression;
 begin
-  Result := TConvertExpression.Create(Left, Right, Convert);
+  Result := TConvertExpression.Create(Left, Right, ConvertFunc);
 end;
 
 class function Expression.Default(TypeInfo: Pointer): IDefaultExpression;
@@ -838,7 +868,7 @@ class operator TBooleanExpression.Implicit(
   const Value: TBooleanExpression): TFunc<Boolean>;
 var
   Expression: IExpression;
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   Expression := ExpressionStack.Pop();
 
@@ -857,7 +887,7 @@ class operator TBooleanExpression.Implicit(
 var
   Expression: IExpression;
   Param1: IValueExpression;
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   Expression := ExpressionStack.Pop();
   Param1 := ExpressionParams[0];
@@ -884,7 +914,7 @@ end;
 
 class operator TBooleanExpression.Implicit(const Value: TBooleanExpression): Boolean;
 var
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   ExpressionStack.Pop();
   Delegate := Value.Compile();
@@ -939,7 +969,7 @@ begin
   ExpressionStack.Push(Result.FExpression);
 end;
 
-function TBooleanExpression.Compile: TFunc<TValue>;
+function TBooleanExpression.Compile: TCompiledExpression;
 begin
   Result := FExpression.Compile;
 end;
@@ -1020,7 +1050,7 @@ end;
 
 class operator TValueExpression.Implicit(const Value: TValueExpression): Extended;
 var
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   ExpressionStack.Pop();
   Delegate := Value.Compile();
@@ -1029,7 +1059,7 @@ end;
 
 class operator TValueExpression.Implicit(const Value: TValueExpression): Int64;
 var
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   ExpressionStack.Pop();
   Delegate := Value.Compile();
@@ -1126,7 +1156,7 @@ begin
   ExpressionStack.Push(Result.FExpression);
 end;
 
-function TValueExpression.Compile: TFunc<TValue>;
+function TValueExpression.Compile: TCompiledExpression;
 begin
   if Assigned(FExpression) then
   begin
@@ -1174,11 +1204,16 @@ end;
 
 { TExpression }
 
+function TExpression.Compile: TCompiledExpression;
+begin
+  Result := CompileExpression();
+end;
+
 function TExpression.Execute: TValue;
 var
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
-  Delegate := Compile();
+  Delegate := CompileExpression();
   Result := Delegate();
 end;
 
@@ -1205,7 +1240,7 @@ begin
   Result := TConstantExpression.Create(TValue.From<T>(Value));
 end;
 
-function TConstantExpression.Compile: TFunc<TValue>;
+function TConstantExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IConstantExpression;
 begin
@@ -1270,7 +1305,7 @@ begin
   inherited Create(Value);
 end;
 
-function TComponentExpression.Compile: TFunc<TValue>;
+function TComponentExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IConstantExpression;
 begin
@@ -1295,7 +1330,7 @@ begin
   FExpression := Expression;
 end;
 
-function TUnaryExpression.Compile: TFunc<TValue>;
+function TUnaryExpression.CompileExpression: TCompiledExpression;
 begin
   Result := FExpression.Compile();
 end;
@@ -1307,10 +1342,10 @@ end;
 
 { TNegativeExpression }
 
-function TNegativeExpression.Compile: TFunc<TValue>;
+function TNegativeExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IExpression;
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   Expression := Self;
   Delegate := FExpression.Compile();
@@ -1367,10 +1402,10 @@ end;
 
 { TAdditionExpression }
 
-function TAdditionExpression.Compile: TFunc<TValue>;
+function TAdditionExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1407,10 +1442,10 @@ end;
 
 { TSubtractionExpression }
 
-function TSubtractionExpression.Compile: TFunc<TValue>;
+function TSubtractionExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1444,10 +1479,10 @@ end;
 
 { TMultiplicationExpression }
 
-function TMultiplicationExpression.Compile: TFunc<TValue>;
+function TMultiplicationExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1481,10 +1516,10 @@ end;
 
 { TDivisionExpression }
 
-function TDivisionExpression.Compile: TFunc<TValue>;
+function TDivisionExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1514,10 +1549,10 @@ end;
 
 { TIntegerDivisionExpression }
 
-function TIntegerDivisionExpression.Compile: TFunc<TValue>;
+function TIntegerDivisionExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1547,10 +1582,10 @@ end;
 
 { TModulusExpression }
 
-function TModulusExpression.Compile: TFunc<TValue>;
+function TModulusExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1580,10 +1615,10 @@ end;
 
 { TLogicalAndExpression }
 
-function TLogicalAndExpression.Compile: TFunc<TValue>;
+function TLogicalAndExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1610,10 +1645,10 @@ end;
 
 { TLogicalExclusiveOrExpression }
 
-function TLogicalExclusiveOrExpression.Compile: TFunc<TValue>;
+function TLogicalExclusiveOrExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1640,10 +1675,10 @@ end;
 
 { TLogicalOrExpression }
 
-function TLogicalOrExpression.Compile: TFunc<TValue>;
+function TLogicalOrExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1670,10 +1705,10 @@ end;
 
 { TEqualExpression }
 
-function TEqualExpression.Compile: TFunc<TValue>;
+function TEqualExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1700,10 +1735,10 @@ end;
 
 { TNotEqualExpression }
 
-function TNotEqualExpression.Compile: TFunc<TValue>;
+function TNotEqualExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1737,10 +1772,10 @@ end;
 
 { TLessThanExpression }
 
-function TLessThanExpression.Compile: TFunc<TValue>;
+function TLessThanExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1774,10 +1809,10 @@ end;
 
 { TLessThanOrEqualExpression }
 
-function TLessThanOrEqualExpression.Compile: TFunc<TValue>;
+function TLessThanOrEqualExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1811,10 +1846,10 @@ end;
 
 { TGreaterThanExpression }
 
-function TGreaterThanExpression.Compile: TFunc<TValue>;
+function TGreaterThanExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1848,10 +1883,10 @@ end;
 
 { TGreaterThanOrEqualExpression }
 
-function TGreaterThanOrEqualExpression.Compile: TFunc<TValue>;
+function TGreaterThanOrEqualExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
 begin
   Expression := Self;
   LeftDelegate := FLeft.Compile();
@@ -1902,7 +1937,7 @@ end;
 
 function TMemberExpression.GetObject: TObject;
 var
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   if Assigned(FExpression) then
   begin
@@ -1976,7 +2011,7 @@ begin
   Create(LExpression, APropertyName);
 end;
 
-function TPropertyExpression.Compile: TFunc<TValue>;
+function TPropertyExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IMemberExpression;
 begin
@@ -2215,13 +2250,13 @@ begin
 {$ENDIF}
   if LObject.TryGetProperty(FPropertyName, LProperty) then
   begin
-    if FIndex > -1 then
+    if FIndex = -1 then
     begin
-      SetIndexedValue(LProperty.GetValue(LObject), LValue);
+      LProperty.SetValue(LObject, LValue);
     end
     else
     begin
-      LProperty.SetValue(LObject, LValue);
+      SetIndexedValue(LProperty.GetValue(LObject), LValue);
     end;
   end else
   if LObject.TryGetField(FPropertyName, LField) then
@@ -2245,10 +2280,10 @@ begin
   FParameters := TArray.Copy<IExpression>(AParameters);
 end;
 
-function TMethodExpression.Compile: TFunc<TValue>;
+function TMethodExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IMemberExpression;
-  ArgumentDelegates: TArray<TFunc<TValue>>;
+  ArgumentDelegates: TCompiledExpressionArray;
 begin
   Expression := Self;
   ArgumentDelegates := CompileArguments();
@@ -2301,7 +2336,7 @@ begin
   Create(LExpression, AMethodName, AParameters);
 end;
 
-function TMethodExpression.CompileArguments: TArray<TFunc<TValue>>;
+function TMethodExpression.CompileArguments: TCompiledExpressionArray;
 var
   i: Integer;
 begin
@@ -2345,10 +2380,10 @@ end;
 
 { TAssignExpression }
 
-function TAssignExpression.Compile: TFunc<TValue>;
+function TAssignExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
   LeftExpr: IValueExpression;
 begin
   if Supports(FLeft, IValueExpression, LeftExpr) then
@@ -2378,25 +2413,25 @@ end;
 { TConvertExpression }
 
 constructor TConvertExpression.Create(Left, Right: IExpression;
-  Convert: TConvertFunc);
+  ConvertFunc: TConvertFunc);
 begin
   inherited Create(Left, Right);
-  FConvert := Convert;
+  FConvertFunc := ConvertFunc;
 end;
 
-function TConvertExpression.Compile: TFunc<TValue>;
+function TConvertExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBinaryExpression;
-  LeftDelegate, RightDelegate: TFunc<TValue>;
+  LeftDelegate, RightDelegate: TCompiledExpression;
   LeftExpr: IValueExpression;
-  Convert: TConvertFunc;
+  ConvertFunc: TConvertFunc;
 begin
   if Supports(Left, IValueExpression, LeftExpr) then
   begin
     Expression := Self;
     LeftDelegate := LeftExpr.Compile();
     RightDelegate := Right.Compile();
-    Convert := FConvert;
+    ConvertFunc := FConvertFunc;
 
     Result :=
       function: TValue
@@ -2406,9 +2441,9 @@ begin
         if Assigned(Expression) then;
 
         RightValue := RightDelegate();
-        if Assigned(Convert) then
+        if Assigned(ConvertFunc) then
         begin
-          LeftValue := Convert(RightValue);
+          LeftValue := ConvertFunc(RightValue);
         end
         else
         begin
@@ -2425,7 +2460,7 @@ begin
       begin
         raise EArgumentException.Create('Left side cannot be assigned to');
       end;
-  end
+  end;
 end;
 
 { TBlockExpression }
@@ -2435,10 +2470,10 @@ begin
   FExpressions := TArray.Copy<IExpression>(Expressions);
 end;
 
-function TBlockExpression.Compile: TFunc<TValue>;
+function TBlockExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IBlockExpression;
-  Delegates: TArray<TFunc<TValue>>;
+  Delegates: TCompiledExpressionArray;
   i: Integer;
 begin
   Expression := Self;
@@ -2464,7 +2499,7 @@ begin
     end;
 end;
 
-function TBlockExpression.GetExpressions: TArray<IExpression>;
+function TBlockExpression.GetExpressions: TExpressionArray;
 begin
   Result := FExpressions;
 end;
@@ -2492,10 +2527,10 @@ begin
   FIfFalse := AIfFalse;
 end;
 
-function TConditionalExpression.Compile: TFunc<TValue>;
+function TConditionalExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IConditionalExpression;
-  TestDelegate, IfTrueDelegate, IfFalseDelegate: TFunc<TValue>;
+  TestDelegate, IfTrueDelegate, IfFalseDelegate: TCompiledExpression;
 begin
   Expression := Self;
   TestDelegate := FTest.Compile();
@@ -2554,10 +2589,10 @@ end;
 
 { TLogicalNotExpression }
 
-function TLogicalNotExpression.Compile: TFunc<TValue>;
+function TLogicalNotExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IUnaryExpression;
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   Expression := Self;
   Delegate := FExpression.Compile();
@@ -2578,7 +2613,7 @@ end;
 
 { TBreakExpression }
 
-function TBreakExpression.Compile: TFunc<TValue>;
+function TBreakExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IExpression;
 begin
@@ -2600,10 +2635,10 @@ end;
 
 { TLoopExpression }
 
-function TLoopExpression.Compile: TFunc<TValue>;
+function TLoopExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IUnaryExpression;
-  Delegate: TFunc<TValue>;
+  Delegate: TCompiledExpression;
 begin
   Expression := Self;
   Delegate := FExpression.Compile();

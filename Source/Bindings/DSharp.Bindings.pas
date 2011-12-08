@@ -106,7 +106,7 @@ type
     procedure SetBindingMode(const Value: TBindingMode); virtual;
     procedure SetConverter(const Value: IValueConverter);
     procedure SetTarget(const Value: TObject);
-    procedure SetTargetProperty(AObject: TObject; const APropertyName: string);
+    procedure SetTargetProperty;
     procedure SetTargetPropertyName(const Value: string);
   public
     class constructor Create;
@@ -175,7 +175,7 @@ type
     procedure RaiseValidationError;
     procedure SetBindingMode(const Value: TBindingMode); override;
     procedure SetSource(const Value: TObject);
-    procedure SetSourceProperty(AObject: TObject; const APropertyName: string);
+    procedure SetSourceProperty;
     procedure SetSourcePropertyName(const Value: string);
     function ValidateCommitted: Boolean;
   public
@@ -521,7 +521,7 @@ procedure TBindingBase.SetBindingMode(const Value: TBindingMode);
 begin
   FBindingMode := Value;
 
-  SetTargetProperty(FTarget, FTargetPropertyName);
+  SetTargetProperty();
 end;
 
 procedure TBindingBase.SetConverter(const Value: IValueConverter);
@@ -555,7 +555,8 @@ begin
       end;
     end;
 
-    SetTargetProperty(Value, FTargetPropertyName);
+    FTarget := Value;
+    SetTargetProperty();
 
     if Assigned(FTarget) then
     begin
@@ -575,11 +576,8 @@ begin
   end;
 end;
 
-procedure TBindingBase.SetTargetProperty(AObject: TObject;
-  const APropertyName: string);
+procedure TBindingBase.SetTargetProperty;
 begin
-  FTarget := AObject;
-
   FTargetProperty := Expression.PropertyAccess(
     Expression.Constant(FTarget), FTargetPropertyName);
 
@@ -593,7 +591,7 @@ begin
     FTargetPropertyName := Value;
     if Assigned(FTarget) then
     begin
-      SetTargetProperty(FTarget, FTargetPropertyName);
+      SetTargetProperty();
 
       UpdateTarget(True);
     end;
@@ -850,7 +848,7 @@ procedure TBinding.SetBindingMode(const Value: TBindingMode);
 begin
   inherited;
 
-  SetSourceProperty(FSource, FSourcePropertyName);
+  SetSourceProperty();
 end;
 
 procedure TBinding.SetSource(const Value: TObject);
@@ -881,12 +879,11 @@ begin
       end;
     end;
 
-    SetSourceProperty(Value, FSourcePropertyName);
+    FSource := Value;
+    SetSourceProperty();
 
     if Assigned(FSource) then
     begin
-      SetSourceProperty(FSource, FSourcePropertyName);
-
       if FSource is TComponent then
       begin
         TComponent(FSource).FreeNotification(FNotificationHandler);
@@ -911,7 +908,7 @@ begin
   end;
 end;
 
-procedure TBinding.SetSourceProperty(AObject: TObject; const APropertyName: string);
+procedure TBinding.SetSourceProperty;
 var
   LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
@@ -920,8 +917,6 @@ begin
     LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
     LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
   end;
-
-  FSource := AObject;
 
   FSourceProperty := Expression.PropertyAccess(
     Expression.Constant(FSource), FSourcePropertyName);
@@ -944,7 +939,7 @@ begin
     FSourcePropertyName := Value;
     if Assigned(FSource) then
     begin
-      SetSourceProperty(FSource, FSourcePropertyName);
+      SetSourceProperty;
 
       UpdateTarget(True);
     end;
@@ -953,7 +948,8 @@ end;
 
 procedure TBinding.UpdateSource(IgnoreBindingMode: Boolean = True);
 begin
-  if FActive and (IgnoreBindingMode or (FBindingMode in [bmTwoWay..bmOneWayToSource]))
+  if Assigned(Self) and FActive
+    and (IgnoreBindingMode or (FBindingMode in [bmTwoWay..bmOneWayToSource]))
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)
     and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsWritable then
@@ -972,7 +968,8 @@ procedure TBinding.UpdateTarget(IgnoreBindingMode: Boolean = True);
 var
   LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
 begin
-  if FActive and (IgnoreBindingMode or (FBindingMode in [bmOneWay..bmTwoWay]))
+  if Assigned(Self) and FActive
+    and (IgnoreBindingMode or (FBindingMode in [bmOneWay..bmTwoWay]))
     and (not Assigned(FBindingGroup) or not (csLoading in FBindingGroup.ComponentState))
     and Assigned(FTarget) and Assigned(FTargetProperty)
     and Assigned(FSource) and Assigned(FSourceProperty)

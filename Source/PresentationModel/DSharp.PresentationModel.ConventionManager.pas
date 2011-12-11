@@ -118,7 +118,6 @@ class procedure ConventionManager.ConfigureSelectedItem(AViewModel: TObject;
   APropertyName: string; AViewElement: TComponent; ASelectedItemPropertyName: string);
 var
   LBindingGroup: TBindingGroup;
-  LBinding: TBinding;
   LProperty: TRttiProperty;
   LPotentialName: string;
 begin
@@ -129,11 +128,8 @@ begin
     LProperty := AViewModel.GetProperty(LPotentialName);
     if Assigned(LProperty) then
     begin
-      LBinding := LBindingGroup.Bindings.Add();
-      LBinding.Source := AViewModel;
-      LBinding.SourcePropertyName := LPotentialName;
-      LBinding.Target := AViewElement;
-      LBinding.TargetPropertyName := ASelectedItemPropertyName;
+      LBindingGroup.AddBinding(
+        AViewModel, LPotentialName, AViewElement, ASelectedItemPropertyName);
     end;
   end;
 end;
@@ -171,7 +167,7 @@ begin
     LBindingGroup := TBindingGroup.Create(AViewElement.Owner);
   end;
 
-  LBinding := LBindingGroup.Bindings.Add();
+  LBinding := LBindingGroup.AddBinding();
 
   ApplyValidation(LBinding, AViewModel, APropertyName);
 

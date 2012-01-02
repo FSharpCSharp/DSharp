@@ -1003,6 +1003,7 @@ end;
 
 function TBinding.Validate: Boolean;
 var
+  LConverted: Boolean;
   LSourceValue: TValue;
   LTargetValue: TValue;
   LValidationResult: IValidationResult;
@@ -1038,19 +1039,26 @@ begin
 
       if Result then
       begin
-        if Assigned(FConverter) then
-        begin
-          LSourceValue := FConverter.ConvertBack(LTargetValue);
-        end
-        else
-        begin
-          LSourceValue := LTargetValue;
-        end;
+        LConverted := False;
 
         for LValidationRule in FValidationRules do
         begin
           if LValidationRule.ValidationStep = vsConvertedProposedValue then
           begin
+            if not LConverted then
+            begin
+              if Assigned(FConverter) then
+              begin
+                LSourceValue := FConverter.ConvertBack(LTargetValue);
+              end
+              else
+              begin
+                LSourceValue := LTargetValue;
+              end;
+
+              LConverted := True;
+            end;
+
             LValidationResult := LValidationRule.Validate(LSourceValue);
             FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
             if not LValidationResult.IsValid then

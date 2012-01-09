@@ -41,12 +41,13 @@ uses
 
 type
   TStartsTextExpression = class(TBinaryExpression)
+  protected
+    function CompileExpression: TCompiledExpression; override;
   public
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
-function TStartsTextExpression.Compile: TFunc<TValue>;
+function TStartsTextExpression.CompileExpression: TCompiledExpression;
 var
   LeftDelegate, RightDelegate: TFunc<TValue>;
 begin

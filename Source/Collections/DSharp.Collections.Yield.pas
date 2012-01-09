@@ -54,7 +54,7 @@ uses
 
 type
 {$IFDEF USE_COLLECTIONS}
-  TDelegateEnumerable<T> = class(TEnexCollection<T>)
+  TDelegateEnumerable<T> = class(TSequence<T>)
 {$ELSEIF DEFINED(USE_SPRING)}
   TDelegateEnumerable<T> = class(TEnumerableBase<T>)
 {$ELSE}

@@ -55,7 +55,7 @@ begin
 end;
 
 function Power(ANumber, AExponent: Integer):
-  {$IFDEF USE_COLLECTIONS}IEnexCollection<Integer>;{$ELSE}IEnumerable<Integer>;{$ENDIF}
+  {$IFDEF USE_COLLECTIONS}ISequence<Integer>;{$ELSE}IEnumerable<Integer>;{$ENDIF}
 begin
   Result := TDelegateEnumerable<Integer>.Create(
     procedure

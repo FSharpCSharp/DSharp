@@ -290,6 +290,51 @@ end;
 
 {--------------------------------------------------------------------------------------------------}
 
+const
+  TRttiMethod_CreateImplementationBytesCmp: array[0..11] of Byte = (
+    $53,                // push ebx                        //  0
+    $56,                // push esi                        //  1
+    $57,                // push edi                        //  2
+    $8B, $F9,           // mov edi,ecx                     //  3
+    $8B, $F2,           // mov esi,edx                     //  5
+    $8B, $D8,           // mov ebx,eax                     //  7
+    $8B, $C3,           // mov eax,ebx                     //  9
+    $E8                 // call TRttiMethod.GetInvokeInfo  // 11
+  );
+
+  TRttiMethod_GetInvokeInfoBytes: array[0..25] of SmallInt = (
+    $B0, $01,             // mov al,$01                //  0
+    $50,                  // push eax                  //  2
+    $8B, $C6,             // mov eax,esi               //  3
+    $8B, $10,             // mov edx,[eax]             //  5
+    $FF, $52, $10,        // call dword ptr [edx+$10]  //  7
+    $E8, -1, -1, -1, -1,  // call Generics + $4C9D7C   // 10
+    $8B, $D0,             // mov edx,eax               // 15
+    $8B, $45, $F8,        // mov eax,[ebp-$08]         // 17
+    $59,                  // pop ecx                   // 20
+    $E8, -1, -1, -1, -1   // call TMethodImplementation.TInvokeInfo.AddParameter // 21
+  );
+
+var
+  OrgInvokeInfoAddParameter: procedure(AInvokeInfo: TObject; AType: PTypeInfo; ByRef: Boolean);
+
+procedure FixInvokeInfoAddParameter(AInvokeInfo: TObject; AType: PTypeInfo; ByRef: Boolean;
+  p: TRttiParameter; Method: TRttiMethod);
+begin
+  OrgInvokeInfoAddParameter(AInvokeInfo, p.ParamType.Handle,
+    ([pfVar, pfOut] * p.Flags <> []) or
+    PassByRef(p.ParamType.Handle, Method.CallingConvention, pfConst in p.Flags));
+end;
+
+procedure FixInvokeInfoAddParameterEnter(AInvokeInfo: TObject; AType: PTypeInfo; ByRef: Boolean);
+asm
+  push esi // p is kept in ESI
+  push edi // TMethodRtti is kept in EDI
+  call FixInvokeInfoAddParameter
+end;
+
+{--------------------------------------------------------------------------------------------------}
+
 procedure PatchRtti;
 var
   Ctx: TRttiContext;
@@ -324,6 +369,26 @@ begin
   // Fix TRttiInstanceMethodEx.DispatchInvoke
   Meth := ctx.GetType(TInstanceMethodHelper).GetMethod('InstanceMethod');
   RedirectFunction(GetVirtualMethod(Meth, $34), @TRttiMethodFix.InstanceDispatchInvoke);
+
+  // Fix TRttiMethod.GetInvokeInfo
+  // Find the private TRttiMethod.GetInvokeInfo method
+  P := GetActualAddr(@TRttiMethod.CreateImplementation);
+  if CompareMem(P, @TRttiMethod_CreateImplementationBytesCmp[0], SizeOf(TRttiMethod_CreateImplementationBytesCmp)) then
+  begin
+    P := PByte(P + 11 + 5) + PInteger(@P[11 + 1])^; // relative call => absolute address
+    P := FindMethodBytes(P, TRttiMethod_GetInvokeInfoBytes, 400);
+    if P <> nil then
+    begin
+      @OrgInvokeInfoAddParameter := PByte(P + 21 + 5) + PInteger(@P[21 + 1])^; // relative call => absolute address
+      Offset := PByte(@FixInvokeInfoAddParameterEnter) - (P + 21 + 5);
+      if not WriteProcessMemory(GetCurrentProcess, P + 21 + 1, @Offset, SizeOf(Offset), n) then
+        RaiseLastOSError;
+    end
+    else
+      raise Exception.Create('Patching TRttiMethod.GetInvokeInfoBytes failed. Do you have set a breakpoint in the method?');
+  end
+  else
+    raise Exception.Create('TRttiMethod.CreateImplementation does not match the search pattern. Do you have set a breakpoint in the method?');
 
   Ctx.Free;
 end;

@@ -33,6 +33,9 @@ interface
 
 uses
   DSharp.Core.Reflection,
+{$IF COMPILERVERSION < 23}
+  DSharp.Core.VirtualInterface,
+{$IFEND}
   DSharp.Testing.Mock.Interfaces,
   Generics.Collections,
   Rtti,
@@ -125,9 +128,6 @@ type
 implementation
 
 uses
-{$IF COMPILERVERSION < 23}
-  DSharp.Core.VirtualInterface,
-{$IFEND}
   RTLConsts,
   TypInfo;
 

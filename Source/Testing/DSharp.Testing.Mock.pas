@@ -37,9 +37,12 @@ interface
 
 uses
   DSharp.Testing.Mock.Interfaces,
+  Rtti,
   SysUtils;
 
 type
+  TValue = Rtti.TValue;
+
   Mock<T> = record
   private
     FMock: IMock<T>;
@@ -53,7 +56,7 @@ type
     class operator Implicit(var Value: Mock<T>): T;
     class operator Implicit(Value: T): Mock<T>;
     procedure Verify;
-    function WillExecute<TAction>(const Action: TAction): IExpect<T>;
+    function WillExecute(const Action: TMockAction): IExpect<T>;
     function WillRaise(const ExceptionClass: ExceptClass;
       const Msg: string = ''): IExpect<T>; overload;
     function WillRaise(const ExceptionClass: ExceptClass; const Msg: string;
@@ -65,8 +68,7 @@ type
 implementation
 
 uses
-  DSharp.Testing.Mock.Internals,
-  Rtti;
+  DSharp.Testing.Mock.Internals;
 
 { Mock<T> }
 
@@ -114,9 +116,9 @@ begin
   Mock.Verify;
 end;
 
-function Mock<T>.WillExecute<TAction>(const Action: TAction): IExpect<T>;
+function Mock<T>.WillExecute(const Action: TMockAction): IExpect<T>;
 begin
-  Result := Mock.WillExecute(TValue.From<TAction>(Action));
+  Result := Mock.WillExecute(Action);
 end;
 
 function Mock<T>.WillRaise(const ExceptionClass: ExceptClass;

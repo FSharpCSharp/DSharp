@@ -36,6 +36,8 @@ uses
   SysUtils;
 
 type
+  TMockAction = reference to function(const Args: TArray<TValue>): TValue;
+
   IWhen<T> = interface
     function WhenCalling: T;
     function WhenCallingWithAnyArguments: T;
@@ -54,7 +56,7 @@ type
   IMock<T> = interface
     function GetInstance: T;
     procedure Verify;
-    function WillExecute(const Action: TValue): IExpect<T>;
+    function WillExecute(const Action: TMockAction): IExpect<T>;
     function WillRaise(const Exception: TFunc<Exception>): IExpect<T>;
     function WillReturn(const Value: TValue): IExpect<T>;
     property Instance: T read GetInstance;

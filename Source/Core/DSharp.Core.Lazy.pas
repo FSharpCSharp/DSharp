@@ -32,6 +32,7 @@ unit DSharp.Core.Lazy;
 interface
 
 uses
+  DSharp.Core.Reflection,
   SysUtils;
 
 type
@@ -69,7 +70,6 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection,
   TypInfo;
 
 { TLazy<T> }

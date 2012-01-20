@@ -35,6 +35,7 @@ uses
   DSharp.Aspects,
   DSharp.ComponentModel.Composition,
   DSharp.Core.Lazy,
+  DSharp.Core.Reflection,
   Generics.Collections,
   Rtti,
   Spring.Container,
@@ -98,7 +99,6 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection,
   Spring.Collections;
 
 {$IF COMPILERVERSION = 21}

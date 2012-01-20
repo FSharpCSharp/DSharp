@@ -32,10 +32,11 @@ unit DSharp.Collections.ObservableCollection;
 interface
 
 uses
-  DSharp.Collections,
   DSharp.Bindings.Collections,
   DSharp.Bindings.Notifications,
-  DSharp.Core.Events;
+  DSharp.Collections,
+  DSharp.Core.Events,
+  DSharp.Core.Utils;
 
 type
   TObservableCollection<T: class> = class(TObjectList<T>,
@@ -55,9 +56,6 @@ type
   end;
 
 implementation
-
-uses
-  DSharp.Core.Utils;
 
 { TObservableCollection<T> }
 

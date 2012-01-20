@@ -73,7 +73,7 @@ type
     Offset: Integer;
   end;
 var
-  n: Cardinal;
+  n: NativeUInt;
   JmpBuffer: TJmpBuffer;
 begin
   JmpBuffer.Jmp := $E9;

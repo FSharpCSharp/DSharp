@@ -32,6 +32,7 @@ unit DSharp.Testing.Mock.Internals;
 interface
 
 uses
+  DSharp.Core.Reflection,
   DSharp.Testing.Mock.Interfaces,
   Generics.Collections,
   Rtti,
@@ -41,7 +42,7 @@ uses
 type
   TExpectation = class
   private
-    FAction: TValue;
+    FAction: TMockAction;
     FAnyArguments: Boolean;
     FArguments: TArray<TValue>;
     FCallCount: Cardinal;
@@ -56,7 +57,7 @@ type
       ReturnType: TRttiType): TValue;
     function HasBeenMet: Boolean;
 
-    property Action: TValue read FAction write FAction;
+    property Action: TMockAction read FAction write FAction;
     property AnyArguments: Boolean read FAnyArguments write FAnyArguments;
     property Arguments: TArray<TValue> read FArguments write FArguments;
     property CallCount: Cardinal read FCallCount write FCallCount;
@@ -106,7 +107,7 @@ type
     function WhenCallingWithAnyArguments: T;
 
     // IMock<T>
-    function WillExecute(const Action: TValue): IExpect<T>;
+    function WillExecute(const Action: TMockAction): IExpect<T>;
     function WillRaise(const E: TFunc<Exception>): IExpect<T>;
     function WillReturn(const Value: TValue): IExpect<T>;
   end;
@@ -118,10 +119,12 @@ const
   CUnmetExpectations = 'not all expected invocations were performed';
   CUnexpectedInvocation = 'unexpected invocation of: %0:s.%1:s(%2:s)';
 
+type
+  Mock<T> = class(TVirtualInterface);
+
 implementation
 
 uses
-  DSharp.Core.Reflection,
 {$IF COMPILERVERSION < 23}
   DSharp.Core.VirtualInterface,
 {$IFEND}
@@ -161,7 +164,7 @@ end;
 
 procedure TMockWrapper<T>.CreateInterfaceMock(AType: TRttiType);
 begin
-  Supports(TVirtualInterface.Create(AType.Handle, DoMethodCall),
+  Supports(Mock<T>.Create(AType.Handle, DoMethodCall),
     TRttiInterfaceType(AType).GUID, FInstance);
   FType := mtInterface;
 end;
@@ -171,14 +174,14 @@ begin
   FInstance := AType.GetMethod('Create').Invoke(
     AType.AsInstance.MetaclassType, []).AsType<T>();
   FInterceptor := TVirtualMethodInterceptor.Create(AType.AsInstance.MetaclassType);
-  FInterceptor.Proxify(TObject(FInstance));
+  FInterceptor.Proxify(PPointer(@FInstance)^);
   FInterceptor.OnBefore := DoBefore;
   FType := mtObject;
 end;
 
 procedure TMockWrapper<T>.DestroyObjectMock;
 begin
-  TObject(FInstance).Free();
+  TObject(PPointer(@FInstance)^).Free();
   FInterceptor.Free();
 end;
 
@@ -346,7 +349,7 @@ begin
   Result := FInstance;
 end;
 
-function TMockWrapper<T>.WillExecute(const Action: TValue): IExpect<T>;
+function TMockWrapper<T>.WillExecute(const Action: TMockAction): IExpect<T>;
 begin
   FCurrentExpectation := TExpectation.Create();
   FCurrentExpectation.Action := Action;
@@ -382,65 +385,11 @@ end;
 
 function TExpectation.Execute(const Arguments: TArray<TValue>;
   ReturnType: TRttiType): TValue;
-type
-  PPVtable = ^PVtable;
-  PVtable = ^TVtable;
-  TVtable = array[0..3] of Pointer;
-var
-  LType: TRttiType;
-  LMethod: TRttiMethod;
-  LParameters: TArray<TRttiParameter>;
-  LCode: Pointer;
-  LArgs: TArray<TValue>;
-  i: Integer;
 begin
   try
-    if not FAction.IsEmpty then
+    if Assigned(FAction) then
     begin
-      LType := GetRttiType(FAction.TypeInfo);
-      if (LType is TRttiInterfaceType) and LType.TryGetMethod('Invoke', LMethod) then
-      begin
-        LParameters := LMethod.GetParameters();
-
-        if Pred(Length(Arguments)) <> Length(LParameters) then
-          raise EInvocationError.CreateRes(@SParameterCountMismatch);
-
-        SetLength(LArgs, Length(Arguments) - 1);
-        for i := Low(Arguments) + 1 to High(Arguments) do
-        begin
-          TValue.MakeWithoutCopy(Arguments[i].GetReferenceToRawData,
-            LParameters[i - 1].ParamType.Handle, LArgs[i - 1]);
-        end;
-        LMethod.Invoke(FAction, LArgs);
-        for i := Low(Arguments) + 1 to High(Arguments) do
-        begin
-          TValue.MakeWithoutCopy(LArgs[i - 1].GetReferenceToRawData,
-            LParameters[i - 1].ParamType.Handle, Arguments[i]);
-        end;
-      end
-      else
-      begin
-        // Try to do it without rtti
-        // We handle every parameter as by val - for any other parameter
-        // this causes an AV - provide RTTI for the method in that case
-
-        FAction.ExtractRawDataNoCopy(@LCode);
-        LCode := PPVtable(LCode)^^[3];
-        SetLength(LArgs, Length(Arguments));
-        for i := 0 to Length(Arguments) - 1 do
-        begin
-          TValue.MakeWithoutCopy(Arguments[i].GetReferenceToRawData,
-            Arguments[i].TypeInfo, LArgs[i]);
-        end;
-        if Assigned(ReturnType) then
-        begin
-          Result := Invoke(LCode, LArgs, ccReg, ReturnType.Handle);
-        end
-        else
-        begin
-          Result := Invoke(LCode, LArgs, ccReg, nil);
-        end;
-      end;
+      Result := FAction(Arguments);
     end else
     if Assigned(FException) then
     begin

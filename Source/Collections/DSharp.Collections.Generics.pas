@@ -34,7 +34,8 @@ interface
 uses
   Generics.Collections,
   Rtti,
-  SysUtils;
+  SysUtils,
+  Windows;
 
 type
   TEnumerableEx<T> = class(TEnumerable<T>, IEnumerable<T>, IEnumerable)
@@ -86,8 +87,7 @@ type
 implementation
 
 uses
-  DSharp.Core.Generics,
-  Windows;
+  DSharp.Core.Generics;
 
 { TEnumerableEx<T> }
 

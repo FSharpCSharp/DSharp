@@ -37,10 +37,6 @@ uses
   TypInfo;
 
 type
-  IAspectWeaver = interface
-    function Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
-  end;
-
   TAspect = class
   public
     class procedure DoAfter(Instance: TObject; Method: TRttiMethod;
@@ -54,6 +50,11 @@ type
   end;
 
   TAspectClass = class of TAspect;
+
+  IAspectWeaver = interface
+    procedure AddAspect(Guid: TGUID; AspectClass: TAspectClass);
+    function Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
+  end;
 
   AspectAttribute = class(TCustomAttribute)
   private

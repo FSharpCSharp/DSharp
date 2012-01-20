@@ -35,7 +35,9 @@ uses
   Classes,
   DSharp.Core.Events,
   Generics.Defaults,
-  Rtti;
+  RTLConsts,
+  Rtti,
+  SysUtils;
 
 type
   TCollectionChangedAction = (caAdd, caRemove, caReplace, caMove);
@@ -288,10 +290,6 @@ type
   end;
 
 implementation
-
-uses
-  RTLConsts,
-  SysUtils;
 
 { TArray }
 

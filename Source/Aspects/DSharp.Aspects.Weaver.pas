@@ -42,6 +42,7 @@ type
   AspectWeaver = record
   private
     class var FIntercepts: TObjectDictionary<TRttiType, TIntercept>;
+    class function GetIntercept(RttiType: TRttiType): TIntercept; static;
     class procedure InternalAddAspect(RttiType: TRttiType;
       AspectClass: TAspectClass; const MethodName: string); static;
 
@@ -63,6 +64,7 @@ type
 
   TAspectWeaver = class(TInterfacedObject, IAspectWeaver)
   public
+    procedure AddAspect(Guid: TGUID; AspectClass: TAspectClass);
     function Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
   end;
 
@@ -151,24 +153,29 @@ begin
   end;
 end;
 
+class function AspectWeaver.GetIntercept(RttiType: TRttiType): TIntercept;
+begin
+  if not FIntercepts.TryGetValue(RttiType, Result) then
+  begin
+    if RttiType.IsInstance then
+    begin
+      Result := TClassIntercept.Create(RttiType.AsInstance.MetaclassType);
+    end else
+    if RttiType.IsInterface then
+    begin
+      Result := TInterfaceIntercept.Create(RttiType.Handle);
+    end;
+    FIntercepts.Add(RttiType, Result);
+  end;
+end;
+
 class procedure AspectWeaver.InternalAddAspect(RttiType: TRttiType;
   AspectClass: TAspectClass; const MethodName: string);
 var
   LIntercept: TIntercept;
   LMethod: TRttiMethod;
 begin
-  if not FIntercepts.TryGetValue(RttiType, LIntercept) then
-  begin
-    if RttiType.IsInstance then
-    begin
-      LIntercept := TClassIntercept.Create(RttiType.AsInstance.MetaclassType);
-    end else
-    if RttiType.IsInterface then
-    begin
-      LIntercept := TInterfaceIntercept.Create(RttiType.Handle);
-    end;
-    FIntercepts.Add(RttiType, LIntercept);
-  end;
+  LIntercept := AspectWeaver.GetIntercept(RttiType);
 
   for LMethod in RttiType.GetMethods do
   begin
@@ -184,8 +191,9 @@ var
   LType: TRttiType;
   LIntercept: TIntercept;
 begin
-  if TryGetRttiType(TypeInfo, LType) and FIntercepts.TryGetValue(LType, LIntercept) then
+  if TryGetRttiType(TypeInfo, LType) then
   begin
+    LIntercept := AspectWeaver.GetIntercept(LType);
     Result := (LIntercept as TInterfaceIntercept).Proxify(Instance);
   end else
   begin
@@ -199,6 +207,11 @@ begin
 end;
 
 { TAspectWeaver }
+
+procedure TAspectWeaver.AddAspect(Guid: TGUID; AspectClass: TAspectClass);
+begin
+  AspectWeaver.AddAspect(Guid, AspectClass, '.*');
+end;
 
 function TAspectWeaver.Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
 begin

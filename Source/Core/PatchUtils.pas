@@ -73,7 +73,11 @@ type
     Offset: Integer;
   end;
 var
+{$IF COMPILERVERSION < 23}
+  n: Cardinal;
+{$ELSE}
   n: NativeUInt;
+{$IFEND}
   JmpBuffer: TJmpBuffer;
 begin
   JmpBuffer.Jmp := $E9;

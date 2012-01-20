@@ -55,7 +55,7 @@ type
       const AMethodName: string; AIncludeDerivedTypes: Boolean = True); overload; static;
     class procedure AddAspect(AGuid: TGUID; AAspectClass: TAspectClass;
       const AMethodName: string; AIncludeDerivedTypes: Boolean = True); overload; static;
-    class procedure AddAspect(ARttiType: TRttiType; AAspectClass: TAspectClass;
+    class procedure AddAspect(AType: TRttiType; AAspectClass: TAspectClass;
       const AMethodName: string; AIncludeDerivedTypes: Boolean = True); overload; static;
 
     class function Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface; overload; static;
@@ -106,19 +106,19 @@ begin
   AspectWeaver.AddAspect(LType, AAspectClass, AMethodName);
 end;
 
-class procedure AspectWeaver.AddAspect(ARttiType: TRttiType;
+class procedure AspectWeaver.AddAspect(AType: TRttiType;
   AAspectClass: TAspectClass; const AMethodName: string;
   AIncludeDerivedTypes: Boolean);
 var
   LType: TRttiType;
 begin
-  AspectWeaver.InternalAddAspect(ARttiType, AAspectClass, AMethodName);
+  AspectWeaver.InternalAddAspect(AType, AAspectClass, AMethodName);
 
   if AIncludeDerivedTypes then
   begin
     for LType in GetRttiTypes do
     begin
-      if LType.IsInheritedFrom(ARttiType) and (LType.Handle <> ARttiType.Handle) then
+      if LType.IsInheritedFrom(AType) and (LType.Handle <> AType.Handle) then
       try
         AspectWeaver.InternalAddAspect(LType, AAspectClass, AMethodName);
       except
@@ -215,7 +215,7 @@ end;
 
 function TAspectWeaver.Proxify(Instance: IInterface; TypeInfo: PTypeInfo): IInterface;
 begin
-  Result := AspectWeaver.Proxify(Instance, TypeInfo)
+  Result := AspectWeaver.Proxify(Instance, TypeInfo);
 end;
 
 initialization

@@ -2341,7 +2341,7 @@ var
   i: Integer;
 begin
   SetLength(Result, Length(FParameters));
-  for i := Low(FParameters) to High(FParameters) do
+  for i := 0 to Pred(Length(FParameters)) do
   begin
     Result[i] := FParameters[i].Compile();
   end;
@@ -2365,9 +2365,9 @@ var
   i: Integer;
 begin
   Result := FExpression.ToString() + '.' + FName + '(';
-  for i := Low(FParameters) to High(FParameters) do
+  for i := 0 to Pred(Length(FParameters)) do
   begin
-    if i < High(FParameters) then
+    if i < Pred(Length(FParameters)) then
     begin
       Result := Result + FParameters[i].ToString() + ', ';
     end
@@ -2479,7 +2479,7 @@ begin
   Expression := Self;
   SetLength(Delegates, Length(FExpressions));
 
-  for i := 0 to High(FExpressions) do
+  for i := 0 to Pred(Length(FExpressions)) do
   begin
     Delegates[i] := FExpressions[i].Compile();
   end;
@@ -2510,7 +2510,7 @@ var
 begin
   Result := 'begin' + sLineBreak;
   ExpressionManager.Indent();
-  for i := 0 to High(FExpressions) do
+  for i := 0 to Pred(Length(FExpressions)) do
   begin
     Result := Result + GetIndentation + FExpressions[i].ToString() + sLineBreak;
   end;

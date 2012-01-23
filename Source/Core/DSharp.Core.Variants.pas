@@ -310,6 +310,6 @@ initialization
   ExpressionVariantType := TExpressionVariantType.Create();
 
 finalization
-  ExpressionVariantType.Free();;
+  ExpressionVariantType.Free();
 
 end.

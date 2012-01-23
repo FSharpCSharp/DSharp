@@ -75,6 +75,57 @@ type
       Expression: IExpression): Boolean; static;
   end;
 
+  TLambda<TResult> = record
+  private
+    FExpression: IExpression;
+  public
+    class operator Implicit(const Value: Variant): TLambda<TResult>;
+    class operator Implicit(const Value: TLambda<TResult>): TFunc<TResult>;
+
+    function Invoke: TResult;
+  end;
+
+  TLambda<T, TResult> = record
+  private
+    FExpression: IExpression;
+  public
+    class operator Implicit(const Value: Variant): TLambda<T, TResult>;
+    class operator Implicit(const Value: TLambda<T, TResult>): TFunc<T, TResult>;
+    class operator Implicit(const Value: TLambda<T, TResult>): TPredicate<T>;
+
+    function Invoke(Arg1: T): TResult;
+  end;
+
+  TLambda<T1, T2, TResult> = record
+  private
+    FExpression: IExpression;
+  public
+    class operator Implicit(const Value: Variant): TLambda<T1, T2, TResult>;
+    class operator Implicit(const Value: TLambda<T1, T2, TResult>): TFunc<T1, T2, TResult>;
+
+    function Invoke(Arg1: T1; Arg2: T2): TResult;
+  end;
+
+  TLambda<T1, T2, T3, TResult> = record
+  private
+    FExpression: IExpression;
+  public
+    class operator Implicit(const Value: Variant): TLambda<T1, T2, T3, TResult>;
+    class operator Implicit(const Value: TLambda<T1, T2, T3, TResult>): TFunc<T1, T2, T3, TResult>;
+
+    function Invoke(Arg1: T1; Arg2: T2; Arg3: T3): TResult;
+  end;
+
+  TLambda<T1, T2, T3, T4, TResult> = record
+  private
+    FExpression: IExpression;
+  public
+    class operator Implicit(const Value: Variant): TLambda<T1, T2, T3, T4, TResult>;
+    class operator Implicit(const Value: TLambda<T1, T2, T3, T4, TResult>): TFunc<T1, T2, T3, T4, TResult>;
+
+    function Invoke(Arg1: T1; Arg2: T2; Arg3: T3; Arg4: T4): TResult;
+  end;
+
 function Arg(AComponent: TComponent): Variant; overload;
 function Arg(AObject: TObject): Variant; overload;
 function Arg(const AValue: Variant): Variant; overload;
@@ -410,6 +461,109 @@ end;
 function TArgument.ToString: string;
 begin
   Result := Format('Arg%d', [FIndex]);
+end;
+
+{ TLambda<TResult> }
+
+class operator TLambda<TResult>.Implicit(
+  const Value: Variant): TLambda<TResult>;
+begin
+  Result.FExpression := Lambda.InitExpression(Value);
+end;
+
+class operator TLambda<TResult>.Implicit(
+  const Value: TLambda<TResult>): TFunc<TResult>;
+begin
+  Result := Lambda.Make<TResult>(Value.FExpression);
+end;
+
+function TLambda<TResult>.Invoke: TResult;
+begin
+  Result := FExpression.Execute.AsType<TResult>;
+end;
+
+{ TLambda<T, TResult> }
+
+class operator TLambda<T, TResult>.Implicit(
+  const Value: Variant): TLambda<T, TResult>;
+begin
+  Result.FExpression := Lambda.InitExpression(Value);
+end;
+
+class operator TLambda<T, TResult>.Implicit(
+  const Value: TLambda<T, TResult>): TFunc<T, TResult>;
+begin
+  Result := Lambda.Make<T, TResult>(Value.FExpression);
+end;
+
+class operator TLambda<T, TResult>.Implicit(
+  const Value: TLambda<T, TResult>): TPredicate<T>;
+begin
+  Result := Lambda.Predicate<T>(Value.FExpression);
+end;
+
+function TLambda<T, TResult>.Invoke(Arg1: T): TResult;
+begin
+  Result := FExpression.Execute.AsType<TResult>;
+end;
+
+{ TLambda<T1, T2, TResult> }
+
+class operator TLambda<T1, T2, TResult>.Implicit(
+  const Value: Variant): TLambda<T1, T2, TResult>;
+begin
+  Result.FExpression := Lambda.InitExpression(Value);
+end;
+
+class operator TLambda<T1, T2, TResult>.Implicit(
+  const Value: TLambda<T1, T2, TResult>): TFunc<T1, T2, TResult>;
+begin
+  Result := Lambda.Make<T1, T2, TResult>(Value.FExpression);
+end;
+
+function TLambda<T1, T2, TResult>.Invoke(Arg1: T1; Arg2: T2): TResult;
+begin
+  Result := FExpression.Execute.AsType<TResult>;
+end;
+
+{ TLambda<T1, T2, T3, TResult> }
+
+class operator TLambda<T1, T2, T3, TResult>.Implicit(
+  const Value: Variant): TLambda<T1, T2, T3, TResult>;
+begin
+  Result.FExpression := Lambda.InitExpression(Value);
+end;
+
+class operator TLambda<T1, T2, T3, TResult>.Implicit(
+  const Value: TLambda<T1, T2, T3, TResult>): TFunc<T1, T2, T3, TResult>;
+begin
+  Result := Lambda.Make<T1, T2, T3, TResult>(Value.FExpression);
+end;
+
+function TLambda<T1, T2, T3, TResult>.Invoke(Arg1: T1; Arg2: T2;
+  Arg3: T3): TResult;
+begin
+  Result := FExpression.Execute.AsType<TResult>;
+end;
+
+{ TLambda<T1, T2, T3, T4, TResult> }
+
+class operator TLambda<T1, T2, T3, T4, TResult>.Implicit(
+  const Value: Variant): TLambda<T1, T2, T3, T4, TResult>;
+begin
+  Result.FExpression := Lambda.InitExpression(Value);
+end;
+
+class operator TLambda<T1, T2, T3, T4, TResult>.Implicit(
+  const Value: TLambda<T1, T2, T3, T4, TResult>): TFunc<T1, T2, T3, T4, TResult>;
+begin
+  Result := Lambda.Make<T1, T2, T3, T4, TResult>(Value.FExpression);
+end;
+
+function TLambda<T1, T2, T3, T4, TResult>.Invoke(Arg1: T1; Arg2: T2; Arg3: T3;
+  Arg4: T4): TResult;
+begin
+  Result := FExpression.Execute.AsType<TResult>;
 end;
 
 end.

@@ -6,7 +6,8 @@ interface
 
 implementation
 
-{$IF CompilerVersion = 22}
+{$IF CompilerVersion < 23}
+{$IF CompilerVersion > 20}
 uses
   RTLConsts, PatchUtils, Rtti, SysConst, SysUtils, TypInfo, Windows;
 
@@ -69,6 +70,61 @@ type
   PPVtable = ^PVtable;
   PVtable = ^TVtable;
   TVtable = array[0..MaxInt div 4 - 1] of Pointer;
+
+{$IF CompilerVersion = 21}
+  TValueHelper = record helper for TValue
+    function Cast(ATypeInfo: PTypeInfo): TValue;
+    function TryCastFix(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
+  end;
+
+const
+  GUID_NULL: TGUID = '{00000000-0000-0000-0000-000000000000}';
+
+function ConvClass2Intf(const ASource: TValue; ATarget: PTypeInfo; out AResult: TValue): Boolean;
+var
+  iid: TGUID;
+  obj: Pointer;
+begin
+  iid := GetTypeData(ATarget)^.Guid;
+  if IsEqualGUID(iid, GUID_NULL) then
+    Exit(False);
+  Result := ASource.AsObject.GetInterface(iid, obj);
+  if Result then
+    TValue.MakeWithoutCopy(@obj, ATarget, AResult);
+end;
+
+function TValueHelper.Cast(ATypeInfo: PTypeInfo): TValue;
+begin
+  if not TryCastFix(ATypeInfo, Result) then
+    raise EInvalidCast.CreateRes(@SInvalidCast);
+end;
+
+function TValueHelper.TryCastFix(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
+begin
+  if (Self.FData.FTypeInfo^.Kind = tkClass) and (ATypeInfo^.Kind = tkInterface) then
+  begin
+    if IsEmpty then
+    begin
+      // nil converts to reference types
+      AResult := TValue.Empty;
+      Result := (ATypeInfo <> nil) and (ATypeInfo^.Kind in [tkInterface, tkClass, tkClassRef]);
+      if Result then
+        AResult.FData.FTypeInfo := ATypeInfo;
+      Exit;
+    end;
+    if Self.FData.FTypeInfo = ATypeInfo then
+    begin
+      AResult := Self;
+      Exit(True);
+    end;
+    if ATypeInfo = nil then
+      Exit(False);
+    Result := ConvClass2Intf(Self, ATypeInfo, AResult);
+  end
+  else
+    Result := TryCast(ATypeInfo, AResult);
+end;
+{$IFEND}
 
 procedure TInstanceMethodHelper.InstanceMethod;
 begin
@@ -339,13 +395,17 @@ procedure PatchRtti;
 var
   Ctx: TRttiContext;
   Meth: TRttiMethod;
+{$IF CompilerVersion = 22}
   P: PByte;
   Offset: Integer;
   n: Cardinal;
+{$IFEND}
 begin
+  Ctx := TRttiContext.Create;
+
+{$IF CompilerVersion = 22}
   // Get the code pointer of the TMethodImplementation.TInvokeInfo.GetParamLocs method for which
   // extended RTTI is available to find the private type private method SaveArguments.
-  Ctx := TRttiContext.Create;
   P := Ctx.GetType(TMethodImplementation).GetField('FInvokeInfo').FieldType.GetMethod('GetParamLocs').CodeAddress;
 
   // Find for the "locs[i].SetArg(AFrame, Args[i]);" call and replace it with a call to our function.
@@ -360,7 +420,7 @@ begin
   end
   else
     raise Exception.Create('Patching TMethodImplementation.TInvokeInfo.SaveArguments failed. Do you have set a breakpoint in the method?');
-
+{$IFEND}
 
   // Fix TRttiIntfMethod.DispatchInvoke
   Meth := ctx.GetType(TypeInfo(IIntfMethodHelper)).GetMethod('IntfMethod');
@@ -370,6 +430,7 @@ begin
   Meth := ctx.GetType(TInstanceMethodHelper).GetMethod('InstanceMethod');
   RedirectFunction(GetVirtualMethod(Meth, $34), @TRttiMethodFix.InstanceDispatchInvoke);
 
+{$IF CompilerVersion = 22}
   // Fix TRttiMethod.GetInvokeInfo
   // Find the private TRttiMethod.GetInvokeInfo method
   P := GetActualAddr(@TRttiMethod.CreateImplementation);
@@ -389,6 +450,7 @@ begin
   end
   else
     raise Exception.Create('TRttiMethod.CreateImplementation does not match the search pattern. Do you have set a breakpoint in the method?');
+{$IFEND}
 
   Ctx.Free;
 end;
@@ -402,6 +464,7 @@ initialization
       if not (e is EAbort) then
 //        MessageBox(0, PChar(e.ClassName + ': ' + e.Message), PChar(ExtractFileName(ParamStr(0))), MB_OK or MB_ICONERROR);
   end;
+{$IFEND}
 {$IFEND}
 
 end.

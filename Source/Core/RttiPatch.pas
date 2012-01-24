@@ -398,6 +398,7 @@ end;
 
 {--------------------------------------------------------------------------------------------------}
 
+{$IF CompilerVersion = 21}
 type
   TRttiPackageFix = class helper for TRttiPackage
     class function GetMakeTypeLookupTableAddress: Pointer;
@@ -492,6 +493,7 @@ begin
     Exit;
   DoMake;
 end;
+{$IFEND}
 
 {--------------------------------------------------------------------------------------------------}
 

@@ -9,7 +9,14 @@ implementation
 {$IF CompilerVersion < 23}
 {$IF CompilerVersion > 20}
 uses
-  RTLConsts, PatchUtils, Rtti, SysConst, SysUtils, TypInfo, Windows;
+  Generics.Collections,
+  PatchUtils,
+  RTLConsts,
+  Rtti,
+  SysConst,
+  SysUtils,
+  TypInfo,
+  Windows;
 
 {--------------------------------------------------------------------------------------------------}
 
@@ -391,6 +398,103 @@ end;
 
 {--------------------------------------------------------------------------------------------------}
 
+type
+  TRttiPackageFix = class helper for TRttiPackage
+    class function GetMakeTypeLookupTableAddress: Pointer;
+    procedure MakeTypeLookupTableFix;
+  end;
+
+procedure PeekData(var P: PByte; var Data; Len: Integer);
+begin
+  Move(P^, Data, Len);
+end;
+
+procedure ReadData(var P: PByte; var Data; Len: Integer);
+begin
+  PeekData(P, Data, Len);
+  Inc(P, Len);
+end;
+
+function ReadU8(var P: PByte): Byte;
+begin
+  ReadData(P, Result, SizeOf(Result));
+end;
+
+function ReadShortString(var P: PByte): string;
+var
+  len: Integer;
+begin
+  Result := UTF8ToString(PShortString(P)^);
+  len := ReadU8(P);
+  Inc(P, len);
+end;
+
+class function TRttiPackageFix.GetMakeTypeLookupTableAddress: Pointer;
+asm
+  lea eax, [TRttiPackage.MakeTypeLookupTable]
+end;
+
+procedure TRttiPackageFix.MakeTypeLookupTableFix;
+  function GetUnits: TArray<string>;
+  var
+    p: PByte;
+    i: Integer;
+  begin
+    SetLength(Result, Self.FTypeInfo^.UnitCount);
+    p := Pointer(Self.FTypeInfo^.UnitNames);
+    for i := 0 to Self.FTypeInfo^.UnitCount - 1 do
+      Result[i] := ReadShortString(p);
+  end;
+
+  procedure DoMake;
+  var
+    units: TArray<string>;
+    typeIter: PPTypeInfo;
+    currUnit: Integer;
+    typeName: string;
+    i: Integer;
+  begin
+    Self.FLock.Acquire;
+    try
+      if Self.FNameToType <> nil then // presumes double-checked locking ok
+        Exit;
+
+      units := GetUnits;
+      currUnit := 0;
+      Self.FNameToType := TDictionary<string,PTypeInfo>.Create;
+      Self.FTypeToName := TDictionary<PTypeInfo,string>.Create;
+      for i := 0 to Self.FTypeInfo^.TypeCount - 1 do
+      begin
+        typeIter := Self.FTypeInfo^.TypeTable^[i];
+        if typeIter = nil then
+          Continue;
+        if Integer(typeIter) = 1 then
+        begin
+          // inter-unit boundary
+          Inc(currUnit);
+          Continue;
+        end;
+        if typeIter^ = nil then // linker broke or fixup eliminated.
+          Continue;
+        typeName := units[currUnit] + '.' + UTF8ToString(typeIter^^.Name);
+        if not Self.FNameToType.ContainsKey(typeName) then
+          Self.FNameToType.Add(typeName, typeIter^);
+        if not Self.FTypeToName.ContainsKey(typeIter^) then
+          Self.FTypeToName.Add(typeIter^, typeName);
+      end;
+    finally
+      Self.FLock.Release;
+    end;
+  end;
+
+begin
+  if Self.FNameToType <> nil then
+    Exit;
+  DoMake;
+end;
+
+{--------------------------------------------------------------------------------------------------}
+
 procedure PatchRtti;
 var
   Ctx: TRttiContext;
@@ -429,6 +533,11 @@ begin
   // Fix TRttiInstanceMethodEx.DispatchInvoke
   Meth := ctx.GetType(TInstanceMethodHelper).GetMethod('InstanceMethod');
   RedirectFunction(GetVirtualMethod(Meth, $34), @TRttiMethodFix.InstanceDispatchInvoke);
+
+{$IF CompilerVersion = 21}
+  // Fix TRttiPackage.MakeTypeLookupTable
+  RedirectFunction(TRttiPackage.GetMakeTypeLookupTableAddress, @TRttiPackage.MakeTypeLookupTableFix);
+{$IFEND}
 
 {$IF CompilerVersion = 22}
   // Fix TRttiMethod.GetInvokeInfo

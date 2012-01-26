@@ -1451,7 +1451,14 @@ begin
     begin
       Result := Result + ', ';
     end;
-    Result := Result + Values[i].ToString;
+    if Values[i].IsString then
+    begin
+      Result := Result + '''' + Values[i].ToString + '''';
+    end
+    else
+    begin
+      Result := Result + Values[i].ToString;
+    end;
   end;
 end;
 

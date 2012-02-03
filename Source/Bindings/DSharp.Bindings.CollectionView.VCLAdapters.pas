@@ -583,14 +583,16 @@ procedure TCollectionViewTreeNodesAdapter.UpdateDisplayItem(AIndex: NativeInt;
 
   procedure CreateNodes(ANode: TTreeNode; AItemTemplate: IDataTemplate);
   var
+    i: Integer;
     LItem: TObject;
     LItemTemplate: IDataTemplate;
     LTreeNode: TTreeNode;
   begin
-    if Assigned(AItemTemplate) and (AItemTemplate.GetItemCount(ANode.Data) > 0) then
+    if Assigned(AItemTemplate) then
     begin
-      for LItem in AItemTemplate.GetItems(ANode.Data) do
+      for i := 0 to Pred(AItemTemplate.GetItemCount(ANode.Data)) do
       begin
+        LItem := AItemTemplate.GetItem(ANode.Data, i);
         LItemTemplate := AItemTemplate.GetItemTemplate(LItem);
         LTreeNode := FItems.AddChildObject(ANode, LItemTemplate.GetText(LItem, -1), LItem);
         CreateNodes(LTreeNode, LItemTemplate);

@@ -214,6 +214,7 @@ end;
 
 procedure TCollectionViewAdapter.UpdateItems(AClearItems: Boolean);
 var
+  i: Integer;
   LCurrentItem: TObject;
   LIndex: NativeInt;
   LItem: TValue;
@@ -227,8 +228,9 @@ begin
 
   if Assigned(FItemsSource) then
   begin
-    for LItem in FItemsSource do
+    for i := 0 to Pred(ItemTemplate.GetItemCount(ItemsSource as TObject)) do
     begin
+      LItem := ItemTemplate.GetItem(ItemsSource as TObject, i);
       LIndex := FindDisplayItem(LItem.ToObject);
       if not Assigned(FFilter) or FFilter(LItem.ToObject) then
       begin

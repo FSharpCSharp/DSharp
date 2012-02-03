@@ -601,13 +601,15 @@ procedure TCollectionViewTreeNodesAdapter.UpdateDisplayItem(AIndex: NativeInt;
   end;
 
 var
+  LItemTemplate: IDataTemplate;
   LTreeNode: TTreeNode;
 begin
   LTreeNode := TTreeNode(AIndex);
-  LTreeNode.Text := ItemTemplate.GetText(AItem, -1);
+  LItemTemplate := ItemTemplate.GetItemTemplate(AItem);
+  LTreeNode.Text := LItemTemplate.GetText(AItem, -1);
   LTreeNode.Data := AItem;
   LTreeNode.DeleteChildren();
-  CreateNodes(LTreeNode, ItemTemplate);
+  CreateNodes(LTreeNode, LItemTemplate);
 end;
 
 procedure TCollectionViewTreeNodesAdapter.UpdateItems(AClearItems: Boolean);

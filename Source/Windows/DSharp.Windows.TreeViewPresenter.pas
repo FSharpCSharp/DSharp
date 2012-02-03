@@ -903,10 +903,10 @@ procedure TTreeViewPresenter.ResetRootNodeCount;
 begin
   if Assigned(FTreeView) then
   begin
-    if Assigned(View.ItemsSource) then
+    if Assigned(View.ItemsSource) and Assigned(View.ItemTemplate) then
     begin
       FTreeView.Clear;
-      FTreeView.RootNodeCount := View.ItemsSource.Count;
+      FTreeView.RootNodeCount := View.ItemTemplate.GetItemCount(View.ItemsSource as TObject);
     end
     else
     begin

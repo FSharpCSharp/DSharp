@@ -1098,6 +1098,10 @@ end;
 function TRttiTypeHelper.IsGenericTypeDefinition: Boolean;
 begin
   Result := Length(GetGenericArguments) > 0;
+  if not Result and Assigned(BaseType) then
+  begin
+    Result := BaseType.IsGenericTypeDefinition;
+  end;
 end;
 
 function TRttiTypeHelper.IsGenericTypeOf(const BaseTypeName: string): Boolean;

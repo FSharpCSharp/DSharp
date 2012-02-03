@@ -164,12 +164,15 @@ var
 begin
   Result := nil;
 
-  for LTemplate in FTemplates do
+  if Assigned(FTemplates) then
   begin
-    Result := LTemplate.GetItemTemplate(Item);
-    if Assigned(Result) then
+    for LTemplate in FTemplates do
     begin
-      Break;
+      Result := LTemplate.GetItemTemplate(Item);
+      if Assigned(Result) then
+      begin
+        Break;
+      end;
     end;
   end;
 

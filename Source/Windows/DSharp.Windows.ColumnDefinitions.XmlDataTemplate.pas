@@ -67,13 +67,13 @@ end;
 
 function TXmlDataTemplate.GetItemCount(const Item: TObject): Integer;
 begin
-  if Assigned(Item) then
+  if Item is TXNode then
   begin
     Result := TXNode(Item).ChildNodes.Count;
   end
   else
   begin
-    Result := 0;
+    Result := inherited;
   end;
 end;
 

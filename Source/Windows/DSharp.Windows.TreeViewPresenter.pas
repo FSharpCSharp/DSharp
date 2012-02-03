@@ -514,7 +514,7 @@ begin
   end
   else
   begin
-    LItem := View.ItemsSource[Node.Index].ToObject;
+    LItem := View.ItemTemplate.GetItem(View.ItemsSource as TObject, Node.Index);
   end;
 
   SetNodeItem(Sender, Node, LItem);

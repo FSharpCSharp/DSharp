@@ -55,13 +55,13 @@ implementation
 function TXmlDataTemplate.GetItem(const Item: TObject;
   const Index: Integer): TObject;
 begin
-  if Assigned(Item) then
+  if Item is TXNode then
   begin
     Result := TXNode(Item).ChildNodes[Index];
   end
   else
   begin
-    Result := nil;
+    Result := inherited;
   end;
 end;
 
@@ -85,7 +85,7 @@ begin
   end
   else
   begin
-    Result := nil;
+    Result := inherited;
   end;
 end;
 
@@ -100,7 +100,7 @@ var
   LAttribute: TXNode;
   LNode: TXNode;
 begin
-  if Assigned(Item) then
+  if Item is TXNode then
   begin
     if Assigned(FColumnDefinitions)
       and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then

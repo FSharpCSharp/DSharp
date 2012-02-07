@@ -12,7 +12,7 @@ uses
 type
   [InheritedExport]
   [Logging]
-  IContactDetailsViewModel = interface
+  IContactDetailsViewModel = interface(IInvokable)
     ['{04FC1B4C-5B2A-4C41-BB84-39E69816F7D6}']
     function GetContact: TContact;
     procedure SetContact(const Value: TContact);
@@ -22,7 +22,7 @@ type
 
   [InheritedExport]
   [Logging]
-  IContactsOverviewViewModel = interface
+  IContactsOverviewViewModel = interface(IInvokable)
     ['{15AC3244-E2BB-42BE-AB15-61C2DF87FEB8}']
     function GetCanDeleteContact: Boolean;
     function GetCanEditContact: Boolean;

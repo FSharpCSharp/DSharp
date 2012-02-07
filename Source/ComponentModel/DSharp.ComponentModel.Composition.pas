@@ -87,6 +87,8 @@ type
   // Attribute marking a property for importing all exports as a dynamic array
   ImportManyAttribute = class(ImportBase);
 
+  ImportLazyAttribute = class(ImportAttribute);
+
   // Part creation policy defining whether a singleton or an instance
   // per request should be created.
   PartCreationPolicyAttribute = class(TBaseExportAttribute)

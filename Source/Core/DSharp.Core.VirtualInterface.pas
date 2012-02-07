@@ -77,10 +77,10 @@ type
     function Virtual_AddRef: Integer; stdcall;
     function Virtual_Release: Integer; stdcall;
     function VirtualQueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-
+  protected
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; virtual; stdcall;
 
     procedure DoInvoke(UserData: Pointer;
       const Args: TArray<TValue>; out Result: TValue);
@@ -91,6 +91,7 @@ type
       InvokeEvent: TVirtualInterfaceInvokeEvent); overload;
     destructor Destroy; override;
     property Instance: IInterface read FInstance write FInstance;
+    property InterfaceID: TGUID read FInterfaceID;
     property OnInvoke: TVirtualInterfaceInvokeEvent read FOnInvoke write FOnInvoke;
   end;
 

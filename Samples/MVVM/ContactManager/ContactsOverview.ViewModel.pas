@@ -7,7 +7,6 @@ uses
   ContactManager.Interfaces,
   DSharp.Collections,
   DSharp.ComponentModel.Composition,
-  DSharp.Core.Lazy,
   DSharp.PresentationModel.ViewModelBase;
 
 type
@@ -15,8 +14,8 @@ type
   private
     [Import('DemoData.Contacts')]
     FContacts: IList;
-    [Import]
-    FContactDetails: Lazy<IContactDetailsViewModel>;
+    [ImportLazy]
+    FContactDetails: IContactDetailsViewModel;
     FSelectedContact: TContact;
     function GetCanDeleteContact: Boolean;
     function GetCanEditContact: Boolean;
@@ -29,7 +28,7 @@ type
 
     property CanDeleteContact: Boolean read GetCanDeleteContact;
     property CanEditContact: Boolean read GetCanEditContact;
-    property ContactDetails: Lazy<IContactDetailsViewModel> read FContactDetails;
+    property ContactDetails: IContactDetailsViewModel read FContactDetails;
     property Contacts: IList read FContacts;
     property SelectedContact: TContact read GetSelectedContact write SetSelectedContact;
   end;
@@ -46,7 +45,7 @@ var
   LContact: TContact;
 begin
   LContact := TContact.Create();
-  ContactDetails.Value.Contact := LContact;
+  ContactDetails.Contact := LContact;
 
   if WindowManager.ShowDialog(ContactDetails) = mrOk then
   begin
@@ -69,7 +68,7 @@ end;
 
 procedure TContactsOverviewViewModel.EditContact;
 begin
-  FContactDetails.Value.Contact := FSelectedContact;
+  FContactDetails.Contact := FSelectedContact;
 
   WindowManager.ShowDialog(FContactDetails);
 end;

@@ -65,7 +65,7 @@ type
 
     procedure ImportRtti;
 
-    function Resolve(TypeInfo: PTypeInfo; const Name: string): TValue; overload;
+    function Resolve(TypeInfo: PTypeInfo; const Name: string = ''): TValue; overload;
 
     function ResolveLazy<T>: ILazy<T>; overload;
     function ResolveLazy(LazyType: TRttiType): TValue; overload;
@@ -182,6 +182,14 @@ var
 begin
   if Member.TryGetAttributeOfType<ImportAttribute>(LImportAttribute) then
   begin
+    if LImportAttribute is ImportLazyAttribute then
+    begin
+      LValue := ResolveLazy(Member.RttiType);
+      if Member is TRttiProperty then
+        Model.InjectProperty(Member.Name, LValue)
+      else if Member is TRttiField then
+        Model.InjectField(Member.Name, LValue);
+    end else
     if Member.RttiType.IsGenericTypeOf('Lazy') then
     begin
       LValue := ResolveLazy(Member.RttiType);
@@ -415,7 +423,7 @@ var
   LIntf: IInterface;
 begin
   if Name = '' then
-    LResult := Resolve(TypeInfo)
+    LResult := inherited Resolve(TypeInfo)
   else
     LResult := Resolve(Name);
 
@@ -473,25 +481,50 @@ end;
 
 function TSpringContainer.ResolveLazy(LazyType: TRttiType): TValue;
 var
+  Intf: IInterface;
+  Lazy: TLazy<IInterface>;
   LazyContentType: TRttiType;
   Value: TValue;
 begin
-  LazyContentType := LazyType.GetGenericArguments[0];
-  if LazyContentType is TRttiInterfaceType then
+  if LazyType.IsGenericTypeOf('Lazy') then
   begin
-    Value := TValue.From<Lazy<IInterface>>(Lazy<IInterface>(
-      function: IInterface
-      begin
-        Result := Resolve(LazyContentType.Handle).AsInterface;
-      end));
-  end;
-  if LazyContentType is TRttiInstanceType then
+    LazyContentType := LazyType.GetGenericArguments[0];
+    if LazyContentType is TRttiInterfaceType then
+    begin
+      Value := TValue.From<Lazy<IInterface>>(Lazy<IInterface>(
+        function: IInterface
+        begin
+          Result := Resolve(LazyContentType.Handle).AsInterface;
+        end));
+    end;
+    if LazyContentType is TRttiInstanceType then
+    begin
+      Value := TValue.From<Lazy<TObject>>(Lazy<TObject>(
+        function: TObject
+        begin
+          Result := Resolve(LazyContentType.Handle).AsObject;
+        end));
+    end;
+  end
+  else
   begin
-    Value := TValue.From<Lazy<TObject>>(Lazy<TObject>(
-      function: TObject
-      begin
-        Result := Resolve(LazyContentType.Handle).AsObject;
-      end));
+    LazyContentType := LazyType;
+    if LazyContentType is TRttiInterfaceType then
+    begin
+      Lazy := TLazy.Create(
+        function: IInterface
+        begin
+          Result := Resolve(LazyContentType.Handle).AsInterface;
+        end, LazyContentType.Handle);
+      Supports(Lazy, TRttiInterfaceType(LazyContentType).GUID, Intf);
+      Value := TValue.From<IInterface>(Intf);
+    end
+    else
+    begin
+      raise ENotSupportedException.CreateFmt(
+        'Lazy initialization of non interface types is not supported.' + sLineBreak +
+        'Please use Lazy<%s>', [LazyType.Name]);
+    end;
   end;
   TValueData(Value).FTypeInfo := LazyType.Handle;
   Result := Value;

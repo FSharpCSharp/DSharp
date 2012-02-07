@@ -152,6 +152,7 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.Default.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.Dynamics.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Editable.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
@@ -166,6 +167,7 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Utils.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Variants.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.VirtualInterface.pas"/>
 			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>

@@ -303,7 +303,8 @@ begin
   LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
   FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
 
-  if not FListMode and ((hiOnNormalIcon in LHitInfo.HitPositions)
+  if not FListMode and Assigned(LHitInfo.HitNode)
+    and ((hiOnNormalIcon in LHitInfo.HitPositions)
     or (not Assigned(OnDoubleClick) and not Assigned(Action))) then
   begin
     FTreeView.ToggleNode(LHitInfo.HitNode);
@@ -992,6 +993,7 @@ begin
         if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
         begin
           FTreeView.Selected[LNode] := True;
+          FTreeView.ScrollIntoView(LNode, True, True);
         end;
         LNode := FTreeView.GetNext(LNode);
       end;

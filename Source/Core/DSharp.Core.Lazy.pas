@@ -32,11 +32,11 @@ unit DSharp.Core.Lazy;
 interface
 
 uses
+  Rtti,
 {$IF COMPILERVERSION > 21}
   DSharp.Core.Dynamics,
 {$IFEND}
   DSharp.Core.Reflection,
-  Rtti,
   SysUtils,
   TypInfo;
 

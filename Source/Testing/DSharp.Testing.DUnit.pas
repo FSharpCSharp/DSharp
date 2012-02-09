@@ -146,12 +146,26 @@ end;
 
 function TTestCase.GetName: string;
 begin
-  Result := FMethod.Name + '(' + TValue.ToString(FArgs) + ')';
+  if Assigned(FMethod) then
+  begin
+    Result := FMethod.Name + '(' + TValue.ToString(FArgs) + ')';
+  end
+  else
+  begin
+    Result := inherited;
+  end;
 end;
 
 procedure TTestCase.Invoke(AMethod: TTestMethod);
 begin
-  FMethod.Invoke(Self, FArgs);
+  if Assigned(FMethod) then
+  begin
+    FMethod.Invoke(Self, FArgs);
+  end
+  else
+  begin
+    inherited;
+  end;
 end;
 
 class function TTestCase.Suite: ITestSuite;
@@ -163,11 +177,11 @@ end;
 
 procedure TTestSuite.AddTests(testClass: TTestCaseClass);
 var
-  LMethod: TRttiMethod;
+  i: Integer;
   LArgs: TArray<TValue>;
   LAttribute: TCustomAttribute;
+  LMethod: TRttiMethod;
   LParameters: TArray<TRttiParameter>;
-  i: Integer;
   LTestSuite: ITestSuite;
 
   procedure InternalInvoke(Index: Integer);
@@ -201,27 +215,34 @@ begin
   begin
     if LMethod.Visibility = mvPublished then
     begin
-      LTestSuite := TTestSuite.Create(LMethod.Name);
-      AddTest(LTestSuite);
-
       LParameters := LMethod.GetParameters;
       SetLength(LArgs, Length(LParameters));
 
-      for LAttribute in LMethod.GetAttributes do
+      if Length(LParameters) > 0 then
       begin
-        if LAttribute is TestCaseAttribute then
+        LTestSuite := TTestSuite.Create(LMethod.Name);
+        AddTest(LTestSuite);
+
+        for LAttribute in LMethod.GetAttributes do
         begin
-          for i := 0 to Pred(Length(LParameters)) do
+          if LAttribute is TestCaseAttribute then
           begin
-            TestCaseAttribute(LAttribute).Values[i].TryConvert(
-              LParameters[i].ParamType.Handle, LArgs[i]);
+            for i := 0 to Pred(Length(LParameters)) do
+            begin
+              TestCaseAttribute(LAttribute).Values[i].TryConvert(
+                LParameters[i].ParamType.Handle, LArgs[i]);
+            end;
+
+            LTestSuite.AddTest(TTestCaseClassInherited(testClass).Create(LMethod, LArgs));
           end;
-
-          LTestSuite.AddTest(TTestCaseClassInherited(testClass).Create(LMethod, LArgs));
         end;
-      end;
 
-      InternalInvoke(0);
+        InternalInvoke(0);
+      end
+      else
+      begin
+        AddTest(testClass.Create(LMethod.Name));
+      end;
     end;
   end;
 end;

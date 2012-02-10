@@ -66,6 +66,7 @@ type
 
   TColumnDefinition = class(TCollectionItem)
   private
+    FAlignment: TAlignment;
     FCaption: string;
     FCustomFilter: string;
     FFilter: TPredicate<TObject>;
@@ -88,6 +89,7 @@ type
     property ImageIndexPropertyExpression: IMemberExpression read FImageIndexPropertyExpression;
     property TextPropertyExpression: IMemberExpression read FTextPropertyExpression;
   published
+    property Alignment: TAlignment read FAlignment write FAlignment default taLeftJustify;
     property Caption: string read FCaption write FCaption;
     property CustomFilter: string read FCustomFilter write SetCustomFilter;
     property Filter: TPredicate<TObject> read FFilter;
@@ -122,7 +124,8 @@ type
     function _Release: Integer; stdcall;
   public
     constructor Create(AOwner: TPersistent = nil); override;
-    function Add(const Caption: string; const Width: Integer = CDefaultWidth): TColumnDefinition; overload;
+    function Add(const Caption: string; Width: Integer = CDefaultWidth;
+      Alignment: TAlignment = taLeftJustify): TColumnDefinition; overload;
   end;
 
 implementation
@@ -240,9 +243,11 @@ begin
     Destroy;
 end;
 
-function TColumnDefinitions.Add(const Caption: string; const Width: Integer): TColumnDefinition;
+function TColumnDefinitions.Add(const Caption: string;
+  Width: Integer; Alignment: TAlignment): TColumnDefinition;
 begin
   Result := Add();
+  Result.Alignment := Alignment;
   Result.Caption := Caption;
   Result.Width := Width;
 end;

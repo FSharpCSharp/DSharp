@@ -791,8 +791,10 @@ begin
       begin
         with FTreeView.Header.Columns.Add do
         begin
+          Alignment := ColumnDefinitions[i].Alignment;
           Text := ColumnDefinitions[i].Caption;
           Width := ColumnDefinitions[i].Width;
+          Options := Options + [coUseCaptionAlignment];
         end;
       end;
     end;

@@ -442,11 +442,14 @@ var
   LItem: TObject;
   LItemTemplate: IDataTemplate;
 begin
-  LItem := GetNodeItem(Sender, Node);
-  LItemTemplate := GetItemTemplate(LItem);
-  if Assigned(LItemTemplate) then
+  if Kind in [ikNormal, ikSelected] then
   begin
-    ImageIndex := LItemTemplate.GetImageIndex(LItem, Column);
+    LItem := GetNodeItem(Sender, Node);
+    LItemTemplate := GetItemTemplate(LItem);
+    if Assigned(LItemTemplate) then
+    begin
+      ImageIndex := LItemTemplate.GetImageIndex(LItem, Column);
+    end;
   end;
 end;
 

@@ -33,9 +33,6 @@ interface
 
 uses
   Rtti,
-{$IF COMPILERVERSION > 21}
-  DSharp.Core.Dynamics,
-{$IFEND}
   DSharp.Core.Reflection,
   SysUtils,
   TypInfo;
@@ -47,34 +44,21 @@ type
     property Value: T read Invoke;
   end;
 
-{$IF COMPILERVERSION > 21}
-  TLazy<T> = class(TVirtualInterface, ILazy<T>)
-{$ELSE}
   TLazy<T> = class(TInterfacedObject, ILazy<T>, IInterface)
-{$IFEND}
   private
     FIsValueCreated: Boolean;
     FValue: T;
     FValueFactory: TFunc<T>;
     procedure Initialize;
-{$IF COMPILERVERSION > 21}
-    procedure InternalInvoke(Method: TRttiMethod;
-      const Args: TArray<TValue>; out Result: TValue);
-{$IFEND}
     function Invoke: T;
   protected
-    function QueryInterface(const IID: TGUID; out Obj): HResult; {$IF COMPILERVERSION > 21}override; {$IFEND}stdcall;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
   public
-    constructor Create(ValueFactory: TFunc<T>); overload;
+    constructor Create(ValueFactory: TFunc<T>);
     destructor Destroy; override;
 
     function IsValueCreated: Boolean;
     property Value: T read Invoke;
-  end;
-
-  TLazy = class(TLazy<IInterface>)
-  public
-    constructor Create(ValueFactory: TFunc<IInterface>; TypeInfo: PTypeInfo);
   end;
 
   Lazy<T> = record
@@ -84,12 +68,10 @@ type
   public
     class constructor Create;
     property Value: T read GetValue;
-    class operator Implicit(const Value: TFunc<T>): Lazy<T>; overload;
+    class operator Implicit(const Value: Lazy<T>): ILazy<T>; overload;
     class operator Implicit(const Value: Lazy<T>): T; overload;
+    class operator Implicit(const Value: TFunc<T>): Lazy<T>; overload;
   end;
-
-const
-  ObjCastGUID: TGUID = '{CEDF24DE-80A4-447D-8C75-EB871DC121FD}';
 
 implementation
 
@@ -97,9 +79,6 @@ implementation
 
 constructor TLazy<T>.Create(ValueFactory: TFunc<T>);
 begin
-{$IF COMPILERVERSION > 21}
-  inherited Create(TypeInfo(T), InternalInvoke);
-{$IFEND}
   FValueFactory := ValueFactory;
 end;
 
@@ -124,47 +103,13 @@ begin
   begin
     FValue := FValueFactory();
     FIsValueCreated := True;
-{$IF COMPILERVERSION > 21}
-    if PTypeInfo(TypeInfo(T)).Kind = tkInterface then
-    begin
-      Instance := IInterface(PPointer(@FValue)^);
-    end;
-{$IFEND}
   end;
 end;
-
-{$IF COMPILERVERSION > 21}
-procedure TLazy<T>.InternalInvoke(Method: TRttiMethod;
-  const Args: TArray<TValue>; out Result: TValue);
-var
-  i: Integer;
-  LArgs: TArray<TValue>;
-  LParams: TArray<TRttiParameter>;
-begin
-  Initialize();
-  LParams := Method.GetParameters;
-  SetLength(LArgs, Pred(Length(Args)));
-  for i := 0 to Pred(Length(LArgs)) do
-  begin
-    LArgs[i] := Args[i + 1];
-  end;
-  Result := Method.Invoke(TValue.From<T>(FValue), LArgs);
-end;
-{$IFEND}
 
 function TLazy<T>.Invoke: T;
 begin
-{$IF COMPILERVERSION > 21}
-  if PTypeInfo(TypeInfo(T)).Kind = tkInterface then
-  begin
-    Supports(Self, InterfaceID, Result);
-  end
-  else
-{$IFEND}
-  begin
-    Initialize();
-    Result := FValue;
-  end;
+  Initialize();
+  Result := FValue;
 end;
 
 function TLazy<T>.IsValueCreated: Boolean;
@@ -181,18 +126,6 @@ begin
   Result := inherited;
 end;
 
-{ TLazy }
-
-constructor TLazy.Create(ValueFactory: TFunc<IInterface>; TypeInfo: PTypeInfo);
-begin
-{$IF COMPILERVERSION > 21}
-  inherited Create(TypeInfo, InternalInvoke);
-{$ELSE}
-  inherited Create(ValueFactory);
-{$IFEND}
-  FValueFactory := ValueFactory;
-end;
-
 { Lazy<T> }
 
 class constructor Lazy<T>.Create;
@@ -206,14 +139,19 @@ begin
   Result := FLazy();
 end;
 
-class operator Lazy<T>.Implicit(const Value: TFunc<T>): Lazy<T>;
+class operator Lazy<T>.Implicit(const Value: Lazy<T>): ILazy<T>;
 begin
-  Result.FLazy := TLazy<T>.Create(Value);
+  Result := Value.FLazy;
 end;
 
 class operator Lazy<T>.Implicit(const Value: Lazy<T>): T;
 begin
   Result := Value.Value;
+end;
+
+class operator Lazy<T>.Implicit(const Value: TFunc<T>): Lazy<T>;
+begin
+  Result.FLazy := TLazy<T>.Create(Value);
 end;
 
 end.

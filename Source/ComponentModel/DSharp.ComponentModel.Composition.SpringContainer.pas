@@ -34,6 +34,9 @@ interface
 uses
   DSharp.Aspects,
   DSharp.ComponentModel.Composition,
+{$IF CompilerVersion > 21}
+  DSharp.Core.Dynamics,
+{$IFEND}
   DSharp.Core.Lazy,
   DSharp.Core.Reflection,
   Generics.Collections,
@@ -101,7 +104,7 @@ implementation
 uses
   Spring.Collections;
 
-{$IF COMPILERVERSION = 21}
+{$IF CompilerVersion = 21}
 type
   TGuidHelper = record helper for TGUID
     class function Empty: TGUID; static;
@@ -482,7 +485,6 @@ end;
 function TSpringContainer.ResolveLazy(LazyType: TRttiType): TValue;
 var
   Intf: IInterface;
-  Lazy: TLazy<IInterface>;
   LazyContentType: TRttiType;
   Value: TValue;
 begin
@@ -511,13 +513,14 @@ begin
     LazyContentType := LazyType;
     if LazyContentType is TRttiInterfaceType then
     begin
-      Lazy := TLazy.Create(
+{$IF CompilerVersion > 21}
+      Supports(TVirtualInterfaceProxy.Create(
         function: IInterface
         begin
           Result := Resolve(LazyContentType.Handle).AsInterface;
-        end, LazyContentType.Handle);
-      Supports(Lazy, TRttiInterfaceType(LazyContentType).GUID, Intf);
+        end, LazyContentType.Handle), TRttiInterfaceType(LazyContentType).GUID, Intf);
       Value := TValue.From<IInterface>(Intf);
+{$IFEND}
     end
     else
     begin

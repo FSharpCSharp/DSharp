@@ -54,6 +54,23 @@ type
     destructor Destroy; override;
   end;
 
+  TVirtualInterfaceProxy<T: IInterface> = class(TVirtualInterface)
+  private
+    FFactory: TFunc<T>;
+    procedure EnsureInitialized;
+    procedure InternalInvoke(Method: TRttiMethod;
+      const Args: TArray<TValue>; out Result: TValue);
+  protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; override; stdcall;
+  public
+    constructor Create(Factory: TFunc<T>); overload;
+  end;
+
+  TVirtualInterfaceProxy = class(TVirtualInterfaceProxy<IInterface>)
+  public
+    constructor Create(Factory: TFunc<IInterface>; TypeInfo: PTypeInfo);
+  end;
+
   TInterfaceMethodInterceptor = class
   private
     FGuid: TGUID;
@@ -307,6 +324,60 @@ begin
     raise ENotImplemented.CreateResFmt(@CMethodNotImplemented,
       [Method.Parent.Name, Method.Name, TValue.ToString(@Args[1])]);
   end;
+end;
+
+{ TVirtualInterfaceProxy<T> }
+
+constructor TVirtualInterfaceProxy<T>.Create(Factory: TFunc<T>);
+begin
+  FFactory := Factory;
+  inherited Create(TypeInfo(T), InternalInvoke);
+end;
+
+procedure TVirtualInterfaceProxy<T>.EnsureInitialized;
+begin
+  if not Assigned(Instance) then
+  begin
+    Instance := FFactory();
+  end;
+end;
+
+procedure TVirtualInterfaceProxy<T>.InternalInvoke(Method: TRttiMethod;
+  const Args: TArray<TValue>; out Result: TValue);
+var
+  i: Integer;
+  LArgs: TArray<TValue>;
+  LParams: TArray<TRttiParameter>;
+  LInterface: T;
+begin
+  EnsureInitialized();
+  LParams := Method.GetParameters;
+  SetLength(LArgs, Pred(Length(Args)));
+  for i := 0 to Pred(Length(LArgs)) do
+  begin
+    LArgs[i] := Args[i + 1];
+  end;
+  Supports(Instance, InterfaceID, LInterface);
+  Result := Method.Invoke(TValue.From<T>(LInterface), LArgs);
+end;
+
+function TVirtualInterfaceProxy<T>.QueryInterface(const IID: TGUID;
+  out Obj): HResult;
+begin
+  if IsEqualGUID(IID, ObjCastGUID) then
+  begin
+    EnsureInitialized();
+  end;
+  Result := inherited;
+end;
+
+{ TVirtualInterfaceProxy }
+
+constructor TVirtualInterfaceProxy.Create(Factory: TFunc<IInterface>;
+  TypeInfo: PTypeInfo);
+begin
+  FFactory := Factory;
+  inherited Create(TypeInfo, InternalInvoke);
 end;
 
 { TInterfaceMethodInterceptor }

@@ -98,7 +98,8 @@ type
 implementation
 
 uses
-  RTLConsts;
+  RTLConsts,
+  SysUtils;
 
 { TVirtualInterface }
 
@@ -107,6 +108,7 @@ var
   i: Integer;
   LMaxVirtualIndex: SmallInt;
   LMethod: TRttiMethod;
+  LMethods: TArray<TRttiMethod>;
   LType: TRttiType;
 type
   PVtable = ^TVtable;
@@ -117,7 +119,12 @@ begin
   FMethodIntercepts := TObjectList<TMethodIntercept>.Create();
 
   LMaxVirtualIndex := 2;
-  for LMethod in LType.GetMethods() do
+  LMethods := LType.GetMethods();
+
+  if Length(LMethods) = 0 then
+    raise Exception.CreateFmt('Interface %s is missing TypeInfo', [LType.Name]);
+
+  for LMethod in LMethods do
   begin
     if LMaxVirtualIndex < LMethod.VirtualIndex then
     begin

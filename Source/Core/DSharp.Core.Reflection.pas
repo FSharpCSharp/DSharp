@@ -325,6 +325,9 @@ function SameValue(const Left, Right: TValue): Boolean;
 function SplitString(const S: string; const Delimiter: Char): TStringDynArray;
 {$ENDIF}
 
+const
+  ObjCastGUID: TGUID = '{CEDF24DE-80A4-447D-8C75-EB871DC121FD}';
+
 implementation
 
 uses

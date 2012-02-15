@@ -126,11 +126,11 @@ type
 
   TColumnDefinitions = class(TOwnedCollection<TColumnDefinition>, IColumnDefinitions)
   private
-    FMainColumnIndex: Integer;
     FRefCount: Integer;
 
     function GetMainColumnIndex: Integer;
   protected
+    FMainColumnIndex: Integer;
     procedure Initialize; virtual;
 
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;

@@ -278,14 +278,11 @@ procedure TTreeViewPresenter.DoCompareNodes(Sender: TBaseVirtualTree; Node1,
   Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
 var
   LItem1, LItem2: TObject;
-  LItemTemplate1, LItemTemplate2: IDataTemplate;
 begin
   if Column > -1 then
   begin
     LItem1 := GetNodeItem(Sender, Node1);
     LItem2 := GetNodeItem(Sender, Node2);
-    LItemTemplate1 := GetItemTemplate(LItem1);
-    LItemTemplate2 := GetItemTemplate(LItem2);
 
     if Assigned(FOnCompare) then
     begin
@@ -293,12 +290,7 @@ begin
     end
     else
     begin
-      // Using item template to sort
-      if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
-      begin
-        Result := CompareText(LItemTemplate1.GetText(LItem1, Column),
-          LItemTemplate2.GetText(LItem2, Column));
-      end;
+      Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
     end;
   end;
 end;
@@ -849,6 +841,7 @@ begin
           Options := Options + [coUseCaptionAlignment];
         end;
       end;
+      FTreeView.Header.SortColumn := ColumnDefinitions.MainColumnIndex;
     end;
     FTreeView.Header.Options := FTreeView.Header.Options + [hoVisible];
   end;

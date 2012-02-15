@@ -51,6 +51,8 @@ type
     function GetItems(const Item: TObject): IList<TObject>;
     function GetItemTemplate(const Item: TObject): IDataTemplate;
 
+    function CompareItems(const Item1, Item2: TObject; const ColumnIndex: Integer): Integer;
+
     // methods to manage the template "binding"
     function GetTemplateDataClass: TClass;
     procedure RegisterDataTemplate(const DataTemplate: IDataTemplate);
@@ -80,6 +82,9 @@ type
     function GetItemCount(const Item: TObject): Integer; virtual;
     function GetItems(const Item: TObject): IList<TObject>; virtual;
     function GetItemTemplate(const Item: TObject): IDataTemplate; virtual;
+
+    function CompareItems(const Item1, Item2: TObject;
+      const ColumnIndex: Integer): Integer; virtual;
 
     function GetTemplateDataClass: TClass; virtual;
     procedure RegisterDataTemplate(const DataTemplate: IDataTemplate);
@@ -119,9 +124,45 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection;
+  DSharp.Core.Reflection,
+  SysUtils;
 
 { TDataTemplate }
+
+function TDataTemplate.CompareItems(const Item1, Item2: TObject;
+  const ColumnIndex: Integer): Integer;
+var
+  LItemTemplate1, LItemTemplate2: IDataTemplate;
+begin
+  Result := 0;
+
+  if Item1.InheritsFrom(GetTemplateDataClass) then
+  begin
+    if Item2.InheritsFrom(GetTemplateDataClass) then
+    begin
+      Result := CompareText(GetText(Item1, ColumnIndex), GetText(Item2, ColumnIndex));
+    end else
+    begin
+      Result := -1;
+    end;
+  end else
+  begin
+    if Item2.InheritsFrom(GetTemplateDataClass) then
+    begin
+      Result := 1;
+    end else
+    begin
+      LItemTemplate1 := GetItemTemplate(Item1);
+      LItemTemplate2 := GetItemTemplate(Item2);
+
+      if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
+      begin
+        Result := CompareText(LItemTemplate1.GetText(Item1, ColumnIndex),
+          LItemTemplate2.GetText(Item2, ColumnIndex));
+      end;
+    end;
+  end;
+end;
 
 constructor TDataTemplate.Create;
 begin

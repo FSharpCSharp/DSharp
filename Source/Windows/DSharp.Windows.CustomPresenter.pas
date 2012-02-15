@@ -228,7 +228,7 @@ begin
     if (FView.ItemTemplate is TColumnDefinitionsControlTemplate)
       and ((FView.ItemTemplate as TColumnDefinitionsControlTemplate).ColumnDefinitions = FColumnDefinitions) then
     begin
-      FView.ItemTemplate := nil;
+      (FView.ItemTemplate as TColumnDefinitionsControlTemplate).ColumnDefinitions := Value;
     end;
   end;
   FColumnDefinitions := Value;

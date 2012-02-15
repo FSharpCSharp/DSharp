@@ -55,7 +55,8 @@ type
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
       const Value: string); override;
 
-    property ColumnDefinitions: IColumnDefinitions read FColumnDefinitions;
+    property ColumnDefinitions: IColumnDefinitions
+      read FColumnDefinitions write FColumnDefinitions;
   end;
 
 implementation

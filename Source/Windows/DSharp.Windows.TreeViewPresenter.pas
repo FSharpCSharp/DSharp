@@ -95,6 +95,9 @@ type
     procedure DoFilterNode(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoFocusChanged(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex);
+    procedure DoGetHint(Sender: TBaseVirtualTree; Node: PVirtualNode;
+      Column: TColumnIndex; var LineBreakStyle: TVTTooltipLineBreakStyle;
+      var HintText: string);
     procedure DoGetImageIndex(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Kind: TVTImageKind; Column: TColumnIndex; var Ghosted: Boolean;
       var ImageIndex: Integer);
@@ -432,6 +435,24 @@ begin
   if Assigned(LItem) then
   begin
     // nothing to do here yet
+  end;
+end;
+
+procedure TTreeViewPresenter.DoGetHint(Sender: TBaseVirtualTree;
+  Node: PVirtualNode; Column: TColumnIndex;
+  var LineBreakStyle: TVTTooltipLineBreakStyle; var HintText: string);
+var
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
+begin
+  FCurrentNode := Node;
+  DoPropertyChanged('ParentItem');
+
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
+  if Assigned(LItemTemplate) then
+  begin
+    HintText := LItemTemplate.GetHint(LItem, Column);
   end;
 end;
 
@@ -831,6 +852,7 @@ begin
     FTreeView.OnDragDrop := DoDragDrop;
     FTreeView.OnDragOver := DoDragOver;
     FTreeView.OnFocusChanged := DoFocusChanged;
+    FTreeView.OnGetHint := DoGetHint;
     FTreeView.OnGetImageIndex := DoGetImageIndex;
     FTreeView.OnGetText := DoGetText;
     FTreeView.OnHeaderClick := DoHeaderClick;
@@ -889,6 +911,8 @@ begin
         FTreeView.TreeOptions.PaintOptions + [toShowRoot, toShowTreeLines];
     end;
 
+    FTreeView.HintMode := hmHintAndDefault;
+    FTreeView.ShowHint := True;
     FTreeView.TreeOptions.AutoOptions :=
       FTreeView.TreeOptions.AutoOptions - [toAutoDeleteMovedNodes] + [toAutoSort];
     FTreeView.TreeOptions.MiscOptions :=

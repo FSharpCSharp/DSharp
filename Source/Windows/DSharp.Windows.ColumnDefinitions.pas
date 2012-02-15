@@ -57,6 +57,8 @@ type
   TCustomDrawEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject; TargetCanvas: TCanvas; CellRect: TRect;
     ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean of object;
+  TGetHintEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
+    Item: TObject): string of object;
   TGetImageIndexEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject): Integer of object;
   TGetTextEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
@@ -70,10 +72,13 @@ type
     FCaption: string;
     FCustomFilter: string;
     FFilter: TPredicate<TObject>;
+    FHintPropertyName: string;
+    FHintPropertyExpression: IMemberExpression;
     FImageIndexOffset: Integer;
     FImageIndexPropertyExpression: IMemberExpression;
     FImageIndexPropertyName: string;
     FOnCustomDraw: TCustomDrawEvent;
+    FOnGetHint: TGetHintEvent;
     FOnGetImageIndex: TGetImageIndexEvent;
     FOnGetText: TGetTextEvent;
     FOnSetText: TSetTextEvent;
@@ -81,11 +86,13 @@ type
     FTextPropertyName: string;
     FWidth: Integer;
     procedure SetCustomFilter(const Value: string);
+    procedure SetHintPropertyName(const Value: string);
     procedure SetImageIndexPropertyName(const Value: string);
     procedure SetTextPropertyName(const Value: string);
   public
     constructor Create(Collection: TCollection); override;
     procedure Assign(Source: TPersistent); override;
+    property HintPropertyExpression: IMemberExpression read FHintPropertyExpression;
     property ImageIndexPropertyExpression: IMemberExpression read FImageIndexPropertyExpression;
     property TextPropertyExpression: IMemberExpression read FTextPropertyExpression;
   published
@@ -93,9 +100,11 @@ type
     property Caption: string read FCaption write FCaption;
     property CustomFilter: string read FCustomFilter write SetCustomFilter;
     property Filter: TPredicate<TObject> read FFilter;
+    property HintPropertyName: string read FHintPropertyName write SetHintPropertyName;
     property ImageIndexOffset: Integer read FImageIndexOffset write FImageIndexOffset default 0;
     property ImageIndexPropertyName: string read FImageIndexPropertyName write SetImageIndexPropertyName;
     property OnCustomDraw: TCustomDrawEvent read FOnCustomDraw write FOnCustomDraw;
+    property OnGetHint: TGetHintEvent read FOnGetHint write FOnGetHint;
     property OnGetImageIndex: TGetImageIndexEvent read FOnGetImageIndex write FOnGetImageIndex;
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
@@ -123,7 +132,7 @@ type
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
   public
-    constructor Create(AOwner: TPersistent = nil); override;
+    constructor Create(AOwner: TPersistent = nil); override; final;
     function Add(const Caption: string; Width: Integer = CDefaultWidth;
       Alignment: TAlignment = taLeftJustify): TColumnDefinition; overload;
   end;
@@ -194,6 +203,13 @@ begin
   end;
 end;
 
+procedure TColumnDefinition.SetHintPropertyName(const Value: string);
+begin
+  FHintPropertyName := Value;
+  FHintPropertyExpression := TPropertyExpression.Create(
+    TParameterExpression.Create('Instance') as IExpression, FHintPropertyName);
+end;
+
 procedure TColumnDefinition.SetImageIndexPropertyName(const Value: string);
 begin
   FImageIndexPropertyName := Value;
@@ -213,6 +229,7 @@ end;
 constructor TColumnDefinitions.Create(AOwner: TPersistent);
 begin
   inherited;
+  PropName := 'ColumnDefinitions';
   Initialize();
 end;
 

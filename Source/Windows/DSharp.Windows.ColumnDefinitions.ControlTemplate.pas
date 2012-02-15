@@ -46,6 +46,7 @@ type
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
       DrawMode: TDrawMode): Boolean; override;
+    function GetHint(const Item: TObject; const ColumnIndex: Integer): string; override;
     function GetImageIndex(const Item: TObject;
       const ColumnIndex: Integer): Integer; override;
     function GetItemTemplate(const Item: TObject): IDataTemplate; override;
@@ -85,6 +86,36 @@ begin
         TargetCanvas, CellRect, ImageList, DrawMode);
     end
     else
+    begin
+      Result := inherited;
+    end;
+  end
+  else
+  begin
+    Result := inherited;
+  end;
+end;
+
+function TColumnDefinitionsControlTemplate.GetHint(const Item: TObject;
+  const ColumnIndex: Integer): string;
+var
+  LColumnDefinition: TColumnDefinition;
+begin
+  if Assigned(Item) and Assigned(FColumnDefinitions)
+    and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
+  begin
+    LColumnDefinition := FColumnDefinitions[ColumnIndex];
+
+    if Assigned(LColumnDefinition.OnGetHint) then
+    begin
+      Result := LColumnDefinition.OnGetHint(
+        FColumnDefinitions.Owner, LColumnDefinition, Item);
+    end else
+    if Assigned(LColumnDefinition.HintPropertyExpression) then
+    begin
+      (LColumnDefinition.HintPropertyExpression.Expression as IParameterExpression).Value := Item;
+      Result := LColumnDefinition.HintPropertyExpression.Value.ToString;
+    end else
     begin
       Result := inherited;
     end;

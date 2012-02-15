@@ -37,6 +37,7 @@ uses
 type
   IDataTemplate = interface
     // methods to display items
+    function GetHint(const Item: TObject; const ColumnIndex: Integer): string;
     function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer;
     function GetText(const Item: TObject; const ColumnIndex: Integer): string;
 
@@ -64,6 +65,8 @@ type
     constructor Create;
     destructor Destroy; override;
 
+    function GetHint(const Item: TObject;
+      const ColumnIndex: Integer): string; virtual;
     function GetImageIndex(const Item: TObject;
       const ColumnIndex: Integer): Integer; virtual;
     function GetText(const Item: TObject;
@@ -84,6 +87,11 @@ type
 
   TDataTemplate<T: class> = class(TDataTemplate)
   public
+    function GetHint(const Item: TObject;
+      const ColumnIndex: Integer): string; overload; override; final;
+    function GetHint(const Item: T;
+      const ColumnIndex: Integer): string; reintroduce; overload; virtual;
+
     function GetImageIndex(const Item: TObject;
       const ColumnIndex: Integer): Integer; overload; override; final;
     function GetImageIndex(const Item: T;
@@ -123,6 +131,12 @@ end;
 destructor TDataTemplate.Destroy;
 begin
   inherited;
+end;
+
+function TDataTemplate.GetHint(const Item: TObject;
+  const ColumnIndex: Integer): string;
+begin
+  Result := '';
 end;
 
 function TDataTemplate.GetImageIndex(const Item: TObject;
@@ -211,6 +225,18 @@ function TDataTemplate<T>.GetImageIndex(const Item: TObject;
   const ColumnIndex: Integer): Integer;
 begin
   Result := GetImageIndex(T(Item), ColumnIndex);
+end;
+
+function TDataTemplate<T>.GetHint(const Item: T;
+  const ColumnIndex: Integer): string;
+begin
+  Result := inherited GetHint(Item, ColumnIndex);
+end;
+
+function TDataTemplate<T>.GetHint(const Item: TObject;
+  const ColumnIndex: Integer): string;
+begin
+  Result := GetHint(T(Item), ColumnIndex);
 end;
 
 function TDataTemplate<T>.GetImageIndex(const Item: T;

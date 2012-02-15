@@ -235,7 +235,8 @@ begin
   LItem := GetNodeItem(Sender, Node);
   if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
-    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList, dmAfterCellPaint);
+    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList,
+      dmAfterCellPaint, Sender.Selected[Node]);
   end;
 end;
 
@@ -249,7 +250,8 @@ begin
   LItem := GetNodeItem(Sender, Node);
   if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
-    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList, dmBeforeCellPaint);
+    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList,
+      dmBeforeCellPaint, Sender.Selected[Node]);
   end;
 end;
 
@@ -692,7 +694,8 @@ begin
   LItem := GetNodeItem(Sender, Node);
   if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
-    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CDefaultCellRect, ImageList, dmPaintText);
+    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CDefaultCellRect,
+      ImageList, dmPaintText, Sender.Selected[Node]);
   end;
 end;
 

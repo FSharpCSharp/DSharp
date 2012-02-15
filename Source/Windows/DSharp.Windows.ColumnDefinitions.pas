@@ -56,7 +56,7 @@ type
 
   TCustomDrawEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject; TargetCanvas: TCanvas; CellRect: TRect;
-    ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean of object;
+    ImageList: TCustomImageList; DrawMode: TDrawMode; Selected: Boolean): Boolean of object;
   TGetHintEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject): string of object;
   TGetImageIndexEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;

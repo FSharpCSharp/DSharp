@@ -105,7 +105,8 @@ begin
   if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin
     Done := LItemTemplate.CustomDraw(LItem, ViewInfo.Column.ItemIndex,
-      Canvas.Canvas, ViewInfo.VisibleRect, ImageList, dmAfterCellPaint);
+      Canvas.Canvas, ViewInfo.VisibleRect, ImageList, dmAfterCellPaint,
+      ViewInfo.Selected);
   end;
 end;
 

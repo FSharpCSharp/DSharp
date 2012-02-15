@@ -45,24 +45,24 @@ type
     ['{D8A84E8C-DE21-4DDC-847A-4257A4493A28}']
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean;
+      DrawMode: TDrawMode; Selected: Boolean): Boolean;
   end;
 
   TControlTemplate = class(TDataTemplate, IControlTemplate)
   public
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean; virtual;
+      DrawMode: TDrawMode; Selected: Boolean): Boolean; virtual;
   end;
 
   TControlTemplate<T: class> = class(TDataTemplate<T>, IControlTemplate)
   public
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean; overload;
+      DrawMode: TDrawMode; Selected: Boolean): Boolean; overload;
     function CustomDraw(const Item: T; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean; reintroduce; overload; virtual;
+      DrawMode: TDrawMode; Selected: Boolean): Boolean; reintroduce; overload; virtual;
   end;
 
 implementation
@@ -71,7 +71,7 @@ implementation
 
 function TControlTemplate.CustomDraw(const Item: TObject;
   const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
-  ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
+  ImageList: TCustomImageList; DrawMode: TDrawMode; Selected: Boolean): Boolean;
 begin
   Result := False;
 end;
@@ -80,19 +80,18 @@ end;
 
 function TControlTemplate<T>.CustomDraw(const Item: TObject;
   const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
-  ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
+  ImageList: TCustomImageList; DrawMode: TDrawMode; Selected: Boolean): Boolean;
 begin
   Result := CustomDraw(T(Item), ColumnIndex,
-    TargetCanvas, CellRect, ImageList, DrawMode);
+    TargetCanvas, CellRect, ImageList, DrawMode, Selected);
 end;
 
 function TControlTemplate<T>.CustomDraw(const Item: T; const ColumnIndex: Integer;
   TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-  DrawMode: TDrawMode): Boolean;
+  DrawMode: TDrawMode; Selected: Boolean): Boolean;
 begin
   TControlTemplate(Self).CustomDraw(Item, ColumnIndex,
-    TargetCanvas, CellRect, ImageList, DrawMode);
+    TargetCanvas, CellRect, ImageList, DrawMode, Selected);
 end;
-
 
 end.

@@ -45,7 +45,7 @@ type
 
     function CustomDraw(const Item: TObject; const ColumnIndex: Integer;
       TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
-      DrawMode: TDrawMode): Boolean; override;
+      DrawMode: TDrawMode; IsSelected: Boolean): Boolean; override;
     function GetHint(const Item: TObject; const ColumnIndex: Integer): string; override;
     function GetImageIndex(const Item: TObject;
       const ColumnIndex: Integer): Integer; override;
@@ -74,7 +74,7 @@ end;
 
 function TColumnDefinitionsControlTemplate.CustomDraw(const Item: TObject;
   const ColumnIndex: Integer; TargetCanvas: TCanvas; CellRect: TRect;
-  ImageList: TCustomImageList; DrawMode: TDrawMode): Boolean;
+  ImageList: TCustomImageList; DrawMode: TDrawMode; IsSelected: Boolean): Boolean;
 begin
   if Assigned(Item) and Assigned(FColumnDefinitions)
     and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1) then
@@ -83,7 +83,7 @@ begin
     begin
       Result := FColumnDefinitions[ColumnIndex].OnCustomDraw(FColumnDefinitions.Owner,
         FColumnDefinitions[ColumnIndex], Item,
-        TargetCanvas, CellRect, ImageList, DrawMode);
+        TargetCanvas, CellRect, ImageList, DrawMode, IsSelected);
     end
     else
     begin

@@ -105,6 +105,8 @@ type
       Column: TColumnIndex; TextType: TVSTTextType;
       var CellText: string);
     procedure DoHeaderClick(Sender: TVTHeader; HitInfo: TVTHeaderHitInfo);
+    procedure DoIncrementalSearch(Sender: TBaseVirtualTree;
+      Node: PVirtualNode; const SearchText: string; var Result: Integer);
     procedure DoInitNode(Sender: TBaseVirtualTree; ParentNode,
       Node: PVirtualNode; var InitialStates: TVirtualNodeInitStates);
     procedure DoKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -184,6 +186,7 @@ uses
   DSharp.Core.Reflection,
   DSharp.Windows.ColumnDefinitions.ControlTemplate,
   DSharp.Windows.ControlTemplates,
+  Math,
   Windows;
 
 const
@@ -512,6 +515,31 @@ begin
       Sender.SortDirection := sdAscending;
     end;
   end;
+end;
+
+procedure TTreeViewPresenter.DoIncrementalSearch(Sender: TBaseVirtualTree;
+  Node: PVirtualNode; const SearchText: string; var Result: Integer);
+var
+  LCellText: string;
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
+begin
+  FCurrentNode := Node;
+  DoPropertyChanged('ParentItem');
+
+  LItem := GetNodeItem(Sender, Node);
+  LItemTemplate := GetItemTemplate(LItem);
+  if Assigned(LItemTemplate) then
+  begin
+    LCellText := LItemTemplate.GetText(LItem, ColumnDefinitions.MainColumnIndex);
+  end
+  else
+  begin
+    LCellText := '';
+  end;
+
+  Result := StrLIComp(PChar(SearchText), PChar(LCellText),
+    Min(Length(SearchText), Length(LCellText)));
 end;
 
 procedure TTreeViewPresenter.DoInitNode(Sender: TBaseVirtualTree; ParentNode,
@@ -859,6 +887,7 @@ begin
     FTreeView.OnGetImageIndex := DoGetImageIndex;
     FTreeView.OnGetText := DoGetText;
     FTreeView.OnHeaderClick := DoHeaderClick;
+    FTreeView.OnIncrementalSearch := DoIncrementalSearch;
     FTreeView.OnInitNode := DoInitNode;
     FTreeView.OnKeyDown := DoKeyDown;
     FTreeView.OnMouseDown := DoMouseDown;
@@ -915,6 +944,7 @@ begin
     end;
 
     FTreeView.HintMode := hmHintAndDefault;
+    FTreeView.IncrementalSearch := isAll;
     FTreeView.ShowHint := True;
     FTreeView.TreeOptions.AutoOptions :=
       FTreeView.TreeOptions.AutoOptions - [toAutoDeleteMovedNodes] + [toAutoSort];

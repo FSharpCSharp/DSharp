@@ -115,16 +115,21 @@ type
   IColumnDefinitions = interface
     function GetCount: Integer;
     function GetItem(Index: Integer): TColumnDefinition;
+    function GetMainColumnIndex: Integer;
     function GetOwner: TPersistent;
     procedure SetItem(Index: Integer; Value: TColumnDefinition);
     property Count: Integer read GetCount;
     property Items[Index: Integer]: TColumnDefinition read GetItem write SetItem; default;
+    property MainColumnIndex: Integer read GetMainColumnIndex;
     property Owner: TPersistent read GetOwner;
   end;
 
   TColumnDefinitions = class(TOwnedCollection<TColumnDefinition>, IColumnDefinitions)
   private
+    FMainColumnIndex: Integer;
     FRefCount: Integer;
+
+    function GetMainColumnIndex: Integer;
   protected
     procedure Initialize; virtual;
 
@@ -231,6 +236,11 @@ begin
   inherited;
   PropName := 'ColumnDefinitions';
   Initialize();
+end;
+
+function TColumnDefinitions.GetMainColumnIndex: Integer;
+begin
+  Result := FMainColumnIndex;
 end;
 
 procedure TColumnDefinitions.Initialize;

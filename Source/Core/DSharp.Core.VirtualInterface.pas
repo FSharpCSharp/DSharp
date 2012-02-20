@@ -121,9 +121,6 @@ begin
   LMaxVirtualIndex := 2;
   LMethods := LType.GetMethods();
 
-  if Length(LMethods) = 0 then
-    raise Exception.CreateFmt('Interface %s is missing TypeInfo', [LType.Name]);
-
   for LMethod in LMethods do
   begin
     if LMaxVirtualIndex < LMethod.VirtualIndex then

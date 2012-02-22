@@ -73,6 +73,7 @@ type
     FOnDragOver: TDragOverEvent;
     FOnSelectionChanged: TNotifyEvent;
     FSelectedItems: IList<TObject>;
+    FSorting: Boolean;
     FTreeView: TVirtualStringTree;
 
     procedure DoAfterCellPaint(Sender: TBaseVirtualTree; TargetCanvas: TCanvas;
@@ -129,6 +130,7 @@ type
 
     procedure ResetRootNodeCount;
 
+    procedure SetCheckedItems(const Value: IList<TObject>);
     procedure SetCheckSupport(const Value: TCheckSupport);
     procedure SetExpandedItems(const Value: IList<TObject>);
     procedure SetListMode(const Value: Boolean);
@@ -136,6 +138,7 @@ type
     procedure SetNodeItem(Tree: TBaseVirtualTree; Node: PVirtualNode; Item: TObject);
     procedure SetSelectedItem(const Value: TObject);
     procedure SetSelectedItems(const Value: IList<TObject>);
+    procedure SetSorting(const Value: Boolean);
     procedure SetTreeView(const Value: TVirtualStringTree);
 
     procedure UpdateCheckedItems;
@@ -161,7 +164,7 @@ type
 
     procedure Refresh; override;
 
-    property CheckedItems: IList<TObject> read GetCheckedItems;
+    property CheckedItems: IList<TObject> read GetCheckedItems write SetCheckedItems;
     property ExpandedItems: IList<TObject> read GetExpandedItems write SetExpandedItems;
     property ParentItem[const Level: Integer]: TObject read GetParentItem;
     property SelectedItem: TObject read GetSelectedItem write SetSelectedItem;
@@ -177,6 +180,7 @@ type
     property OnDragOver: TDragOverEvent read FOnDragOver write FOnDragOver;
     property OnSelectionChanged: TNotifyEvent
       read FOnSelectionChanged write FOnSelectionChanged;
+    property Sorting: Boolean read FSorting write SetSorting default True;
     property TreeView: TVirtualStringTree read FTreeView write SetTreeView;
   end;
 
@@ -196,11 +200,12 @@ const
 
 constructor TTreeViewPresenter.Create(AOwner: TComponent);
 begin
-  inherited;
-  FAllowMove := True;
   FCheckedItems := TList<TObject>.Create();
   FExpandedItems := TList<TObject>.Create();
   FSelectedItems := TList<TObject>.Create();
+  inherited;
+  FAllowMove := True;
+  FSorting := True;
 end;
 
 destructor TTreeViewPresenter.Destroy;
@@ -492,19 +497,22 @@ end;
 procedure TTreeViewPresenter.DoHeaderClick(Sender: TVTHeader;
   HitInfo: TVTHeaderHitInfo);
 begin
-  if Sender.SortColumn <> HitInfo.Column then
+  if FSorting then
   begin
-    Sender.SortColumn := HitInfo.Column;
-  end
-  else
-  begin
-    if Sender.SortDirection = sdAscending then
+    if Sender.SortColumn <> HitInfo.Column then
     begin
-      Sender.SortDirection := sdDescending;
+      Sender.SortColumn := HitInfo.Column;
     end
     else
     begin
-      Sender.SortDirection := sdAscending;
+      if Sender.SortDirection = sdAscending then
+      begin
+        Sender.SortDirection := sdDescending;
+      end
+      else
+      begin
+        Sender.SortDirection := sdAscending;
+      end;
     end;
   end;
 end;
@@ -951,8 +959,24 @@ begin
 end;
 
 procedure TTreeViewPresenter.Refresh;
+var
+  LCheckedItems: IList<TObject>;
+  LExpandedItems: IList<TObject>;
+  LSelectedItems: IList<TObject>;
 begin
-  ResetRootNodeCount();
+  if Assigned(FTreeView) then
+  begin
+    LCheckedItems := TList<TObject>.Create();
+    LCheckedItems.AddRange(CheckedItems);
+    LExpandedItems := TList<TObject>.Create();
+    LExpandedItems.AddRange(ExpandedItems);
+    LSelectedItems := TList<TObject>.Create();
+    LSelectedItems.AddRange(SelectedItems);
+    ResetRootNodeCount();
+    CheckedItems := LCheckedItems;
+    ExpandedItems := LExpandedItems;
+    SelectedItems := LSelectedItems;
+  end;
 end;
 
 procedure TTreeViewPresenter.ResetRootNodeCount;
@@ -967,6 +991,26 @@ begin
     else
     begin
       FTreeView.RootNodeCount := 0;
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.SetCheckedItems(const Value: IList<TObject>);
+var
+  LItem: TObject;
+  LNode: PVirtualNode;
+begin
+  if Assigned(Value) then
+  begin
+    LNode := FTreeView.GetFirst();
+    while Assigned(LNode) do
+    begin
+      LItem := GetNodeItem(FTreeView, LNode);
+      if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
+      begin
+        FTreeView.CheckState[LNode] := csCheckedNormal;
+      end;
+      LNode := FTreeView.GetNext(LNode);
     end;
   end;
 end;
@@ -1057,6 +1101,16 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.SetSorting(const Value: Boolean);
+begin
+  FSorting := Value;
+  if Assigned(FTreeView) and not FSorting then
+  begin
+    FTreeView.Header.SortColumn := -1;
+    Refresh();
+  end;
+end;
+
 procedure TTreeViewPresenter.SetTreeView(const Value: TVirtualStringTree);
 begin
   FTreeView := Value;
@@ -1068,16 +1122,19 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
 begin
-  FCheckedItems.Clear();
-  LNode := FTreeView.GetFirstChecked();
-  while Assigned(LNode) do
+  if Assigned(FTreeView) then
   begin
-    LItem := GetNodeItem(FTreeView, LNode);
-    if Assigned(LItem) then
+    FCheckedItems.Clear();
+    LNode := FTreeView.GetFirstChecked();
+    while Assigned(LNode) do
     begin
-      FCheckedItems.Add(LItem);
+      LItem := GetNodeItem(FTreeView, LNode);
+      if Assigned(LItem) then
+      begin
+        FCheckedItems.Add(LItem);
+      end;
+      LNode := FTreeView.GetNextChecked(LNode);
     end;
-    LNode := FTreeView.GetNextChecked(LNode);
   end;
 end;
 
@@ -1086,16 +1143,19 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
 begin
-  FExpandedItems.Clear();
-  LNode := FTreeView.GetFirst();
-  while Assigned(LNode) do
+  if Assigned(FTreeView) then
   begin
-    LItem := GetNodeItem(FTreeView, LNode);
-    if Assigned(LItem) and FTreeView.Expanded[LNode] then
+    FExpandedItems.Clear();
+    LNode := FTreeView.GetFirst();
+    while Assigned(LNode) do
     begin
-      FExpandedItems.Add(LItem);
+      LItem := GetNodeItem(FTreeView, LNode);
+      if Assigned(LItem) and FTreeView.Expanded[LNode] then
+      begin
+        FExpandedItems.Add(LItem);
+      end;
+      LNode := FTreeView.GetNext(LNode);
     end;
-    LNode := FTreeView.GetNext(LNode);
   end;
 end;
 
@@ -1105,15 +1165,18 @@ var
   LItem: TObject;
   LSelectedNodes: TNodeArray;
 begin
-  FSelectedItems.Clear();
-  LSelectedNodes := FTreeView.GetSortedSelection(False);
-
-  for i := Low(LSelectedNodes) to High(LSelectedNodes) do
+  if Assigned(FTreeView) then
   begin
-    LItem := GetNodeItem(FTreeView, LSelectedNodes[i]);
-    if Assigned(LItem) then
+    FSelectedItems.Clear();
+    LSelectedNodes := FTreeView.GetSortedSelection(False);
+
+    for i := Low(LSelectedNodes) to High(LSelectedNodes) do
     begin
-      FSelectedItems.Add(LItem);
+      LItem := GetNodeItem(FTreeView, LSelectedNodes[i]);
+      if Assigned(LItem) then
+      begin
+        FSelectedItems.Add(LItem);
+      end;
     end;
   end;
 

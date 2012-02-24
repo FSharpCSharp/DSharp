@@ -52,6 +52,7 @@ type
     FNotifyPropertyChanged: INotifyPropertyChanged;
     FOnDoubleClick: TNotifyEvent;
     FPopupMenu: TPopupMenu;
+    FUpdateCount: Integer;
     FView: TCollectionView;
     procedure ReadColumnDefinitions(Reader: TReader);
     procedure SetColumnDefinitions(const Value: IColumnDefinitions);
@@ -74,9 +75,13 @@ type
     procedure InitEvents; virtual;
     procedure InitProperties; virtual;
     procedure Loaded; override;
+    property UpdateCount: Integer read FUpdateCount;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+
+    procedure BeginUpdate; virtual;
+    procedure EndUpdate; virtual;
 
     function GetItemTemplate(const Item: TObject): IDataTemplate; overload;
     procedure Refresh; virtual;
@@ -129,6 +134,11 @@ begin
   inherited;
 end;
 
+procedure TCustomPresenter.BeginUpdate;
+begin
+  Inc(FUpdateCount);
+end;
+
 procedure TCustomPresenter.DefineProperties(Filer: TFiler);
 begin
   inherited;
@@ -161,7 +171,22 @@ end;
 procedure TCustomPresenter.DoSourceCollectionChanged(Sender, Item: TObject;
   Action: TCollectionChangedAction);
 begin
-  Refresh();
+  if FUpdateCount = 0 then
+  begin
+    Refresh();
+  end;
+end;
+
+procedure TCustomPresenter.EndUpdate;
+begin
+  if FUpdateCount > 0 then
+  begin
+    Dec(FUpdateCount);
+    if FUpdateCount = 0 then
+    begin
+      Refresh;
+    end;
+  end;
 end;
 
 function TCustomPresenter.GetCurrentItem: TObject;

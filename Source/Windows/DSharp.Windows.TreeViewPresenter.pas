@@ -156,7 +156,9 @@ type
     procedure InitProperties; override;
   public
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
+
+    procedure BeginUpdate; override;
+    procedure EndUpdate; override;
 
     procedure DeleteItems(Items: IList<TObject>);
     procedure FullCollapse;
@@ -208,9 +210,10 @@ begin
   FSorting := True;
 end;
 
-destructor TTreeViewPresenter.Destroy;
+procedure TTreeViewPresenter.BeginUpdate;
 begin
   inherited;
+  FTreeView.BeginUpdate();
 end;
 
 procedure TTreeViewPresenter.DeleteItems(Items: IList<TObject>);
@@ -730,7 +733,7 @@ procedure TTreeViewPresenter.DoSourceCollectionChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) then
+  if Assigned(FTreeView) and (UpdateCount = 0) then
   begin
     LNode := FTreeView.IterateSubtree(nil, GetItemNode, Pointer(Item));
     case Action of
@@ -746,6 +749,12 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TTreeViewPresenter.EndUpdate;
+begin
+  inherited;
+  FTreeView.EndUpdate();
 end;
 
 procedure TTreeViewPresenter.FullCollapse;

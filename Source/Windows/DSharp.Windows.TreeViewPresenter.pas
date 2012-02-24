@@ -54,7 +54,7 @@ type
   TDragOverEvent = procedure(Sender: TObject; TargetItem: TObject;
     var AllowDrop: Boolean) of object;
   TDragDropEvent = procedure(Sender: TObject; TargetItem: TObject;
-    DragOperation: TDragOperation) of object;
+    DragOperation: TDragOperation; var DropMode: TDropMode) of object;
 
   TCheckSupport = (csNone, csSimple, csTriState);
 
@@ -353,7 +353,7 @@ begin
     begin
       if Assigned(FOnDragDrop) then
       begin
-        FOnDragDrop(Sender, LItem, doCopy);
+        FOnDragDrop(Sender, LItem, doCopy, Mode);
       end;
       Sender.ReinitNode(LNode, True);
     end
@@ -361,7 +361,7 @@ begin
     begin
       if Assigned(FOnDragDrop) then
       begin
-        FOnDragDrop(Sender, LItem, doMove);
+        FOnDragDrop(Sender, LItem, doMove, Mode);
       end;
       for i := Low(LSelectedNodes) to High(LSelectedNodes) do
       begin

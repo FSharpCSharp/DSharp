@@ -51,9 +51,9 @@ type
   TCompareEvent = procedure(Sender: TObject; Item1, Item2: TObject;
     ColumnIndex: Integer; var Result: Integer) of object;
   TDragBeginEvent = procedure(Sender: TObject; var AllowDrag: Boolean) of object;
-  TDragOverEvent = procedure(Sender: TObject; TargetItem: TObject;
+  TDragOverEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
     var AllowDrop: Boolean) of object;
-  TDragDropEvent = procedure(Sender: TObject; TargetItem: TObject;
+  TDragDropEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
     DragOperation: TDragOperation; var DropMode: TDropMode) of object;
 
   TCheckSupport = (csNone, csSimple, csTriState);
@@ -346,30 +346,28 @@ var
 begin
   LNode := Sender.DropTargetNode;
   LItem := GetNodeItem(Sender, LNode);
-  if Assigned(LItem) then
+
+  LSelectedNodes := Sender.GetSortedSelection(False);
+  if ssCtrl in Shift then
   begin
-    LSelectedNodes := Sender.GetSortedSelection(False);
-    if ssCtrl in Shift then
+    if Assigned(FOnDragDrop) then
     begin
-      if Assigned(FOnDragDrop) then
-      begin
-        FOnDragDrop(Sender, LItem, doCopy, Mode);
-      end;
-      Sender.ReinitNode(LNode, True);
-    end
-    else
+      FOnDragDrop(Sender, Source, LItem, doCopy, Mode);
+    end;
+    Sender.ReinitNode(LNode, True);
+  end
+  else
+  begin
+    if Assigned(FOnDragDrop) then
     begin
-      if Assigned(FOnDragDrop) then
-      begin
-        FOnDragDrop(Sender, LItem, doMove, Mode);
-      end;
-      for i := Low(LSelectedNodes) to High(LSelectedNodes) do
-      begin
-        case Mode of
-          dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
-          dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
-          dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
-        end;
+      FOnDragDrop(Sender, Source, LItem, doMove, Mode);
+    end;
+    for i := Low(LSelectedNodes) to High(LSelectedNodes) do
+    begin
+      case Mode of
+        dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
+        dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+        dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
       end;
     end;
   end;
@@ -387,9 +385,9 @@ begin
   case Mode of
     dmAbove, dmBelow: Accept := FAllowMove;
   end;
-  if Assigned(LItem) and Assigned(FOnDragOver) then
+  if Assigned(FOnDragOver) then
   begin
-    FOnDragOver(Sender, LItem, Accept);
+    FOnDragOver(Sender, Source, LItem, Accept);
   end;
 end;
 

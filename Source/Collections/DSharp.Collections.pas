@@ -539,7 +539,7 @@ end;
 
 procedure TList<T>.Insert(const Index: NativeInt; const Value: TValue);
 begin
-  Insert(Index, Value.AsType<T>);
+
 end;
 
 procedure TList<T>.InsertRange(const Index: NativeInt; const Values: array of T);

@@ -91,6 +91,9 @@ type
     procedure Move(const OldIndex, NewIndex: NativeInt);
     function Remove(const Value: TValue): NativeInt;
     procedure SetItem(const Index: NativeInt; const Value: TValue);
+    procedure Sort; overload;
+    procedure Sort(Comparer: IComparer<TValue>); overload;
+    procedure Sort(Comparison: TComparison<TValue>); overload;
 
     property Capacity: NativeInt read GetCapacity write SetCapacity;
     property Count: NativeInt read GetCount;
@@ -123,6 +126,8 @@ type
     procedure Move(const OldIndex, NewIndex: NativeInt);
     function Remove(const Value: T): NativeInt;
     procedure SetItem(const Index: NativeInt; const Value: T);
+    procedure Sort(Comparer: IComparer<T>); overload;
+    procedure Sort(Comparison: TComparison<T>); overload;
 
     function ToArray: TArray<T>;
     function ToList: IList;
@@ -234,6 +239,11 @@ type
     procedure Move(const OldIndex, NewIndex: NativeInt);
     function Remove(const Value: T): NativeInt; overload;
     function Remove(const Value: TValue): NativeInt; overload;
+    procedure Sort; overload;
+    procedure Sort(Comparer: IComparer<T>); overload;
+    procedure Sort(Comparer: IComparer<TValue>); overload;
+    procedure Sort(Comparison: TComparison<T>); overload;
+    procedure Sort(Comparison: TComparison<TValue>); overload;
 
     function GetEnumerator: IEnumerator<T>; override;
     function ToArray: TArray<T>;
@@ -290,6 +300,9 @@ type
   end;
 
 implementation
+
+uses
+  Generics.Collections;
 
 { TArray }
 
@@ -640,7 +653,7 @@ end;
 
 procedure TList<T>.SetItem(const Index: NativeInt; const Value: TValue);
 begin
-
+  SetItem(Index, Value.AsType<T>);
 end;
 
 procedure TList<T>.SetItem(const Index: NativeInt; const Value: T);
@@ -655,6 +668,40 @@ begin
 
   Notify(LItem, caRemove);
   Notify(Value, caAdd);
+end;
+
+procedure TList<T>.Sort;
+var
+  LComparer: IComparer<T>;
+begin
+  LComparer := TComparer<T>.Default;
+  Sort(LComparer);
+end;
+
+procedure TList<T>.Sort(Comparer: IComparer<T>);
+begin
+  Generics.Collections.TArray.Sort<T>(FItems, Comparer, 0, Count);
+end;
+
+procedure TList<T>.Sort(Comparer: IComparer<TValue>);
+begin
+  Generics.Collections.TArray.Sort<T>(FItems,
+    TComparer<T>.Construct(
+    function(const Left, Right: T): Integer
+    begin
+      Result := Comparer.Compare(TValue.From<T>(Left), TValue.From<T>(Right));
+    end), 0, Count);
+end;
+
+
+procedure TList<T>.Sort(Comparison: TComparison<T>);
+begin
+  Sort(TComparer<T>.Construct(Comparison));
+end;
+
+procedure TList<T>.Sort(Comparison: TComparison<TValue>);
+begin
+  Sort(TComparer<TValue>.Construct(Comparison));
 end;
 
 function TList<T>.ToArray: TArray<T>;

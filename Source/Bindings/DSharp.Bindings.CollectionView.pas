@@ -57,7 +57,7 @@ type
     procedure DoCurrentChanged;
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); virtual;
-    procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
+    procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction); virtual;
     function GetCanMoveCurrentToNext: Boolean; virtual;
     function GetCanMoveCurrentToPrevious: Boolean; virtual;
@@ -136,8 +136,8 @@ begin
 
 end;
 
-procedure TCollectionView.DoSourceCollectionChanged(Sender, Item: TObject;
-  Action: TCollectionChangedAction);
+procedure TCollectionView.DoSourceCollectionChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
 begin
   case Action of
     caReplace:

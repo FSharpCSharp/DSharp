@@ -50,7 +50,7 @@ type
 
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
-    procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
+    procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction); override;
     function GetOwner: TPersistent; override;
     procedure SetItemsSource(const Value: IList); override;
@@ -134,8 +134,8 @@ begin
 
 end;
 
-procedure TCollectionViewAdapter.DoSourceCollectionChanged(Sender,
-  Item: TObject; Action: TCollectionChangedAction);
+procedure TCollectionViewAdapter.DoSourceCollectionChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
 var
   LIndex: NativeInt;
 begin

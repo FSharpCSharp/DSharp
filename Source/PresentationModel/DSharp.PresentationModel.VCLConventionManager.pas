@@ -57,9 +57,9 @@ uses
 type
   TConventionManager = class
   private
-    procedure PageControlCollectionChanged(Sender, Item: TObject;
+    procedure PageControlCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction);
-    procedure ScrollBoxCollectionChanged(Sender, Item: TObject;
+    procedure ScrollBoxCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction);
   end;
 
@@ -72,8 +72,8 @@ var
 
 { TConventionManager }
 
-procedure TConventionManager.PageControlCollectionChanged(Sender,
-  Item: TObject; Action: TCollectionChangedAction);
+procedure TConventionManager.PageControlCollectionChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
 var
   LView: TControl;
   LTabSheet: TTabSheet;
@@ -93,8 +93,8 @@ begin
   end;
 end;
 
-procedure TConventionManager.ScrollBoxCollectionChanged(Sender, Item: TObject;
-  Action: TCollectionChangedAction);
+procedure TConventionManager.ScrollBoxCollectionChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
 var
   i: Integer;
   LItemIndex: Integer;

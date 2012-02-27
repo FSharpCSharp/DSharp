@@ -93,9 +93,9 @@ type
     procedure DoTargetUpdated(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger);
     procedure DoValidationErrorsChanged(Sender: TObject;
-      Item: IValidationResult; Action: TCollectionChangedAction);
+      const Item: IValidationResult; Action: TCollectionChangedAction);
     procedure DoValidationRulesChanged(Sender: TObject;
-      Item: IValidationRule; Action: TCollectionChangedAction);
+      const Item: IValidationRule; Action: TCollectionChangedAction);
     function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
     function GetOnValidation: TEvent<TValidationEvent>;
     function GetValidationErrors: IList<IValidationResult>;
@@ -162,7 +162,7 @@ type
     FUpdateSourceExpression: TCompiledExpression;
     FUpdateTargetExpression: TCompiledExpression;
     procedure CompileExpressions; override;
-    procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
+    procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction);
     procedure DoSourcePropertyChanged(ASender: TObject;
       APropertyName: string; AUpdateTrigger: TUpdateTrigger);
@@ -233,9 +233,9 @@ type
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoValidationErrorsChanged(Sender: TObject;
-      Item: IValidationResult; Action: TCollectionChangedAction);
+      const Item: IValidationResult; Action: TCollectionChangedAction);
     procedure DoValidationRulesChanged(Sender: TObject;
-      Item: IValidationRule; Action: TCollectionChangedAction);
+      const Item: IValidationRule; Action: TCollectionChangedAction);
     procedure DefineProperties(Filer: TFiler); override;
     procedure Loaded; override;
     procedure ReadBindings(AReader: TReader);
@@ -425,13 +425,13 @@ begin
 end;
 
 procedure TBindingBase.DoValidationErrorsChanged(Sender: TObject;
-  Item: IValidationResult; Action: TCollectionChangedAction);
+  const Item: IValidationResult; Action: TCollectionChangedAction);
 begin
   DoPropertyChanged('ValidationErrors');
 end;
 
 procedure TBindingBase.DoValidationRulesChanged(Sender: TObject;
-  Item: IValidationRule; Action: TCollectionChangedAction);
+  const Item: IValidationRule; Action: TCollectionChangedAction);
 begin
   Validate();
   DoPropertyChanged('ValidationRules');
@@ -729,7 +729,7 @@ begin
 end;
 
 procedure TBinding.DoSourceCollectionChanged(Sender: TObject;
-  Item: TObject; Action: TCollectionChangedAction);
+  const Item: TObject; Action: TCollectionChangedAction);
 var
   LCollectionView: ICollectionView;
   LEvent: TEvent<TCollectionChangedEvent>;
@@ -1196,13 +1196,13 @@ begin
 end;
 
 procedure TBindingGroup.DoValidationErrorsChanged(Sender: TObject;
-  Item: IValidationResult; Action: TCollectionChangedAction);
+  const Item: IValidationResult; Action: TCollectionChangedAction);
 begin
   DoPropertyChanged('ValidationErrors');
 end;
 
 procedure TBindingGroup.DoValidationRulesChanged(Sender: TObject;
-  Item: IValidationRule; Action: TCollectionChangedAction);
+  const Item: IValidationRule; Action: TCollectionChangedAction);
 begin
   Validate();
   DoPropertyChanged('ValidationRules');

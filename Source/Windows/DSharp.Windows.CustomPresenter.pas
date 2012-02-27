@@ -102,7 +102,7 @@ type
   protected
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
-    procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
+    procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction); override;
     function GetCurrentItem: TObject; override;
     procedure SetCurrentItem(const Value: TObject); override;
@@ -298,8 +298,8 @@ begin
   NotifyPropertyChanged(FPresenter, Self, 'View');
 end;
 
-procedure TCollectionViewPresenterAdapter.DoSourceCollectionChanged(Sender,
-  Item: TObject; Action: TCollectionChangedAction);
+procedure TCollectionViewPresenterAdapter.DoSourceCollectionChanged(
+  Sender: TObject; const Item: TObject; Action: TCollectionChangedAction);
 begin
   inherited;
 

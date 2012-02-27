@@ -41,7 +41,7 @@ uses
 
 type
   TCollectionChangedAction = (caAdd, caRemove, caReplace, caMove);
-  TCollectionChangedEvent<T> = procedure(Sender: TObject; Item: T;
+  TCollectionChangedEvent<T> = procedure(Sender: TObject; const Item: T;
     Action: TCollectionChangedAction) of object;
 
   TArray = record

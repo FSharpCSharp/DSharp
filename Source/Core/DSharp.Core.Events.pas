@@ -52,7 +52,7 @@ type
     property Invoke: TMethod read GetInvoke;
   end;
 
-  TEventBase = class abstract(TInterfacedObject, IEvent)
+  TEvent = class abstract(TInterfacedObject, IEvent)
   strict private
     FInternalDispatcher: TMethod;
     FMethods: TList<TMethod>;
@@ -89,7 +89,7 @@ type
     property Invoke: T read GetInvoke;
   end;
 
-  TEvent<T> = class(TEventBase, IEvent<T>)
+  TEvent<T> = class(TEvent, IEvent<T>)
   strict private
     FInvoke: T;
     FNotificationHandler: TNotificationHandler<TEvent<T>>;
@@ -220,13 +220,13 @@ end;
 
 { TEventHandler }
 
-constructor TEventBase.Create;
+constructor TEvent.Create;
 begin
   FMethods := TList<TMethod>.Create();
   FMethods.OnNotify := InternalNotify;
 end;
 
-destructor TEventBase.Destroy;
+destructor TEvent.Destroy;
 begin
   FMethods.Free();
   ReleaseMethodPointer(FInternalDispatcher);
@@ -234,7 +234,7 @@ begin
 end;
 
 
-procedure TEventBase.InternalInvoke(Params: PParameters; StackSize: Integer);
+procedure TEvent.InternalInvoke(Params: PParameters; StackSize: Integer);
 const
   PointerSize = SizeOf(Pointer);
 var
@@ -301,7 +301,7 @@ begin
 end;
 {$IFEND}
 
-procedure TEventBase.InternalNotify(Sender: TObject; const Item: TMethod;
+procedure TEvent.InternalNotify(Sender: TObject; const Item: TMethod;
   Action: TCollectionNotification);
 begin
   if Assigned(Item.Data) and not IsValid(Item.Data) then
@@ -313,7 +313,7 @@ begin
   end;
 end;
 
-procedure TEventBase.Add(const AEvent: TMethod);
+procedure TEvent.Add(const AEvent: TMethod);
 var
   LMethod: TMethod;
 begin
@@ -326,12 +326,12 @@ begin
   MethodAdded(TMethod(AEvent));
 end;
 
-function TEventBase.GetCount: Integer;
+function TEvent.GetCount: Integer;
 begin
   Result := FMethods.Count;
 end;
 
-function TEventBase.IndexOf(const AEvent: TMethod): Integer;
+function TEvent.IndexOf(const AEvent: TMethod): Integer;
 var
   i: Integer;
 begin
@@ -347,7 +347,7 @@ begin
   end;
 end;
 
-function TEventBase.IndexOfInstance(const AInstance: TObject): Integer;
+function TEvent.IndexOfInstance(const AInstance: TObject): Integer;
 var
   i: Integer;
 begin
@@ -362,7 +362,7 @@ begin
   end;
 end;
 
-procedure TEventBase.Remove(const AEvent: TMethod);
+procedure TEvent.Remove(const AEvent: TMethod);
 var
   i: Integer;
 begin
@@ -374,7 +374,7 @@ begin
   MethodRemoved(TMethod(AEvent));
 end;
 
-procedure TEventBase.RemoveInstanceReferences(const AInstance: TObject);
+procedure TEvent.RemoveInstanceReferences(const AInstance: TObject);
 var
   i: Integer;
 begin
@@ -387,7 +387,7 @@ begin
   until i = -1;
 end;
 
-procedure TEventBase.SetDispatcher(var AMethod: TMethod;
+procedure TEvent.SetDispatcher(var AMethod: TMethod;
   ATypeData: PTypeData);
 begin
   if Assigned(FInternalDispatcher.Code)

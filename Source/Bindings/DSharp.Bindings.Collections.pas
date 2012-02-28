@@ -43,8 +43,8 @@ type
 
   INotifyCollectionChanged = interface
     ['{FE0D3160-6BCE-46B6-B01D-1B3C23EA76F3}']
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent>
+    function GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
+    property OnCollectionChanged: IEvent<TCollectionChangedEvent>
       read GetOnCollectionChanged;
   end;
 

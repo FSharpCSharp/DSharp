@@ -49,18 +49,18 @@ type
     ['{6627279B-8112-4A92-BBD3-795185A41966}']
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent>
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
+    property OnPropertyChanged: IEvent<TPropertyChangedEvent>
       read GetOnPropertyChanged;
   end;
 
   TNotifyPropertyChanged = class sealed(TInterfacedObject, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FOnPropertyChanged: Event<TPropertyChangedEvent>;
     FOwner: TObject;
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
   public
     constructor Create(AOwner: TObject);
   end;
@@ -77,7 +77,7 @@ procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string
   AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+  LPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
   if Supports(AObject, INotifyPropertyChanged, LNotifyPropertyChanged) then
   begin
@@ -99,9 +99,9 @@ begin
   FOnPropertyChanged.Invoke(FOwner, APropertyName, AUpdateTrigger);
 end;
 
-function TNotifyPropertyChanged.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TNotifyPropertyChanged.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
-  Result := FOnPropertyChanged.EventHandler;
+  Result := FOnPropertyChanged;
 end;
 
 end.

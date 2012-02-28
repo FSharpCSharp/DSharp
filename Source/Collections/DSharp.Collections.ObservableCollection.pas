@@ -42,9 +42,9 @@ type
   TObservableCollection<T: class> = class(TObjectList<T>,
     INotifyCollectionChanged, INotifyPropertyChanged)
   private
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FOnPropertyChanged: Event<TPropertyChangedEvent>;
+    function GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
   protected
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
@@ -52,7 +52,7 @@ type
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure Notify(const Value: T; const Action: TCollectionChangedAction); override;
   public
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
+    property OnPropertyChanged: IEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
 
 implementation
@@ -71,20 +71,20 @@ begin
   FOnPropertyChanged.Invoke(Self, 'Count');
 end;
 
-function TObservableCollection<T>.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+function TObservableCollection<T>.GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
-  TEvent<TCollectionChangedEvent<T>>(Result) := inherited GetOnCollectionChanged;
+  IEvent<TCollectionChangedEvent<T>>(Result) := inherited GetOnCollectionChanged;
 end;
 
-function TObservableCollection<T>.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TObservableCollection<T>.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
-  Result := FOnPropertyChanged.EventHandler;
+  Result := FOnPropertyChanged;
 end;
 
 procedure TObservableCollection<T>.Notify(const Value: T; const Action: TCollectionChangedAction);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+  LPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
 //  inherited;
 

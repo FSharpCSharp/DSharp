@@ -40,7 +40,7 @@ uses
 type
   TProperty<T> = record
   private
-    FOnChange: IEventHandler<TNotifyEvent>;
+    FOnChange: IEvent<TNotifyEvent>;
     FOwner: TObject;
     FValue: T;
     // this needs to be the last field so the other values
@@ -54,13 +54,13 @@ type
     class operator Implicit(AValue: TProperty<T>): T;
 
     function ToString: string;
-    property OnChange: IEventHandler<TNotifyEvent> read FOnChange;
+    property OnChange: IEvent<TNotifyEvent> read FOnChange;
     property Value: T read GetValue write SetValue;
   end;
 
   TField<T> = record
   private
-    FEvent: TEvent<TNotifyEvent>;
+    FEvent: Event<TNotifyEvent>;
   public
     Value: TProperty<T>;
     procedure Initialize(Owner: TObject);
@@ -71,7 +71,7 @@ type
 
   TPropertyCopyOperator<T> = class(TCopyOperator<TProperty<T>>)
   private
-    FEventHandler: IEventHandler<TNotifyEvent>;
+    FEventHandler: IEvent<TNotifyEvent>;
     FOwner: TObject;
   protected
     procedure Copy; override;

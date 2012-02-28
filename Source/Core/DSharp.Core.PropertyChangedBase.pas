@@ -39,8 +39,8 @@ uses
 type
   TPropertyChangedBase = class abstract(TPersistent, IInterface, INotifyPropertyChanged)
   private
-    FPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FPropertyChanged: Event<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
@@ -59,9 +59,9 @@ begin
   FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
-function TPropertyChangedBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TPropertyChangedBase.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
-  Result := FPropertyChanged.EventHandler;
+  Result := FPropertyChanged;
 end;
 
 function TPropertyChangedBase.QueryInterface(const IID: TGUID; out Obj): HResult;

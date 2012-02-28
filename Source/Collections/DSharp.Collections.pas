@@ -82,7 +82,7 @@ type
     procedure DeleteRange(const Index, Count: NativeInt);
     function First: TValue;
     function GetItem(const Index: NativeInt): TValue;
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent<TValue>>;
+    function GetOnCollectionChanged: IEvent;
     function IndexOf(const Value: TValue): NativeInt;
     procedure Insert(const Index: NativeInt; const Value: TValue);
     procedure InsertRange(const Index: NativeInt; const Values: array of TValue); overload;
@@ -98,8 +98,7 @@ type
     property Capacity: NativeInt read GetCapacity write SetCapacity;
     property Count: NativeInt read GetCount;
     property Items[const Index: NativeInt]: TValue read GetItem write SetItem; default;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent<TValue>>
-      read GetOnCollectionChanged;
+    property OnCollectionChanged: IEvent read GetOnCollectionChanged;
   end;
 
   IList<T> = interface(IEnumerable<T>)
@@ -116,7 +115,7 @@ type
     procedure DeleteRange(const Index, Count: NativeInt);
     function First: T;
     function GetItem(const Index: NativeInt): T;
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
+    function GetOnCollectionChanged: IEvent<TCollectionChangedEvent<T>>;
     function IndexOf(const Value: T): NativeInt;
     procedure Insert(const Index: NativeInt; const Value: T);
     procedure InsertRange(const Index: NativeInt; const Values: array of T); overload;
@@ -135,7 +134,7 @@ type
     property Capacity: NativeInt read GetCapacity write SetCapacity;
     property Count: NativeInt read GetCount;
     property Items[const Index: NativeInt]: T read GetItem write SetItem; default;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent<T>>
+    property OnCollectionChanged: IEvent<TCollectionChangedEvent<T>>
       read GetOnCollectionChanged;
   end;
 
@@ -191,7 +190,7 @@ type
     FItems: TArray<T>;
     FCount: NativeInt;
     FComparer: IComparer<T>;
-    FOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
+    FOnCollectionChanged: Event<TCollectionChangedEvent<T>>;
     function GetCapacity: NativeInt;
     function GetCount: NativeInt;
     function FirstBase: TValue;
@@ -206,8 +205,8 @@ type
     procedure SetItem(const Index: NativeInt; const Value: T); overload;
     procedure SetItem(const Index: NativeInt; const Value: TValue); overload;
   protected
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
-    function GetOnCollectionChangedBase: TEvent<TCollectionChangedEvent<TValue>>;
+    function GetOnCollectionChanged: IEvent<TCollectionChangedEvent<T>>;
+    function GetOnCollectionChangedBase: IEvent;
     function IList.GetOnCollectionChanged = GetOnCollectionChangedBase;
 
     procedure Notify(const Value: T; const Action: TCollectionChangedAction); virtual;
@@ -264,7 +263,7 @@ type
 
     property Count: NativeInt read GetCount;
     property Items[const Index: NativeInt]: T read GetItem write SetItem; default;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent<T>>
+    property OnCollectionChanged: IEvent<TCollectionChangedEvent<T>>
       read GetOnCollectionChanged;
   end;
 
@@ -485,14 +484,14 @@ begin
   Result := TValue.From<T>(GetItem(Index));
 end;
 
-function TList<T>.GetOnCollectionChanged: TEvent<TCollectionChangedEvent<T>>;
+function TList<T>.GetOnCollectionChanged: IEvent<TCollectionChangedEvent<T>>;
 begin
-  Result := FOnCollectionChanged.EventHandler;
+  Result := FOnCollectionChanged;
 end;
 
-function TList<T>.GetOnCollectionChangedBase: TEvent<TCollectionChangedEvent<TValue>>;
+function TList<T>.GetOnCollectionChangedBase: IEvent;
 begin
-  Result := TEvent<TCollectionChangedEvent<TValue>>(OnCollectionChanged);
+  Result := OnCollectionChanged;
 end;
 
 procedure TList<T>.Grow;

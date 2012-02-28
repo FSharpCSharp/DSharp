@@ -27,7 +27,7 @@ implementation
 procedure TForm2.FormCreate(Sender: TObject);
 begin
 {$IFDEF VER210}
-  Button1.OnClick := TEventHandler<TNotifyEvent>.Create<TProc<TObject>>(Self,
+  Button1.OnClick := TEvent<TNotifyEvent>.Create<TProc<TObject>>(Self,
     TArray<TProc<TObject>>.Create(
       procedure(Sender: TObject)
       begin
@@ -35,7 +35,7 @@ begin
       end))
     .Invoke;
 {$ELSE}
-  Button1.OnClick := TEventHandler<TNotifyEvent>.Create<TProc<TObject>>(Self, [
+  Button1.OnClick := TEvent<TNotifyEvent>.Create<TProc<TObject>>(Self, [
     procedure(Sender: TObject)
     begin
       Memo1.Lines.Add(Sender.ClassName + ' clicked');

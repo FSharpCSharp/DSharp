@@ -52,7 +52,7 @@ type
   TViewModelBase = class(TComponent, IInterface, INotifyPropertyChanged,
     IValidatable, IDataErrorInfo, ICanClose, IClose, IHaveDisplayName)
   private
-    FPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FPropertyChanged: Event<TPropertyChangedEvent>;
     FThrowOnInvalidPropertyName: Boolean;
     FParent: TObject;
     FRefCount: Integer;
@@ -60,7 +60,7 @@ type
     [Import]
     FWindowManager: IWindowManager;
 
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
     function GetValidationErrors: IList<IValidationResult>;
   protected
     // IInterface
@@ -158,9 +158,9 @@ begin
   Result := '';
 end;
 
-function TViewModelBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TViewModelBase.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
-  Result := FPropertyChanged.EventHandler;
+  Result := FPropertyChanged;
 end;
 
 function TViewModelBase.GetValidationErrors: IList<IValidationResult>;

@@ -191,7 +191,7 @@ begin
       AViewElement: TComponent; ABindingType: TBindingType;
       AConvention: TElementConvention)
     var
-      LCollectionChanged: TEvent<TCollectionChangedEvent>;
+      LCollectionChanged: IEvent<TCollectionChangedEvent>;
       LItems: IList;
       LItem: TValue;
     begin
@@ -247,7 +247,7 @@ begin
       AViewElement: TComponent; ABindingType: TBindingType;
       AConvention: TElementConvention)
     var
-      LCollectionChanged: TEvent<TCollectionChangedEvent>;
+      LCollectionChanged: IEvent<TCollectionChangedEvent>;
       LItems: IList;
       LItem: TValue;
     begin

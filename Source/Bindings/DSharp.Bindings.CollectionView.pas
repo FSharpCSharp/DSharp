@@ -52,7 +52,7 @@ type
     FItemIndex: NativeInt;
     FItemsSource: IList;
     FItemTemplate: IDataTemplate;
-    FOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    FOnCollectionChanged: Event<TCollectionChangedEvent>;
 
     procedure DoCurrentChanged;
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
@@ -65,7 +65,7 @@ type
     function GetFilter: TPredicate<TObject>; virtual;
     function GetItemsSource: IList; virtual;
     function GetItemTemplate: IDataTemplate; virtual;
-    function GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+    function GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
     procedure SetCurrentItem(const Value: TObject); virtual;
     procedure SetFilter(const Value: TPredicate<TObject>); virtual;
     procedure SetItemIndex(const Value: NativeInt); virtual;
@@ -91,7 +91,7 @@ type
     property ItemIndex: NativeInt read FItemIndex write SetItemIndex;
     property ItemsSource: IList read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
-    property OnCollectionChanged: TEvent<TCollectionChangedEvent>
+    property OnCollectionChanged: IEvent<TCollectionChangedEvent>
       read GetOnCollectionChanged;
     property OnCurrentChanged: TNotifyEvent read FOnCurrentChanged write FOnCurrentChanged;
     property Updating: Boolean read GetUpdating;
@@ -200,9 +200,9 @@ begin
   Result := FItemTemplate;
 end;
 
-function TCollectionView.GetOnCollectionChanged: TEvent<TCollectionChangedEvent>;
+function TCollectionView.GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
-  Result := FOnCollectionChanged.EventHandler;
+  Result := FOnCollectionChanged;
 end;
 
 function TCollectionView.GetUpdating: Boolean;
@@ -283,13 +283,13 @@ end;
 
 procedure TCollectionView.SetItemsSource(const Value: IList);
 var
-  LCollectionChanged: TEvent<TCollectionChangedEvent>;
+  LCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
   if FItemsSource <> Value then
   begin
     if Assigned(FItemsSource) then
     begin
-      LCollectionChanged := TEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
+      LCollectionChanged := IEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
       LCollectionChanged.Remove(DoSourceCollectionChanged);
     end;
 
@@ -297,7 +297,7 @@ begin
 
     if Assigned(FItemsSource) then
     begin
-      LCollectionChanged := TEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
+      LCollectionChanged := IEvent<TCollectionChangedEvent>(FItemsSource.OnCollectionChanged);
       LCollectionChanged.Add(DoSourceCollectionChanged);
     end;
     UpdateItems(True);

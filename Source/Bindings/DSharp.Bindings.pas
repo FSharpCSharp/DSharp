@@ -70,9 +70,9 @@ type
     FManaged: Boolean;
     FNotificationHandler: TNotificationHandler<TBindingBase>;
     FNotifyOnTargetUpdated: Boolean;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FOnPropertyChanged: Event<TPropertyChangedEvent>;
     FOnTargetUpdated: TPropertyChangedEvent;
-    FOnValidation: TEvent<TValidationEvent>;
+    FOnValidation: Event<TValidationEvent>;
     FPreventFocusChange: Boolean;
     FTarget: TObject;
     FTargetProperty: IMemberExpression;
@@ -96,8 +96,8 @@ type
       const Item: IValidationResult; Action: TCollectionChangedAction);
     procedure DoValidationRulesChanged(Sender: TObject;
       const Item: IValidationRule; Action: TCollectionChangedAction);
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
-    function GetOnValidation: TEvent<TValidationEvent>;
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
+    function GetOnValidation: IEvent<TValidationEvent>;
     function GetValidationErrors: IList<IValidationResult>;
     function GetValidationRules: IList<IValidationRule>;
     procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
@@ -124,9 +124,9 @@ type
     property Active: Boolean read FActive write SetActive;
     property BindingGroup: TBindingGroup read FBindingGroup write SetBindingGroup;
     property Converter: IValueConverter read FConverter write SetConverter;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent>
+    property OnPropertyChanged: IEvent<TPropertyChangedEvent>
       read GetOnPropertyChanged;
-    property OnValidation: TEvent<TValidationEvent> read GetOnValidation;
+    property OnValidation: IEvent<TValidationEvent> read GetOnValidation;
     property TargetProperty: IMemberExpression read FTargetProperty;
     property Updating: Boolean read GetUpdating;
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
@@ -220,10 +220,10 @@ type
     FBindings: TBindingCollection;
     FEditing: Boolean;
     FItems: IList<TObject>;
-    FOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    FOnPropertyChanged: Event<TPropertyChangedEvent>;
     FValidationErrors: IList<IValidationResult>;
     FValidationRules: IList<IValidationRule>;
-    function GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
     procedure SetBindings(const Value: TBindingCollection);
     procedure SetEditing(const Value: Boolean);
     function GetItems: IList<TObject>;
@@ -266,7 +266,7 @@ type
     property Bindings: TBindingCollection read FBindings write SetBindings;
     property Editing: Boolean read FEditing;
     property Items: IList<TObject> read GetItems;
-    property OnPropertyChanged: TEvent<TPropertyChangedEvent>
+    property OnPropertyChanged: IEvent<TPropertyChangedEvent>
       read GetOnPropertyChanged;
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
     property ValidationRules: IList<IValidationRule> read GetValidationRules;
@@ -442,14 +442,14 @@ begin
   Dec(FUpdateCount);
 end;
 
-function TBindingBase.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TBindingBase.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
-  Result := FOnPropertyChanged.EventHandler;
+  Result := FOnPropertyChanged;
 end;
 
-function TBindingBase.GetOnValidation: TEvent<TValidationEvent>;
+function TBindingBase.GetOnValidation: IEvent<TValidationEvent>;
 begin
-  Result := FOnValidation.EventHandler;
+  Result := FOnValidation;
 end;
 
 function TBindingBase.GetUpdating: Boolean;
@@ -537,7 +537,7 @@ end;
 procedure TBindingBase.SetTarget(const Value: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
+  LPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
   if FTarget <> Value then
   begin
@@ -732,7 +732,7 @@ procedure TBinding.DoSourceCollectionChanged(Sender: TObject;
   const Item: TObject; Action: TCollectionChangedAction);
 var
   LCollectionView: ICollectionView;
-  LEvent: TEvent<TCollectionChangedEvent>;
+  LEvent: IEvent<TCollectionChangedEvent>;
 begin
   if Supports(FTarget, ICollectionView, LCollectionView) then
   begin
@@ -854,8 +854,8 @@ end;
 procedure TBinding.SetSource(const Value: TObject);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: TEvent<TPropertyChangedEvent>;
-  LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
+  LPropertyChanged: IEvent<TPropertyChangedEvent>;
+  LSourceCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
   if FSource <> Value then
   begin
@@ -910,7 +910,7 @@ end;
 
 procedure TBinding.SetSourceProperty;
 var
-  LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
+  LSourceCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
   if Assigned(FSourceCollectionChanged) then
   begin
@@ -966,7 +966,7 @@ end;
 
 procedure TBinding.UpdateTarget(IgnoreBindingMode: Boolean = True);
 var
-  LSourceCollectionChanged: TEvent<TCollectionChangedEvent>;
+  LSourceCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
   if Assigned(Self) and FActive
     and (IgnoreBindingMode or (FBindingMode in [bmOneWay..bmTwoWay]))
@@ -1247,9 +1247,9 @@ begin
   Result := FItems;
 end;
 
-function TBindingGroup.GetOnPropertyChanged: TEvent<TPropertyChangedEvent>;
+function TBindingGroup.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
-  Result := FOnPropertyChanged.EventHandler;
+  Result := FOnPropertyChanged;
 end;
 
 function TBindingGroup.GetValidationErrors: IList<IValidationResult>;

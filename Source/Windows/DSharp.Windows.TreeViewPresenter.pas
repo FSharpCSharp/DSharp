@@ -71,6 +71,7 @@ type
     FOnDragBegin: TDragBeginEvent;
     FOnDragDrop: TDragDropEvent;
     FOnDragOver: TDragOverEvent;
+    FOnKeyAction: TKeyEvent;
     FOnSelectionChanged: TNotifyEvent;
     FSelectedItems: IList<TObject>;
     FSorting: Boolean;
@@ -180,6 +181,7 @@ type
     property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
     property OnDragDrop: TDragDropEvent read FOnDragDrop write FOnDragDrop;
     property OnDragOver: TDragOverEvent read FOnDragOver write FOnDragOver;
+    property OnKeyAction: TKeyEvent read FOnKeyAction write FOnKeyAction;
     property OnSelectionChanged: TNotifyEvent
       read FOnSelectionChanged write FOnSelectionChanged;
     property Sorting: Boolean read FSorting write SetSorting default True;
@@ -654,6 +656,11 @@ begin
         end;
       end;
     end;
+  end;
+
+  if Assigned(FOnKeyAction) then
+  begin
+    FOnKeyAction(Self, Key, Shift);
   end;
 end;
 

@@ -45,15 +45,19 @@ uses
 type
   IEvent = interface
     function GetCount: Integer;
+    function GetEnabled: Boolean;
     function GetInvoke: TMethod;
     procedure Add(const AEvent: TMethod);
     procedure Remove(const AEvent: TMethod);
+    procedure SetEnabled(const AValue: Boolean);
     property Count: Integer read GetCount;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
     property Invoke: TMethod read GetInvoke;
   end;
 
   TEvent = class abstract(TInterfacedObject, IEvent)
   strict private
+    FEnabled: Boolean;
     FInternalDispatcher: TMethod;
     FMethods: TList<TMethod>;
     function IEvent.GetInvoke = GetInvokeBase;
@@ -70,11 +74,13 @@ type
     procedure MethodRemoved(const AMethod: TMethod); virtual; abstract;
     procedure Add(const AEvent: TMethod);
     function GetCount: Integer;
+    function GetEnabled: Boolean;
     function IndexOf(const AEvent: TMethod): Integer;
     function IndexOfInstance(const AInstance: TObject): Integer;
     procedure Remove(const AEvent: TMethod);
     procedure RemoveInstanceReferences(const AInstance: TObject);
     procedure SetDispatcher(var AMethod: TMethod; ATypeData: PTypeData);
+    procedure SetEnabled(const AValue: Boolean);
   public
     constructor Create;
     destructor Destroy; override;
@@ -117,6 +123,7 @@ type
     procedure Remove<TDelegate>(ADelegate: TDelegate); overload;
     function IndexOf(AEvent: T): Integer;
     property Count: Integer read GetCount;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
     property Invoke: T read GetInvoke;
     property Owner: TComponent read FOwner;
   end;
@@ -125,16 +132,18 @@ type
   strict private
     FEventHandler: IEvent<T>;
     FInitialized: Boolean;
-    function GetInvoke: T;
-    function GetEventHandler: IEvent<T>;
-  private
     function GetCount: Integer;
+    function GetEnabled: Boolean;
+    function GetEventHandler: IEvent<T>;
+    function GetInvoke: T;
+    procedure SetEnabled(const Value: Boolean);
   public
     constructor Create(AEventHandler: IEvent<T>);
 
     procedure Add(AEvent: T);
     procedure Remove(AEvent: T);
     property Count: Integer read GetCount;
+    property Enabled: Boolean read GetEnabled write SetEnabled;
     property EventHandler: IEvent<T> read GetEventHandler;
     property Invoke: T read GetInvoke;
 
@@ -222,6 +231,7 @@ end;
 
 constructor TEvent.Create;
 begin
+  FEnabled := True;
   FMethods := TList<TMethod>.Create();
   FMethods.OnNotify := InternalNotify;
 end;
@@ -241,31 +251,34 @@ var
   LMethod: TMethod;
 {$IF CompilerVersion < 23}
 begin
-  for LMethod in FMethods do
+  if FEnabled then
   begin
-    // "Push" parameters on stack
-    if StackSize > 0 then
-    asm
-      // Put StackSize as third parameter
-      MOV ECX,StackSize
-      // stack address alignment
-      ADD ECX,PointerSize-1
-      AND ECX,NOT(PointerSize-1)
-      AND ECX,$FFFF
-      SUB ESP,ECX
-      // Put Stack Address as second parameter
-      MOV EDX,ESP
-      // Put Params on Stack as first parameter
-      MOV EAX,Params
-      LEA EAX,[EAX].TParameters.Stack[8]
-      CALL System.Move
-    end;
-    asm
-      MOV EAX,Params
-      MOV EDX,[EAX].TParameters.Registers.DWORD[0]
-      MOV ECX,[EAX].TParameters.Registers.DWORD[4]
-      MOV EAX,LMethod.Data
-      CALL LMethod.Code
+    for LMethod in FMethods do
+    begin
+      // "Push" parameters on stack
+      if StackSize > 0 then
+      asm
+        // Put StackSize as third parameter
+        MOV ECX,StackSize
+        // stack address alignment
+        ADD ECX,PointerSize-1
+        AND ECX,NOT(PointerSize-1)
+        AND ECX,$FFFF
+        SUB ESP,ECX
+        // Put Stack Address as second parameter
+        MOV EDX,ESP
+        // Put Params on Stack as first parameter
+        MOV EAX,Params
+        LEA EAX,[EAX].TParameters.Stack[8]
+        CALL System.Move
+      end;
+      asm
+        MOV EAX,Params
+        MOV EDX,[EAX].TParameters.Registers.DWORD[0]
+        MOV ECX,[EAX].TParameters.Registers.DWORD[4]
+        MOV EAX,LMethod.Data
+        CALL LMethod.Code
+      end;
     end;
   end;
 end;
@@ -274,7 +287,7 @@ end;
   LArgs: TArray<TValue>;
   LOffset: Byte;
 begin
-  if FMethods.Count > 0 then
+  if FEnabled and (FMethods.Count > 0) then
   begin
 {$IFDEF CPUX86}
     LOffset := StackSize;
@@ -329,6 +342,11 @@ end;
 function TEvent.GetCount: Integer;
 begin
   Result := FMethods.Count;
+end;
+
+function TEvent.GetEnabled: Boolean;
+begin
+  Result := FEnabled;
 end;
 
 function TEvent.IndexOf(const AEvent: TMethod): Integer;
@@ -397,6 +415,11 @@ begin
   end;
   FInternalDispatcher := CreateMethodPointer(InternalInvoke, ATypeData);
   AMethod := FInternalDispatcher;
+end;
+
+procedure TEvent.SetEnabled(const AValue: Boolean);
+begin
+  FEnabled := AValue;
 end;
 
 { TEventHandler<T> }
@@ -538,7 +561,7 @@ begin
   if Operation = opRemove then
   begin
     RemoveInstanceReferences(AComponent);
-    if AComponent = FOwner then
+    if (AComponent = FOwner) and (RefCount = 0) then
     begin
       Free();
     end;
@@ -599,6 +622,18 @@ begin
   end;
 end;
 
+function Event<T>.GetEnabled: Boolean;
+var
+  LEventHandler: IEvent<T>;
+begin
+  Result := False;
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    Result := LEventHandler.Enabled;
+  end;
+end;
+
 function Event<T>.GetEventHandler: IEvent<T>;
 begin
   if not FInitialized then
@@ -628,6 +663,17 @@ begin
   if Assigned(LEventHandler) then
   begin
     LEventHandler.Remove(AEvent);
+  end;
+end;
+
+procedure Event<T>.SetEnabled(const Value: Boolean);
+var
+  LEventHandler: IEvent<T>;
+begin
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    LEventHandler.Enabled := Value;
   end;
 end;
 

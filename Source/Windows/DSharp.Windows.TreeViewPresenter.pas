@@ -365,12 +365,15 @@ begin
     begin
       FOnDragDrop(Sender, Source, LItem, doMove, Mode);
     end;
-    for i := Low(LSelectedNodes) to High(LSelectedNodes) do
+    if Sender = Source then
     begin
-      case Mode of
-        dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
-        dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
-        dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
+      for i := Low(LSelectedNodes) to High(LSelectedNodes) do
+      begin
+        case Mode of
+          dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
+          dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+          dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
+        end;
       end;
     end;
   end;

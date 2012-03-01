@@ -94,4 +94,22 @@ initialization
 //  SupportedClasses.Add(TStatusPanel, 'Text'); // does not work (yet)
   SupportedClasses.Add(TTrackBar, 'Position');
 
+finalization
+  SupportedClasses.Remove(TCheckBox);
+  SupportedClasses.Remove(TColorBox);
+  SupportedClasses.Remove(TComboBox);
+  SupportedClasses.Remove(TDateTimePicker);
+  SupportedClasses.Remove(TEdit);
+  SupportedClasses.Remove(TGroupBox);
+  SupportedClasses.Remove(TLabel);
+  SupportedClasses.Remove(TLabeledEdit);
+  SupportedClasses.Remove(TListBox);
+  SupportedClasses.Remove(TMemo);
+  SupportedClasses.Remove(TMonthCalendar);
+  SupportedClasses.Remove(TPanel);
+  SupportedClasses.Remove(TRadioButton);
+  SupportedClasses.Remove(TRadioGroup);
+//  SupportedClasses.Remove(TStatusPanel, 'Text');
+  SupportedClasses.Remove(TTrackBar);
+
 end.

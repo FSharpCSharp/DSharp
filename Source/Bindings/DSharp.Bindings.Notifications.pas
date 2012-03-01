@@ -65,15 +65,15 @@ type
     constructor Create(AOwner: TObject);
   end;
 
-procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+procedure NotifyPropertyChanged(AObject, ASender: TObject; const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger = utPropertyChanged); overload;
 
 implementation
 
 uses
   DSharp.Core.Utils;
 
-procedure NotifyPropertyChanged(AObject, ASender: TObject; APropertyName: string;
+procedure NotifyPropertyChanged(AObject, ASender: TObject; const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;

@@ -274,6 +274,8 @@ type
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 function GetBindingForComponent(AComponent: TPersistent): TBinding;
+procedure NotifyPropertyChanged(ASender: TObject; const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger = utPropertyChanged); overload;
 
 implementation
 
@@ -284,6 +286,9 @@ uses
   DSharp.Core.Utils,
   StrUtils,
   TypInfo;
+
+var
+  BindingGroups: TList;
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 var
@@ -350,6 +355,18 @@ begin
     LRoot := LeftStr(LRoot, Pred(Pos('[', LRoot)));
   end;
   Result := SameText(Name, LRoot);
+end;
+
+procedure NotifyPropertyChanged(ASender: TObject; const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(BindingGroups.Count) do
+  begin
+    TBindingGroup(BindingGroups[i]).NotifyPropertyChanged(
+      ASender, APropertyName, AUpdateTrigger);
+  end;
 end;
 
 { TBindingBase }
@@ -1179,10 +1196,12 @@ begin
     end;
   end;
   inherited;
+  BindingGroups.Add(Self);
 end;
 
 destructor TBindingGroup.Destroy;
 begin
+  BindingGroups.Remove(Self);
   FBindings.Free();
   FValidationErrors.OnCollectionChanged.Remove(DoValidationErrorsChanged);
   FValidationRules.OnCollectionChanged.Remove(DoValidationRulesChanged);
@@ -1408,5 +1427,11 @@ begin
   end;
   AWriter.WriteCollection(FBindings);
 end;
+
+initialization
+  BindingGroups := TList.Create();
+
+finalization
+  BindingGroups.Free();
 
 end.

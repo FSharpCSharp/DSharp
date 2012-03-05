@@ -56,7 +56,7 @@ type
   TDragDropEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
     DragOperation: TDragOperation; var DropMode: TDropMode) of object;
 
-  TCheckSupport = (csNone, csSimple, csTriState);
+  TCheckSupport = (csNone, csSimple, csTriState, csRadio);
 
   TTreeViewPresenter = class(TCustomPresenter)
   private    
@@ -558,12 +558,10 @@ begin
   FCurrentNode := Node;
   DoPropertyChanged('ParentItem');
 
-  if FCheckSupport = csTriState then
-  begin
-    Node.CheckType := ctTriStateCheckbox;
-  end
+  case FCheckSupport of
+    csTriState: Node.CheckType := ctTriStateCheckBox;
+    csRadio: Node.CheckType := ctRadioButton;
   else
-  begin
     Node.CheckType := ctCheckBox;
   end;
 
@@ -1160,6 +1158,8 @@ begin
       LNode := FTreeView.GetNextChecked(LNode);
     end;
   end;
+
+  DoPropertyChanged('CheckedItems');
 end;
 
 procedure TTreeViewPresenter.UpdateExpandedItems;
@@ -1181,6 +1181,8 @@ begin
       LNode := FTreeView.GetNext(LNode);
     end;
   end;
+
+  DoPropertyChanged('ExpandedItems');
 end;
 
 procedure TTreeViewPresenter.UpdateSelectedItems;

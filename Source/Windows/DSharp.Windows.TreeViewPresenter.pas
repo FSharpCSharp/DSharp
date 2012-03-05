@@ -313,7 +313,7 @@ begin
   LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
   FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
 
-  if not FListMode and Assigned(LHitInfo.HitNode)
+  if FListMode and Assigned(LHitInfo.HitNode)
     and ((hiOnNormalIcon in LHitInfo.HitPositions)
     or (not Assigned(OnDoubleClick) and not Assigned(Action))) then
   begin
@@ -958,12 +958,12 @@ begin
     if FListMode then
     begin
       FTreeView.TreeOptions.PaintOptions :=
-        FTreeView.TreeOptions.PaintOptions - [toShowRoot, toShowTreeLines];
+        FTreeView.TreeOptions.PaintOptions - [toShowButtons, toShowRoot, toShowTreeLines];
     end
     else
     begin
       FTreeView.TreeOptions.PaintOptions :=
-        FTreeView.TreeOptions.PaintOptions + [toShowRoot, toShowTreeLines];
+        FTreeView.TreeOptions.PaintOptions + [toShowButtons, toShowRoot, toShowTreeLines];
     end;
 
     FTreeView.HintMode := hmHintAndDefault;

@@ -852,6 +852,7 @@ begin
   if Assigned(FTreeView) then
   begin
     FTreeView.Header.Columns.Clear;
+    FTreeView.Header.AutoSizeIndex := ColumnDefinitions.MainColumnIndex;
     if Assigned(ColumnDefinitions) then
     begin
       for i := 0 to Pred(ColumnDefinitions.Count) do

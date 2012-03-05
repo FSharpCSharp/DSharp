@@ -612,7 +612,7 @@ begin
   end;
 
   // moving elements with Ctrl+Up and Ctrl+Down only when sorting is off
-  if (ssCtrl in Shift) and (FTreeView.Header.SortColumn = -1) then
+  if FAllowMove and (ssCtrl in Shift) and (FTreeView.Header.SortColumn = -1) then
   begin
     case Key of
       VK_UP:
@@ -866,7 +866,14 @@ begin
           Options := Options + [coUseCaptionAlignment];
         end;
       end;
-      FTreeView.Header.SortColumn := ColumnDefinitions.MainColumnIndex;
+      if FSorting then
+      begin
+        FTreeView.Header.SortColumn := ColumnDefinitions.MainColumnIndex;
+      end
+      else
+      begin
+        FTreeView.Header.SortColumn := -1;
+      end;
     end;
     FTreeView.Header.Options := FTreeView.Header.Options + [hoVisible];
   end;

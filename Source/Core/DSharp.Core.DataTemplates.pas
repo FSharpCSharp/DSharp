@@ -136,29 +136,32 @@ var
 begin
   Result := 0;
 
-  if Item1.InheritsFrom(GetTemplateDataClass) then
+  if Assigned(Item1) and Assigned(Item2) then
   begin
-    if Item2.InheritsFrom(GetTemplateDataClass) then
+    if Item1.InheritsFrom(GetTemplateDataClass) then
     begin
-      Result := CompareText(GetText(Item1, ColumnIndex), GetText(Item2, ColumnIndex));
-    end else
-    begin
-      Result := -1;
-    end;
-  end else
-  begin
-    if Item2.InheritsFrom(GetTemplateDataClass) then
-    begin
-      Result := 1;
-    end else
-    begin
-      LItemTemplate1 := GetItemTemplate(Item1);
-      LItemTemplate2 := GetItemTemplate(Item2);
-
-      if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
+      if Item2.InheritsFrom(GetTemplateDataClass) then
       begin
-        Result := CompareText(LItemTemplate1.GetText(Item1, ColumnIndex),
-          LItemTemplate2.GetText(Item2, ColumnIndex));
+        Result := CompareText(GetText(Item1, ColumnIndex), GetText(Item2, ColumnIndex));
+      end else
+      begin
+        Result := -1;
+      end;
+    end else
+    begin
+      if Item2.InheritsFrom(GetTemplateDataClass) then
+      begin
+        Result := 1;
+      end else
+      begin
+        LItemTemplate1 := GetItemTemplate(Item1);
+        LItemTemplate2 := GetItemTemplate(Item2);
+
+        if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
+        begin
+          Result := CompareText(LItemTemplate1.GetText(Item1, ColumnIndex),
+            LItemTemplate2.GetText(Item2, ColumnIndex));
+        end;
       end;
     end;
   end;

@@ -290,8 +290,8 @@ begin
     LObject := Designer.GetComponent(Value);
     if not (LObject is GetTypeData(GetPropType)^.ClassType) then
       raise EDesignPropertyError.CreateRes(@SInvalidPropertyValue);
-    if Assigned(LBinding) and (LBinding.Target = LObject) then
-      raise EDesignPropertyError.Create('Binding source must be different from binding target');
+//    if Assigned(LBinding) and (LBinding.Target = LObject) then
+//      raise EDesignPropertyError.Create('Binding source must be different from binding target');
   end;
   SetOrdValue(NativeInt(LObject));
 
@@ -355,8 +355,8 @@ begin
     LObject := Designer.GetComponent(Value);
     if not (LObject is GetTypeData(GetPropType)^.ClassType) then
       raise EDesignPropertyError.CreateRes(@SInvalidPropertyValue);
-    if Assigned(LBinding) and (LBinding.Source = LObject) then
-      raise EDesignPropertyError.Create('Binding source must be different from binding target');
+//    if Assigned(LBinding) and (LBinding.Source = LObject) then
+//      raise EDesignPropertyError.Create('Binding source must be different from binding target');
   end;
   SetOrdValue(NativeInt(LObject));
 

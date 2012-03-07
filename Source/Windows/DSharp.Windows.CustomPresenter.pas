@@ -55,6 +55,7 @@ type
     FUpdateCount: Integer;
     FView: TCollectionView;
     procedure ReadColumnDefinitions(Reader: TReader);
+    procedure SetAction(const Value: TBasicAction);
     procedure SetColumnDefinitions(const Value: IColumnDefinitions);
     procedure SetImageList(const Value: TCustomImageList);
     procedure SetPopupMenu(const Value: TPopupMenu);
@@ -66,15 +67,17 @@ type
     procedure DoDblClick(Sender: TObject); virtual;
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    procedure DoSourceCollectionChanged(Sender: TObject; Item: TObject;
+    procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction); virtual;
     function GetCurrentItem: TObject; virtual;
-    procedure SetCurrentItem(const Value: TObject); virtual;
+    procedure Notification(AComponent: TComponent;
+      Operation: TOperation); override;
     procedure InitColumns; virtual;
     procedure InitControl; virtual;
     procedure InitEvents; virtual;
     procedure InitProperties; virtual;
     procedure Loaded; override;
+    procedure SetCurrentItem(const Value: TObject); virtual;
     property UpdateCount: Integer read FUpdateCount;
   public
     constructor Create(AOwner: TComponent); override;
@@ -90,7 +93,7 @@ type
       read FColumnDefinitions write SetColumnDefinitions;
     property View: TCollectionView read FView implements ICollectionView;
   published
-    property Action: TBasicAction read FAction write FAction;
+    property Action: TBasicAction read FAction write SetAction;
     property ImageList: TCustomImageList read FImageList write SetImageList;
     property OnDoubleClick: TNotifyEvent read FOnDoubleClick write FOnDoubleClick;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
@@ -168,8 +171,8 @@ begin
   NotifyPropertyChanged.DoPropertyChanged(APropertyName, AUpdateTrigger);
 end;
 
-procedure TCustomPresenter.DoSourceCollectionChanged(Sender, Item: TObject;
-  Action: TCollectionChangedAction);
+procedure TCustomPresenter.DoSourceCollectionChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
 begin
   if FUpdateCount = 0 then
   begin
@@ -211,10 +214,13 @@ end;
 
 procedure TCustomPresenter.InitControl;
 begin
-  InitColumns();
-  InitEvents();
-  InitProperties();
-  Refresh();
+  if [csDesigning, csDestroying] * ComponentState = [] then
+  begin
+    InitColumns();
+    InitEvents();
+    InitProperties();
+    Refresh();
+  end;
 end;
 
 procedure TCustomPresenter.InitEvents;
@@ -234,6 +240,27 @@ begin
   Refresh();
 end;
 
+procedure TCustomPresenter.Notification(AComponent: TComponent;
+  Operation: TOperation);
+begin
+  inherited;
+  if Operation = opRemove then
+  begin
+    if AComponent = FAction then
+    begin
+      SetAction(nil);
+    end;
+    if AComponent = FImageList then
+    begin
+      SetImageList(nil);
+    end;
+    if AComponent = FPopupMenu then
+    begin
+      SetPopupMenu(nil);
+    end;
+  end;
+end;
+
 procedure TCustomPresenter.ReadColumnDefinitions(Reader: TReader);
 begin
   Reader.ReadValue();
@@ -243,6 +270,24 @@ end;
 procedure TCustomPresenter.Refresh;
 begin
   // implemented by descendants
+end;
+
+procedure TCustomPresenter.SetAction(const Value: TBasicAction);
+begin
+  if FAction <> Value then
+  begin
+    if Assigned(FAction) then
+    begin
+      FAction.RemoveFreeNotification(Self);
+    end;
+
+    FAction := Value;
+
+    if Assigned(FAction) then
+    begin
+      FAction.FreeNotification(Self);
+    end;
+  end;
 end;
 
 procedure TCustomPresenter.SetColumnDefinitions(
@@ -267,14 +312,42 @@ end;
 
 procedure TCustomPresenter.SetImageList(const Value: TCustomImageList);
 begin
-  FImageList := Value;
-  InitControl();
+  if FImageList <> Value then
+  begin
+    if Assigned(FImageList) then
+    begin
+      FImageList.RemoveFreeNotification(Self);
+    end;
+
+    FImageList := Value;
+
+    if Assigned(FImageList) then
+    begin
+      FImageList.FreeNotification(Self);
+    end;
+
+    InitControl();
+  end;
 end;
 
 procedure TCustomPresenter.SetPopupMenu(const Value: TPopupMenu);
 begin
-  FPopupMenu := Value;
-  InitControl();
+  if FPopupMenu <> Value then
+  begin
+    if Assigned(FPopupMenu) then
+    begin
+      FPopupMenu.RemoveFreeNotification(Self);
+    end;
+
+    FPopupMenu := Value;
+
+    if Assigned(FPopupMenu) then
+    begin
+      FPopupMenu.FreeNotification(Self);
+    end;
+
+    InitControl();
+  end;
 end;
 
 procedure TCustomPresenter.WriteColumnDefinitions(Writer: TWriter);

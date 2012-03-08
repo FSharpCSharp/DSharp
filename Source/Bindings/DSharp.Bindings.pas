@@ -67,6 +67,7 @@ type
     FBindingGroup: TBindingGroup;
     FBindingMode: TBindingMode;
     FConverter: IValueConverter;
+    FEnabled: Boolean;
     FManaged: Boolean;
     FNotificationHandler: TNotificationHandler<TBindingBase>;
     FNotifyOnTargetUpdated: Boolean;
@@ -105,6 +106,7 @@ type
     procedure SetBindingGroup(const Value: TBindingGroup);
     procedure SetBindingMode(const Value: TBindingMode); virtual;
     procedure SetConverter(const Value: IValueConverter);
+    procedure SetEnabled(const Value: Boolean);
     procedure SetTarget(const Value: TObject);
     procedure SetTargetProperty;
     procedure SetTargetPropertyName(const Value: string);
@@ -134,6 +136,7 @@ type
   published
     property BindingMode: TBindingMode read FBindingMode write SetBindingMode
       default BindingModeDefault;
+    property Enabled: Boolean read FEnabled write SetEnabled default True;
     property Managed: Boolean read FManaged write FManaged default True;
     property NotifyOnTargetUpdated: Boolean read FNotifyOnTargetUpdated
       write FNotifyOnTargetUpdated default False;
@@ -378,6 +381,7 @@ begin
     Active := TBindingBase(Source).Active;
 //    BindingGroup := TBindingBase(Source).BindingGroup;
     Converter := TBindingBase(Source).Converter;
+    Enabled := TBindingBase(Source).Enabled;
     Target := TBindingBase(Source).Target;
     TargetPropertyName := TBindingBase(Source).TargetPropertyName;
     TargetUpdateTrigger := TBindingBase(Source).TargetUpdateTrigger;
@@ -405,12 +409,14 @@ begin
   FValidationRules.OnCollectionChanged.Add(DoValidationRulesChanged);
 
   FBindingMode := BindingModeDefault;
+  FEnabled := True;
 
   if Assigned(Collection) then
   begin
     FBindingGroup := TBindingGroup(Collection.Owner);
     FManaged := Assigned(FBindingGroup);
-    FActive := Assigned(FBindingGroup) and not (csDesigning in FBindingGroup.ComponentState);
+    FActive := FEnabled and Assigned(FBindingGroup) 
+      and not (csDesigning in FBindingGroup.ComponentState);
   end;
 end;
 
@@ -510,7 +516,7 @@ end;
 
 procedure TBindingBase.SetActive(const Value: Boolean);
 begin
-  if FActive <> Value then
+  if FEnabled and (FActive <> Value) then
   begin
     FActive := Value;
 
@@ -548,6 +554,15 @@ begin
     FConverter := Value;
     CompileExpressions();
     UpdateTarget(True);
+  end;
+end;
+
+procedure TBindingBase.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
+  if not FEnabled and FActive then
+  begin
+    FActive := False;
   end;
 end;
 

@@ -236,8 +236,11 @@ end;
 procedure TCustomPresenter.Loaded;
 begin
   inherited;
-  InitColumns();
-  Refresh();
+  if not (csDesigning in ComponentState) then
+  begin
+    InitColumns();
+    Refresh();
+  end;
 end;
 
 procedure TCustomPresenter.Notification(AComponent: TComponent;

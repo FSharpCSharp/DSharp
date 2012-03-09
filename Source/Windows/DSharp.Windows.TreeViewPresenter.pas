@@ -216,6 +216,31 @@ uses
 const
   CDefaultCellRect: TRect = (Left: 0; Top: 0; Right: 0; Bottom: 0);
 
+procedure Synchronize(Target, Source: IList<TObject>);
+var
+  i: Integer;
+begin
+  i := 0;
+  while i < Target.Count do
+  begin
+    if Source.Contains(Target[i]) then
+    begin
+      Inc(i);
+    end
+    else
+    begin
+      Target.Delete(i);
+    end;
+  end;
+  for i := 0 to Pred(Source.Count) do
+  begin
+    if not Target.Contains(Source[i]) then
+    begin
+      Target.Add(Source[i]);
+    end;
+  end;
+end;
+
 { TTreeViewPresenter }
 
 constructor TTreeViewPresenter.Create(AOwner: TComponent);
@@ -367,6 +392,20 @@ begin
     else
     begin
       Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
+    end;
+  end
+  else
+  begin
+    LItem1 := GetNodeItem(Sender, Node1);
+    LItem2 := GetNodeItem(Sender, Node2);
+
+    if FTreeView.Header.SortDirection = sdAscending then
+    begin
+      Result := View.ItemsSource.IndexOf(LItem1) - View.ItemsSource.IndexOf(LItem2);
+    end
+    else
+    begin
+      Result := View.ItemsSource.IndexOf(LItem2) - View.ItemsSource.IndexOf(LItem1);
     end;
   end;
 end;
@@ -868,12 +907,12 @@ var
 begin
   if Assigned(FTreeView) and (UpdateCount = 0) then
   begin
-    LNode := FTreeView.IterateSubtree(nil, GetItemNode, Pointer(Item));
     case Action of
       caAdd: ResetRootNodeCount;
       caRemove: ResetRootNodeCount;
       caReplace:
       begin
+        LNode := FTreeView.IterateSubtree(nil, GetItemNode, Pointer(Item));
         if Assigned(LNode) then
         begin
           FTreeView.ReinitNode(LNode, True);
@@ -1296,23 +1335,26 @@ end;
 procedure TTreeViewPresenter.UpdateCheckedItems;
 var
   LItem: TObject;
+  LCheckedItems: IList<TObject>;
   LNode: PVirtualNode;
 begin
   if Assigned(FTreeView) then
   begin
     Inc(FCollectionChanging);
+    LCheckedItems := TList<TObject>.Create();
     try
-      FCheckedItems.Clear();
       LNode := FTreeView.GetFirstChecked();
       while Assigned(LNode) do
       begin
         LItem := GetNodeItem(FTreeView, LNode);
         if Assigned(LItem) then
         begin
-          FCheckedItems.Add(LItem);
+          LCheckedItems.Add(LItem);
         end;
         LNode := FTreeView.GetNextChecked(LNode);
       end;
+
+      Synchronize(FCheckedItems, LCheckedItems);
     finally
       Dec(FCollectionChanging);
     end;
@@ -1322,23 +1364,26 @@ end;
 procedure TTreeViewPresenter.UpdateExpandedItems;
 var
   LItem: TObject;
+  LExpandedItems: IList<TObject>;
   LNode: PVirtualNode;
 begin
   if Assigned(FTreeView) then
   begin
     Inc(FCollectionChanging);
+    LExpandedItems := TList<TObject>.Create();
     try
-      FExpandedItems.Clear();
       LNode := FTreeView.GetFirst();
       while Assigned(LNode) do
       begin
         LItem := GetNodeItem(FTreeView, LNode);
         if Assigned(LItem) and FTreeView.Expanded[LNode] then
         begin
-          FExpandedItems.Add(LItem);
+          LExpandedItems.Add(LItem);
         end;
         LNode := FTreeView.GetNext(LNode);
       end;
+
+      Synchronize(FExpandedItems, LExpandedItems);
     finally
       Dec(FCollectionChanging);
     end;
@@ -1349,13 +1394,14 @@ procedure TTreeViewPresenter.UpdateSelectedItems;
 var
   i: Integer;
   LItem: TObject;
+  LSelectedItems: IList<TObject>;
   LSelectedNodes: TNodeArray;
 begin
   if Assigned(FTreeView) then
   begin
     Inc(FCollectionChanging);
+    LSelectedItems := TList<TObject>.Create();
     try
-      FSelectedItems.Clear();
       LSelectedNodes := FTreeView.GetSortedSelection(False);
 
       for i := Low(LSelectedNodes) to High(LSelectedNodes) do
@@ -1363,9 +1409,11 @@ begin
         LItem := GetNodeItem(FTreeView, LSelectedNodes[i]);
         if Assigned(LItem) then
         begin
-          FSelectedItems.Add(LItem);
+          LSelectedItems.Add(LItem);
         end;
       end;
+
+      Synchronize(FSelectedItems, LSelectedItems);
     finally
       Dec(FCollectionChanging);
     end;

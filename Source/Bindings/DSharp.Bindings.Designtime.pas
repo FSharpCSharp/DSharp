@@ -81,6 +81,7 @@ type
   public
     function GetAttributes: TPropertyAttributes; override;
     procedure GetValues(Proc: TGetStrProc); override;
+    procedure SetValue(const Value: string); override;
   end;
 
   TTargetProperty = class(TComponentProperty)
@@ -93,6 +94,7 @@ type
   public
     function GetAttributes: TPropertyAttributes; override;
     procedure GetValues(Proc: TGetStrProc); override;
+    procedure SetValue(const Value: string); override;
   end;
 
 procedure Register;
@@ -105,6 +107,7 @@ implementation
 uses
   ColnEdit,
   Consts,
+  DSharp.Core.Reflection,
   RTLConsts,
   Rtti,
   StrUtils,
@@ -251,8 +254,7 @@ end;
 
 function TBindingProperty.GetPropInfo: PPropInfo;
 begin
-  Result := TRttiInstanceProperty(TRttiContext.Create.GetType(TBindingProperty)
-    .GetProperty('Binding')).PropInfo;
+  Result := TRttiInstanceProperty(GetProperty('Binding')).PropInfo;
 end;
 
 function TBindingProperty.GetPropType: PTypeInfo;
@@ -277,7 +279,6 @@ procedure TSourceProperty.SetValue(const Value: string);
 var
   LBinding: TBinding;
   LObject: TObject;
-  LProperty: TRttiProperty;
 begin
   LBinding := TBinding(GetComponent(0));
 
@@ -290,18 +291,20 @@ begin
     LObject := Designer.GetComponent(Value);
     if not (LObject is GetTypeData(GetPropType)^.ClassType) then
       raise EDesignPropertyError.CreateRes(@SInvalidPropertyValue);
-//    if Assigned(LBinding) and (LBinding.Target = LObject) then
-//      raise EDesignPropertyError.Create('Binding source must be different from binding target');
   end;
   SetOrdValue(NativeInt(LObject));
 
-  if Assigned(LBinding.Source) and (LBinding.SourcePropertyName <> '') then
+  if Assigned(LBinding.SourceProperty)
+    and Assigned(LBinding.SourceProperty.Member) then
   begin
-    LProperty := TRttiContext.Create.GetType(LBinding.Source.ClassInfo).GetProperty(LBinding.SourcePropertyName);
-    if not Assigned(LProperty) then
+    if not LBinding.SourceProperty.Member.IsWritable then
     begin
-      LBinding.SourcePropertyName := '';
+      LBinding.BindingMode := bmOneWay;
     end;
+  end
+  else
+  begin
+    LBinding.SourcePropertyName := '';
   end;
 end;
 
@@ -320,7 +323,7 @@ begin
   LBinding := TBinding(GetComponent(0));
   if Assigned(LBinding.Source) then
   begin
-    for LProperty in TRttiContext.Create.GetType(LBinding.Source.ClassInfo).GetProperties do
+    for LProperty in LBinding.Source.GetProperties do
     begin
       if LProperty.PropertyType.TypeKind <> tkMethod then
       begin
@@ -328,6 +331,27 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TSourcePropertyNameProperty.SetValue(const Value: string);
+var
+  LBinding: TBinding;
+begin
+  inherited;
+
+  LBinding := TBinding(GetComponent(0));
+
+  if Assigned(LBinding.SourceProperty)
+    and Assigned(LBinding.SourceProperty.Member) then
+  begin
+    if not LBinding.SourceProperty.Member.IsWritable
+      and not (LBinding.BindingMode in [bmOneWay, bmOneTime]) then
+    begin
+      LBinding.BindingMode := bmOneWay;
+    end;
+  end;
+
+  Modified;
 end;
 
 { TTargetProperty }
@@ -342,7 +366,6 @@ procedure TTargetProperty.SetValue(const Value: string);
 var
   LBinding: TBinding;
   LObject: TObject;
-  LProperty: TRttiProperty;
 begin
   LBinding := TBinding(GetComponent(0));
 
@@ -355,17 +378,16 @@ begin
     LObject := Designer.GetComponent(Value);
     if not (LObject is GetTypeData(GetPropType)^.ClassType) then
       raise EDesignPropertyError.CreateRes(@SInvalidPropertyValue);
-//    if Assigned(LBinding) and (LBinding.Source = LObject) then
-//      raise EDesignPropertyError.Create('Binding source must be different from binding target');
   end;
   SetOrdValue(NativeInt(LObject));
 
-  if Assigned(LBinding.Target) and (LBinding.TargetPropertyName <> '') then
+  if Assigned(LBinding.TargetProperty)
+    and Assigned(LBinding.TargetProperty.Member) then
   begin
-    LProperty := TRttiContext.Create.GetType(LBinding.Target.ClassInfo).GetProperty(LBinding.TargetPropertyName);
-    if not Assigned(LProperty) then
+    if not LBinding.TargetProperty.Member.IsWritable
+      and not (LBinding.BindingMode in [bmOneWayToSource]) then
     begin
-      LBinding.TargetPropertyName := '';
+      LBinding.BindingMode := bmOneWayToSource;
     end;
   end;
 end;
@@ -385,7 +407,7 @@ begin
   LBinding := TBinding(GetComponent(0));
   if Assigned(LBinding.Target) then
   begin
-    for LProperty in TRttiContext.Create.GetType(LBinding.Target.ClassInfo).GetProperties do
+    for LProperty in LBinding.Target.GetProperties do
     begin
       if LProperty.PropertyType.TypeKind <> tkMethod then
       begin
@@ -393,6 +415,27 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TTargetPropertyNameProperty.SetValue(const Value: string);
+var
+  LBinding: TBinding;
+begin
+  inherited;
+
+  LBinding := TBinding(GetComponent(0));
+
+  if Assigned(LBinding.TargetProperty)
+    and Assigned(LBinding.TargetProperty.Member) then
+  begin
+    if not LBinding.TargetProperty.Member.IsWritable
+      and not (LBinding.BindingMode in [bmOneWayToSource]) then
+    begin
+      LBinding.BindingMode := bmOneWayToSource;
+    end;
+  end;
+
+  Modified;
 end;
 
 initialization

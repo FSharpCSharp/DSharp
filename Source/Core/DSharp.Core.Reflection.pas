@@ -343,13 +343,16 @@ function FindType(const AName: string; out AType: TRttiType): Boolean;
 var
   LType: TRttiType;
 begin
-  AType := nil;
-  for LType in Context.GetTypes do
+  AType := Context.FindType(AName);
+  if not Assigned(AType) then
   begin
-    if SameText(LType.Name, AName) or (LType.IsPublicType and SameText(LType.QualifiedName, AName)) then
+    for LType in Context.GetTypes do
     begin
-      AType := LType;
-      Break;
+      if SameText(LType.Name, AName) then
+      begin
+        AType := LType;
+        Break;
+      end;
     end;
   end;
   Result := Assigned(AType);
@@ -915,11 +918,13 @@ end;
 function TRttiTypeHelper.ExtractGenericArguments: string;
 var
   i: Integer;
+  s: string;
 begin
-  i := Pos('<', Name);
+  s := Name;
+  i := Pos('<', s);
   if i > 0 then
   begin
-    Result := Copy(Name, Succ(i), Length(Name) - Succ(i));
+    Result := Copy(s, Succ(i), Length(s) - Succ(i));
   end
   else
   begin
@@ -979,6 +984,7 @@ function TRttiTypeHelper.GetGenericTypeDefinition(
 var
   i: Integer;
   args: TStringDynArray;
+  s: string;
 begin
   args := SplitString(ExtractGenericArguments, ',');
   for i := Low(args) to High(args) do
@@ -995,11 +1001,13 @@ begin
   end;
   if IsPublicType and AIncludeUnitName then
   begin
-    Result := Copy(QualifiedName, 1, Pos('<', QualifiedName)) + MergeStrings(args, ',') + '>';
+    s := QualifiedName;
+    Result := Copy(s, 1, Pos('<', s)) + MergeStrings(args, ',') + '>';
   end
   else
   begin
-    Result := Copy(Name, 1, Pos('<', Name)) + MergeStrings(args, ',') + '>';
+    s := Name;
+    Result := Copy(s, 1, Pos('<', s)) + MergeStrings(args, ',') + '>';
   end;
 end;
 
@@ -1108,9 +1116,12 @@ begin
 end;
 
 function TRttiTypeHelper.IsGenericTypeOf(const BaseTypeName: string): Boolean;
+var
+  s: string;
 begin
-  Result := (Copy(Name, 1, Succ(Length(BaseTypeName))) = (BaseTypeName + '<'))
-    and (Copy(Name, Length(Name), 1) = '>');
+  s := Name;
+  Result := (Copy(s, 1, Succ(Length(BaseTypeName))) = (BaseTypeName + '<'))
+    and (Copy(s, Length(s), 1) = '>');
 end;
 
 function TRttiTypeHelper.IsInheritedFrom(const OtherTypeName: string): Boolean;

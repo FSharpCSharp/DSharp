@@ -77,6 +77,8 @@ type
     FOnSelectionChanged: TNotifyEvent;
     FSelectedItems: IList<TObject>;
     FSorting: Boolean;
+    FSyncing: Boolean;
+    FSyncMode: Boolean;
     FTreeView: TVirtualStringTree;
 
     procedure DoAfterCellPaint(Sender: TBaseVirtualTree; TargetCanvas: TCanvas;
@@ -201,6 +203,7 @@ type
     property OnSelectionChanged: TNotifyEvent
       read FOnSelectionChanged write FOnSelectionChanged;
     property Sorting: Boolean read FSorting write SetSorting default True;
+    property SyncMode: Boolean read FSyncMode write FSyncMode default False;
     property TreeView: TVirtualStringTree read FTreeView write SetTreeView;
   end;
 
@@ -350,19 +353,30 @@ procedure TTreeViewPresenter.DoCheckedItemsChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) and (FCollectionChanging = 0) then
+  if Assigned(FTreeView) then
   begin
-    LNode := FTreeView.GetFirst();
-    while Assigned(LNode) do
+    if FCollectionChanging = 0 then
     begin
-      if GetNodeItem(FTreeView, LNode) = Item then
+      LNode := FTreeView.GetFirst();
+      while Assigned(LNode) do
       begin
-        case Action of
-          caAdd: FTreeView.CheckState[LNode] := csCheckedNormal;
-          caRemove: FTreeView.CheckState[LNode] := csUncheckedNormal;
+        if GetNodeItem(FTreeView, LNode) = Item then
+        begin
+          case Action of
+            caAdd: FTreeView.CheckState[LNode] := csCheckedNormal;
+            caRemove: FTreeView.CheckState[LNode] := csUncheckedNormal;
+          end;
         end;
+        LNode := FTreeView.GetNext(LNode);
       end;
-      LNode := FTreeView.GetNext(LNode);
+    end;
+
+    if FSyncMode and not FSyncing then
+    try
+      FSyncing := True;
+      SetSelectedItems(FCheckedItems);
+    finally
+      FSyncing := False;
     end;
   end;
 end;
@@ -883,19 +897,30 @@ procedure TTreeViewPresenter.DoSelectedItemsChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) and (FCollectionChanging = 0) then
+  if Assigned(FTreeView) then
   begin
-    LNode := FTreeView.GetFirst();
-    while Assigned(LNode) do
+    if FCollectionChanging = 0 then
     begin
-      if GetNodeItem(FTreeView, LNode) = Item then
+      LNode := FTreeView.GetFirst();
+      while Assigned(LNode) do
       begin
-        case Action of
-          caAdd: FTreeView.Selected[LNode] := True;
-          caRemove: FTreeView.Selected[LNode] := False;
+        if GetNodeItem(FTreeView, LNode) = Item then
+        begin
+          case Action of
+            caAdd: FTreeView.Selected[LNode] := True;
+            caRemove: FTreeView.Selected[LNode] := False;
+          end;
         end;
+        LNode := FTreeView.GetNext(LNode);
       end;
-      LNode := FTreeView.GetNext(LNode);
+    end;
+
+    if FSyncMode and not FSyncing then
+    try
+      FSyncing := True;
+      SetCheckedItems(FSelectedItems);
+    finally
+      FSyncing := False;
     end;
   end;
 end;
@@ -1307,9 +1332,14 @@ begin
         if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
         begin
           FTreeView.Selected[LNode] := True;
-          FTreeView.ScrollIntoView(LNode, True, True);
         end;
         LNode := FTreeView.GetNext(LNode);
+      end;
+      LNode := FTreeView.GetFirstSelected();
+      FTreeView.FocusedNode := LNode;
+      if Assigned(LNode) and (FCollectionChanging = 0) then
+      begin
+        FTreeView.ScrollIntoView(LNode, True, True);
       end;
     end;
     FTreeView.EndUpdate();

@@ -174,7 +174,7 @@ type
     procedure BeginUpdate; override;
     procedure EndUpdate; override;
 
-    procedure DeleteItems(Items: IList<TObject>);
+    procedure DeleteItems(Items: IList<TObject>); deprecated 'use View.ItemsSource.RemoveRange instead';
     procedure FullCollapse;
     procedure FullExpand;
 
@@ -908,8 +908,8 @@ begin
   if Assigned(FTreeView) and (UpdateCount = 0) then
   begin
     case Action of
-      caAdd: ResetRootNodeCount;
-      caRemove: ResetRootNodeCount;
+      caAdd: Refresh();
+      caRemove: Refresh();
       caReplace:
       begin
         LNode := FTreeView.IterateSubtree(nil, GetItemNode, Pointer(Item));

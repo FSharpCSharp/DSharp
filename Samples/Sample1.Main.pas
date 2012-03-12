@@ -133,16 +133,16 @@ begin
   FSettings.Caption := 'Binding demo';
   FSettings.Color := clBtnFace;
   FSettings.Date := Now();
-  TBinding.Create(FSettings, 'Caption', MainForm, 'Caption');
-  TBinding.Create(FSettings, 'Color', MainForm, 'Color');
-  TBinding.Create(FSettings, 'Caption', Edit3, 'Text');
+  BindingGroup1.AddBinding(FSettings, 'Caption', MainForm, 'Caption');
+  BindingGroup1.AddBinding(FSettings, 'Color', MainForm, 'Color');
+  BindingGroup1.AddBinding(FSettings, 'Caption', Edit3, 'Text');
 
   // add a validation on this binding and bind a label on its validationerrors
-  LBinding := TBinding.Create(FSettings, 'Date', DateTimePicker1, 'Date');
+  LBinding := BindingGroup1.AddBinding(FSettings, 'Date', DateTimePicker1, 'Date');
   LRule := TFutureDateRule.Create;
   LBinding.ValidationRules.Add(LRule);
-  TBinding.Create(LBinding, 'ValidationErrors[0].ErrorContent', Label1, 'Caption');
-//  TBinding.Create(LBinding, 'ValidationErrors[0].ErrorContent', DateTimePicker1, 'Hint');
+  BindingGroup1.AddBinding(LBinding, 'ValidationErrors[0].ErrorContent', Label1, 'Caption');
+  BindingGroup1.AddBinding(LBinding, 'ValidationErrors[0].ErrorContent', DateTimePicker1, 'Hint');
 
 //  BindingGroup1.ValidationRules.Add(LRule);
 

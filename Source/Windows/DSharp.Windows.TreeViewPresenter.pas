@@ -407,20 +407,6 @@ begin
     begin
       Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
     end;
-  end
-  else
-  begin
-    LItem1 := GetNodeItem(Sender, Node1);
-    LItem2 := GetNodeItem(Sender, Node2);
-
-    if FTreeView.Header.SortDirection = sdAscending then
-    begin
-      Result := View.ItemsSource.IndexOf(LItem1) - View.ItemsSource.IndexOf(LItem2);
-    end
-    else
-    begin
-      Result := View.ItemsSource.IndexOf(LItem2) - View.ItemsSource.IndexOf(LItem1);
-    end;
   end;
 end;
 
@@ -668,6 +654,11 @@ begin
       begin
         Sender.SortDirection := sdAscending;
       end;
+    end;
+
+    if Sender.SortColumn = -1 then
+    begin
+      Refresh;
     end;
   end;
 end;

@@ -552,8 +552,17 @@ begin
 end;
 
 function TList<T>.IndexOf(const Value: TValue): NativeInt;
+var
+  LItem: T;
 begin
-  Result := IndexOf(Value.AsType<T>);
+  if Value.TryAsType<T>(LItem) then
+  begin
+    Result := IndexOf(LItem);
+  end
+  else
+  begin
+    Result := -1;
+  end;
 end;
 
 procedure TList<T>.Insert(const Index: NativeInt; const Value: T);

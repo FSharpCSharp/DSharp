@@ -186,7 +186,7 @@ type
     function GetCount: NativeInt; virtual; abstract;
     function GetEnumeratorBase: IEnumerator; virtual;
     function IEnumerable.GetEnumerator = GetEnumeratorBase;
-    function ToArrayBase: TArray<TValue>; virtual; abstract;
+    function ToArrayBase: TArray<TValue>;
     function IEnumerable.ToArray = ToArrayBase;
   public
     property Count: NativeInt read GetCount;
@@ -195,7 +195,6 @@ type
   TEnumerable<T> = class(TEnumerable, IEnumerable<T>, IEnumerable)
   private
     function GetEnumeratorBase: IEnumerator; override;
-    function ToArrayBase: TArray<TValue>; override;
   public
     function GetEnumerator: IEnumerator<T>; reintroduce; virtual;
     function ToArray: TArray<T>; virtual; abstract;
@@ -367,6 +366,21 @@ begin
   Result := TEnumerator.Create();
 end;
 
+function TEnumerable.ToArrayBase: TArray<TValue>;
+var
+  i: Integer;
+  LEnumerator: IEnumerator;
+begin
+  i := 0;
+  SetLength(Result, Count);
+  LEnumerator := GetEnumeratorBase();
+  while LEnumerator.MoveNext do
+  begin
+    Result[i] := LEnumerator.Current;
+    Inc(i);
+  end;
+end;
+
 { TEnumerable<T> }
 
 function TEnumerable<T>.GetEnumerator: IEnumerator<T>;
@@ -377,20 +391,6 @@ end;
 function TEnumerable<T>.GetEnumeratorBase: IEnumerator;
 begin
   Result := GetEnumerator();
-end;
-
-function TEnumerable<T>.ToArrayBase: TArray<TValue>;
-var
-  i: NativeInt;
-  LItem: T;
-begin
-  i := 0;
-  SetLength(Result, Count);
-  for LItem in Self do
-  begin
-    Result[i] := TValue.From<T>(LItem);
-    Inc(i);
-  end;
 end;
 
 { TList<T> }

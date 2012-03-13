@@ -1059,6 +1059,10 @@ begin
           Text := ColumnDefinitions[i].Caption;
           Width := ColumnDefinitions[i].Width;
           Options := Options + [coUseCaptionAlignment];
+          if not ColumnDefinitions[i].Visible then
+          begin
+            Options := Options - [coVisible];
+          end;
         end;
       end;
       if FSorting then

@@ -146,6 +146,7 @@ begin
           if i < LTableView.ColumnCount then
           begin
             LTableView.Columns[i].Caption := ColumnDefinitions[i].Caption;
+            LTableView.Columns[i].Visible := ColumnDefinitions[i].Visible;
             LTableView.Columns[i].Width := ColumnDefinitions[i].Width;
           end;
         end;
@@ -158,6 +159,7 @@ begin
           if i < LCardView.RowCount then
           begin
             LCardView.Rows[i].Caption := ColumnDefinitions[i].Caption;
+            LCardView.Rows[i].Visible := ColumnDefinitions[i].Visible;
           end;
         end;
       end;

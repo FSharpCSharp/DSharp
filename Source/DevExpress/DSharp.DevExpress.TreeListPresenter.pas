@@ -175,6 +175,7 @@ begin
         if i < FTreeList.ColumnCount then
         begin
           FTreeList.Columns[i].Caption.Text := ColumnDefinitions[i].Caption;
+          FTreeList.Columns[i].Visible := ColumnDefinitions[i].Visible;
           FTreeList.Columns[i].Width := ColumnDefinitions[i].Width;
         end;
       end;

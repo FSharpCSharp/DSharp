@@ -84,6 +84,7 @@ type
     FOnSetText: TSetTextEvent;
     FTextPropertyExpression: IMemberExpression;
     FTextPropertyName: string;
+    FVisible: Boolean;
     FWidth: Integer;
     procedure SetCustomFilter(const Value: string);
     procedure SetHintPropertyName(const Value: string);
@@ -109,6 +110,7 @@ type
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
     property TextPropertyName: string read FTextPropertyName write SetTextPropertyName;
+    property Visible: Boolean read FVisible write FVisible default True;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;
 
@@ -154,6 +156,7 @@ uses
 constructor TColumnDefinition.Create(Collection: TCollection);
 begin
   inherited;
+  FVisible := True;
   FWidth := CDefaultWidth;
 end;
 

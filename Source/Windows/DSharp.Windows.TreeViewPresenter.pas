@@ -76,6 +76,7 @@ type
     FOnKeyAction: TKeyEvent;
     FOnSelectionChanged: TNotifyEvent;
     FSelectedItems: IList<TObject>;
+    FShowHeader: Boolean;
     FSorting: Boolean;
     FSyncing: Boolean;
     FSyncMode: Boolean;
@@ -147,6 +148,7 @@ type
     procedure SetNodeItem(Tree: TBaseVirtualTree; Node: PVirtualNode; Item: TObject);
     procedure SetSelectedItem(const Value: TObject);
     procedure SetSelectedItems(const Value: IList<TObject>);
+    procedure SetShowHeader(const Value: Boolean);
     procedure SetSorting(const Value: Boolean);
     procedure SetTreeView(const Value: TVirtualStringTree);
 
@@ -202,6 +204,7 @@ type
     property OnKeyAction: TKeyEvent read FOnKeyAction write FOnKeyAction;
     property OnSelectionChanged: TNotifyEvent
       read FOnSelectionChanged write FOnSelectionChanged;
+    property ShowHeader: Boolean read FShowHeader write SetShowHeader default True;
     property Sorting: Boolean read FSorting write SetSorting default True;
     property SyncMode: Boolean read FSyncMode write FSyncMode default False;
     property TreeView: TVirtualStringTree read FTreeView write SetTreeView;
@@ -257,6 +260,7 @@ begin
   inherited;
   FAllowClearSelection := True;
   FAllowMove := True;
+  FShowHeader := True;
   FSorting := True;
 end;
 
@@ -1066,7 +1070,6 @@ begin
         FTreeView.Header.SortColumn := -1;
       end;
     end;
-    FTreeView.Header.Options := FTreeView.Header.Options + [hoVisible];
   end;
 end;
 
@@ -1161,6 +1164,16 @@ begin
         FTreeView.TreeOptions.PaintOptions + [toShowButtons, toShowRoot, toShowTreeLines];
     end;
 
+    if FShowHeader then
+    begin
+      FTreeView.Header.Options := FTreeView.Header.Options + [hoVisible];
+    end
+    else
+    begin
+      FTreeView.Header.Options := FTreeView.Header.Options - [hoVisible];
+    end;
+
+    FTreeView.Header.Options := FTreeView.Header.Options + [hoAutoResize];
     FTreeView.HintMode := hmHintAndDefault;
     FTreeView.IncrementalSearch := isAll;
     FTreeView.ShowHint := True;
@@ -1169,7 +1182,7 @@ begin
     FTreeView.TreeOptions.MiscOptions :=
       FTreeView.TreeOptions.MiscOptions - [toToggleOnDblClick];
     FTreeView.TreeOptions.PaintOptions :=
-      FTreeView.TreeOptions.PaintOptions + [toHideFocusRect];
+      FTreeView.TreeOptions.PaintOptions + [toHideFocusRect, toUseExplorerTheme];
     FTreeView.TreeOptions.SelectionOptions :=
       FTreeView.TreeOptions.SelectionOptions + [toExtendedFocus, toFullRowSelect, toRightClickSelect];
   end;
@@ -1335,6 +1348,12 @@ begin
     end;
     FTreeView.EndUpdate();
   end;
+end;
+
+procedure TTreeViewPresenter.SetShowHeader(const Value: Boolean);
+begin
+  FShowHeader := Value;
+  InitProperties();
 end;
 
 procedure TTreeViewPresenter.SetSorting(const Value: Boolean);

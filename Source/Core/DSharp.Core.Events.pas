@@ -160,14 +160,29 @@ var
 
 implementation
 
+//function IsValid(AObject: TObject): Boolean;
+//begin
+//  Result := False;
+//  if Assigned(AObject) then
+//  try
+//    if NativeInt(Pointer(PPointer(AObject)^)) > $FFFF then  // "hotfix" to prevent some access violations (no clue if this works) :)
+//      Result := Pointer(PPointer(AObject)^) =
+//        Pointer(Pointer(Cardinal(PPointer(AObject)^) + Cardinal(vmtSelfPtr))^);
+//  except
+//  end;
+//end;
+
 function IsValid(AObject: TObject): Boolean;
+{$IFDEF VER210}
+type
+  PNativeInt = ^NativeInt;
+{$ENDIF}
 begin
   Result := False;
   if Assigned(AObject) then
   try
-    if NativeInt(Pointer(PPointer(AObject)^)) > $FFFF then  // "hotfix" to prevent some access violations (no clue if this works) :)
-      Result := Pointer(PPointer(AObject)^) =
-        Pointer(Pointer(Cardinal(PPointer(AObject)^) + Cardinal(vmtSelfPtr))^);
+    if PNativeInt(AObject)^ > $FFFF then  // "hotfix" to prevent some access violations (no clue if this works) :)
+      Result := PNativeInt(AObject)^ = PNativeInt(PNativeInt(AObject)^ + vmtSelfPtr)^;
   except
   end;
 end;

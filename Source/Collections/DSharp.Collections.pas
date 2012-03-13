@@ -183,7 +183,7 @@ type
 
   TEnumerable = class(TInterfacedObject, IEnumerable)
   private
-    function GetCount: NativeInt; virtual; abstract;
+    function GetCount: NativeInt; virtual;
     function GetEnumeratorBase: IEnumerator; virtual;
     function IEnumerable.GetEnumerator = GetEnumeratorBase;
     function ToArrayBase: TArray<TValue>;
@@ -197,7 +197,7 @@ type
     function GetEnumeratorBase: IEnumerator; override;
   public
     function GetEnumerator: IEnumerator<T>; reintroduce; virtual;
-    function ToArray: TArray<T>; virtual; abstract;
+    function ToArray: TArray<T>; virtual;
   end;
 
   TList<T> = class(TEnumerable<T>, IList<T>, IList)
@@ -361,6 +361,18 @@ end;
 
 { TEnumerable }
 
+function TEnumerable.GetCount: NativeInt;
+var
+  LEnumerator: IEnumerator;
+begin
+  Result := 0;
+  LEnumerator := GetEnumeratorBase();
+  while LEnumerator.MoveNext do
+  begin
+    Inc(Result);
+  end;
+end;
+
 function TEnumerable.GetEnumeratorBase: IEnumerator;
 begin
   Result := TEnumerator.Create();
@@ -391,6 +403,21 @@ end;
 function TEnumerable<T>.GetEnumeratorBase: IEnumerator;
 begin
   Result := GetEnumerator();
+end;
+
+function TEnumerable<T>.ToArray: TArray<T>;
+var
+  i: Integer;
+  LEnumerator: IEnumerator<T>;
+begin
+  i := 0;
+  SetLength(Result, Count);
+  LEnumerator := GetEnumerator();
+  while LEnumerator.MoveNext do
+  begin
+    Result[i] := LEnumerator.Current;
+    Inc(i);
+  end;
 end;
 
 { TList<T> }

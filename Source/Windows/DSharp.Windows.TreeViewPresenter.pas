@@ -357,7 +357,7 @@ procedure TTreeViewPresenter.DoCheckedItemsChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) then
+  if Assigned(FTreeView) and not (csDestroying in ComponentState) then
   begin
     if FCollectionChanging = 0 then
     begin
@@ -521,7 +521,8 @@ procedure TTreeViewPresenter.DoExpandedItemsChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) and (FCollectionChanging = 0) then
+  if Assigned(FTreeView) and not (csDestroying in ComponentState)
+    and (FCollectionChanging = 0) then
   begin
     LNode := FTreeView.GetFirst();
     while Assigned(LNode) do
@@ -892,7 +893,7 @@ procedure TTreeViewPresenter.DoSelectedItemsChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) then
+  if Assigned(FTreeView) and not (csDestroying in ComponentState) then
   begin
     if FCollectionChanging = 0 then
     begin
@@ -925,7 +926,8 @@ procedure TTreeViewPresenter.DoSourceCollectionChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) and (UpdateCount = 0) then
+  if Assigned(FTreeView) and not (csDestroying in ComponentState)
+    and (UpdateCount = 0) then
   begin
     case Action of
       caAdd: Refresh();
@@ -1232,7 +1234,10 @@ end;
 procedure TTreeViewPresenter.SetCheckedItem(const Value: TObject);
 begin
   FCheckedItems.Clear();
-  FCheckedItems.Add(Value);
+  if Assigned(Value) then
+  begin
+    FCheckedItems.Add(Value);
+  end;
   SetCheckedItems(FCheckedItems);
 end;
 
@@ -1317,7 +1322,10 @@ begin
   if (Value <> SelectedItem) or (SelectedItems.Count > 1) then
   begin
     FSelectedItems.Clear();
-    FSelectedItems.Add(Value);
+    if Assigned(Value) then
+    begin
+      FSelectedItems.Add(Value);
+    end;
     SetSelectedItems(FSelectedItems);
   end;
 end;

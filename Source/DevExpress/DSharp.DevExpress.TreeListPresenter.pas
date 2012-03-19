@@ -166,7 +166,7 @@ procedure TTreeListPresenter.InitColumns;
 var
   i: Integer;
 begin
-  if Assigned(FTreeList) then
+  if Assigned(FTreeList) and UseColumnDefinitions then
   begin
     if Assigned(ColumnDefinitions) then
     begin

@@ -53,6 +53,7 @@ type
     FOnDoubleClick: TNotifyEvent;
     FPopupMenu: TPopupMenu;
     FUpdateCount: Integer;
+    FUseColumnDefinitions: Boolean;
     FView: TCollectionView;
     procedure DoColumnDefinitionsChanged(Sender: TObject; const Item: TColumnDefinition;
       Action: TCollectionNotification);
@@ -99,6 +100,8 @@ type
     property ImageList: TCustomImageList read FImageList write SetImageList;
     property OnDoubleClick: TNotifyEvent read FOnDoubleClick write FOnDoubleClick;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
+    property UseColumnDefinitions: Boolean
+      read FUseColumnDefinitions write FUseColumnDefinitions default True;
   end;
 
   TCollectionViewPresenterAdapter = class(TCollectionView)
@@ -131,6 +134,7 @@ begin
 
   FColumnDefinitions := TColumnDefinitions.Create(Self);
   FColumnDefinitions.OnNotify.Add(DoColumnDefinitionsChanged);
+  FUseColumnDefinitions := True;
   FView.ItemTemplate := TColumnDefinitionsControlTemplate.Create(FColumnDefinitions);
 end;
 

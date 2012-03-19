@@ -134,7 +134,7 @@ var
   LTableView: TcxGridTableView;
   LCardView: TcxGridCardView;
 begin
-  if Assigned(FGridView) then
+  if Assigned(FGridView) and UseColumnDefinitions then
   begin
     if Assigned(ColumnDefinitions) then
     begin

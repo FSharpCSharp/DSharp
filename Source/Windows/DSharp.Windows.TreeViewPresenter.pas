@@ -1047,7 +1047,7 @@ procedure TTreeViewPresenter.InitColumns;
 var
   i: Integer;
 begin
-  if Assigned(FTreeView) then
+  if Assigned(FTreeView) and UseColumnDefinitions then
   begin
     FTreeView.Header.Columns.Clear;
     if Assigned(ColumnDefinitions) then

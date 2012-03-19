@@ -54,6 +54,8 @@ type
     FPopupMenu: TPopupMenu;
     FUpdateCount: Integer;
     FView: TCollectionView;
+    procedure DoColumnDefinitionsChanged(Sender: TObject; const Item: TColumnDefinition;
+      Action: TCollectionNotification);
     procedure ReadColumnDefinitions(Reader: TReader);
     procedure SetAction(const Value: TBasicAction);
     procedure SetColumnDefinitions(const Value: IColumnDefinitions);
@@ -128,11 +130,16 @@ begin
   FView := TCollectionViewPresenterAdapter.Create(Self);
 
   FColumnDefinitions := TColumnDefinitions.Create(Self);
+  FColumnDefinitions.OnNotify.Add(DoColumnDefinitionsChanged);
   FView.ItemTemplate := TColumnDefinitionsControlTemplate.Create(FColumnDefinitions);
 end;
 
 destructor TCustomPresenter.Destroy;
 begin
+  if Assigned(FColumnDefinitions) then
+  begin
+    FColumnDefinitions.OnNotify.Remove(DoColumnDefinitionsChanged);
+  end;
   FView.Free();
   inherited;
 end;
@@ -146,6 +153,12 @@ procedure TCustomPresenter.DefineProperties(Filer: TFiler);
 begin
   inherited;
   Filer.DefineProperty('ColumnDefinitions', ReadColumnDefinitions, WriteColumnDefinitions, True);
+end;
+
+procedure TCustomPresenter.DoColumnDefinitionsChanged(Sender: TObject;
+  const Item: TColumnDefinition; Action: TCollectionNotification);
+begin
+  InitColumns();
 end;
 
 procedure TCustomPresenter.DoDblClick(Sender: TObject);
@@ -296,15 +309,23 @@ end;
 procedure TCustomPresenter.SetColumnDefinitions(
   const Value: IColumnDefinitions);
 begin
-  if Assigned(FColumnDefinitions) and (FColumnDefinitions.Owner = Self) then
+  if Assigned(FColumnDefinitions) then
   begin
-    if (FView.ItemTemplate is TColumnDefinitionsControlTemplate)
-      and ((FView.ItemTemplate as TColumnDefinitionsControlTemplate).ColumnDefinitions = FColumnDefinitions) then
+    FColumnDefinitions.OnNotify.Remove(DoColumnDefinitionsChanged);
+    if FColumnDefinitions.Owner = Self then
     begin
-      (FView.ItemTemplate as TColumnDefinitionsControlTemplate).ColumnDefinitions := Value;
+      if (FView.ItemTemplate is TColumnDefinitionsControlTemplate)
+        and ((FView.ItemTemplate as TColumnDefinitionsControlTemplate).ColumnDefinitions = FColumnDefinitions) then
+      begin
+        (FView.ItemTemplate as TColumnDefinitionsControlTemplate).ColumnDefinitions := Value;
+      end;
     end;
   end;
   FColumnDefinitions := Value;
+  if Assigned(FColumnDefinitions) then
+  begin
+    FColumnDefinitions.OnNotify.Add(DoColumnDefinitionsChanged);
+  end;
   InitColumns();
 end;
 

@@ -35,6 +35,7 @@ uses
   Classes,
   DSharp.Collections,
   DSharp.Core.Collections,
+  DSharp.Core.Events,
   DSharp.Core.Expressions,
   DSharp.Windows.ControlTemplates,
   Graphics,
@@ -115,14 +116,20 @@ type
   end;
 
   IColumnDefinitions = interface
+    ['{FBD9C07D-E910-4291-AF4C-E7786E83372A}']
+    function Add(const Caption: string; Width: Integer = CDefaultWidth;
+      Alignment: TAlignment = taLeftJustify): TColumnDefinition;
     function GetCount: Integer;
     function GetItem(Index: Integer): TColumnDefinition;
     function GetMainColumnIndex: Integer;
+    function GetOnNotify: IEvent<TCollectionNotifyEvent<TColumnDefinition>>;
+    
     function GetOwner: TPersistent;
     procedure SetItem(Index: Integer; Value: TColumnDefinition);
     property Count: Integer read GetCount;
     property Items[Index: Integer]: TColumnDefinition read GetItem write SetItem; default;
     property MainColumnIndex: Integer read GetMainColumnIndex;
+    property OnNotify: IEvent<TCollectionNotifyEvent<TColumnDefinition>> read GetOnNotify;
     property Owner: TPersistent read GetOwner;
   end;
 
@@ -276,10 +283,11 @@ end;
 function TColumnDefinitions.Add(const Caption: string;
   Width: Integer; Alignment: TAlignment): TColumnDefinition;
 begin
-  Result := Add();
+  Result := TColumnDefinition.Create(nil);
   Result.Alignment := Alignment;
   Result.Caption := Caption;
   Result.Width := Width;
+  Result.Collection := Self;
 end;
 
 end.

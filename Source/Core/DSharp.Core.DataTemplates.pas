@@ -36,6 +36,7 @@ uses
 
 type
   IDataTemplate = interface
+    ['{C03657F3-54EF-4105-9943-B07733770700}']
     // methods to display items
     function GetHint(const Item: TObject; const ColumnIndex: Integer): string;
     function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer;

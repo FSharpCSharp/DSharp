@@ -32,7 +32,8 @@ unit DSharp.Core.Collections;
 interface
 
 uses
-  Classes;
+  Classes,
+  DSharp.Core.Events;
 
 type
   TCollectionNotifyEvent<T> = procedure(Sender: TObject; const Item: T;
@@ -46,10 +47,11 @@ type
 
   TCollection<T: TCollectionItem> = class(TCollection)
   private
-    FOnNotify: TCollectionNotifyEvent<T>;
+    FOnNotify: Event<TCollectionNotifyEvent<T>>;
   protected
     function GetCount: Integer;
     function GetItem(Index: Integer): T;
+    function GetOnNotify: IEvent<TCollectionNotifyEvent<T>>;
     procedure Notify(Item: TCollectionItem; Action: TCollectionNotification); override;
     procedure SetItem(Index: Integer; Value: T);
   public
@@ -58,7 +60,7 @@ type
     function GetEnumerator: TCollectionEnumerator<T>;
     function Insert(Index: Integer): T;
     property Items[Index: Integer]: T read GetItem write SetItem; default;
-    property OnNotify: TCollectionNotifyEvent<T> read FOnNotify write FOnNotify;
+    property OnNotify: IEvent<TCollectionNotifyEvent<T>> read GetOnNotify;
   end;
 
   TOwnedCollection<T: TCollectionItem> = class(TCollection<T>)
@@ -106,6 +108,11 @@ begin
   Result := T(inherited GetItem(Index));
 end;
 
+function TCollection<T>.GetOnNotify: IEvent<TCollectionNotifyEvent<T>>;
+begin
+  Result := FOnNotify;
+end;
+
 function TCollection<T>.Insert(Index: Integer): T;
 begin
   Result := T(inherited Insert(Index));
@@ -115,10 +122,7 @@ procedure TCollection<T>.Notify(Item: TCollectionItem;
   Action: TCollectionNotification);
 begin
   inherited;
-  if Assigned(FOnNotify) then
-  begin
-    FOnNotify(Self, Item, Action);
-  end;
+  FOnNotify.Invoke(Self, Item, Action);
 end;
 
 procedure TCollection<T>.SetItem(Index: Integer; Value: T);

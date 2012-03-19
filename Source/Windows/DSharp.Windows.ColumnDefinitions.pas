@@ -43,6 +43,10 @@ uses
   SysUtils,
   Types;
 
+{$IFDEF VER210}
+  {$MESSAGE HINT 'If you get F2084 Internal Error: L817 just compile again (not build)'}
+{$ENDIF}
+
 const
   CDefaultWidth = 100;
 
@@ -123,7 +127,6 @@ type
     function GetItem(Index: Integer): TColumnDefinition;
     function GetMainColumnIndex: Integer;
     function GetOnNotify: IEvent<TCollectionNotifyEvent<TColumnDefinition>>;
-    
     function GetOwner: TPersistent;
     procedure SetItem(Index: Integer; Value: TColumnDefinition);
     property Count: Integer read GetCount;

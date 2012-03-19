@@ -39,10 +39,10 @@ uses
 type
   TRttiDataTemplate = class(TDataTemplate)
   private
-    FColumnDefinitions: TColumnDefinitions;
+    FColumnDefinitions: IColumnDefinitions;
     FContext: TRttiContext;
   public
-    constructor Create(AColumnDefinitions: TColumnDefinitions);
+    constructor Create(AColumnDefinitions: IColumnDefinitions);
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
   end;
 
@@ -50,7 +50,7 @@ implementation
 
 { TRttiDataTemplate }
 
-constructor TRttiDataTemplate.Create(AColumnDefinitions: TColumnDefinitions);
+constructor TRttiDataTemplate.Create(AColumnDefinitions: IColumnDefinitions);
 begin
   inherited Create;
   FColumnDefinitions := AColumnDefinitions;

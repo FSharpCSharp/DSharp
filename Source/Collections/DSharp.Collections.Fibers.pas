@@ -32,31 +32,32 @@ unit DSharp.Collections.Fibers;
 interface
 
 uses
-  SysUtils,
-  DSharp.Core.Fibers;
+  DSharp.Core.Fibers,
+  Rtti,
+  SysUtils;
 
 type
   TEnumeratorFiber = class(TFiber)
   strict private
     FCanceled: Boolean;
     FProc: TProc;
-    FResult: TObject;
   strict protected
+    FResult: TValue;
     procedure Execute; override;
     property Canceled: Boolean read FCanceled;
   public
     constructor Create(const AProc: TProc);
     destructor Destroy; override;
-    procedure Yield(const AValue: TObject); overload;
-    property Result: TObject read FResult;
+    procedure Yield(const AValue: TValue); overload;
+    property Result: TValue read FResult;
   end;
 
   TEnumeratorFiber<T> = class(TEnumeratorFiber)
-  strict private
-    FResult: T;
+  private
+    function GetResult: T;
   public
     procedure Yield(const AValue: T);
-    property Result: T read FResult;
+    property Result: T read GetResult;
   end;
 
 implementation
@@ -84,7 +85,7 @@ begin
   FProc();
 end;
 
-procedure TEnumeratorFiber.Yield(const AValue: TObject);
+procedure TEnumeratorFiber.Yield(const AValue: TValue);
 begin
   FResult := AValue;
   inherited Yield();
@@ -96,11 +97,16 @@ end;
 
 { TEnumeratorFiber<T> }
 
+function TEnumeratorFiber<T>.GetResult: T;
+begin
+  Result := FResult.AsType<T>;
+end;
+
 procedure TEnumeratorFiber<T>.Yield(const AValue: T);
 begin
   if Self <> nil then
   begin
-    FResult := AValue;
+    FResult := TValue.From<T>(AValue);
     inherited Yield();
     if Canceled then
     begin

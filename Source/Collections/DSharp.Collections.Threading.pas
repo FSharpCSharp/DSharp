@@ -34,26 +34,28 @@ interface
 uses
   Classes,
   DSharp.Core.Threading,
+  Rtti,
   SysUtils;
 
 type
   TEnumeratorThread = class(TAbstractFutureThread)
   strict private
     FProc: TProc;
-    FResult: TObject;
+  strict protected
+    FResult: TValue;
   public
     constructor Create(const AProc: TProc);
     procedure Execute; override;
-    procedure Yield(const AItem: TObject); overload;
-    property Result: TObject read FResult;
+    procedure Yield(const AItem: TValue); overload;
+    property Result: TValue read FResult;
   end;
 
   TEnumeratorThread<T> = class(TEnumeratorThread)
-  strict private
-    FResult: T;
+  private
+    function GetResult: T;
   public
     procedure Yield(const AValue: T);
-    property Result: T read FResult;
+    property Result: T read GetResult;
   end;
 
 implementation
@@ -72,7 +74,7 @@ begin
   FProc();
 end;
 
-procedure TEnumeratorThread.Yield(const AItem: TObject);
+procedure TEnumeratorThread.Yield(const AItem: TValue);
 begin
   FResult := AItem;
   inherited Yield();
@@ -80,9 +82,14 @@ end;
 
 { TEnumeratorThread<T> }
 
+function TEnumeratorThread<T>.GetResult: T;
+begin
+  Result := FResult.AsType<T>;
+end;
+
 procedure TEnumeratorThread<T>.Yield(const AValue: T);
 begin
-  FResult := AValue;
+  FResult := TValue.From<T>(AValue);
   inherited Yield();
 end;
 

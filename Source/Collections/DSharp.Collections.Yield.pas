@@ -50,9 +50,18 @@ uses
   Classes,
   DSharp.Collections.Threading,
 {$ENDIF}
+  Rtti,
   SysUtils;
 
 type
+  TDelegateEnumerable = class
+  strict private
+    class function GetCurrent: TValue; static;
+  protected
+    class procedure Yield(const Value: TValue); overload;
+    class property Current: TValue read GetCurrent;
+  end;
+
 {$IFDEF USE_COLLECTIONS}
   TDelegateEnumerable<T> = class(TSequence<T>)
 {$ELSEIF DEFINED(USE_SPRING)}
@@ -93,11 +102,30 @@ type
       end;
     class function GetCurrent: T; static;
   protected
-    class procedure Yield(const Value: T);
+    class procedure Yield(const Value: T); overload;
+    class procedure Yield(const Value: TValue); overload;
     class property Current: T read GetCurrent;
   public
     constructor Create(const AEnumeration: TProc);
     function GetEnumerator: IEnumerator<T>; override;
+  end;
+
+  Yield = record
+{$IFDEF CPUX64}
+{$HINTS OFF}
+  private
+    FValue: Pointer; // workaround for 64-bit bug
+{$HINTS ON}
+{$ENDIF}
+  public
+    class operator Implicit(const Value: IInterface): Yield;
+    class operator Implicit(const Value: TObject): Yield;
+    class operator Implicit(const Value: TValue): Yield;
+    class operator Implicit(const Value: Variant): Yield;
+    class operator Implicit(const Value: Yield): IInterface;
+    class operator Implicit(const Value: Yield): TObject;
+    class operator Implicit(const Value: Yield): TValue;
+    class operator Implicit(const Value: Yield): Variant;
   end;
 
   Yield<T> = record
@@ -108,11 +136,55 @@ type
 {$HINTS ON}
 {$ENDIF}
   public
-    class operator Implicit(const Value: T): Yield<T>; inline;
-    class operator Implicit(const Value: Yield<T>): T; inline;
+    class operator Implicit(const Value: T): Yield<T>;
+    class operator Implicit(const Value: TValue): Yield<T>;
+    class operator Implicit(const Value: Yield<T>): T;
   end;
 
 implementation
+
+{ Yield }
+
+
+class operator Yield.Implicit(const Value: IInterface): Yield;
+begin
+  TDelegateEnumerable.Yield(TValue.From<IInterface>(Value));
+end;
+
+class operator Yield.Implicit(const Value: TObject): Yield;
+begin
+  TDelegateEnumerable.Yield(TValue.From<TObject>(Value));
+end;
+
+class operator Yield.Implicit(const Value: TValue): Yield;
+begin
+  TDelegateEnumerable.Yield(Value);
+end;
+
+class operator Yield.Implicit(const Value: Variant): Yield;
+begin
+  TDelegateEnumerable.Yield(TValue.FromVariant(Value));
+end;
+
+class operator Yield.Implicit(const Value: Yield): IInterface;
+begin
+  Result := TDelegateEnumerable.Current.AsInterface;
+end;
+
+class operator Yield.Implicit(const Value: Yield): TObject;
+begin
+  Result := TDelegateEnumerable.Current.AsObject;
+end;
+
+class operator Yield.Implicit(const Value: Yield): TValue;
+begin
+  Result := TDelegateEnumerable.Current;
+end;
+
+class operator Yield.Implicit(const Value: Yield): Variant;
+begin
+  Result := TDelegateEnumerable.Current.AsVariant;
+end;
 
 { Yield<T> }
 
@@ -121,9 +193,34 @@ begin
   TDelegateEnumerable<T>.Yield(Value);
 end;
 
+class operator Yield<T>.Implicit(const Value: TValue): Yield<T>;
+begin
+  TDelegateEnumerable<T>.Yield(Value.AsType<T>);
+end;
+
 class operator Yield<T>.Implicit(const Value: Yield<T>): T;
 begin
   Result := TDelegateEnumerable<T>.Current;
+end;
+
+{ TDelegateEnumerable }
+
+class function TDelegateEnumerable.GetCurrent: TValue;
+begin
+{$IFDEF USE_FIBERS}
+  Result := TEnumeratorFiber(TFiber.CurrentFiber).Result;
+{$ELSE}
+  Result := TEnumeratorThread(TThread.CurrentThread).Result;
+{$ENDIF}
+end;
+
+class procedure TDelegateEnumerable.Yield(const Value: TValue);
+begin
+{$IFDEF USE_FIBERS}
+  TEnumeratorFiber(TFiber.CurrentFiber).Yield(Value);
+{$ELSE}
+  TEnumeratorThread(TThread.CurrentThread).Yield(Value);
+{$ENDIF}
 end;
 
 { TDelegateEnumerable<T> }
@@ -154,6 +251,15 @@ begin
   TEnumeratorFiber<T>(TFiber.CurrentFiber).Yield(Value);
 {$ELSE}
   TEnumeratorThread<T>(TThread.CurrentThread).Yield(Value);
+{$ENDIF}
+end;
+
+class procedure TDelegateEnumerable<T>.Yield(const Value: TValue);
+begin
+{$IFDEF USE_FIBERS}
+  TEnumeratorFiber(TFiber.CurrentFiber).Yield(Value);
+{$ELSE}
+  TEnumeratorThread(TThread.CurrentThread).Yield(Value);
 {$ENDIF}
 end;
 

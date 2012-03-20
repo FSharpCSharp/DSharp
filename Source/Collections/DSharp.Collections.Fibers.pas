@@ -38,26 +38,31 @@ uses
 
 type
   TEnumeratorFiber = class(TFiber)
-  strict private
+  private
     FCanceled: Boolean;
     FProc: TProc;
-  strict protected
     FResult: TValue;
+  protected
     procedure Execute; override;
+    function GetResult: TValue; virtual;
+    procedure SetResult(const Value: TValue); virtual;
     property Canceled: Boolean read FCanceled;
   public
     constructor Create(const AProc: TProc);
     destructor Destroy; override;
     procedure Yield(const AValue: TValue); overload;
-    property Result: TValue read FResult;
+    property Result: TValue read GetResult;
   end;
 
   TEnumeratorFiber<T> = class(TEnumeratorFiber)
   private
-    function GetResult: T;
+    FResult: T;
+  protected
+    function GetResult: TValue; override;
+    procedure SetResult(const Value: TValue); override;
   public
     procedure Yield(const AValue: T);
-    property Result: T read GetResult;
+    property Result: T read FResult;
   end;
 
 implementation
@@ -85,9 +90,19 @@ begin
   FProc();
 end;
 
+function TEnumeratorFiber.GetResult: TValue;
+begin
+  Result := FResult;
+end;
+
+procedure TEnumeratorFiber.SetResult(const Value: TValue);
+begin
+  FResult := Value;
+end;
+
 procedure TEnumeratorFiber.Yield(const AValue: TValue);
 begin
-  FResult := AValue;
+  SetResult(AValue);
   inherited Yield();
   if Canceled then
   begin
@@ -97,16 +112,21 @@ end;
 
 { TEnumeratorFiber<T> }
 
-function TEnumeratorFiber<T>.GetResult: T;
+function TEnumeratorFiber<T>.GetResult: TValue;
 begin
-  Result := FResult.AsType<T>;
+  Result := TValue.From<T>(FResult);
+end;
+
+procedure TEnumeratorFiber<T>.SetResult(const Value: TValue);
+begin
+  FResult := Value.AsType<T>;
 end;
 
 procedure TEnumeratorFiber<T>.Yield(const AValue: T);
 begin
   if Self <> nil then
   begin
-    FResult := TValue.From<T>(AValue);
+    FResult := AValue;
     inherited Yield();
     if Canceled then
     begin

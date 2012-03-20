@@ -40,6 +40,7 @@ uses
   Collections.Base,
 {$ELSEIF DEFINED(USE_SPRING)}
   Spring.Collections,
+  Spring.Collections.Base,
 {$ELSE}
   DSharp.Collections,
 {$IFEND}
@@ -145,7 +146,6 @@ implementation
 
 { Yield }
 
-
 class operator Yield.Implicit(const Value: IInterface): Yield;
 begin
   TDelegateEnumerable.Yield(TValue.From<IInterface>(Value));
@@ -163,7 +163,7 @@ end;
 
 class operator Yield.Implicit(const Value: Variant): Yield;
 begin
-  TDelegateEnumerable.Yield(TValue.FromVariant(Value));
+  TDelegateEnumerable.Yield(TValue.From(Value));
 end;
 
 class operator Yield.Implicit(const Value: Yield): IInterface;

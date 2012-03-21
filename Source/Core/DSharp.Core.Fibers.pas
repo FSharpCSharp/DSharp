@@ -61,7 +61,7 @@ type
 
     procedure HandleException;
 
-    procedure Resume;
+    procedure Continue;
     procedure Yield;
 
     procedure Synchronize(AThreadProc: TThreadProcedure);
@@ -174,6 +174,16 @@ begin
   inherited;
 end;
 
+procedure TFiber.Continue;
+begin
+  if not FFinished then
+  begin
+{$IFDEF MSWINDOWS}
+    SwitchToFiber(FHandle);
+{$ENDIF}
+  end;
+end;
+
 class function TFiber.CurrentFiber: TFiber;
 begin
   if FiberCount > 0 then
@@ -211,16 +221,6 @@ begin
     end;
   end;
   Inc(FiberCount);
-end;
-
-procedure TFiber.Resume;
-begin
-  if not FFinished then
-  begin
-{$IFDEF MSWINDOWS}
-    SwitchToFiber(FHandle);
-{$ENDIF}
-  end;
 end;
 
 procedure TFiber.Run;
@@ -290,9 +290,9 @@ begin
   TFiber.Initialize;
   while not Terminated do
   begin
-    FFiber.Resume;
+    FFiber.Continue;
   end;
-  TThread.Synchronize(nil, FFiber.Resume);
+  TThread.Synchronize(nil, FFiber.Continue);
 end;
 
 { TActionFiber }

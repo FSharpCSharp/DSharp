@@ -54,7 +54,7 @@ type
   private
     function GetResult: T;
   public
-    procedure Yield(const AValue: T);
+    procedure Yield(const AValue: T); overload;
     property Result: T read GetResult;
   end;
 

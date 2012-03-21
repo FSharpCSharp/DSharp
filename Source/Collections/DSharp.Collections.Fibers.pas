@@ -61,7 +61,7 @@ type
     function GetResult: TValue; override;
     procedure SetResult(const Value: TValue); override;
   public
-    procedure Yield(const AValue: T);
+    procedure Yield(const AValue: T); overload;
     property Result: T read FResult;
   end;
 
@@ -80,7 +80,7 @@ begin
   if not Finished then
   begin
     FCanceled := True;
-    Resume;
+    Continue();
   end;
   inherited;
 end;

@@ -424,12 +424,13 @@ end;
 
 function TList<T>.Add(const Value: T): NativeInt;
 begin
+  Result := FCount;
   Insert(FCount, Value);
 end;
 
 function TList<T>.Add(const Value: TValue): NativeInt;
 begin
-  Add(Value.AsType<T>);
+  Result := Add(Value.AsType<T>);
 end;
 
 procedure TList<T>.AddRange(Values: IEnumerable);

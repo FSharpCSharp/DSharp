@@ -41,7 +41,7 @@ uses
   SysUtils;
 
 type
-  IFuture = interface
+  ITask = interface
     function Canceled: Boolean;
     function Finished: Boolean;
 
@@ -49,12 +49,12 @@ type
     procedure WaitFor;
   end;
 
-  TAbstractFutureThread = class;
+  TAbstractTaskThread = class;
 
-  TAbstractFuture = class(TInterfacedObject, IFuture)
+  TAbstractTask = class(TInterfacedObject, ITask)
   strict protected
     FCanceled: Boolean;
-    FWorker: TAbstractFutureThread;
+    FWorker: TAbstractTaskThread;
   public
     destructor Destroy; override;
 
@@ -65,7 +65,7 @@ type
     procedure WaitFor; virtual;
   end;
 
-  TAbstractFutureThread = class(TThread)
+  TAbstractTaskThread = class(TThread)
   strict private
     FFinishedOrYielded: THandleObjectArray;
     FTerminatedOrResumed: THandleObjectArray;
@@ -83,12 +83,12 @@ type
     procedure Yield;
   end;
 
-  TFuture = class(TAbstractFuture)
+  TTask = class(TAbstractTask)
   public
     constructor Create(const AAction: TProc);
   end;
 
-  TFutureThread = class(TAbstractFutureThread)
+  TTaskThread = class(TAbstractTaskThread)
   strict private
     FAction: TProc;
   public
@@ -96,18 +96,18 @@ type
     procedure Execute; override;
   end;
 
-  IFuture<T> = interface(IFuture)
+  ITask<T> = interface(ITask)
     function Value: T;
   end;
 
-  TFuture<T> = class(TAbstractFuture, IFuture<T>)
+  TTask<T> = class(TAbstractTask, ITask<T>)
   public
     constructor Create(const AAction: TFunc<T>);
 
     function Value: T;
   end;
 
-  TFutureThread<T> = class(TAbstractFutureThread)
+  TTaskThread<T> = class(TAbstractTaskThread)
   strict private
     FAction: TFunc<T>;
     FResult: T;
@@ -125,15 +125,30 @@ type
     function DetachException: Exception;
   end;
 
-{ TAbstractFuture }
+{ TThreadHelper }
 
-destructor TAbstractFuture.Destroy;
+function TThreadHelper.DetachException: Exception;
+begin
+  if (FatalException is Exception) and not (FatalException is EAbort) then
+  begin
+    Result := Exception(FatalException);
+    Self.FFatalException := nil;
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+{ TAbstractTask }
+
+destructor TAbstractTask.Destroy;
 begin
   FreeAndNil(FWorker);
   inherited;
 end;
 
-procedure TAbstractFuture.Cancel;
+procedure TAbstractTask.Cancel;
 begin
   if FCanceled then
     raise Exception.Create('Action already canceled');
@@ -145,24 +160,24 @@ begin
   end;
 end;
 
-function TAbstractFuture.Canceled: Boolean;
+function TAbstractTask.Canceled: Boolean;
 begin
   Result := FCanceled;
 end;
 
-function TAbstractFuture.Finished: Boolean;
+function TAbstractTask.Finished: Boolean;
 begin
   Result := FWorker.Finished;
 end;
 
-procedure TAbstractFuture.WaitFor;
+procedure TAbstractTask.WaitFor;
 begin
   FWorker.WaitFor();
 end;
 
-{ TAbstractFutureThread }
+{ TAbstractTaskThread }
 
-constructor TAbstractFutureThread.Create;
+constructor TAbstractTaskThread.Create;
 begin
   inherited Create(True);
   FFinished := TEvent.Create(nil, False, False, '');
@@ -177,7 +192,7 @@ begin
   FTerminatedOrResumed[1] := FResumed;
 end;
 
-destructor TAbstractFutureThread.Destroy;
+destructor TAbstractTaskThread.Destroy;
 begin
   if not Finished and not Terminated then
   begin
@@ -194,7 +209,7 @@ begin
   inherited;
 end;
 
-procedure TAbstractFutureThread.Continue;
+procedure TAbstractTaskThread.Continue;
 {$IFDEF MSWINDOWS}
 var
   LSignaledObject: THandleObject;
@@ -216,13 +231,13 @@ begin
   end;
 end;
 
-procedure TAbstractFutureThread.DoTerminate;
+procedure TAbstractTaskThread.DoTerminate;
 begin
   inherited;
   FFinished.SetEvent;
 end;
 
-procedure TAbstractFutureThread.RaiseException;
+procedure TAbstractTaskThread.RaiseException;
 var
   E: Exception;
 begin
@@ -233,7 +248,7 @@ begin
   end;
 end;
 
-procedure TAbstractFutureThread.Yield;
+procedure TAbstractTaskThread.Yield;
 {$IFDEF MSWINDOWS}
 var
   LSignaledObject: THandleObject;
@@ -247,53 +262,53 @@ begin
     Abort;
 end;
 
-{ TFuture }
+{ TTask }
 
-constructor TFuture.Create(const AAction: TProc);
+constructor TTask.Create(const AAction: TProc);
 begin
   inherited Create();
-  FWorker := TFutureThread.Create(AAction);
+  FWorker := TTaskThread.Create(AAction);
   FWorker.Start();
 end;
 
-{ TFutureThread }
+{ TTaskThread }
 
-constructor TFutureThread.Create(const AAction: TProc);
+constructor TTaskThread.Create(const AAction: TProc);
 begin
   inherited Create();
   FAction := AAction;
 end;
 
-procedure TFutureThread.Execute;
+procedure TTaskThread.Execute;
 begin
   inherited;
   FAction();
 end;
 
-{ TFutureThread<T> }
+{ TTaskThread<T> }
 
-constructor TFutureThread<T>.Create(const AAction: TFunc<T>);
+constructor TTaskThread<T>.Create(const AAction: TFunc<T>);
 begin
   inherited Create();
   FAction := AAction;
 end;
 
-procedure TFutureThread<T>.Execute;
+procedure TTaskThread<T>.Execute;
 begin
   inherited;
   FResult := FAction();
 end;
 
-{ TFuture<T> }
+{ TTask<T> }
 
-constructor TFuture<T>.Create(const AAction: TFunc<T>);
+constructor TTask<T>.Create(const AAction: TFunc<T>);
 begin
   inherited Create;
-  FWorker := TFutureThread<T>.Create(AAction);
+  FWorker := TTaskThread<T>.Create(AAction);
   FWorker.Start();
 end;
 
-function TFuture<T>.Value: T;
+function TTask<T>.Value: T;
 begin
   if FCanceled then
     raise Exception.Create('Action was canceled');
@@ -302,22 +317,7 @@ begin
   begin
     WaitFor();
   end;
-  Result := TFutureThread<T>(FWorker).Result;
-end;
-
-{ TThreadHelper }
-
-function TThreadHelper.DetachException: Exception;
-begin
-  if (FatalException is Exception) and not (FatalException is EAbort) then
-  begin
-    Result := Exception(FatalException);
-    Self.FFatalException := nil;
-  end
-  else
-  begin
-    Result := nil;
-  end;
+  Result := TTaskThread<T>(FWorker).Result;
 end;
 
 end.

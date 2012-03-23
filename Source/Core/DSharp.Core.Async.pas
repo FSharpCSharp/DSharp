@@ -39,7 +39,7 @@ uses
 type
   Async = record
   private
-    FFuture: IFuture;
+    FTask: ITask;
   public
     class operator Implicit(const Value: TProc): Async;
 
@@ -49,7 +49,7 @@ type
 
   Async<T> = record
   private
-    FFuture: IFuture<T>;
+    FTask: ITask<T>;
   public
     class operator Implicit(const Value: TFunc<T>): Async<T>;
     class operator Implicit(const Value: Async<T>): T;
@@ -58,12 +58,12 @@ type
     procedure Cancel;
   end;
 
-  TAsync = class(TFuture)
+  TAsync = class(TTask)
   public
     procedure WaitFor; override;
   end;
 
-  TAsync<T> = class(TFuture<T>)
+  TAsync<T> = class(TTask<T>)
   public
     procedure WaitFor; override;
   end;
@@ -142,32 +142,32 @@ end;
 
 procedure Async.Await;
 begin
-  if Assigned(FFuture) then
+  if Assigned(FTask) then
   begin
-    FFuture.WaitFor;
+    FTask.WaitFor;
   end;
 end;
 
 procedure Async.Cancel;
 begin
-  if Assigned(FFuture) then
+  if Assigned(FTask) then
   begin
-    FFuture.Cancel();
+    FTask.Cancel();
   end;
 end;
 
 class operator Async.Implicit(const Value: TProc): Async;
 begin
-  Result.FFuture := TAsync.Create(Value);
+  Result.FTask := TAsync.Create(Value);
 end;
 
 { Async<T> }
 
 function Async<T>.Await: T;
 begin
-  if Assigned(FFuture) then
+  if Assigned(FTask) then
   begin
-    Result := FFuture.Value;
+    Result := FTask.Value;
   end
   else
   begin
@@ -177,15 +177,15 @@ end;
 
 procedure Async<T>.Cancel;
 begin
-  if Assigned(FFuture) then
+  if Assigned(FTask) then
   begin
-    FFuture.Cancel();
+    FTask.Cancel();
   end;
 end;
 
 class operator Async<T>.Implicit(const Value: TFunc<T>): Async<T>;
 begin
-  Result.FFuture := TAsync<T>.Create(Value);
+  Result.FTask := TAsync<T>.Create(Value);
 end;
 
 class operator Async<T>.Implicit(const Value: Async<T>): T;

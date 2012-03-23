@@ -38,7 +38,7 @@ uses
   SysUtils;
 
 type
-  TEnumeratorThread = class(TAbstractFutureThread)
+  TEnumeratorThread = class(TAbstractTaskThread)
   strict private
     FProc: TProc;
   strict protected

@@ -60,18 +60,18 @@ type
 
   TAsync = class(TTask)
   public
-    procedure WaitFor; override;
+    procedure Wait; override;
   end;
 
   TAsync<T> = class(TTask<T>)
   public
-    procedure WaitFor; override;
+    procedure Wait; override;
   end;
 
 function AsyncCanceled: Boolean;
 procedure Delay(Milliseconds: Integer);
 procedure Synchronize(AProc: TProc);
-procedure WaitForThread(AThread: TThread);
+procedure WaitFor(AThread: TThread);
 
 implementation
 
@@ -117,7 +117,7 @@ begin
   end;
 end;
 
-procedure WaitForThread(AThread: TThread);
+procedure WaitFor(AThread: TThread);
 var
   LHandles: array[0..1] of THandle;
 begin
@@ -144,7 +144,7 @@ procedure Async.Await;
 begin
   if Assigned(FTask) then
   begin
-    FTask.WaitFor;
+    FTask.Wait();
   end;
 end;
 
@@ -159,6 +159,7 @@ end;
 class operator Async.Implicit(const Value: TProc): Async;
 begin
   Result.FTask := TAsync.Create(Value);
+  Result.FTask.Start();
 end;
 
 { Async<T> }
@@ -186,6 +187,7 @@ end;
 class operator Async<T>.Implicit(const Value: TFunc<T>): Async<T>;
 begin
   Result.FTask := TAsync<T>.Create(Value);
+  Result.FTask.Start();
 end;
 
 class operator Async<T>.Implicit(const Value: Async<T>): T;
@@ -195,17 +197,17 @@ end;
 
 { TAsync }
 
-procedure TAsync.WaitFor;
+procedure TAsync.Wait;
 begin
-  WaitForThread(FWorker);
+  WaitFor(FWorker);
   FWorker.RaiseException;
 end;
 
 { TAsync<T> }
 
-procedure TAsync<T>.WaitFor;
+procedure TAsync<T>.Wait;
 begin
-  WaitForThread(FWorker);
+  WaitFor(FWorker);
   FWorker.RaiseException;
 end;
 

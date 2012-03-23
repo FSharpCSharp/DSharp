@@ -46,23 +46,12 @@ type
     function Finished: Boolean;
 
     procedure Cancel;
-    procedure WaitFor;
+    procedure Start;
+    procedure Wait;
   end;
 
-  TAbstractTaskThread = class;
-
-  TAbstractTask = class(TInterfacedObject, ITask)
-  strict protected
-    FCanceled: Boolean;
-    FWorker: TAbstractTaskThread;
-  public
-    destructor Destroy; override;
-
-    function Canceled: Boolean;
-    function Finished: Boolean;
-
-    procedure Cancel; virtual;
-    procedure WaitFor; virtual;
+  ITask<T> = interface(ITask)
+    function Value: T;
   end;
 
   TAbstractTaskThread = class(TThread)
@@ -83,9 +72,19 @@ type
     procedure Yield;
   end;
 
-  TTask = class(TAbstractTask)
+  TAbstractTask = class(TInterfacedObject, ITask)
+  strict protected
+    FCanceled: Boolean;
+    FWorker: TAbstractTaskThread;
   public
-    constructor Create(const AAction: TProc);
+    destructor Destroy; override;
+
+    function Canceled: Boolean;
+    function Finished: Boolean;
+
+    procedure Cancel; virtual;
+    procedure Start; virtual;
+    procedure Wait; virtual;
   end;
 
   TTaskThread = class(TAbstractTaskThread)
@@ -96,15 +95,9 @@ type
     procedure Execute; override;
   end;
 
-  ITask<T> = interface(ITask)
-    function Value: T;
-  end;
-
-  TTask<T> = class(TAbstractTask, ITask<T>)
+  TTask = class(TAbstractTask)
   public
-    constructor Create(const AAction: TFunc<T>);
-
-    function Value: T;
+    constructor Create(const AAction: TProc);
   end;
 
   TTaskThread<T> = class(TAbstractTaskThread)
@@ -115,6 +108,13 @@ type
     constructor Create(const AAction: TFunc<T>);
     procedure Execute; override;
     property Result: T read FResult;
+  end;
+
+  TTask<T> = class(TAbstractTask, ITask<T>)
+  public
+    constructor Create(const AAction: TFunc<T>);
+
+    function Value: T;
   end;
 
 implementation
@@ -140,41 +140,6 @@ begin
   end;
 end;
 
-{ TAbstractTask }
-
-destructor TAbstractTask.Destroy;
-begin
-  FreeAndNil(FWorker);
-  inherited;
-end;
-
-procedure TAbstractTask.Cancel;
-begin
-  if FCanceled then
-    raise Exception.Create('Action already canceled');
-
-  if not FWorker.Finished then
-  begin
-    FWorker.Terminate();
-    FCanceled := True;
-  end;
-end;
-
-function TAbstractTask.Canceled: Boolean;
-begin
-  Result := FCanceled;
-end;
-
-function TAbstractTask.Finished: Boolean;
-begin
-  Result := FWorker.Finished;
-end;
-
-procedure TAbstractTask.WaitFor;
-begin
-  FWorker.WaitFor();
-end;
-
 { TAbstractTaskThread }
 
 constructor TAbstractTaskThread.Create;
@@ -194,7 +159,7 @@ end;
 
 destructor TAbstractTaskThread.Destroy;
 begin
-  if not Finished and not Terminated then
+  if not Suspended and not Finished and not Terminated then
   begin
     Terminate;
     FTerminated.SetEvent;
@@ -262,13 +227,44 @@ begin
     Abort;
 end;
 
-{ TTask }
+{ TAbstractTask }
 
-constructor TTask.Create(const AAction: TProc);
+destructor TAbstractTask.Destroy;
 begin
-  inherited Create();
-  FWorker := TTaskThread.Create(AAction);
+  FreeAndNil(FWorker);
+  inherited;
+end;
+
+procedure TAbstractTask.Cancel;
+begin
+  if FCanceled then
+    raise Exception.Create('Action already canceled');
+
+  if not FWorker.Finished then
+  begin
+    FWorker.Terminate();
+    FCanceled := True;
+  end;
+end;
+
+function TAbstractTask.Canceled: Boolean;
+begin
+  Result := FCanceled;
+end;
+
+function TAbstractTask.Finished: Boolean;
+begin
+  Result := FWorker.Finished;
+end;
+
+procedure TAbstractTask.Start;
+begin
   FWorker.Start();
+end;
+
+procedure TAbstractTask.Wait;
+begin
+  FWorker.WaitFor();
 end;
 
 { TTaskThread }
@@ -283,6 +279,14 @@ procedure TTaskThread.Execute;
 begin
   inherited;
   FAction();
+end;
+
+{ TTask }
+
+constructor TTask.Create(const AAction: TProc);
+begin
+  inherited Create();
+  FWorker := TTaskThread.Create(AAction);
 end;
 
 { TTaskThread<T> }
@@ -305,7 +309,6 @@ constructor TTask<T>.Create(const AAction: TFunc<T>);
 begin
   inherited Create;
   FWorker := TTaskThread<T>.Create(AAction);
-  FWorker.Start();
 end;
 
 function TTask<T>.Value: T;
@@ -315,7 +318,7 @@ begin
 
   if not Finished then
   begin
-    WaitFor();
+    Wait();
   end;
   Result := TTaskThread<T>(FWorker).Result;
 end;

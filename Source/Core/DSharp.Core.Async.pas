@@ -32,34 +32,50 @@ unit DSharp.Core.Async;
 interface
 
 uses
+  Classes,
   DSharp.Core.Threading,
   SysUtils;
 
 type
+  Async = record
+  private
+    FFuture: IFuture;
+  public
+    class operator Implicit(const Value: TProc): Async;
+
+    procedure Await;
+    procedure Cancel;
+  end;
+
   Async<T> = record
   private
     FFuture: IFuture<T>;
-    function GetAwait: T;
   public
     class operator Implicit(const Value: TFunc<T>): Async<T>;
     class operator Implicit(const Value: Async<T>): T;
 
+    function Await: T;
     procedure Cancel;
-    property Await: T read GetAwait;
   end;
 
-  TAsync<T> = class(TFuture<T>, IFuture<T>)
-    function Value: T;
+  TAsync = class(TFuture)
+  public
+    procedure WaitFor; override;
+  end;
+
+  TAsync<T> = class(TFuture<T>)
+  public
+    procedure WaitFor; override;
   end;
 
 function AsyncCanceled: Boolean;
 procedure Delay(Milliseconds: Integer);
 procedure Synchronize(AProc: TProc);
+procedure WaitForThread(AThread: TThread);
 
 implementation
 
 uses
-  Classes,
   Forms,
   Windows;
 
@@ -67,7 +83,7 @@ uses
 
 function AsyncCanceled: Boolean;
 begin
-  Result := (GetCurrentThreadId() <> MainThreadID) and TThread.CheckTerminated;
+  Result := (TThread.CurrentThread.ThreadID <> MainThreadID) and TThread.CheckTerminated;
 end;
 
 procedure Delay(Milliseconds: Integer);
@@ -91,7 +107,7 @@ end;
 
 procedure Synchronize(AProc: TProc);
 begin
-  if GetCurrentThreadId() <> MainThreadID then
+  if TThread.CurrentThread.ThreadID <> MainThreadID then
   begin
     TThread.Synchronize(TThread.CurrentThread, TThreadProcedure(AProc));
   end
@@ -101,14 +117,53 @@ begin
   end;
 end;
 
-{ Async<T> }
-
-procedure Async<T>.Cancel;
+procedure WaitForThread(AThread: TThread);
+var
+  LHandles: array[0..1] of THandle;
 begin
-  FFuture.Cancel();
+  LHandles[0] := AThread.Handle;
+  if GetCurrentThreadId = MainThreadID then
+  begin
+    LHandles[1] := SyncEvent;
+    repeat
+      case MsgWaitForMultipleObjects(2, LHandles, False, INFINITE, QS_ALLINPUT) of
+        WAIT_OBJECT_0 + 1: CheckSynchronize();
+        WAIT_OBJECT_0 + 2: Application.ProcessMessages();
+      end;
+    until AThread.Finished;
+  end
+  else
+  begin
+    WaitForSingleObject(LHandles[0], INFINITE);
+  end;
 end;
 
-function Async<T>.GetAwait: T;
+{ Async }
+
+procedure Async.Await;
+begin
+  if Assigned(FFuture) then
+  begin
+    FFuture.WaitFor;
+  end;
+end;
+
+procedure Async.Cancel;
+begin
+  if Assigned(FFuture) then
+  begin
+    FFuture.Cancel();
+  end;
+end;
+
+class operator Async.Implicit(const Value: TProc): Async;
+begin
+  Result.FFuture := TAsync.Create(Value);
+end;
+
+{ Async<T> }
+
+function Async<T>.Await: T;
 begin
   if Assigned(FFuture) then
   begin
@@ -120,6 +175,14 @@ begin
   end;
 end;
 
+procedure Async<T>.Cancel;
+begin
+  if Assigned(FFuture) then
+  begin
+    FFuture.Cancel();
+  end;
+end;
+
 class operator Async<T>.Implicit(const Value: TFunc<T>): Async<T>;
 begin
   Result.FFuture := TAsync<T>.Create(Value);
@@ -127,32 +190,21 @@ end;
 
 class operator Async<T>.Implicit(const Value: Async<T>): T;
 begin
-  Result := Value.FFuture.Value;
+  Result := Value.Await;
+end;
+
+{ TAsync }
+
+procedure TAsync.WaitFor;
+begin
+  WaitForThread(FWorker);
 end;
 
 { TAsync<T> }
 
-function TAsync<T>.Value: T;
-var
-  LHandles: array[0..1] of THandle;
+procedure TAsync<T>.WaitFor;
 begin
-  LHandles[0] := FWorker.Handle;
-  if GetCurrentThreadId = MainThreadID then
-  begin
-    LHandles[1] := SyncEvent;
-    repeat
-      case MsgWaitForMultipleObjects(2, LHandles, False, INFINITE, QS_ALLINPUT) of
-        WAIT_OBJECT_0 + 1: CheckSynchronize();
-        WAIT_OBJECT_0 + 2: Application.ProcessMessages();
-      end;
-    until Finished;
-  end
-  else
-  begin
-    WaitForSingleObject(LHandles[0], INFINITE);
-  end;
-
-  Result := TFutureThread<T>(FWorker).Result;
+  WaitForThread(FWorker);
 end;
 
 end.

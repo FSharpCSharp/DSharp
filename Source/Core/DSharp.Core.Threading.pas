@@ -62,8 +62,8 @@ type
     function Canceled: Boolean;
     function Finished: Boolean;
 
-    procedure Cancel;
-    procedure WaitFor;
+    procedure Cancel; virtual;
+    procedure WaitFor; virtual;
   end;
 
   TAbstractFutureThread = class(TThread)
@@ -286,9 +286,9 @@ begin
   if FCanceled then
     raise Exception.Create('Action was canceled');
 
-  if not FWorker.Finished then
+  if not Finished then
   begin
-    FWorker.WaitFor();
+    WaitFor();
   end;
   Result := TFutureThread<T>(FWorker).Result;
 end;

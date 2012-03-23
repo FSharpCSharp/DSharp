@@ -198,6 +198,7 @@ end;
 procedure TAsync.WaitFor;
 begin
   WaitForThread(FWorker);
+  FWorker.RaiseException;
 end;
 
 { TAsync<T> }
@@ -205,6 +206,7 @@ end;
 procedure TAsync<T>.WaitFor;
 begin
   WaitForThread(FWorker);
+  FWorker.RaiseException;
 end;
 
 end.

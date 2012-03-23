@@ -56,7 +56,6 @@ type
     FCanceled: Boolean;
     FWorker: TAbstractFutureThread;
   public
-    constructor Create;
     destructor Destroy; override;
 
     function Canceled: Boolean;
@@ -80,6 +79,7 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure Continue;
+    procedure RaiseException;
     procedure Yield;
   end;
 
@@ -119,12 +119,13 @@ type
 
 implementation
 
+type
+  TThreadHelper = class helper for TThread
+  protected
+    function DetachException: Exception;
+  end;
+
 { TAbstractFuture }
-
-constructor TAbstractFuture.Create;
-begin
-
-end;
 
 destructor TAbstractFuture.Destroy;
 begin
@@ -193,12 +194,6 @@ begin
   inherited;
 end;
 
-procedure TAbstractFutureThread.DoTerminate;
-begin
-  inherited;
-  FFinished.SetEvent;
-end;
-
 procedure TAbstractFutureThread.Continue;
 {$IFDEF MSWINDOWS}
 var
@@ -218,6 +213,23 @@ begin
 {$IFDEF MSWINDOWS}
     THandleObject.WaitForMultiple(FFinishedOrYielded, INFINITE, False, LSignaledObject);
 {$ENDIF}
+  end;
+end;
+
+procedure TAbstractFutureThread.DoTerminate;
+begin
+  inherited;
+  FFinished.SetEvent;
+end;
+
+procedure TAbstractFutureThread.RaiseException;
+var
+  E: Exception;
+begin
+  E := DetachException;
+  if Assigned(E) and not (E is EAbort) then
+  begin
+    raise E;
   end;
 end;
 
@@ -291,6 +303,21 @@ begin
     WaitFor();
   end;
   Result := TFutureThread<T>(FWorker).Result;
+end;
+
+{ TThreadHelper }
+
+function TThreadHelper.DetachException: Exception;
+begin
+  if (FatalException is Exception) and not (FatalException is EAbort) then
+  begin
+    Result := Exception(FatalException);
+    Self.FFatalException := nil;
+  end
+  else
+  begin
+    Result := nil;
+  end;
 end;
 
 end.

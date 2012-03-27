@@ -238,8 +238,15 @@ begin
   with TExpressionVarData(V) do
   begin
     LParameter := ExpressionStack.Pop();
-    SetLength(LParameters, Length(Arguments));
-    for i := Low(Arguments) to High(Arguments) do
+    if (Length(Arguments) = 1) and (Arguments[0].VType = varError) then
+    begin
+      SetLength(LParameters, 0);
+    end
+    else
+    begin
+      SetLength(LParameters, Length(Arguments));
+    end;
+    for i := Low(LParameters) to High(LParameters) do
     begin
       if Arguments[i].VType = VarType then
       begin

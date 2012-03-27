@@ -2141,7 +2141,7 @@ begin
     if LMethod.IsClassMethod then
     begin
       LResult.Code := LMethod.CodeAddress;
-      LResult.Data := LObject;
+      LResult.Data := LObject.ClassType;
       Result := TValue.From(LResult);
     end
     else

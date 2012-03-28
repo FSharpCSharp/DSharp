@@ -37,7 +37,8 @@ uses
   Generics.Defaults,
   RTLConsts,
   Rtti,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 type
   TCollectionChangedAction = (caAdd, caRemove, caReplace, caMove);
@@ -64,8 +65,10 @@ type
   IEnumerable = interface
     function GetCount: NativeInt;
     function GetEnumerator: IEnumerator;
+    function GetItemType: PTypeInfo;
     function ToArray: TArray<TValue>;
     property Count: NativeInt read GetCount;
+    property ItemType: PTypeInfo read GetItemType;
   end;
 
   IEnumerable<T> = interface(IEnumerable)
@@ -186,15 +189,18 @@ type
     function GetCount: NativeInt; virtual;
     function GetEnumeratorBase: IEnumerator; virtual;
     function IEnumerable.GetEnumerator = GetEnumeratorBase;
+    function GetItemType: PTypeInfo; virtual;
     function ToArrayBase: TArray<TValue>;
     function IEnumerable.ToArray = ToArrayBase;
   public
     property Count: NativeInt read GetCount;
+    property ItemType: PTypeInfo read GetItemType;
   end;
 
   TEnumerable<T> = class(TEnumerable, IEnumerable<T>, IEnumerable)
   private
     function GetEnumeratorBase: IEnumerator; override;
+    function GetItemType: PTypeInfo; override;
   public
     function GetEnumerator: IEnumerator<T>; reintroduce; virtual;
     function ToArray: TArray<T>; virtual;
@@ -378,6 +384,11 @@ begin
   Result := TEnumerator.Create();
 end;
 
+function TEnumerable.GetItemType: PTypeInfo;
+begin
+  Result := nil;
+end;
+
 function TEnumerable.ToArrayBase: TArray<TValue>;
 var
   i: Integer;
@@ -403,6 +414,11 @@ end;
 function TEnumerable<T>.GetEnumeratorBase: IEnumerator;
 begin
   Result := GetEnumerator();
+end;
+
+function TEnumerable<T>.GetItemType: PTypeInfo;
+begin
+  Result := TypeInfo(T);
 end;
 
 function TEnumerable<T>.ToArray: TArray<T>;

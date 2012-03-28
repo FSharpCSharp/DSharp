@@ -38,131 +38,214 @@ uses
 
 type
   {$REGION 'Documentation'}
-  ///	<summary>Extends <see cref="System.TObject">TObject</see> with several
-  ///	methods to directly retrieve RTTI.</summary>
+  ///	<summary>
+  ///	  Extends <see cref="System.TObject">TObject</see> for easier RTTI use.
+  ///	</summary>
   {$ENDREGION}
   TObjectHelper = class helper for TObject
   public
     {$REGION 'Documentation'}
-    ///	<summary>Returns a list of all fields of the object.</summary>
+    ///	<summary>
+    ///	  Returns a list of all fields of the object.
+    ///	</summary>
     {$ENDREGION}
     function GetFields: TArray<TRttiField>;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns the field with the given name; <b>nil</b> if nothing
-    ///	is found.</summary>
-    ///	<param name="AName">Name of the field to find.</param>
+    ///	<summary>
+    ///	  Returns the field with the given name; <b>nil</b> if nothing is found.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the field to find
+    ///	</param>
     {$ENDREGION}
     function GetField(const AName: string): TRttiField;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns a list of all methods of the object.</summary>
+    ///	<summary>
+    ///	  Returns a list of all methods of the object.
+    ///	</summary>
     {$ENDREGION}
     function GetMethods: TArray<TRttiMethod>;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns the method at the given code address; <b>nil</b> if
-    ///	nothing is found.</summary>
-    ///	<param name="ACodeAddress">Code address of the method to find.</param>
+    ///	<summary>
+    ///	  Returns the method at the given code address; <b>nil</b> if nothing
+    ///	  is found.
+    ///	</summary>
+    ///	<param name="ACodeAddress">
+    ///	  Code address of the method to find.
+    ///	</param>
     {$ENDREGION}
     function GetMethod(ACodeAddress: Pointer): TRttiMethod; overload;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns the method with the given name; <b>nil</b> if nothing
-    ///	is found.</summary>
-    ///	<param name="AName">Name of the method to find.</param>
+    ///	<summary>
+    ///	  Returns the method with the given name; <b>nil</b> if nothing is
+    ///	  found.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the method to find
+    ///	</param>
     {$ENDREGION}
     function GetMethod(const AName: string): TRttiMethod; overload;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns a list of all properties of the object.</summary>
+    ///	<summary>
+    ///	  Returns a list of all properties of the object.
+    ///	</summary>
     {$ENDREGION}
     function GetProperties: TArray<TRttiProperty>;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns the property with the given name; nil if nothing is
-    ///	found.</summary>
-    ///	<param name="AName">Name of the property to find.</param>
+    ///	<summary>
+    ///	  Returns the property with the given name; <b>nil</b> if nothing is
+    ///	  found.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the property to find
+    ///	</param>
     {$ENDREGION}
     function GetProperty(const AName: string): TRttiProperty;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns the type of the object.</summary>
+    ///	<summary>
+    ///	  Returns the type of the object; nil if nothing is found.
+    ///	</summary>
     {$ENDREGION}
     function GetType: TRttiType;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns if the object contains a field with the given
-    ///	name.</summary>
-    ///	<param name="AName">Name of the field to find.</param>
+    ///	<summary>
+    ///	  Returns if the object contains a field with the given name.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the field to find
+    ///	</param>
     {$ENDREGION}
     function HasField(const AName: string): Boolean;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns if the object contains a method with the given
-    ///	name.</summary>
+    ///	<summary>
+    ///	  Returns if the object contains a method with the given name.
+    ///	</summary>
     {$ENDREGION}
     function HasMethod(const AName: string): Boolean;
 
     {$REGION 'Documentation'}
-    ///	<summary>Returns if the object contains a property with the given
-    ///	name.</summary>
+    ///	<summary>
+    ///	  Returns if the object contains a property with the given name.
+    ///	</summary>
     {$ENDREGION}
     function HasProperty(const AName: string): Boolean;
 
     {$REGION 'Documentation'}
-    ///	<summary>Retrieves the method with the given name and returns if this
-    ///	was successful.</summary>
-    ///	<param name="AName">Name of the field to find.</param>
-    ///	<param name="AField">Field that was found when Result is
-    ///	<b>True</b></param>
+    ///	<summary>
+    ///	  Retrieves the method with the given name and returns if this was
+    ///	  successful.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the field to find
+    ///	</param>
+    ///	<param name="AField">
+    ///	  Field that was found when Result is <b>True</b>
+    ///	</param>
     {$ENDREGION}
     function TryGetField(const AName: string; out AField: TRttiField): Boolean;
 
+    {$REGION 'Documentation'}
+    ///	<param name="AName">
+    ///	  Name of the member to find
+    ///	</param>
+    ///	<param name="AMember">
+    ///	  Member that was found when Result is <b>True</b>
+    ///	</param>
+    {$ENDREGION}
     function TryGetMember(const AName: string; out AMember: TRttiMember): Boolean;
 
     {$REGION 'Documentation'}
-    ///	<summary>Retrieves the method with the given code address and returns
-    ///	if this was successful.</summary>
-    ///	<param name="ACodeAddress">Code address of the method to find</param>
-    ///	<param name="AMethod">Method that was found when Result is
-    ///	<b>True</b></param>
+    ///	<summary>
+    ///	  Retrieves the method with the given code address and returns if this
+    ///	  was successful.
+    ///	</summary>
+    ///	<param name="ACodeAddress">
+    ///	  Code address of the method to find
+    ///	</param>
+    ///	<param name="AMethod">
+    ///	  Method that was found when Result is <b>True</b>
+    ///	</param>
     {$ENDREGION}
     function TryGetMethod(ACodeAddress: Pointer; out AMethod: TRttiMethod): Boolean; overload;
 
     {$REGION 'Documentation'}
-    ///	<summary>Retrieves the method with the given name and returns if this
-    ///	was successful.</summary>
-    ///	<param name="AName">Name of the method to find</param>
-    ///	<param name="AMethod">Method that was found when Result is
-    ///	<b>True</b></param>
+    ///	<summary>
+    ///	  Retrieves the method with the given name and returns if this was
+    ///	  successful.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the method to find
+    ///	</param>
+    ///	<param name="AMethod">
+    ///	  Method that was found when Result is <b>True</b>
+    ///	</param>
     {$ENDREGION}
     function TryGetMethod(const AName: string; out AMethod: TRttiMethod): Boolean; overload;
 
     {$REGION 'Documentation'}
-    ///	<summary>Retrieves the method with the given name and returns if this
-    ///	was successful.</summary>
-    ///	<param name="AName">Name of the property to find</param>
-    ///	<param name="AProperty">Property that was found when Result is
-    ///	<b>True</b></param>
+    ///	<summary>
+    ///	  Retrieves the property with the given name and returns if this was
+    ///	  successful.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the property to find
+    ///	</param>
+    ///	<param name="AProperty">
+    ///	  Property that was found when Result is <b>True</b>
+    ///	</param>
     {$ENDREGION}
     function TryGetProperty(const AName: string; out AProperty: TRttiProperty): Boolean;
 
     {$REGION 'Documentation'}
-    ///	<summary>Retrieves the type of the object and returns if this was
-    ///	successful.</summary>
-    ///	<param name="AType">Type of the object when Result is
-    ///	<b>True</b></param>
+    ///	<summary>
+    ///	  Retrieves the type of the object and returns if this was successful.
+    ///	</summary>
+    ///	<param name="AType">
+    ///	  Type of the object when Result is <b>True</b>
+    ///	</param>
     {$ENDREGION}
     function TryGetType(out AType: TRttiType): Boolean;
   end;
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiField">TRttiField</see> for easier RTTI
+  ///	  use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiFieldHelper = class helper for TRttiField
   public
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Retrieves the value of the field and returns if this was successful.
+    ///	</summary>
+    ///	<param name="Instance">
+    ///	  Pointer to the instance of the field
+    ///	</param>
+    ///	<param name="Value">
+    ///	  Value of the field when Result is <b>True</b>
+    ///	</param>
+    {$ENDREGION}
     function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
   end;
 
 {$IF COMPILERVERSION > 22}
+
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiInvokableType">TRttiInvokableType</see>
+  ///	  for easier RTTI use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiInvokableTypeHelper = class helper for TRttiInvokableType
   private
     function GetParameterCount: Integer;
@@ -171,6 +254,12 @@ type
   end;
 {$IFEND}
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiMember">TRttiMember</see> for easier RTTI
+  ///	  use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiMemberHelper = class helper for TRttiMember
   private
     function GetIsReadable: Boolean;
@@ -182,6 +271,12 @@ type
     property RttiType: TRttiType read GetRttiType;
   end;
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiMethod">TRttiMethod</see> for easier RTTI
+  ///	  use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiMethodHelper = class helper for TRttiMethod
   private
     function GetParameterCount: Integer;
@@ -189,6 +284,12 @@ type
     property ParameterCount: Integer read GetParameterCount;
   end;
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiObject">TRttiObject</see> for easier RTTI
+  ///	  use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiObjectHelper = class helper for TRttiObject
   public
     function GetAttributeOfType<T: TCustomAttribute>: T;
@@ -199,17 +300,58 @@ type
     function TryGetAttributeOfType<T: TCustomAttribute>(out AAttribute: T): Boolean;
   end;
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiParameter">TRttiParameter</see> for easier
+  ///	  RTTI use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiParameterHelper = class helper for TRttiParameter
   public
     class function Equals(const Left, Right: TArray<TRttiParameter>): Boolean; //overload;
   end;
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiProperty">TRttiProperty</see> for easier
+  ///	  RTTI use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiPropertyHelper = class helper for TRttiProperty
   public
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Retrieves the value of the property and returns if this was
+    ///	  successful.
+    ///	</summary>
+    ///	<param name="Instance">
+    ///	  Pointer to the instance of the field
+    ///	</param>
+    ///	<param name="Value">
+    ///	  Value of the field when Result is <b>True</b>
+    ///	</param>
+    {$ENDREGION}
     function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
+
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Sets the value of the property and returns if this was successful.
+    ///	</summary>
+    ///	<param name="Instance">
+    ///	  Pointer to the instance of the field
+    ///	</param>
+    ///	<param name="Value">
+    ///	  Value the field should be set to
+    ///	</param>
+    {$ENDREGION}
     function TrySetValue(Instance: Pointer; Value: TValue): Boolean;
   end;
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiType">TRttiType</see> for easier RTTI use.
+  ///	</summary>
+  {$ENDREGION}
   TRttiTypeHelper = class helper for TRttiType
   private
     function ExtractGenericArguments: string;
@@ -221,6 +363,16 @@ type
     function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
     function GetGenericArguments: TArray<TRttiType>;
     function GetGenericTypeDefinition(const AIncludeUnitName: Boolean = True): string;
+
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Returns the method at the given code address; <b>nil</b> if nothing
+    ///	  is found.
+    ///	</summary>
+    ///	<param name="ACodeAddress">
+    ///	  Code address of the method to find
+    ///	</param>
+    {$ENDREGION}
     function GetMethod(ACodeAddress: Pointer): TRttiMethod; overload;
 
     function IsCovariantTo(OtherClass: TClass): Boolean; overload;
@@ -231,9 +383,60 @@ type
     function IsInheritedFrom(const OtherTypeName: string): Boolean; overload;
     function MakeGenericType(TypeArguments: array of PTypeInfo): TRttiType;
 
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Retrieves the method with the given name and returns if this was
+    ///	  successful.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the field to find
+    ///	</param>
+    ///	<param name="AField">
+    ///	  Field that was found when Result is <b>True</b>
+    ///	</param>
+    {$ENDREGION}
     function TryGetField(const AName: string; out AField: TRttiField): Boolean;
+
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Retrieves the method with the given code address and returns if this
+    ///	  was successful.
+    ///	</summary>
+    ///	<param name="ACodeAddress">
+    ///	  Code address of the method to find
+    ///	</param>
+    ///	<param name="AMethod">
+    ///	  Method that was found when Result is <b>True</b>
+    ///	</param>
+    {$ENDREGION}
     function TryGetMethod(ACodeAddress: Pointer; out AMethod: TRttiMethod): Boolean; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Retrieves the method with the given code address and returns if this
+    ///	  was successful.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the method to find
+    ///	</param>
+    ///	<param name="AMethod">
+    ///	  Method that was found when Result is <b>True</b>
+    ///	</param>
+    {$ENDREGION}
     function TryGetMethod(const AName: string; out AMethod: TRttiMethod): Boolean; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Retrieves the property with the given name and returns if this was
+    ///	  successful.
+    ///	</summary>
+    ///	<param name="AName">
+    ///	  Name of the property to find
+    ///	</param>
+    ///	<param name="AProperty">
+    ///	  Property that was found when Result is <b>True</b>
+    ///	</param>
+    {$ENDREGION}
     function TryGetProperty(const AName: string; out AProperty: TRttiProperty): Boolean;
 
     property AsInterface: TRttiInterfaceType read GetAsInterface;
@@ -241,6 +444,11 @@ type
     property MethodCount: Integer read GetMethodCount;
   end;
 
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TValue">TValue</see> for easier RTTI use.
+  ///	</summary>
+  {$ENDREGION}
   TValueHelper = record helper for TValue
   private
     class function FromFloat(ATypeInfo: PTypeInfo; AValue: Extended): TValue; static;
@@ -303,13 +511,17 @@ type
 function FindType(const AName: string; out AType: TRttiType): Boolean; overload;
 function FindType(const AGuid: TGUID; out AType: TRttiType): Boolean; overload;
 
+{$REGION 'Documentation'}
 ///	<summary>
 ///	  Returns the RTTI type of the given TClass.
 ///	</summary>
+{$ENDREGION}
 function GetRttiType(AClass: TClass): TRttiType; overload;
 
 {$REGION 'Documentation'}
-///	<summary>Returns the RTTI type of the given TypeInfo.</summary>
+///	<summary>
+///	  Returns the RTTI type of the given TypeInfo.
+///	</summary>
 {$ENDREGION}
 function GetRttiType(ATypeInfo: PTypeInfo): TRttiType; overload;
 function GetRttiTypes: TArray<TRttiType>;

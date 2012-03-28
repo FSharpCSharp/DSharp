@@ -53,6 +53,19 @@ const
   BindingModeDefault = bmTwoWay;
 
 type
+  BindingAttribute = class(TCustomAttribute)
+  private
+    FBindingMode: TBindingMode;
+    FSourcePropertyName: string;
+    FTargetPropertyName: string;
+  public
+    constructor Create(const ASourcePropertyName, ATargetPropertyName: string;
+      ABindingMode: TBindingMode = BindingModeDefault);
+    property BindingMode: TBindingMode read FBindingMode;
+    property SourcePropertyName: string read FSourcePropertyName;
+    property TargetPropertyName: string read FTargetPropertyName;
+  end;
+
   TBindingGroup = class;
 
   TBindingBase = class abstract(TCollectionItem,
@@ -251,6 +264,7 @@ type
       ATarget: TObject = nil; ATargetPropertyName: string = '';
       ABindingMode: TBindingMode = BindingModeDefault;
       AConverter: IValueConverter = nil): TBinding;
+    procedure Bind(ASource: TObject; ATarget: TObject = nil);
 
     function GetBindingForTarget(ATarget: TObject): TBinding;
 
@@ -274,6 +288,8 @@ type
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
     property ValidationRules: IList<IValidationRule> read GetValidationRules;
   end;
+
+  EBindingException = class(Exception);
 
 function FindBindingGroup(AComponent: TPersistent): TBindingGroup;
 function GetBindingForComponent(AComponent: TPersistent): TBinding;
@@ -370,6 +386,16 @@ begin
     TBindingGroup(BindingGroups[i]).NotifyPropertyChanged(
       ASender, APropertyName, AUpdateTrigger);
   end;
+end;
+
+{ BindingAttribute }
+
+constructor BindingAttribute.Create(const ASourcePropertyName,
+  ATargetPropertyName: string; ABindingMode: TBindingMode);
+begin
+  FBindingMode := ABindingMode;
+  FSourcePropertyName := ASourcePropertyName;
+  FTargetPropertyName := ATargetPropertyName;
 end;
 
 { TBindingBase }
@@ -1159,6 +1185,45 @@ begin
   end;
 end;
 
+procedure TBindingGroup.Bind(ASource, ATarget: TObject);
+var
+  LField: TRttiField;
+  LBindingAttribute: BindingAttribute;
+  LTarget: TObject;
+begin
+  if not Assigned(ASource) then
+  begin
+    raise EBindingException.Create('Binding source not specified');
+  end;
+
+  LTarget := ATarget;
+  if not Assigned(LTarget) then
+  begin
+    LTarget := Owner;
+    if not Assigned(LTarget) then
+    begin
+      raise EBindingException.Create('Binding target not specified');
+    end;
+  end;
+
+  for LField in LTarget.GetFields do
+  begin
+    for LBindingAttribute in LField.GetAttributesOfType<BindingAttribute> do
+    begin
+      if LField.RttiType.IsInstance then
+      begin
+        AddBinding(ASource, LBindingAttribute.SourcePropertyName,
+          LField.GetValue(LTarget).AsObject, LBindingAttribute.TargetPropertyName,
+          LBindingAttribute.BindingMode);
+      end
+      else
+      begin
+        raise EBindingException.CreateFmt('Could not bind to %s', [LField.Name]);
+      end;
+    end;
+  end;
+end;
+
 procedure TBindingGroup.CancelEdit;
 var
   LBinding: TBinding;
@@ -1206,7 +1271,7 @@ begin
     begin
       if AOwner.Components[i] is TBindingGroup then
       begin
-        raise Exception.Create('Only one binding group allowed');
+        raise EBindingException.Create('Only one binding group allowed');
       end;
     end;
   end;

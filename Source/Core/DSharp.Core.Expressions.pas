@@ -2437,6 +2437,7 @@ begin
       function: TValue
       var
         LeftValue, RightValue: TValue;
+        MemberExpr: IMemberExpression;
       begin
         if Assigned(Expression) then;
 
@@ -2447,7 +2448,14 @@ begin
         end
         else
         begin
-          RightValue.TryConvert(LeftExpr.Value.TypeInfo, LeftValue);
+          if Supports(LeftExpr, IMemberExpression, MemberExpr) then
+          begin
+            RightValue.TryConvert(MemberExpr.Member.RttiType.Handle, LeftValue);
+          end
+          else
+          begin
+            RightValue.TryConvert(LeftExpr.Value.TypeInfo, LeftValue);
+          end;
         end;
         LeftExpr.Value := LeftValue;
         Result := LeftDelegate();

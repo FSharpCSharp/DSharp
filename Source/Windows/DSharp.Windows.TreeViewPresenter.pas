@@ -48,6 +48,9 @@ uses
   VirtualTrees;
 
 type
+  TDragOperation = VirtualTrees.TDragOperation;
+  TDropMode = VirtualTrees.TDropMode;
+
   TCompareEvent = procedure(Sender: TObject; Item1, Item2: TObject;
     ColumnIndex: Integer; var Result: Integer) of object;
   TDragBeginEvent = procedure(Sender: TObject; var AllowDrag: Boolean) of object;

@@ -509,14 +509,17 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
 begin
-  LNode := Sender.GetNodeAt(Pt.X, Pt.Y);
-  LItem := GetNodeItem(Sender, LNode);
-  case Mode of
-    dmAbove, dmBelow: Accept := FAllowMove;
-  end;
-  if Assigned(FOnDragOver) then
+  if Pt.Y > -1 then
   begin
-    FOnDragOver(Sender, Source, LItem, Accept);
+    LNode := Sender.GetNodeAt(Pt.X, Pt.Y);
+    LItem := GetNodeItem(Sender, LNode);
+    case Mode of
+      dmAbove, dmBelow: Accept := FAllowMove;
+    end;
+    if Assigned(FOnDragOver) then
+    begin
+      FOnDragOver(Sender, Source, LItem, Accept);
+    end;
   end;
 end;
 

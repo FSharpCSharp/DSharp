@@ -37,16 +37,30 @@ implementation
 
 uses
   Classes,
+  DesignEditors,
   DesignIntf,
   DSharp.Windows.CustomPresenter,
   DSharp.Windows.CustomPresenter.Designtime,
   DSharp.Windows.TreeViewPresenter;
+
+type
+  TNonSortedEnumProperty = class(TEnumProperty)
+  public
+    function GetAttributes: TPropertyAttributes; override;
+  end;
+
+function TNonSortedEnumProperty.GetAttributes: TPropertyAttributes;
+begin
+  Result := inherited GetAttributes - [paSortList];
+end;
 
 procedure Register;
 begin
   RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
   RegisterComponentEditor(TCustomPresenter, TCustomPresenterComponentEditor);
   RegisterSelectionEditor(TCustomPresenter, TCustomPresenterSelectionEditor);
+  RegisterPropertyEditor(TypeInfo(TCheckSupport), TTreeViewPresenter, 'CheckSupport', TNonSortedEnumProperty);
+  RegisterPropertyEditor(TypeInfo(TSelectionMode), TTreeViewPresenter, 'SelectionMode', TNonSortedEnumProperty);
 end;
 
 end.

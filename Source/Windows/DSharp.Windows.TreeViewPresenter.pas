@@ -493,11 +493,13 @@ begin
       for i := Low(LSelectedNodes) to High(LSelectedNodes) do
       begin
         case Mode of
+          dmNowhere: FTreeView.MoveTo(LSelectedNodes[i], nil, amAddChildLast, False);
           dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
           dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
           dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
         end;
       end;
+      Refresh();
     end;
   end;
 end;

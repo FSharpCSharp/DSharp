@@ -83,9 +83,10 @@ type
   private
     FEmpty: Boolean;
     FGrid: TStringGrid;
-    procedure ClearRow(AIndex: NativeInt);
-    procedure DeleteRow(AIndex: NativeInt);
   protected
+    procedure ClearRow(AIndex: NativeInt); virtual;
+    procedure DeleteRow(AIndex: NativeInt); virtual;
+
     function AddDisplayItem: NativeInt; override;
     procedure ClearDisplayItems; override;
     function GetDisplayItemsCount: NativeInt; override;
@@ -96,6 +97,8 @@ type
     function GetCurrentItem: TObject; override;
     procedure SetItemIndex(const Value: NativeInt); override;
     procedure UpdateItems(AClearItems: Boolean = False); override;
+
+    property Grid: TStringGrid read FGrid;
   public
     constructor Create(AOwner: TPersistent; AGrid: TStringGrid);
     destructor Destroy; override;

@@ -26,14 +26,8 @@ implementation
 
 {$R *.dfm}
 
-{.$DEFINE USE_COLLECTIONS}
-
 uses
-{$IFDEF USE_COLLECTIONS}
-  Collections.Base,
-{$ELSE}
   DSharp.Collections,
-{$ENDIF}
   DSharp.Collections.Yield,
   Rtti;
 
@@ -54,10 +48,9 @@ begin
   until c > High(UInt64) div 2;
 end;
 
-function Power(ANumber, AExponent: Integer):
-  {$IFDEF USE_COLLECTIONS}ISequence<Integer>;{$ELSE}IEnumerable<Integer>;{$ENDIF}
+function Power(ANumber, AExponent: Integer): IEnumerable<Integer>;
 begin
-  Result := TDelegateEnumerable<Integer>.Create(
+  Result := TYieldEnumerable<Integer>.Create(
     procedure
     var
       i, k: Integer;
@@ -74,7 +67,7 @@ end;
 
 function Fibonacci: IEnumerable<UInt64>;
 begin
-  Result := TDelegateEnumerable<UInt64>.Create(Enumerate);
+  Result := TYieldEnumerable<UInt64>.Create(Enumerate);
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
@@ -102,7 +95,7 @@ begin
   Memo1.Clear();
   Memo1.Lines.BeginUpdate();
   try
-    for i in Power(2, 10){$IFDEF USE_COLLECTIONS}.Reversed(){$ENDIF} do
+    for i in Power(2, 10) do
     begin
       Memo1.Lines.Add(IntToStr(i));
     end;

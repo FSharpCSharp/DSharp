@@ -31,37 +31,30 @@ unit DSharp.Collections.Yield;
 
 interface
 
-{.$DEFINE USE_COLLECTIONS}
-{.$DEFINE USE_SPRING}
-{$DEFINE USE_FIBERS}
+{$IFNDEF MSWINDOWS}
+  {$DEFINE USE_THREADING}
+{$ENDIF}
 
 uses
-{$IFDEF USE_COLLECTIONS}
-  Collections.Base,
-{$ELSEIF DEFINED(USE_SPRING)}
-  Spring.Collections,
-  Spring.Collections.Base,
-{$ELSE}
-  DSharp.Collections,
-{$IFEND}
-{$IFDEF USE_FIBERS}
-  DSharp.Collections.Fibers,
-  DSharp.Core.Fibers,
-{$ELSE}
+{$IFDEF USE_THREADING}
   Classes,
   DSharp.Collections.Threading,
+{$ELSE}
+  DSharp.Collections.Fibers,
+  DSharp.Core.Fibers,
 {$ENDIF}
+  DSharp.Collections,
   Rtti,
   SysUtils;
 
 type
-{$IFDEF USE_FIBERS}
-  TWorkerBase = TEnumeratorFiber;
-{$ELSE}
+{$IFDEF USE_THREADING}
   TWorkerBase = TEnumeratorThread;
+{$ELSE}
+  TWorkerBase = TEnumeratorFiber;
 {$ENDIF}
 
-  TDelegateEnumerable = class
+  TYieldEnumerable = class
   private
     class function GetCurrent: TValue; static;
     class function GetCurrentWorker: TWorkerBase; static;
@@ -70,43 +63,26 @@ type
     class property Current: TValue read GetCurrent;
   end;
 
-{$IFDEF USE_COLLECTIONS}
-  TDelegateEnumerable<T> = class(TSequence<T>)
-{$ELSEIF DEFINED(USE_SPRING)}
-  TDelegateEnumerable<T> = class(TEnumerableBase<T>)
-{$ELSE}
-  TDelegateEnumerable<T> = class(TEnumerable<T>)
-{$IFEND}
+  TYieldEnumerable<T> = class(TEnumerable<T>)
   private
     FEnumeration: TProc;
 
     type
-{$IFDEF USE_FIBERS}
-      TWorker = TEnumeratorFiber<T>;
-{$ELSE}
+{$IFDEF USE_THREADING}
       TWorker = TEnumeratorThread<T>;
+{$ELSE}
+      TWorker = TEnumeratorFiber<T>;
 {$ENDIF}
 
-{$IFDEF USE_COLLECTIONS}
-      TEnumerator = class(TAbstractEnumerator<T>)
-{$ELSEIF DEFINED(USE_SPRING)}
-      TEnumerator = class(TEnumeratorBase<T>)
-{$ELSE}
       TEnumerator = class(TEnumerator<T>)
-{$IFEND}
       private
         FWorker: TWorker;
       protected
-{$IFDEF USE_COLLECTIONS}
-        function TryMoveNext(out ACurrent: T): Boolean; override;
-{$ELSE}
         function GetCurrent: T; override;
       public
-        function MoveNext: Boolean; override;
-{$ENDIF}
-      public
-        constructor Create(AOwner: TDelegateEnumerable<T>; const Enumeration: TProc);
+        constructor Create(AOwner: TYieldEnumerable<T>; const Enumeration: TProc);
         destructor Destroy; override;
+        function MoveNext: Boolean; override;
       end;
 
     class function GetCurrent: T; static;
@@ -157,158 +133,142 @@ implementation
 
 class operator Yield.Implicit(const Value: IInterface): Yield;
 begin
-  TDelegateEnumerable.Yield(TValue.From<IInterface>(Value));
+  TYieldEnumerable.Yield(TValue.From<IInterface>(Value));
 end;
 
 class operator Yield.Implicit(const Value: TObject): Yield;
 begin
-  TDelegateEnumerable.Yield(TValue.From<TObject>(Value));
+  TYieldEnumerable.Yield(TValue.From<TObject>(Value));
 end;
 
 class operator Yield.Implicit(const Value: TValue): Yield;
 begin
-  TDelegateEnumerable.Yield(Value);
+  TYieldEnumerable.Yield(Value);
 end;
 
 class operator Yield.Implicit(const Value: Variant): Yield;
 begin
-  TDelegateEnumerable.Yield(TValue.From(Value));
+  TYieldEnumerable.Yield(TValue.From(Value));
 end;
 
 class operator Yield.Implicit(const Value: Yield): IInterface;
 begin
-  Result := TDelegateEnumerable.Current.AsInterface;
+  Result := TYieldEnumerable.Current.AsInterface;
 end;
 
 class operator Yield.Implicit(const Value: Yield): TObject;
 begin
-  Result := TDelegateEnumerable.Current.AsObject;
+  Result := TYieldEnumerable.Current.AsObject;
 end;
 
 class operator Yield.Implicit(const Value: Yield): TValue;
 begin
-  Result := TDelegateEnumerable.Current;
+  Result := TYieldEnumerable.Current;
 end;
 
 class operator Yield.Implicit(const Value: Yield): Variant;
 begin
-  Result := TDelegateEnumerable.Current.AsVariant;
+  Result := TYieldEnumerable.Current.AsVariant;
 end;
 
 { Yield<T> }
 
 class operator Yield<T>.Implicit(const Value: T): Yield<T>;
 begin
-  TDelegateEnumerable<T>.Yield(Value);
+  TYieldEnumerable<T>.Yield(Value);
 end;
 
 class operator Yield<T>.Implicit(const Value: TValue): Yield<T>;
 begin
-  TDelegateEnumerable<T>.Yield(Value.AsType<T>);
+  TYieldEnumerable<T>.Yield(Value.AsType<T>);
 end;
 
 class operator Yield<T>.Implicit(const Value: Yield<T>): T;
 begin
-  Result := TDelegateEnumerable<T>.Current;
+  Result := TYieldEnumerable<T>.Current;
 end;
 
-{ TDelegateEnumerable }
+{ TYieldEnumerable }
 
-class function TDelegateEnumerable.GetCurrent: TValue;
+class function TYieldEnumerable.GetCurrent: TValue;
 begin
   Result := GetCurrentWorker.Result;
 end;
 
-class function TDelegateEnumerable.GetCurrentWorker: TWorkerBase;
+class function TYieldEnumerable.GetCurrentWorker: TWorkerBase;
 begin
-{$IFDEF USE_FIBERS}
-  Result := TWorkerBase(TFiber.CurrentFiber);
-{$ELSE}
+{$IFDEF USE_THREADING}
   Result := TWorkerBase(TThread.CurrentThread);
+{$ELSE}
+  Result := TWorkerBase(TFiber.CurrentFiber);
 {$ENDIF}
 end;
 
-class procedure TDelegateEnumerable.Yield(const Value: TValue);
+class procedure TYieldEnumerable.Yield(const Value: TValue);
 begin
   GetCurrentWorker.Yield(Value);
 end;
 
-{ TDelegateEnumerable<T> }
+{ TYieldEnumerable<T> }
 
-constructor TDelegateEnumerable<T>.Create(const AEnumeration: TProc);
+constructor TYieldEnumerable<T>.Create(const AEnumeration: TProc);
 begin
   inherited Create();
   FEnumeration := AEnumeration;
 end;
 
-class function TDelegateEnumerable<T>.GetCurrent: T;
+class function TYieldEnumerable<T>.GetCurrent: T;
 begin
   Result := GetCurrentWorker.Result;
 end;
 
-class function TDelegateEnumerable<T>.GetCurrentWorker: TWorker;
+class function TYieldEnumerable<T>.GetCurrentWorker: TWorker;
 begin
-{$IFDEF USE_FIBERS}
-  Result := TWorker(TFiber.CurrentFiber);
-{$ELSE}
+{$IFDEF USE_THREADING}
   Result := TWorker(TThread.CurrentThread);
+{$ELSE}
+  Result := TWorker(TFiber.CurrentFiber);
 {$ENDIF}
 end;
 
-function TDelegateEnumerable<T>.GetEnumerator: IEnumerator<T>;
+function TYieldEnumerable<T>.GetEnumerator: IEnumerator<T>;
 begin
   Result := TEnumerator.Create(Self, FEnumeration);
 end;
 
-class procedure TDelegateEnumerable<T>.Yield(const Value: T);
+class procedure TYieldEnumerable<T>.Yield(const Value: T);
 begin
   GetCurrentWorker.Yield(Value);
 end;
 
-class procedure TDelegateEnumerable<T>.Yield(const Value: TValue);
+class procedure TYieldEnumerable<T>.Yield(const Value: TValue);
 begin
   GetCurrentWorker.Yield(Value);
 end;
 
-{ TDelegateEnumerable<T>.TEnumerator }
+{ TYieldEnumerable<T>.TEnumerator }
 
-constructor TDelegateEnumerable<T>.TEnumerator.Create(
-  AOwner: TDelegateEnumerable<T>; const Enumeration: TProc);
+constructor TYieldEnumerable<T>.TEnumerator.Create(
+  AOwner: TYieldEnumerable<T>; const Enumeration: TProc);
 begin
-{$IFDEF USE_COLLECTIONS}
-  inherited Create(AOwner);
-{$ENDIF}
   FWorker := TWorker.Create(Enumeration);
 end;
 
-destructor TDelegateEnumerable<T>.TEnumerator.Destroy;
+destructor TYieldEnumerable<T>.TEnumerator.Destroy;
 begin
   FWorker.Free();
   inherited;
 end;
 
-{$IFDEF USE_COLLECTIONS}
-function TDelegateEnumerable<T>.TEnumerator.TryMoveNext(out ACurrent: T): Boolean;
-begin
-  FWorker.Continue();
-  Result := not FWorker.Finished;
-  if Result then
-  begin
-    ACurrent :=  FWorker.Result;
-  end;
-end;
-{$ELSE}
-
-function TDelegateEnumerable<T>.TEnumerator.GetCurrent: T;
+function TYieldEnumerable<T>.TEnumerator.GetCurrent: T;
 begin
   Result := FWorker.Result;
 end;
 
-function TDelegateEnumerable<T>.TEnumerator.MoveNext: Boolean;
+function TYieldEnumerable<T>.TEnumerator.MoveNext: Boolean;
 begin
   FWorker.Continue();
   Result := not FWorker.Finished;
 end;
-{$ENDIF}
 
 end.

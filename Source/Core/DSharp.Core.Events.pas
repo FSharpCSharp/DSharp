@@ -89,10 +89,13 @@ type
   IEvent<T> = interface(IEvent)
     function GetCount: Integer;
     function GetInvoke: T;
+    function GetOnChanged: TNotifyEvent;
     procedure Add(AEvent: T);
     procedure Remove(AEvent: T);
+    procedure SetOnChanged(const Value: TNotifyEvent);
     property Count: Integer read GetCount;
     property Invoke: T read GetInvoke;
+    property OnChanged: TNotifyEvent read GetOnChanged write SetOnChanged;
   end;
 
   TEvent<T> = class(TEvent, IEvent<T>)
@@ -100,9 +103,12 @@ type
     FInvoke: T;
     FNotificationHandler: TNotificationHandler<TEvent<T>>;
     FOwner: TComponent;
+    FOnChanged: TNotifyEvent;
     function GetInvoke: T;
+    function GetOnChanged: TNotifyEvent;
     procedure Notification(AComponent: TComponent; Operation: TOperation);
     procedure SetEventDispatcher(var ADispatcher: T; ATypeData: PTypeData);
+    procedure SetOnChanged(const Value: TNotifyEvent);
   strict protected
     function GetInvokeBase: TMethod; override;
     procedure MethodAdded(const AMethod: TMethod); override;
@@ -136,7 +142,9 @@ type
     function GetEnabled: Boolean;
     function GetEventHandler: IEvent<T>;
     function GetInvoke: T;
+    function GetOnChanged: TNotifyEvent;
     procedure SetEnabled(const Value: Boolean);
+    procedure SetOnChanged(const Value: TNotifyEvent);
   public
     constructor Create(AEventHandler: IEvent<T>);
 
@@ -146,6 +154,7 @@ type
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property EventHandler: IEvent<T> read GetEventHandler;
     property Invoke: T read GetInvoke;
+    property OnChanged: TNotifyEvent read GetOnChanged write SetOnChanged;
 
     class operator Implicit(const AValue: Event<T>): IEvent<T>;
     class operator Implicit(const AValue: Event<T>): T;
@@ -159,18 +168,6 @@ var
   Context: TRttiContext;
 
 implementation
-
-//function IsValid(AObject: TObject): Boolean;
-//begin
-//  Result := False;
-//  if Assigned(AObject) then
-//  try
-//    if NativeInt(Pointer(PPointer(AObject)^)) > $FFFF then  // "hotfix" to prevent some access violations (no clue if this works) :)
-//      Result := Pointer(PPointer(AObject)^) =
-//        Pointer(Pointer(Cardinal(PPointer(AObject)^) + Cardinal(vmtSelfPtr))^);
-//  except
-//  end;
-//end;
 
 function IsValid(AObject: TObject): Boolean;
 {$IFDEF VER210}
@@ -545,6 +542,11 @@ begin
   Result := TMethod(Pointer(@FInvoke)^);
 end;
 
+function TEvent<T>.GetOnChanged: TNotifyEvent;
+begin
+  Result := FOnChanged;
+end;
+
 function TEvent<T>.IndexOf(AEvent: T): Integer;
 begin
   Result := inherited IndexOf(TMethod(Pointer(@AEvent)^));
@@ -604,6 +606,11 @@ begin
   LMethod := TMethod(Pointer(@ADispatcher)^);
   inherited SetDispatcher(LMethod, ATypeData);
   TMethod(Pointer(@ADispatcher)^) := LMethod;
+end;
+
+procedure TEvent<T>.SetOnChanged(const Value: TNotifyEvent);
+begin
+  FOnChanged := Value;
 end;
 
 { TEvent<T> }
@@ -670,6 +677,17 @@ begin
   end;
 end;
 
+function Event<T>.GetOnChanged: TNotifyEvent;
+var
+  LEventHandler: IEvent<T>;
+begin
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    Result := LEventHandler.OnChanged;
+  end;
+end;
+
 procedure Event<T>.Remove(AEvent: T);
 var
   LEventHandler: IEvent<T>;
@@ -689,6 +707,17 @@ begin
   if Assigned(LEventHandler) then
   begin
     LEventHandler.Enabled := Value;
+  end;
+end;
+
+procedure Event<T>.SetOnChanged(const Value: TNotifyEvent);
+var
+  LEventHandler: IEvent<T>;
+begin
+  LEventHandler := EventHandler;
+  if Assigned(LEventHandler) then
+  begin
+    LEventHandler.OnChanged := Value;
   end;
 end;
 

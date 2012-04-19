@@ -1349,7 +1349,7 @@ begin
     while Assigned(LType) and not Result do
     begin
       Result := SameText(LType.Name, OtherTypeName)
-        or (LType.IsPublicType and SameText(QualifiedName, OtherTypeName));
+        or (LType.IsPublicType and SameText(LType.QualifiedName, OtherTypeName));
       LType := LType.BaseType;
     end;
   end;

@@ -216,7 +216,7 @@ begin
     if Supports(Collection.Owner, ICollectionView, LCollectionView) then
     begin
       // trigger filtering
-      LCollectionView.Filter := LCollectionView.Filter;
+       LCollectionView.Filter.OnChanged(Self);
     end;
   end;
 end;

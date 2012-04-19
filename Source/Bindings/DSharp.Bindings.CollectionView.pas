@@ -48,13 +48,14 @@ type
     FUpdateCount: Integer;
     function GetUpdating: Boolean;
   protected
-    FFilter: TPredicate<TObject>;
+    FFilter: Event<TFilterEvent>;
     FItemIndex: NativeInt;
     FItemsSource: IList;
     FItemTemplate: IDataTemplate;
     FOnCollectionChanged: Event<TCollectionChangedEvent>;
 
     procedure DoCurrentChanged;
+    procedure DoFilterChanged(Sender: TObject); virtual;
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); virtual;
     procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
@@ -62,12 +63,12 @@ type
     function GetCanMoveCurrentToNext: Boolean; virtual;
     function GetCanMoveCurrentToPrevious: Boolean; virtual;
     function GetCurrentItem: TObject; virtual;
-    function GetFilter: TPredicate<TObject>; virtual;
+    function GetFilter: IEvent<TFilterEvent>;
     function GetItemsSource: IList; virtual;
     function GetItemTemplate: IDataTemplate; virtual;
     function GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
+    function IsFiltered(const Item: TObject): Boolean;
     procedure SetCurrentItem(const Value: TObject); virtual;
-    procedure SetFilter(const Value: TPredicate<TObject>); virtual;
     procedure SetItemIndex(const Value: NativeInt); virtual;
     procedure SetItemsSource(const Value: IList); virtual;
     procedure SetItemTemplate(const Value: IDataTemplate); virtual;
@@ -87,7 +88,7 @@ type
     property CanMoveCurrentToNext: Boolean read GetCanMoveCurrentToNext;
     property CanMoveCurrentToPrevious: Boolean read GetCanMoveCurrentToPrevious;
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
-    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
+    property Filter: IEvent<TFilterEvent> read GetFilter;
     property ItemIndex: NativeInt read FItemIndex write SetItemIndex;
     property ItemsSource: IList read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
@@ -109,6 +110,7 @@ constructor TCollectionView.Create;
 begin
   inherited;
   FItemIndex := -1;
+  FFilter.OnChanged := DoFilterChanged;
 end;
 
 destructor TCollectionView.Destroy;
@@ -128,6 +130,11 @@ begin
   begin
     FOnCurrentChanged(Self);
   end;
+end;
+
+procedure TCollectionView.DoFilterChanged(Sender: TObject);
+begin
+  UpdateItems(True);
 end;
 
 procedure TCollectionView.DoItemPropertyChanged(ASender: TObject;
@@ -158,14 +165,14 @@ end;
 function TCollectionView.GetCanMoveCurrentToNext: Boolean;
 begin
   // TODO: Implement filter support
-  Result := not Assigned(FFilter) and Assigned(FItemsSource)
+  Result := (FFilter.Count = 0) and Assigned(FItemsSource)
     and (FItemIndex < Pred(FItemsSource.Count));
 end;
 
 function TCollectionView.GetCanMoveCurrentToPrevious: Boolean;
 begin
   // TODO: Implement filter support
-  Result := not Assigned(FFilter) and Assigned(FItemsSource)
+  Result := (FFilter.Count = 0) and Assigned(FItemsSource)
     and (FItemIndex > 0);
 end;
 
@@ -181,7 +188,7 @@ begin
   end;
 end;
 
-function TCollectionView.GetFilter: TPredicate<TObject>;
+function TCollectionView.GetFilter: IEvent<TFilterEvent>;
 begin
   Result := FFilter;
 end;
@@ -210,9 +217,16 @@ begin
   Result := FUpdateCount > 0;
 end;
 
+function TCollectionView.IsFiltered(const Item: TObject): Boolean;
+begin
+  Result := True;
+  FFilter.Invoke(Item, Result);
+  Result := not Result;
+end;
+
 procedure TCollectionView.MoveCurrentToFirst;
 begin
-  if not Assigned(FFilter)  then
+  if FFilter.Count = 0 then
   begin
     if CanMoveCurrentToPrevious xor (FItemIndex = -1)
       and Assigned(FItemsSource) and (FItemsSource.Count > 0) then
@@ -224,7 +238,7 @@ end;
 
 procedure TCollectionView.MoveCurrentToLast;
 begin
-  if not Assigned(FFilter) then
+  if FFilter.Count = 0 then
   begin
     if CanMoveCurrentToNext then
     begin
@@ -235,7 +249,7 @@ end;
 
 procedure TCollectionView.MoveCurrentToNext;
 begin
-  if not Assigned(FFilter) then
+  if FFilter.Count = 0 then
   begin
     if CanMoveCurrentToNext then
     begin
@@ -246,7 +260,7 @@ end;
 
 procedure TCollectionView.MoveCurrentToPrevious;
 begin
-  if not Assigned(FFilter) then
+  if FFilter.Count = 0 then
   begin
     if CanMoveCurrentToPrevious then
     begin
@@ -261,12 +275,6 @@ begin
   begin
     ItemIndex := FItemsSource.IndexOf(Value);
   end;
-end;
-
-procedure TCollectionView.SetFilter(const Value: TPredicate<TObject>);
-begin
-  FFilter := Value;
-  UpdateItems(True);
 end;
 
 procedure TCollectionView.SetItemIndex(const Value: NativeInt);

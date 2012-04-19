@@ -86,6 +86,8 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure ApplyFilter; virtual;
+
     procedure BeginUpdate; virtual;
     procedure EndUpdate; virtual;
 
@@ -108,6 +110,7 @@ type
   private
     FPresenter: TCustomPresenter;
   protected
+    procedure DoFilterChanged(Sender: TObject); override;
     procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
     procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
@@ -146,6 +149,11 @@ begin
   end;
   FView.Free();
   inherited;
+end;
+
+procedure TCustomPresenter.ApplyFilter;
+begin
+
 end;
 
 procedure TCustomPresenter.BeginUpdate;
@@ -389,6 +397,11 @@ constructor TCollectionViewPresenterAdapter.Create(Presenter: TCustomPresenter);
 begin
   inherited Create;
   FPresenter := Presenter;
+end;
+
+procedure TCollectionViewPresenterAdapter.DoFilterChanged(Sender: TObject);
+begin
+  FPresenter.ApplyFilter;
 end;
 
 procedure TCollectionViewPresenterAdapter.DoItemPropertyChanged(

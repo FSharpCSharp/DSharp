@@ -181,6 +181,8 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure ApplyFilter; override;
+
     procedure BeginUpdate; override;
     procedure EndUpdate; override;
 
@@ -276,6 +278,18 @@ begin
   FExpandedItems.OnCollectionChanged.Remove(DoExpandedItemsChanged);
   FSelectedItems.OnCollectionChanged.Remove(DoSelectedItemsChanged);
   inherited;
+end;
+
+procedure TTreeViewPresenter.ApplyFilter;
+var
+  LNode: PVirtualNode;
+begin
+  LNode := FTreeView.GetFirst();
+  while Assigned(LNode) do
+  begin
+    DoFilterNode(FTreeView, LNode);
+    LNode := FTreeView.GetNext(LNode);
+  end;
 end;
 
 procedure TTreeViewPresenter.BeginUpdate;
@@ -561,17 +575,13 @@ procedure TTreeViewPresenter.DoFilterNode(Sender: TBaseVirtualTree;
 var
   i: Integer;
   LItem: TObject;
+  LAccepted: Boolean;
 begin
   LItem := GetNodeItem(Sender, Node);
+  LAccepted := True;
 
-  if Assigned(View.Filter) then
-  begin
-    Sender.IsFiltered[Node] := not View.Filter(LItem);
-  end
-  else
-  begin
-    Sender.IsFiltered[Node] := False;
-  end;
+  View.Filter.Invoke(LItem, LAccepted);
+  Sender.IsFiltered[Node] := not LAccepted;
 
   if Assigned(ColumnDefinitions) then
   begin

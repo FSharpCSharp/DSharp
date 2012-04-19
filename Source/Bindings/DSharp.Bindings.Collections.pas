@@ -40,6 +40,7 @@ uses
 
 type
   TCollectionChangedEvent = TCollectionChangedEvent<TObject>;
+  TFilterEvent = procedure(Item: TObject; var Accepted: Boolean) of object;
 
   INotifyCollectionChanged = interface
     ['{FE0D3160-6BCE-46B6-B01D-1B3C23EA76F3}']
@@ -52,15 +53,14 @@ type
     ['{A13215DC-49AC-46AF-A85A-EEC3CC0D709C}']
     function GetCurrentItem: TObject;
     procedure SetCurrentItem(const Value: TObject);
-    function GetFilter: TPredicate<TObject>;
-    procedure SetFilter(const Value: TPredicate<TObject>);
+    function GetFilter: IEvent<TFilterEvent>;
     function GetItemsSource: IList;
     procedure SetItemsSource(const Value: IList);
     function GetItemTemplate: IDataTemplate;
     procedure SetItemTemplate(const Value: IDataTemplate);
 
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
-    property Filter: TPredicate<TObject> read GetFilter write SetFilter;
+    property Filter: IEvent<TFilterEvent> read GetFilter;
     property ItemsSource: IList read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
   end;

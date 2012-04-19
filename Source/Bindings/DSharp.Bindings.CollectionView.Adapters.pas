@@ -101,7 +101,7 @@ var
 begin
   LIndex := FindDisplayItem(ASender);
 
-  if not Assigned(FFilter) or FFilter(ASender) then
+  if not IsFiltered(ASender) then
   begin
     if LIndex = -1 then
     begin
@@ -144,7 +144,7 @@ begin
   case Action of
     caAdd:
     begin
-      if not Assigned(FFilter) or FFilter(Item) then
+      if not IsFiltered(Item) then
       begin
         LIndex := AddDisplayItem();
         UpdateDisplayItem(LIndex, Item);
@@ -232,7 +232,7 @@ begin
     begin
       LItem := ItemTemplate.GetItem(ItemsSource as TObject, i);
       LIndex := FindDisplayItem(LItem.ToObject);
-      if not Assigned(FFilter) or FFilter(LItem.ToObject) then
+      if not IsFiltered(LItem.ToObject) then
       begin
         if LIndex = -1 then
         begin

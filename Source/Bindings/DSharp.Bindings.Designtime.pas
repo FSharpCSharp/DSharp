@@ -97,10 +97,15 @@ type
     procedure SetValue(const Value: string); override;
   end;
 
+  TSupportedClasses = class(TDictionary<TClass, string>)
+  protected
+    procedure KeyNotify(const Key: TClass; Action: TCollectionNotification); override;
+  end;
+
 procedure Register;
 
 var
-  SupportedClasses: TDictionary<TClass, string>;
+  SupportedClasses: TSupportedClasses;
 
 implementation
 
@@ -114,14 +119,7 @@ uses
   SysUtils;
 
 procedure Register;
-var
-  LClass: TClass;
 begin
-  for LClass in SupportedClasses.Keys do
-  begin
-    RegisterSelectionEditor(LClass, TBindingSelectionEditor);
-  end;
-
   RegisterComponents('Data binding', [TBindingGroup]);
   RegisterComponentEditor(TBindingGroup, TBindingGroupComponentEditor);
   RegisterPropertyEditor(TypeInfo(TObject), TBinding, 'Source', TSourceProperty);
@@ -438,8 +436,19 @@ begin
   Modified;
 end;
 
+{ TSupportedClasses }
+
+procedure TSupportedClasses.KeyNotify(const Key: TClass;
+  Action: TCollectionNotification);
+begin
+  inherited;
+  case Action of
+    cnAdded: RegisterSelectionEditor(Key, TBindingSelectionEditor);
+  end;
+end;
+
 initialization
-  SupportedClasses := TDictionary<TClass, string>.Create();
+  SupportedClasses := TSupportedClasses.Create();
 
 finalization
   SupportedClasses.Free();

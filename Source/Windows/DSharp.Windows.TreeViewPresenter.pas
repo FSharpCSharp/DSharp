@@ -1094,6 +1094,14 @@ begin
     if Assigned(ColumnDefinitions) then
     begin
       FTreeView.Header.AutoSizeIndex := ColumnDefinitions.MainColumnIndex;
+      if FTreeView.Header.AutoSizeIndex = -1 then
+      begin
+        FTreeView.Header.Options := FTreeView.Header.Options - [hoAutoResize];
+      end
+      else
+      begin
+        FTreeView.Header.Options := FTreeView.Header.Options + [hoAutoResize];
+      end;
       for i := 0 to Pred(ColumnDefinitions.Count) do
       begin
         with FTreeView.Header.Columns.Add do
@@ -1231,7 +1239,6 @@ begin
       FTreeView.Header.Options := FTreeView.Header.Options - [hoVisible];
     end;
 
-    FTreeView.Header.Options := FTreeView.Header.Options + [hoAutoResize];
     FTreeView.HintMode := hmHintAndDefault;
     FTreeView.IncrementalSearch := isAll;
     FTreeView.ShowHint := True;

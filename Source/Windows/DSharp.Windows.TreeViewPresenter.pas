@@ -131,6 +131,7 @@ type
     procedure DoPaintText(Sender: TBaseVirtualTree; const TargetCanvas: TCanvas;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType);
 
+    procedure ExpandNode(Node: PVirtualNode);
     function GetCheckedItem: TObject;
     function GetCheckedItems: IList<TObject>;
     function GetExpandedItems: IList<TObject>;
@@ -561,7 +562,7 @@ begin
       if GetNodeItem(FTreeView, LNode) = Item then
       begin
         case Action of
-          caAdd: FTreeView.Expanded[LNode] := True;
+          caAdd: ExpandNode(LNode);
           caRemove: FTreeView.Expanded[LNode] := False;
         end;
       end;
@@ -978,6 +979,19 @@ begin
   FTreeView.EndUpdate();
 end;
 
+procedure TTreeViewPresenter.ExpandNode(Node: PVirtualNode);
+var
+  LParentNode: PVirtualNode;
+begin
+  FTreeView.Expanded[Node] := True;
+  LParentNode := Node.Parent;
+  while Assigned(LParentNode) do
+  begin
+    FTreeView.Expanded[LParentNode] := True;
+    LParentNode := LParentNode.Parent;
+  end;
+end;
+
 procedure TTreeViewPresenter.FullCollapse;
 begin
   FTreeView.FullCollapse();
@@ -1333,13 +1347,14 @@ var
 begin
   if Assigned(Value) then
   begin
+    FTreeView.FullCollapse();
     LNode := FTreeView.GetFirst();
     while Assigned(LNode) do
     begin
       LItem := GetNodeItem(FTreeView, LNode);
       if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
       begin
-        FTreeView.Expanded[LNode] := True;
+        ExpandNode(LNode);
       end;
       LNode := FTreeView.GetNext(LNode);
     end;

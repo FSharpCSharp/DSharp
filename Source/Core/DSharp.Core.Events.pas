@@ -43,6 +43,11 @@ uses
   TypInfo;
 
 type
+  PDelegate = ^IDelegate;
+  IDelegate = interface
+    procedure Invoke;
+  end;
+
   IEvent = interface
     function GetCount: Integer;
     function GetEnabled: Boolean;
@@ -55,7 +60,7 @@ type
     property Invoke: TMethod read GetInvoke;
   end;
 
-  TEvent = class abstract(TInterfacedObject, IEvent)
+  TEvent = class abstract(TInterfacedObject, IEvent, IDelegate)
   strict private
     FEnabled: Boolean;
     FInternalDispatcher: TMethod;
@@ -64,9 +69,10 @@ type
     procedure InternalInvoke(Params: PParameters; StackSize: Integer);
     procedure InternalNotify(Sender: TObject; const Item: TMethod;
       Action: TCollectionNotification);
+    procedure Invoke;
   strict protected
 {$IF CompilerVersion > 22}
-    FInvokableType: TRttiInvokableType;
+    FCallingConvention: TCallConv;
     FParameters: TArray<TRttiParameter>;
 {$IFEND}
     function GetInvokeBase: TMethod; virtual; abstract;
@@ -79,7 +85,7 @@ type
     function IndexOfInstance(const AInstance: TObject): Integer;
     procedure Remove(const AEvent: TMethod);
     procedure RemoveInstanceReferences(const AInstance: TObject);
-    procedure SetDispatcher(var AMethod: TMethod; ATypeData: PTypeData);
+    procedure SetDispatcher(out AMethod: TMethod; ATypeData: PTypeData);
     procedure SetEnabled(const AValue: Boolean);
   public
     constructor Create;
@@ -104,10 +110,11 @@ type
     FNotificationHandler: TNotificationHandler<TEvent<T>>;
     FOwner: TComponent;
     FOnChanged: TNotifyEvent;
+    function Cast(const Value: T): TMethod;
     function GetInvoke: T;
     function GetOnChanged: TNotifyEvent;
     procedure Notification(AComponent: TComponent; Operation: TOperation);
-    procedure SetEventDispatcher(var ADispatcher: T; ATypeData: PTypeData);
+    procedure SetEventDispatcher(out ADispatcher: T; ATypeData: PTypeData);
     procedure SetOnChanged(const Value: TNotifyEvent);
   strict protected
     function GetInvokeBase: TMethod; override;
@@ -148,8 +155,8 @@ type
   public
     constructor Create(AEventHandler: IEvent<T>);
 
-    procedure Add(AEvent: T);
-    procedure Remove(AEvent: T);
+    procedure Add(const AEvent: T);
+    procedure Remove(const AEvent: T);
     property Count: Integer read GetCount;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property EventHandler: IEvent<T> read GetEventHandler;
@@ -161,6 +168,7 @@ type
     class operator Implicit(const AValue: IEvent<T>): Event<T>;
   end;
 
+procedure GetMethodTypeData(Method: TRttiMethod; var TypeData: PTypeData);
 function IsValid(AObject: TObject): Boolean;
 procedure MethodReferenceToMethodPointer(const AMethodReference; var AMethodPointer);
 
@@ -168,6 +176,43 @@ var
   Context: TRttiContext;
 
 implementation
+
+procedure GetMethodTypeData(Method: TRttiMethod; var TypeData: PTypeData);
+type
+  PParameterInfos = ^TParameterInfos;
+  TParameterInfos = array[0..255] of PPTypeInfo;
+var
+  params: TArray<TRttiParameter>;
+  i: Integer;
+  p: PByte;
+begin
+  TypeData.MethodKind := Method.MethodKind;
+  params := Method.GetParameters;
+  TypeData.ParamCount := Length(params);
+  p := @TypeData.ParamList;
+  for i := Low(params) to High(params) do
+  begin
+    TParamFlags(p[0]) := params[i].Flags;
+    Inc(p);
+    PShortString(p)^ := ShortString(params[i].Name);
+    Inc(p, p[0] + 1);
+    PShortString(p)^ := ShortString(params[i].ParamType.Name);
+    Inc(p, p[0] + 1);
+  end;
+  if method.MethodKind = mkFunction then
+  begin
+    PShortString(p)^ := ShortString(method.ReturnType.Name);
+    Inc(p, p[0] + 1);
+    PPTypeInfo(p)^ := method.ReturnType.Handle;
+    Inc(p, 4);
+  end;
+  TCallConv(p[0]) := method.CallingConvention;
+  Inc(p);
+  for i := Low(params) to High(params) do
+  begin
+    PParameterInfos(Cardinal(p))[i] := PPTypeInfo(Cardinal(params[i].ParamType.Handle) - 4);
+  end;
+end;
 
 function IsValid(AObject: TObject): Boolean;
 {$IFDEF VER210}
@@ -312,7 +357,7 @@ begin
     for i := Low(FParameters) to High(FParameters) do
     begin
       PassArg(FParameters[i], Params, LArgs[i + 1],
-        FInvokableType.CallingConvention, i, LOffset);
+        FCallingConvention, i, LOffset);
     end;
 
     for LMethod in FMethods do
@@ -320,7 +365,7 @@ begin
       LArgs[0] := TValue.From<TObject>(LMethod.Data);
       // workaround for incorrect type guess in Rtti.pas
       TValueData(LArgs[0]).FTypeInfo := TypeInfo(TObject);
-      Rtti.Invoke(LMethod.Code, LArgs, FInvokableType.CallingConvention, nil);
+      Rtti.Invoke(LMethod.Code, LArgs, FCallingConvention, nil);
     end;
   end;
 end;
@@ -338,17 +383,23 @@ begin
   end;
 end;
 
+procedure TEvent.Invoke;
+asm
+{$IFDEF CPUX64}
+  MOV RAX,RCX
+  MOV RCX,[RAX].FInternalDispatcher.Data
+  JMP [RAX].FInternalDispatcher.Code
+{$ELSE}
+  MOV EBX,EAX
+  MOV EAX,[EBX].FInternalDispatcher.Data
+  JMP [EBX].FInternalDispatcher.Code
+{$ENDIF}
+end;
+
 procedure TEvent.Add(const AEvent: TMethod);
-var
-  LMethod: TMethod;
 begin
-  if IndexOf(AEvent) = -1 then
-  begin
-    LMethod.Code := TMethod(AEvent).Code;
-    LMethod.Data := TMethod(AEvent).Data;
-    FMethods.Add(LMethod);
-  end;
-  MethodAdded(TMethod(AEvent));
+  FMethods.Add(AEvent);
+  MethodAdded(AEvent);
 end;
 
 function TEvent.GetCount: Integer;
@@ -401,7 +452,7 @@ begin
   begin
     FMethods.Delete(i);
   end;
-  MethodRemoved(TMethod(AEvent));
+  MethodRemoved(AEvent);
 end;
 
 procedure TEvent.RemoveInstanceReferences(const AInstance: TObject);
@@ -417,8 +468,7 @@ begin
   until i = -1;
 end;
 
-procedure TEvent.SetDispatcher(var AMethod: TMethod;
-  ATypeData: PTypeData);
+procedure TEvent.SetDispatcher(out AMethod: TMethod; ATypeData: PTypeData);
 begin
   if Assigned(FInternalDispatcher.Code)
     and Assigned(FInternalDispatcher.Data) then
@@ -440,16 +490,41 @@ constructor TEvent<T>.Create(AOwner: TComponent);
 var
   MethInfo: PTypeInfo;
   TypeData: PTypeData;
+  RttiType: TRttiType;
+  Methods: TArray<TRttiMethod>;
 begin
   MethInfo := TypeInfo(T);
   TypeData := GetTypeData(MethInfo);
-{$IF CompilerVersion > 22}
-  FInvokableType := Context.GetType(MethInfo) as TRttiInvokableType;
-  FParameters := FInvokableType.GetParameters();
-{$IFEND}
   inherited Create();
-  Assert(MethInfo.Kind = tkMethod, 'T must be a method pointer type');
-  SetEventDispatcher(FInvoke, TypeData);
+  if MethInfo.Kind = tkInterface then
+  begin
+    RttiType := Context.GetType(MethInfo);
+    Methods := RttiType.GetMethods;
+    Assert(Length(Methods) > 0, string(MethInfo.Name) + ' must contain extended RTTI');
+    New(TypeData);
+    try
+      GetMethodTypeData(Methods[0], TypeData);
+      Assert(TypeData.MethodKind = mkProcedure, string(MethInfo.Name) + ' must not be a function');
+{$IF CompilerVersion > 22}
+      FCallingConvention := Methods[0].CallingConvention;
+      FParameters := Methods[0].GetParameters();
+{$IFEND}
+      SetEventDispatcher(FInvoke, TypeData);
+    finally
+      Dispose(TypeData);
+    end;
+  end
+  else
+  begin
+    Assert(MethInfo.Kind = tkMethod, string(MethInfo.Name) + ' must be a method pointer type');
+    Assert(TypeData.MethodKind = mkProcedure, string(MethInfo.Name) + ' must not be a function');
+{$IF CompilerVersion > 22}
+    RttiType := Context.GetType(MethInfo);
+    FCallingConvention := TRttiInvokableType(RttiType).CallingConvention;
+    FParameters := TRttiInvokableType(RttiType).GetParameters();
+{$IFEND}
+    SetEventDispatcher(FInvoke, TypeData);
+  end;
   FNotificationHandler := TNotificationHandler<TEvent<T>>.Create(Self, Notification);
   if Assigned(AOwner) then
   begin
@@ -503,7 +578,7 @@ end;
 
 procedure TEvent<T>.Add(AEvent: T);
 begin
-  inherited Add(TMethod(Pointer(@AEvent)^));
+  inherited Add(Cast(AEvent));
 end;
 
 procedure TEvent<T>.Add<TDelegate>(ADelegate: TDelegate);
@@ -532,6 +607,18 @@ begin
   Add(LEvent);
 end;
 
+function TEvent<T>.Cast(const Value: T): TMethod;
+begin
+  if PTypeInfo(TypeInfo(T)).Kind = tkInterface then
+  begin
+    MethodReferenceToMethodPointer(Value, Result);
+  end
+  else
+  begin
+    Result := TMethod(Pointer(@Value)^);
+  end;
+end;
+
 function TEvent<T>.GetInvoke: T;
 begin
   Result := FInvoke;
@@ -549,7 +636,7 @@ end;
 
 function TEvent<T>.IndexOf(AEvent: T): Integer;
 begin
-  Result := inherited IndexOf(TMethod(Pointer(@AEvent)^));
+  Result := inherited IndexOf(Cast(AEvent));
 end;
 
 procedure TEvent<T>.MethodAdded(const AMethod: TMethod);
@@ -587,7 +674,7 @@ end;
 
 procedure TEvent<T>.Remove(AEvent: T);
 begin
-  inherited Remove(TMethod(Pointer(@AEvent)^));
+  inherited Remove(Cast(AEvent));
 end;
 
 procedure TEvent<T>.Remove<TDelegate>(ADelegate: TDelegate);
@@ -598,14 +685,20 @@ begin
   Remove(LEvent);
 end;
 
-procedure TEvent<T>.SetEventDispatcher(var ADispatcher: T;
-  ATypeData: PTypeData);
+procedure TEvent<T>.SetEventDispatcher(out ADispatcher: T; ATypeData: PTypeData);
 var
   LMethod: TMethod;
 begin
-  LMethod := TMethod(Pointer(@ADispatcher)^);
   inherited SetDispatcher(LMethod, ATypeData);
-  TMethod(Pointer(@ADispatcher)^) := LMethod;
+  if PTypeInfo(TypeInfo(T)).Kind = tkInterface then
+  begin
+    PDelegate(@FInvoke)^ := Self;
+    Self._Release;
+  end
+  else
+  begin
+    TMethod(Pointer(@ADispatcher)^) := LMethod;
+  end;
 end;
 
 procedure TEvent<T>.SetOnChanged(const Value: TNotifyEvent);
@@ -621,7 +714,7 @@ begin
   FInitialized := Assigned(FEventHandler);
 end;
 
-procedure Event<T>.Add(AEvent: T);
+procedure Event<T>.Add(const AEvent: T);
 var
   LEventHandler: IEvent<T>;
 begin
@@ -688,7 +781,7 @@ begin
   end;
 end;
 
-procedure Event<T>.Remove(AEvent: T);
+procedure Event<T>.Remove(const AEvent: T);
 var
   LEventHandler: IEvent<T>;
 begin

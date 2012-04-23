@@ -232,7 +232,10 @@ type
 
     procedure Notify(const Value: T; const Action: TCollectionChangedAction); virtual;
   public
-    constructor Create;
+    constructor Create; overload;
+    constructor Create(Comparer: IComparer<T>); overload;
+    constructor Create(Values: IEnumerable<T>); overload;
+
     destructor Destroy; override;
 
     function Add(const Value: T): NativeInt; overload;
@@ -318,7 +321,9 @@ type
   protected
     procedure Notify(const Value: T; const Action: TCollectionChangedAction); override;
   public
-    constructor Create(AOwnsObjects: Boolean = True);
+    constructor Create(AOwnsObjects: Boolean = True); overload;
+    constructor Create(Comparer: IComparer<T>; AOwnsObjects: Boolean = True); overload;
+    constructor Create(Values: IEnumerable<T>; AOwnsObjects: Boolean = True); overload;
 
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
   end;
@@ -438,6 +443,27 @@ end;
 
 { TList<T> }
 
+constructor TList<T>.Create;
+begin
+  Create(TComparer<T>.Default);
+end;
+
+constructor TList<T>.Create(Comparer: IComparer<T>);
+begin
+  inherited Create();
+  FComparer := Comparer;
+  if not Assigned(FComparer) then
+  begin
+    FComparer := TComparer<T>.Default;
+  end;
+end;
+
+constructor TList<T>.Create(Values: IEnumerable<T>);
+begin
+  Create();
+  AddRange(Values);
+end;
+
 function TList<T>.Add(const Value: T): NativeInt;
 begin
   Result := FCount;
@@ -486,11 +512,6 @@ end;
 function TList<T>.Contains(const Value: T): Boolean;
 begin
   Result := IndexOf(Value) >= 0;
-end;
-
-constructor TList<T>.Create;
-begin
-  FComparer := TComparer<T>.Default;
 end;
 
 procedure TList<T>.Delete(const Index: NativeInt);
@@ -805,11 +826,8 @@ begin
 end;
 
 procedure TList<T>.Sort;
-var
-  LComparer: IComparer<T>;
 begin
-  LComparer := TComparer<T>.Default;
-  Sort(LComparer);
+  Sort(FComparer);
 end;
 
 procedure TList<T>.Sort(Comparer: IComparer<T>);
@@ -884,6 +902,20 @@ end;
 constructor TObjectList<T>.Create(AOwnsObjects: Boolean);
 begin
   inherited Create();
+  FOwnsObjects := AOwnsObjects;
+end;
+
+constructor TObjectList<T>.Create(Comparer: IComparer<T>;
+  AOwnsObjects: Boolean);
+begin
+  inherited Create(Comparer);
+  FOwnsObjects := AOwnsObjects;
+end;
+
+constructor TObjectList<T>.Create(Values: IEnumerable<T>;
+  AOwnsObjects: Boolean);
+begin
+  inherited Create(Values);
   FOwnsObjects := AOwnsObjects;
 end;
 

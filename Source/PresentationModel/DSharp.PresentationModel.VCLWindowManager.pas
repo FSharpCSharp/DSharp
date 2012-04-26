@@ -112,7 +112,8 @@ begin
 
   if Supports(Model, IHaveDisplayName) then
   begin
-    TBinding.Create(Model, 'DisplayName', LWindow, 'Caption', bmOneWay);
+    FindBindingGroup(LView).AddBinding(
+      Model, 'DisplayName', LWindow, 'Caption', bmOneWay);
   end;
 
   Result := LWindow;

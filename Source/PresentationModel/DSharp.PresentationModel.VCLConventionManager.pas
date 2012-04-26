@@ -88,7 +88,8 @@ begin
 
     if Supports(Item, IHaveDisplayName) then
     begin
-      TBinding.Create(Item, 'DisplayName', LTabSheet, 'Caption', bmOneWay);
+      FindBindingGroup(LView).AddBinding(
+        Item, 'DisplayName', LTabSheet, 'Caption', bmOneWay)
     end;
   end;
 end;

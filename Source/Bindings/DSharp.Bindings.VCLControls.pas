@@ -771,12 +771,14 @@ end;
 procedure TMemo.Change;
 begin
   inherited;
+  NotifyPropertyChanged.DoPropertyChanged('Lines');
   NotifyPropertyChanged.DoPropertyChanged('Text');
 end;
 
 procedure TMemo.CMExit(var Message: TCMExit);
 begin
   try
+    NotifyPropertyChanged.DoPropertyChanged('Lines', utLostFocus);
     NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
     inherited;
   except

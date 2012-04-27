@@ -1937,7 +1937,7 @@ begin
               AResult := TValue.From(GetReferenceToRawData, ATypeInfo);
               Result := True;
             end else if TryGetRttiType(TypeInfo, LType) and (ATypeInfo.Name = 'IList')
-              and LType.IsGenericTypeOf('IList') and LType.TryGetMethod('ToList', LMethod) then
+              and LType.IsGenericTypeOf('IList') and LType.TryGetMethod('AsList', LMethod) then
             begin
               LInterface := LMethod.Invoke(Self, []).AsInterface;
               TValue.Make(@LInterface, ATypeInfo, AResult);

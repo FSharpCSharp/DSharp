@@ -141,7 +141,7 @@ type
     procedure Sort(Comparer: IComparer<T>); overload;
     procedure Sort(Comparison: TComparison<T>); overload;
 
-    function ToList: IList;
+    function AsList: IList;
 
     property Capacity: NativeInt read GetCapacity write SetCapacity;
     property Count: NativeInt read GetCount;
@@ -167,7 +167,7 @@ type
   end;
 
   TEnumerator = class(TInterfacedObject, IEnumerator)
-  private
+  protected
     function GetCurrentBase: TValue; virtual;
     function IEnumerator.GetCurrent = GetCurrentBase;
   public
@@ -176,16 +176,15 @@ type
   end;
 
   TEnumerator<T> = class(TEnumerator, IEnumerator<T>)
-  private
-    function GetCurrentBase: TValue; override;
   protected
+    function GetCurrentBase: TValue; override;
     function GetCurrent: T; virtual;
   public
     property Current: T read GetCurrent;
   end;
 
   TEnumerable = class(TInterfacedObject, IEnumerable)
-  private
+  protected
     function GetCount: NativeInt; virtual;
     function GetEnumeratorBase: IEnumerator; virtual;
     function IEnumerable.GetEnumerator = GetEnumeratorBase;
@@ -198,7 +197,7 @@ type
   end;
 
   TEnumerable<T> = class(TEnumerable, IEnumerable<T>, IEnumerable)
-  private
+  protected
     function GetEnumeratorBase: IEnumerator; override;
     function GetItemType: PTypeInfo; override;
   public
@@ -213,7 +212,6 @@ type
     FComparer: IComparer<T>;
     FOnCollectionChanged: Event<TCollectionChangedEvent<T>>;
     function GetCapacity: NativeInt;
-    function GetCount: NativeInt; override;
     function FirstBase: TValue;
     function GetItem(const Index: NativeInt): T;
     function GetItemBase(const Index: NativeInt): TValue;
@@ -226,6 +224,7 @@ type
     procedure SetItem(const Index: NativeInt; const Value: T); overload;
     procedure SetItem(const Index: NativeInt; const Value: TValue); overload;
   protected
+    function GetCount: NativeInt; override;
     function GetOnCollectionChanged: IEvent<TCollectionChangedEvent<T>>;
     function GetOnCollectionChangedBase: IEvent;
     function IList.GetOnCollectionChanged = GetOnCollectionChangedBase;
@@ -274,9 +273,9 @@ type
     procedure Sort(Comparison: TComparison<T>); overload;
     procedure Sort(Comparison: TComparison<TValue>); overload;
 
+    function AsList: IList;
     function GetEnumerator: IEnumerator<T>; override;
     function ToArray: TArray<T>; override;
-    function ToList: IList;
 
     type
       TEnumerator = class(TEnumerator<T>)
@@ -301,9 +300,10 @@ type
     FCount: NativeInt;
     FItems: array of T;
     function GetCapacity: NativeInt;
-    function GetCount: NativeInt; override;
     procedure Grow;
     procedure SetCapacity(const Value: NativeInt);
+  protected
+    function GetCount: NativeInt; override;
   public
     procedure Clear;
     function Peek: T;
@@ -493,6 +493,11 @@ end;
 procedure TList<T>.AddRange(Values: IEnumerable<T>);
 begin
   InsertRange(FCount, Values);
+end;
+
+function TList<T>.AsList: IList;
+begin
+  Result := Self;
 end;
 
 procedure TList<T>.Clear;
@@ -865,11 +870,6 @@ begin
   begin
     Result[i] := FItems[i];
   end;
-end;
-
-function TList<T>.ToList: IList;
-begin
-  Result := Self;
 end;
 
 { TList<T>.TEnumerator }

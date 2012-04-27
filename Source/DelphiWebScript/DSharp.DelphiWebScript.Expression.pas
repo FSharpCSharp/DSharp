@@ -45,13 +45,13 @@ type
     FScope: TScope;
     FText: string;
   protected
+    function CompileExpression: TCompiledExpression; override;
     procedure SetValue(const Value: TValue); override;
   public
     constructor Create(AExpression: IExpression; const AText: string); overload;
     constructor Create(AObject: TObject; const AText: string); overload;
     destructor Destroy; override;
 
-    function Compile: TFunc<TValue>; override;
     function ToString: string; override;
   end;
 
@@ -94,31 +94,7 @@ begin
   FScope.Free;
 end;
 
-procedure TDelphiWebScriptExpression.SetValue(const Value: TValue);
-var
-  LProgram: IdwsProgram;
-  LExecution: IdwsProgramExecution;
-  LVariant: Variant;
-begin
-  if FText <> EmptyStr then
-  begin
-    FScope.Value := FExpression.Execute();
-    LProgram := TDelphiWebScriptConnector.Compile('var Value: RttiVariant; ' + FText + ' := Value', FScope);
-    if not LProgram.Msgs.HasErrors then
-    begin
-      LExecution := LProgram.BeginNewExecution;
-      try
-        LVariant := ValueToVariant(Value);
-        LExecution.Info.Vars['Value'].Value := LVariant;
-        LExecution.RunProgram(0);
-      finally
-        LExecution.EndProgram;
-      end;
-    end;
-  end;
-end;
-
-function TDelphiWebScriptExpression.Compile: TFunc<TValue>;
+function TDelphiWebScriptExpression.CompileExpression: TCompiledExpression;
 var
   Expression: IExpression;
   LProgram: IdwsProgram;
@@ -158,7 +134,7 @@ begin
                 if (Result.Kind = tkInterface) and ((Result.AsInterface as TObject) is TdwsRTTIVariant) then
                 begin
                   LVariant := Result.AsInterface as TdwsRTTIVariant;
-                  TValue.Make(@LVariant.Instance, LVariant.RTTIType.Handle, Result);
+                  Result := LVariant.AsValue;
                 end;
               end;
             finally
@@ -175,6 +151,30 @@ begin
     begin
       Result := TValue.Empty;
     end;
+end;
+
+procedure TDelphiWebScriptExpression.SetValue(const Value: TValue);
+var
+  LProgram: IdwsProgram;
+  LExecution: IdwsProgramExecution;
+  LVariant: Variant;
+begin
+  if FText <> EmptyStr then
+  begin
+    FScope.Value := FExpression.Execute();
+    LProgram := TDelphiWebScriptConnector.Compile('var Value: RttiVariant; ' + FText + ' := Value', FScope);
+    if not LProgram.Msgs.HasErrors then
+    begin
+      LExecution := LProgram.BeginNewExecution;
+      try
+        LVariant := ValueToVariant(Value);
+        LExecution.Info.Vars['Value'].Value := LVariant;
+        LExecution.RunProgram(0);
+      finally
+        LExecution.EndProgram;
+      end;
+    end;
+  end;
 end;
 
 function TDelphiWebScriptExpression.ToString: string;

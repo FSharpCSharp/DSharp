@@ -85,9 +85,9 @@ begin
     tkChar, tkString, tkWChar, tkLString, tkWString, tkUString:
       Result := Value.AsString;
     tkFloat: Result := Value.AsExtended;
-    tkClass: Result := IUnknown(TdwsRTTIVariant.From(Value.AsObject, Context.GetType(Value.TypeInfo)));
+    tkClass: Result := IUnknown(TdwsRTTIVariant.FromValue(Value));
     tkVariant: Result := Value.AsVariant;
-    tkInterface: Result := IUnknown(TdwsRTTIVariant.From(Pointer(Value.AsInterface), Context.GetType(Value.TypeInfo)));
+    tkInterface: Result := IUnknown(TdwsRTTIVariant.FromValue(Value));
   else
     Result := Value.AsVariant;
   end;

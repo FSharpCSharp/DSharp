@@ -77,6 +77,7 @@ type
   end;
 
   IList = interface(IEnumerable)
+    ['{3FB348F0-95FE-4608-9E7E-98ED9B2A7940}']
     function GetCapacity: NativeInt;
     function GetCount: NativeInt;
     procedure SetCapacity(const Value: NativeInt);

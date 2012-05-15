@@ -375,6 +375,8 @@ type
     {$ENDREGION}
     function GetMethod(ACodeAddress: Pointer): TRttiMethod; overload;
 
+    function GetStandardConstructor: TRttiMethod;
+
     function IsCovariantTo(OtherClass: TClass): Boolean; overload;
     function IsCovariantTo(OtherType: PTypeInfo): Boolean; overload;
     function IsGenericTypeDefinition: Boolean;
@@ -438,6 +440,8 @@ type
     ///	</param>
     {$ENDREGION}
     function TryGetProperty(const AName: string; out AProperty: TRttiProperty): Boolean;
+
+    function TryGetStandardConstructor(out AMethod: TRttiMethod): Boolean;
 
     property AsInterface: TRttiInterfaceType read GetAsInterface;
     property IsInterface: Boolean read GetIsInterface;
@@ -505,6 +509,7 @@ type
     function IsSmallInt: Boolean;
     function IsTime: Boolean;
     function IsUInt64: Boolean;
+    function IsVariant: Boolean;
     function IsWord: Boolean;
   end;
 
@@ -784,6 +789,10 @@ begin
   if Left.IsPointer and Right.IsPointer then
   begin
     Result := Left.AsPointer = Right.AsPointer;
+  end else
+  if Left.IsVariant and Right.IsVariant then
+  begin
+    Result := Left.AsVariant = Right.AsVariant;
   end else
   if Left.TypeInfo = Right.TypeInfo then
   begin
@@ -1248,6 +1257,21 @@ begin
   Result := Length(GetMethods);
 end;
 
+function TRttiTypeHelper.GetStandardConstructor: TRttiMethod;
+var
+  LMethod: TRttiMethod;
+begin
+  Result := nil;
+  for LMethod in GetMethods do
+  begin
+    if LMethod.IsConstructor and (LMethod.ParameterCount = 0) then
+    begin
+      Result := LMethod;
+      Break;
+    end;
+  end;
+end;
+
 function TRttiTypeHelper.InheritsFrom(OtherType: PTypeInfo): Boolean;
 var
   LType: TRttiType;
@@ -1420,6 +1444,13 @@ function TRttiTypeHelper.TryGetProperty(const AName: string;
 begin
   AProperty := GetProperty(AName);
   Result := Assigned(AProperty);
+end;
+
+function TRttiTypeHelper.TryGetStandardConstructor(
+  out AMethod: TRttiMethod): Boolean;
+begin
+  AMethod := GetStandardConstructor();
+  Result := Assigned(AMethod);
 end;
 
 { TValueHelper }
@@ -1655,6 +1686,11 @@ begin
 {$IFDEF CPUX64}
   Result := Result or (TypeInfo = System.TypeInfo(NativeInt));
 {$ENDIF}
+end;
+
+function TValueHelper.IsVariant: Boolean;
+begin
+  Result := TypeInfo = System.TypeInfo(Variant);
 end;
 
 function TValueHelper.IsWord: Boolean;

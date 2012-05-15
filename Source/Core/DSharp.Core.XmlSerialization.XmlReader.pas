@@ -104,7 +104,7 @@ var
   LArgs: TArray<TValue>;
 begin
   if FindType(FCurrentNode.NodeName, LType)
-    and LType.TryGetMethod('Create', LMethod) then
+    and LType.TryGetStandardConstructor(LMethod) then
   begin
     SetLength(LArgs, LMethod.ParameterCount);
     AValue := LMethod.Invoke(LType.AsInstance.MetaclassType, LArgs);

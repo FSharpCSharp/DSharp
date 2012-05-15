@@ -171,7 +171,7 @@ end;
 
 procedure TMockWrapper<T>.CreateObjectMock(AType: TRttiType);
 begin
-  FInstance := AType.GetMethod('Create').Invoke(
+  FInstance := AType.GetStandardConstructor().Invoke(
     AType.AsInstance.MetaclassType, []).AsType<T>();
   FInterceptor := TVirtualMethodInterceptor.Create(AType.AsInstance.MetaclassType);
   FInterceptor.Proxify(PPointer(@FInstance)^);

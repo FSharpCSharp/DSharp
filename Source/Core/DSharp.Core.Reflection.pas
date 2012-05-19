@@ -1980,6 +1980,10 @@ begin
               Result := True;
             end;
           end;
+          tkClass:
+          begin
+            Result := TValue.From<TObject>(Self.AsInterface as TObject).TryConvert(ATypeInfo, AResult);
+          end;
         end;
       end;
 {$IFDEF VER210}

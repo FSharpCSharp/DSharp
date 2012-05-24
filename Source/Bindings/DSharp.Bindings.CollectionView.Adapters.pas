@@ -153,7 +153,7 @@ begin
     caRemove:
     begin
       LIndex := FindDisplayItem(Item);
-      if LIndex > 0 then
+      if LIndex > -1 then
       begin
         RemoveDisplayItem(LIndex);
       end;

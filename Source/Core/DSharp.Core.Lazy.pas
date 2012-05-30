@@ -32,10 +32,7 @@ unit DSharp.Core.Lazy;
 interface
 
 uses
-  Rtti,
-  DSharp.Core.Reflection,
-  SysUtils,
-  TypInfo;
+  SysUtils;
 
 type
   ILazy<T> = interface(TFunc<T>)
@@ -75,6 +72,10 @@ type
 
 implementation
 
+uses
+  DSharp.Core.Reflection,
+  TypInfo;
+
 { TLazy<T> }
 
 constructor TLazy<T>.Create(ValueFactory: TFunc<T>);
@@ -91,7 +92,7 @@ begin
     LTypeInfo := TypeInfo(T);
     if LTypeInfo.Kind = tkClass then
     begin
-      TObject(PPointer(@FValue)^).Free();
+      PObject(@FValue)^.Free();
     end;
   end;
   inherited;

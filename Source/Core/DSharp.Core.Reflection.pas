@@ -513,6 +513,8 @@ type
     function IsWord: Boolean;
   end;
 
+  PObject = ^TObject;
+
 function FindType(const AName: string; out AType: TRttiType): Boolean; overload;
 function FindType(const AGuid: TGUID; out AType: TRttiType): Boolean; overload;
 

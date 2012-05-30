@@ -32,7 +32,6 @@ unit DSharp.Testing.Mock.Internals;
 interface
 
 uses
-  DSharp.Core.Reflection,
 {$IF COMPILERVERSION < 23}
   DSharp.Core.VirtualInterface,
 {$IFEND}
@@ -128,6 +127,7 @@ type
 implementation
 
 uses
+  DSharp.Core.Reflection,
   RTLConsts,
   TypInfo;
 
@@ -174,14 +174,14 @@ begin
   FInstance := AType.GetStandardConstructor().Invoke(
     AType.AsInstance.MetaclassType, []).AsType<T>();
   FInterceptor := TVirtualMethodInterceptor.Create(AType.AsInstance.MetaclassType);
-  FInterceptor.Proxify(PPointer(@FInstance)^);
+  FInterceptor.Proxify(PObject(@FInstance)^);
   FInterceptor.OnBefore := DoBefore;
   FType := mtObject;
 end;
 
 procedure TMockWrapper<T>.DestroyObjectMock;
 begin
-  TObject(PPointer(@FInstance)^).Free();
+  PObject(@FInstance)^.Free();
   FInterceptor.Free();
 end;
 

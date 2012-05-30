@@ -170,7 +170,7 @@ type
 
 procedure GetMethodTypeData(Method: TRttiMethod; var TypeData: PTypeData);
 function IsValid(AObject: TObject): Boolean;
-procedure MethodReferenceToMethodPointer(const AMethodReference; var AMethodPointer);
+procedure MethodReferenceToMethodPointer(const AMethodReference; const AMethodPointer);
 
 var
   Context: TRttiContext;
@@ -229,15 +229,16 @@ begin
   end;
 end;
 
-procedure MethodReferenceToMethodPointer(const AMethodReference; var AMethodPointer);
+procedure MethodReferenceToMethodPointer(const AMethodReference; const AMethodPointer);
 type
   TVtable = array[0..3] of Pointer;
   PVtable = ^TVtable;
   PPVtable = ^PVtable;
+  PMethod = ^TMethod;
 begin
   // 3 is offset of Invoke, after QI, AddRef, Release
-  TMethod(AMethodPointer).Code := PPVtable(AMethodReference)^^[3];
-  TMethod(AMethodPointer).Data := Pointer(AMethodReference);
+  PMethod(@AMethodPointer).Code := PPVtable(AMethodReference)^^[3];
+  PMethod(@AMethodPointer).Data := Pointer(AMethodReference);
 end;
 
 procedure PassArg(Par: TRttiParameter; Params: PParameters; var Dest: TValue;

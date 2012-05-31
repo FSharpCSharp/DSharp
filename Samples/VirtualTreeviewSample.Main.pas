@@ -39,6 +39,7 @@ type
     Edit2: TEdit;
     ActionList: TActionList;
     ContactAction: TAction;
+    FilterEdit: TLabeledEdit;
     procedure FormCreate(Sender: TObject);
     procedure AddContactClick(Sender: TObject);
     procedure DeleteContactClick(Sender: TObject);
@@ -46,10 +47,9 @@ type
       ColumnDefinition: TColumnDefinition; Item: TObject): string;
     procedure SaveXmlClick(Sender: TObject);
     procedure ContactActionExecute(Sender: TObject);
+    procedure FilterEditChange(Sender: TObject);
   private
-    { Private declarations }
-  public
-    { Public declarations }
+    procedure FilterContact(Item: TObject; var Accepted: Boolean);
   end;
 
 var
@@ -67,7 +67,8 @@ uses
   DSharp.Core.DataTemplates,
   DSharp.Core.Reflection,
   DSharp.Windows.ColumnDefinitions.XmlDataTemplate,
-  Sample5.Contact;
+  Sample5.Contact,
+  StrUtils;
 
 type
   TColumnsDataTemplate = class(TDataTemplate)
@@ -92,6 +93,13 @@ begin
   if ContactsPresenter.View.CurrentItem <> nil then
     ShowMessageFmt('DoubleClick or Enter on %s', [
       TContact(ContactsPresenter.View.CurrentItem).Firstname]);
+end;
+
+procedure TMainForm.FilterContact(Item: TObject; var Accepted: Boolean);
+begin
+  Accepted := (FilterEdit.Text = '')
+    or ContainsText(TContact(Item).Firstname, FilterEdit.Text)
+    or ContainsText(TContact(Item).Lastname, FilterEdit.Text);
 end;
 
 procedure TMainForm.AddContactClick(Sender: TObject);
@@ -139,6 +147,8 @@ begin
 
   // connect navigation of VirtualTreeView (presenter) with StringGrid
   TBinding.Create(ContactsPresenter, 'View.CurrentItem', StringGrid1, 'View.CurrentItem');
+
+  ContactsPresenter.View.Filter.Add(FilterContact);
 end;
 
 function TMainForm.InventoryPresenterColumnDefinitions0GetText(Sender: TObject;
@@ -162,6 +172,11 @@ begin
   begin
     Result := Result + LNode.Value +  '</' + LNode.Name + '>';
   end;
+end;
+
+procedure TMainForm.FilterEditChange(Sender: TObject);
+begin
+  ContactsPresenter.View.Filter.OnChanged(Self);
 end;
 
 procedure TMainForm.SaveXmlClick(Sender: TObject);

@@ -52,13 +52,16 @@ type
     function GetCount: Integer;
     function GetEnabled: Boolean;
     function GetInvoke: TMethod;
+    function GetOnChanged: TNotifyEvent;
     procedure Add(const AEvent: TMethod);
     procedure Assign(Source: IEvent);
     procedure Remove(const AEvent: TMethod);
     procedure SetEnabled(const AValue: Boolean);
+    procedure SetOnChanged(const Value: TNotifyEvent);
     property Count: Integer read GetCount;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property Invoke: TMethod read GetInvoke;
+    property OnChanged: TNotifyEvent read GetOnChanged write SetOnChanged;
   end;
 
   TEvent = class abstract(TInterfacedObject, IEvent, IDelegate)
@@ -66,11 +69,14 @@ type
     FEnabled: Boolean;
     FInternalDispatcher: TMethod;
     FMethods: TList<TMethod>;
+    FOnChanged: TNotifyEvent;
     function IEvent.GetInvoke = GetInvokeBase;
+    function GetOnChanged: TNotifyEvent;
     procedure InternalInvoke(Params: PParameters; StackSize: Integer);
     procedure InternalNotify(Sender: TObject; const Item: TMethod;
       Action: TCollectionNotification);
     procedure Invoke;
+    procedure SetOnChanged(const Value: TNotifyEvent);
   strict protected
 {$IF CompilerVersion > 22}
     FCallingConvention: TCallConv;
@@ -95,16 +101,11 @@ type
   end;
 
   IEvent<T> = interface(IEvent)
-    function GetCount: Integer;
     function GetInvoke: T;
-    function GetOnChanged: TNotifyEvent;
     procedure Add(AEvent: T);
     procedure Assign(Source: IEvent<T>);
     procedure Remove(AEvent: T);
-    procedure SetOnChanged(const Value: TNotifyEvent);
-    property Count: Integer read GetCount;
     property Invoke: T read GetInvoke;
-    property OnChanged: TNotifyEvent read GetOnChanged write SetOnChanged;
   end;
 
   TEvent<T> = class(TEvent, IEvent<T>)
@@ -112,13 +113,10 @@ type
     FInvoke: T;
     FNotificationHandler: TNotificationHandler<TEvent<T>>;
     FOwner: TComponent;
-    FOnChanged: TNotifyEvent;
     function Cast(const Value: T): TMethod;
     function GetInvoke: T;
-    function GetOnChanged: TNotifyEvent;
     procedure Notification(AComponent: TComponent; Operation: TOperation);
     procedure SetEventDispatcher(out ADispatcher: T; ATypeData: PTypeData);
-    procedure SetOnChanged(const Value: TNotifyEvent);
   strict protected
     function GetInvokeBase: TMethod; override;
     procedure MethodAdded(const AMethod: TMethod); override;
@@ -290,7 +288,7 @@ begin
 {$ENDIF}
 end;
 
-{ TEventHandler }
+{ TEvent }
 
 constructor TEvent.Create;
 begin
@@ -392,6 +390,11 @@ begin
       cnRemoved: IInterface(Item.Data)._Release();
     end;
   end;
+
+  if Assigned(FOnChanged) then
+  begin
+    FOnChanged(Self);
+  end;
 end;
 
 procedure TEvent.Invoke;
@@ -421,6 +424,11 @@ end;
 function TEvent.GetEnabled: Boolean;
 begin
   Result := FEnabled;
+end;
+
+function TEvent.GetOnChanged: TNotifyEvent;
+begin
+  Result := FOnChanged;
 end;
 
 function TEvent.IndexOf(const AEvent: TMethod): Integer;
@@ -495,7 +503,12 @@ begin
   FEnabled := AValue;
 end;
 
-{ TEventHandler<T> }
+procedure TEvent.SetOnChanged(const Value: TNotifyEvent);
+begin
+  FOnChanged := Value;
+end;
+
+{ TEvent<T> }
 
 constructor TEvent<T>.Create(AOwner: TComponent);
 var
@@ -645,11 +658,6 @@ begin
   Result := TMethod(Pointer(@FInvoke)^);
 end;
 
-function TEvent<T>.GetOnChanged: TNotifyEvent;
-begin
-  Result := FOnChanged;
-end;
-
 function TEvent<T>.IndexOf(AEvent: T): Integer;
 begin
   Result := inherited IndexOf(Cast(AEvent));
@@ -717,12 +725,7 @@ begin
   end;
 end;
 
-procedure TEvent<T>.SetOnChanged(const Value: TNotifyEvent);
-begin
-  FOnChanged := Value;
-end;
-
-{ TEvent<T> }
+{ Event<T> }
 
 constructor Event<T>.Create(AEventHandler: IEvent<T>);
 begin

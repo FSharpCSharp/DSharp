@@ -115,6 +115,18 @@ object MainForm: TMainForm
         TabOrder = 6
         Text = 'Edit1'
       end
+      object FilterEdit: TLabeledEdit
+        Left = 376
+        Top = 10
+        Width = 121
+        Height = 21
+        EditLabel.Width = 24
+        EditLabel.Height = 13
+        EditLabel.Caption = 'Filter'
+        LabelPosition = lpLeft
+        TabOrder = 7
+        OnChange = FilterEditChange
+      end
     end
     object TabSheet2: TTabSheet
       Caption = 'Inventory'

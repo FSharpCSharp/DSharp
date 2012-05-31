@@ -53,6 +53,7 @@ type
     function GetEnabled: Boolean;
     function GetInvoke: TMethod;
     procedure Add(const AEvent: TMethod);
+    procedure Assign(Source: IEvent);
     procedure Remove(const AEvent: TMethod);
     procedure SetEnabled(const AValue: Boolean);
     property Count: Integer read GetCount;
@@ -79,6 +80,7 @@ type
     procedure MethodAdded(const AMethod: TMethod); virtual; abstract;
     procedure MethodRemoved(const AMethod: TMethod); virtual; abstract;
     procedure Add(const AEvent: TMethod);
+    procedure Assign(Source: IEvent);
     function GetCount: Integer;
     function GetEnabled: Boolean;
     function IndexOf(const AEvent: TMethod): Integer;
@@ -97,6 +99,7 @@ type
     function GetInvoke: T;
     function GetOnChanged: TNotifyEvent;
     procedure Add(AEvent: T);
+    procedure Assign(Source: IEvent<T>);
     procedure Remove(AEvent: T);
     procedure SetOnChanged(const Value: TNotifyEvent);
     property Count: Integer read GetCount;
@@ -132,6 +135,7 @@ type
     destructor Destroy; override;
     procedure Add(AEvent: T); overload;
     procedure Add<TDelegate>(ADelegate: TDelegate); overload;
+    procedure Assign(Source: IEvent<T>);
     procedure Remove(AEvent: T); overload;
     procedure Remove<TDelegate>(ADelegate: TDelegate); overload;
     function IndexOf(AEvent: T): Integer;
@@ -157,6 +161,7 @@ type
 
     procedure Add(const AEvent: T);
     procedure Remove(const AEvent: T);
+    procedure Assign(const Source: Event<T>);
     property Count: Integer read GetCount;
     property Enabled: Boolean read GetEnabled write SetEnabled;
     property EventHandler: IEvent<T> read GetEventHandler;
@@ -301,6 +306,11 @@ begin
   inherited;
 end;
 
+procedure TEvent.Assign(Source: IEvent);
+begin
+  FMethods.Clear;
+  FMethods.AddRange((Source as TEvent).FMethods);
+end;
 
 procedure TEvent.InternalInvoke(Params: PParameters; StackSize: Integer);
 const
@@ -608,6 +618,11 @@ begin
   Add(LEvent);
 end;
 
+procedure TEvent<T>.Assign(Source: IEvent<T>);
+begin
+  inherited Assign(Source);
+end;
+
 function TEvent<T>.Cast(const Value: T): TMethod;
 begin
   if PTypeInfo(TypeInfo(T)).Kind = tkInterface then
@@ -724,6 +739,11 @@ begin
   begin
     LEventHandler.Add(AEvent);
   end;
+end;
+
+procedure Event<T>.Assign(const Source: Event<T>);
+begin
+  EventHandler.Assign(Source.EventHandler);
 end;
 
 function Event<T>.GetCount: Integer;

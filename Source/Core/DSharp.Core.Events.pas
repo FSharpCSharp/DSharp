@@ -55,6 +55,7 @@ type
     function GetOnChanged: TNotifyEvent;
     procedure Add(const AEvent: TMethod);
     procedure Assign(Source: IEvent);
+    procedure Clear;
     procedure Remove(const AEvent: TMethod);
     procedure SetEnabled(const AValue: Boolean);
     procedure SetOnChanged(const Value: TNotifyEvent);
@@ -87,6 +88,7 @@ type
     procedure MethodRemoved(const AMethod: TMethod); virtual; abstract;
     procedure Add(const AEvent: TMethod);
     procedure Assign(Source: IEvent);
+    procedure Clear;
     function GetCount: Integer;
     function GetEnabled: Boolean;
     function IndexOf(const AEvent: TMethod): Integer;
@@ -152,12 +154,14 @@ type
     function GetEventHandler: IEvent<T>;
     function GetInvoke: T;
     function GetOnChanged: TNotifyEvent;
+    function Initialize: Boolean;
     procedure SetEnabled(const Value: Boolean);
     procedure SetOnChanged(const Value: TNotifyEvent);
   public
     constructor Create(AEventHandler: IEvent<T>);
 
     procedure Add(const AEvent: T);
+    procedure Clear;
     procedure Remove(const AEvent: T);
     procedure Assign(const Source: Event<T>);
     property Count: Integer read GetCount;
@@ -308,6 +312,11 @@ procedure TEvent.Assign(Source: IEvent);
 begin
   FMethods.Clear;
   FMethods.AddRange((Source as TEvent).FMethods);
+end;
+
+procedure TEvent.Clear;
+begin
+  FMethods.Clear;
 end;
 
 procedure TEvent.InternalInvoke(Params: PParameters; StackSize: Integer);
@@ -734,107 +743,100 @@ begin
 end;
 
 procedure Event<T>.Add(const AEvent: T);
-var
-  LEventHandler: IEvent<T>;
 begin
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
+  if Initialize then
   begin
-    LEventHandler.Add(AEvent);
+    FEventHandler.Add(AEvent);
   end;
 end;
 
 procedure Event<T>.Assign(const Source: Event<T>);
 begin
-  EventHandler.Assign(Source.EventHandler);
+  if Initialize then
+  begin
+    FEventHandler.Assign(Source.EventHandler);
+  end;
+end;
+
+procedure Event<T>.Clear;
+begin
+  if Initialize then
+  begin
+    FEventHandler.Clear;
+  end;
 end;
 
 function Event<T>.GetCount: Integer;
-var
-  LEventHandler: IEvent<T>;
 begin
   Result := 0;
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
+  if Initialize then
   begin
-    Result := LEventHandler.Count;
+    Result := FEventHandler.Count;
   end;
 end;
 
 function Event<T>.GetEnabled: Boolean;
-var
-  LEventHandler: IEvent<T>;
 begin
   Result := False;
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
+  if Initialize then
   begin
-    Result := LEventHandler.Enabled;
+    Result := FEventHandler.Enabled;
   end;
 end;
 
 function Event<T>.GetEventHandler: IEvent<T>;
+begin
+  Initialize;
+  Result := FEventHandler;
+end;
+
+function Event<T>.GetInvoke: T;
+begin
+  if Initialize then
+  begin
+    Result := FEventHandler.Invoke;
+  end;
+end;
+
+function Event<T>.GetOnChanged: TNotifyEvent;
+begin
+  if Initialize then
+  begin
+    Result := FEventHandler.OnChanged;
+  end;
+end;
+
+function Event<T>.Initialize: Boolean;
 begin
   if not FInitialized then
   begin
     FEventHandler := TEvent<T>.Create(nil);
     FInitialized := True;
   end;
-  Result := FEventHandler;
-end;
-
-function Event<T>.GetInvoke: T;
-var
-  LEventHandler: IEvent<T>;
-begin
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
-  begin
-    Result := LEventHandler.Invoke;
-  end;
-end;
-
-function Event<T>.GetOnChanged: TNotifyEvent;
-var
-  LEventHandler: IEvent<T>;
-begin
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
-  begin
-    Result := LEventHandler.OnChanged;
-  end;
+  Result := Assigned(FEventHandler);
 end;
 
 procedure Event<T>.Remove(const AEvent: T);
-var
-  LEventHandler: IEvent<T>;
 begin
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
+  if Initialize then
   begin
-    LEventHandler.Remove(AEvent);
+    FEventHandler.Remove(AEvent);
   end;
 end;
 
 procedure Event<T>.SetEnabled(const Value: Boolean);
-var
-  LEventHandler: IEvent<T>;
 begin
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
+  if Initialize then
   begin
-    LEventHandler.Enabled := Value;
+    FEventHandler.Enabled := Value;
   end;
 end;
 
 procedure Event<T>.SetOnChanged(const Value: TNotifyEvent);
-var
-  LEventHandler: IEvent<T>;
 begin
-  LEventHandler := EventHandler;
-  if Assigned(LEventHandler) then
+  if Initialize then
   begin
-    LEventHandler.OnChanged := Value;
+    FEventHandler.OnChanged := Value;
   end;
 end;
 

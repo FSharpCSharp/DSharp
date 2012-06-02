@@ -3,6 +3,7 @@ unit Server;
 interface
 
 type
+  {$M+}
   IServer<T, TResult> = interface
     ['{61EA6E1F-49A0-44AF-832C-5C15F492E981}']
     function SendMessage(arg: T): TResult;

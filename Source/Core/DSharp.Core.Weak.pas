@@ -136,7 +136,7 @@ begin
   if IsAlive then
     Result := T(FWeak.GetTarget)
   else
-    Result := nil;
+    Result := Default(T);
 end;
 
 procedure Weak<T>.SetTarget(const Value: T);

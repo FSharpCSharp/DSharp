@@ -48,9 +48,10 @@ type
     FObject: TObject;
     function GetIsAlive: Boolean;
     function GetTarget: IInterface;
-  public
     constructor Create(const Reference: IInterface);
+  public
     destructor Destroy; override;
+    class function Get(const Reference: IInterface): IWeak;
 
     property IsAlive: Boolean read GetIsAlive;
   end;
@@ -74,36 +75,30 @@ uses
   DSharp.Core.Detour;
 
 var
-  WeakReferences: TDictionary<TObject,Integer>;
+  WeakReferences: TDictionary<TObject,IWeak>;
 
 { TWeak }
 
 constructor TWeak.Create(const Reference: IInterface);
-var
-  LRefCount: Integer;
 begin
   FObject := Reference as TObject;
-  if WeakReferences.TryGetValue(FObject, LRefCount) then
-    WeakReferences.Items[FObject] := LRefCount + 1
-  else
-    WeakReferences.Add(FObject, 1);
-
+  WeakReferences.Add(FObject, Self);
   FReference := Pointer(Reference);
 end;
 
 destructor TWeak.Destroy;
-var
-  LRefCount: Integer;
 begin
-  if WeakReferences.TryGetValue(FObject, LRefCount) then
-  begin
-    if LRefCount = 1 then
-      WeakReferences.Remove(FObject)
-    else
-      WeakReferences.Items[FObject] := LRefCount - 1;
-  end;
-
+  WeakReferences.Remove(FObject);
   inherited;
+end;
+
+class function TWeak.Get(const Reference: IInterface): IWeak;
+begin
+  if Assigned(Reference)
+    and not WeakReferences.TryGetValue(Reference as TObject, Result) then
+  begin
+    Result := TWeak.Create(Reference);
+  end;
 end;
 
 function TWeak.GetIsAlive: Boolean;
@@ -141,8 +136,7 @@ end;
 
 procedure Weak<T>.SetTarget(const Value: T);
 begin
-  if Assigned(Value) then
-    FWeak := TWeak.Create(IInterface(Value));
+  FWeak := TWeak.Get(IInterface(Value));
 end;
 
 class operator Weak<T>.Implicit(const Value: T): Weak<T>;
@@ -157,8 +151,7 @@ end;
 
 procedure FreeInstance(Self: TObject);
 begin
-  if WeakReferences.ContainsKey(Self) then
-    WeakReferences.Remove(Self);
+  WeakReferences.Remove(Self);
 
   Self.CleanupInstance;
   FreeMem(Pointer(Self));
@@ -168,7 +161,7 @@ var
   FreeInstanceBackup: TXRedirCode;
 
 initialization
-  WeakReferences := TDictionary<TObject,Integer>.Create;
+  WeakReferences := TDictionary<TObject,IWeak>.Create;
   HookCode(@TObject.FreeInstance, @FreeInstance, FreeInstanceBackup);
 
 finalization

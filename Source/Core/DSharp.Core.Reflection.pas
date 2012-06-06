@@ -238,7 +238,22 @@ type
     function TryGetValue(Instance: Pointer; out Value: TValue): Boolean;
   end;
 
-{$IF COMPILERVERSION > 22}
+{$IF CompilerVersion < 23}
+
+  {$REGION 'Documentation'}
+  ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiInstanceTypeHelper">TRttiInstanceTypeHelper</see>
+  ///	  for easier RTTI use.
+  ///	</summary>
+  {$ENDREGION}
+  TRttiInstanceTypeHelper = class helper for TRttiInstanceType
+  public
+    function GetDeclaredImplementedInterfaces: TArray<TRttiInterfaceType>;
+    function GetImplementedInterfaces: TArray<TRttiInterfaceType>;
+  end;
+{$IFEND}
+
+{$IF CompilerVersion > 22}
 
   {$REGION 'Documentation'}
   ///	<summary>
@@ -555,6 +570,12 @@ uses
   StrUtils,
   SysUtils;
 
+type
+  TArrayHelper = class
+  public
+    class function Concat<T>(const Arrays: array of TArray<T>): TArray<T>; static;
+  end;
+
 var
   Context: TRttiContext;
 
@@ -805,6 +826,28 @@ begin
   end;
 end;
 
+{ TArrayHelper }
+
+class function TArrayHelper.Concat<T>(
+  const Arrays: array of TArray<T>): TArray<T>;
+var
+  i, k, LIndex, LLength: Integer;
+begin
+  LLength := 0;
+  for i := 0 to High(Arrays) do
+    Inc(LLength, Length(Arrays[i]));
+  SetLength(Result, LLength);
+  LIndex := 0;
+  for i := 0 to High(Arrays) do
+  begin
+    for k := 0 to High(Arrays[i]) do
+    begin
+      Result[LIndex] := Arrays[i][k];
+      Inc(LIndex);
+    end;
+  end;
+end;
+
 { TObjectHelper }
 
 function TObjectHelper.GetField(const AName: string): TRttiField;
@@ -974,9 +1017,61 @@ begin
   end;
 end;
 
+{ TRttiInstanceTypeHelper }
+
+{$IF CompilerVersion < 23}
+function TRttiInstanceTypeHelper.GetDeclaredImplementedInterfaces: TArray<TRttiInterfaceType>;
+var
+  LInterfaceTable: PInterfaceTable;
+  p: PPointer;
+  i: Integer;
+  LTypeInfo: PTypeInfo;
+begin
+  LInterfaceTable := PPointer(PByte(MetaclassType) + vmtIntfTable)^;
+
+  if Assigned(LInterfaceTable) then
+  begin
+    p := @LInterfaceTable.Entries[LInterfaceTable.EntryCount];
+    SetLength(Result, LInterfaceTable.EntryCount);
+
+    for i := 0 to LInterfaceTable.EntryCount - 1 do
+    begin
+      LTypeInfo := PPTypeInfo(p^)^;
+      Result[i] := GetRttiType(LTypeInfo) as TRttiInterfaceType;
+      Inc(p);
+    end;
+  end;
+end;
+
+function TRttiInstanceTypeHelper.GetImplementedInterfaces: TArray<TRttiInterfaceType>;
+var
+  LCount: Integer;
+  LInterfaces: TArray<TArray<TRttiInterfaceType>>;
+  LType: TRttiInstanceType;
+begin
+  LCount := 0;
+  LType := Self;
+  repeat
+    Inc(LCount);
+    LType := LType.BaseType.AsInstance;
+  until not Assigned(LType);
+
+  SetLength(LInterfaces, LCount);
+  LCount := 0;
+  LType := Self;
+  repeat
+    LInterfaces[LCount] := LType.GetDeclaredImplementedInterfaces;
+    Inc(LCount);
+    LType := LType.BaseType.AsInstance;
+  until not Assigned(LType);
+
+  Result := TArrayHelper.Concat<TRttiInterfaceType>(LInterfaces);
+end;
+{$IFEND}
+
 { TRttiInvokableTypeHelper }
 
-{$IF COMPILERVERSION > 22}
+{$IF CompilerVersion > 22}
 function TRttiInvokableTypeHelper.GetParameterCount: Integer;
 begin
   Result := Length(GetParameters());

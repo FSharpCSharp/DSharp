@@ -50,6 +50,9 @@ type
     class function Copy<T>(Values: array of T): TArray<T>; static;
   end;
 
+  IList = interface;
+  IList<T> = interface;
+
   {$M+}
   IEnumerator = interface
     function GetCurrent: TValue;
@@ -64,16 +67,20 @@ type
 
   IEnumerable = interface
     function GetCount: NativeInt;
-    function GetEnumerator: IEnumerator;
     function GetItemType: PTypeInfo;
+    function Contains(const Value: TValue): Boolean;
+    function GetEnumerator: IEnumerator;
     function ToArray: TArray<TValue>;
+    function ToList: IList;
     property Count: NativeInt read GetCount;
     property ItemType: PTypeInfo read GetItemType;
   end;
 
   IEnumerable<T> = interface(IEnumerable)
+    function Contains(const Value: T): Boolean;
     function GetEnumerator: IEnumerator<T>;
     function ToArray: TArray<T>;
+    function ToList: IList<T>;
   end;
 
   IList = interface(IEnumerable)
@@ -86,7 +93,6 @@ type
     procedure AddRange(const Values: array of TValue); overload;
     procedure AddRange(Values: IEnumerable); overload;
     procedure Clear;
-    function Contains(const Value: TValue): Boolean;
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
     function First: TValue;
@@ -122,7 +128,6 @@ type
     procedure AddRange(const Values: array of T); overload;
     procedure AddRange(Values: IEnumerable<T>); overload;
     procedure Clear;
-    function Contains(const Value: T): Boolean;
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
     function First: T;
@@ -191,8 +196,11 @@ type
     function IEnumerable.GetEnumerator = GetEnumeratorBase;
     function GetItemType: PTypeInfo; virtual;
     function ToArrayBase: TArray<TValue>;
+    function ToListBase: IList; virtual; abstract;
     function IEnumerable.ToArray = ToArrayBase;
+    function IEnumerable.ToList = ToListBase;
   public
+    function Contains(const Value: TValue): Boolean; virtual;
     property Count: NativeInt read GetCount;
     property ItemType: PTypeInfo read GetItemType;
   end;
@@ -201,9 +209,13 @@ type
   protected
     function GetEnumeratorBase: IEnumerator; override;
     function GetItemType: PTypeInfo; override;
+    function ToListBase: IList; override;
   public
+    function Contains(const Value: TValue): Boolean; overload; override;
+    function Contains(const Value: T): Boolean; reintroduce; overload; virtual;
     function GetEnumerator: IEnumerator<T>; reintroduce; virtual;
     function ToArray: TArray<T>; virtual;
+    function ToList: IList<T>; virtual;
   end;
 
   TList<T> = class(TEnumerable<T>, IList<T>, IList)
@@ -245,8 +257,7 @@ type
     procedure AddRange(Values: IEnumerable); overload;
     procedure AddRange(Values: IEnumerable<T>); overload;
     procedure Clear;
-    function Contains(const Value: TValue): Boolean; overload;
-    function Contains(const Value: T): Boolean; overload;
+    function Contains(const Value: T): Boolean; override;
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
     function First: T;
@@ -373,6 +384,11 @@ end;
 
 { TEnumerable }
 
+function TEnumerable.Contains(const Value: TValue): Boolean;
+begin
+  Result := False;
+end;
+
 function TEnumerable.GetCount: NativeInt;
 var
   LEnumerator: IEnumerator;
@@ -412,6 +428,16 @@ end;
 
 { TEnumerable<T> }
 
+function TEnumerable<T>.Contains(const Value: TValue): Boolean;
+begin
+  Result := Contains(Value.AsType<T>);
+end;
+
+function TEnumerable<T>.Contains(const Value: T): Boolean;
+begin
+  Result := False;
+end;
+
 function TEnumerable<T>.GetEnumerator: IEnumerator<T>;
 begin
   Result := TEnumerator<T>.Create();
@@ -440,6 +466,16 @@ begin
     Result[i] := LEnumerator.Current;
     Inc(i);
   end;
+end;
+
+function TEnumerable<T>.ToList: IList<T>;
+begin
+  Result := TList<T>.Create(Self);
+end;
+
+function TEnumerable<T>.ToListBase: IList;
+begin
+  Result := ToList().AsList;
 end;
 
 { TList<T> }
@@ -508,11 +544,6 @@ begin
   while FCount > 0 do
     Delete(FCount - 1);
   SetLength(FItems, 0);
-end;
-
-function TList<T>.Contains(const Value: TValue): Boolean;
-begin
-
 end;
 
 function TList<T>.Contains(const Value: T): Boolean;

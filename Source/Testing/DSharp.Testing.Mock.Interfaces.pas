@@ -36,7 +36,7 @@ uses
   SysUtils;
 
 type
-  TMockAction = reference to function(const Args: TArray<TValue>): TValue;
+  TMockAction = reference to function(var Args: array of TValue): TValue;
 
   IWhen<T> = interface
     function WhenCalling: T;

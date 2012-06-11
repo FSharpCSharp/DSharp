@@ -385,11 +385,14 @@ end;
 
 function TExpectation.Execute(const Arguments: TArray<TValue>;
   ReturnType: TRttiType): TValue;
+type
+  PValueArray = ^TValueArray;
+  TValueArray = TArray<TValue>;
 begin
   try
     if Assigned(FAction) then
     begin
-      Result := FAction(Arguments);
+      Result := FAction(PValueArray(@Arguments)^);
     end else
     if Assigned(FException) then
     begin

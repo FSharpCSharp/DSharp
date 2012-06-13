@@ -305,10 +305,10 @@ begin
         RegisterClassImplementingInterface(TRttiInstanceType(LType));
         RegisterClassInheritedExport(TRttiInstanceType(LType));
 
-        if ComponentRegistry.HasComponent(LType.Handle) then
-        begin
-          LModel := ComponentRegistry.GetComponent(LType.Handle);
+        LModel := ComponentRegistry.FindOne(LType.Handle);
 
+        if Assigned(LModel) then
+        begin
           for LProperty in LType.GetProperties do
           begin
             ImportMember(LModel, LProperty);
@@ -325,7 +325,7 @@ begin
           // register types that got exported properties as singleton
           if LProperty.TryGetAttributeOfType<ExportAttribute>(LExportAttribute) then
           begin
-            if not GetComponentRegistry.HasComponent(LType.Handle) then
+            if not Assigned(LModel) then
             begin
               RegisterClass(LType);
             end;
@@ -375,7 +375,7 @@ begin
       begin
         if FInterfaces.TryGetValue(LInterfaceTable.Entries[i].IID, LInterfaceType) then
         begin
-          if not ComponentRegistry.HasComponent(ClassType.Handle) then
+          if ComponentRegistry.FindOne(ClassType.Handle) = nil then
           begin
             LRegistration := RegisterClass(ClassType);
 
@@ -403,7 +403,7 @@ begin
   begin
     if LParentType.HasAttributeOfType<InheritedExportAttribute> then
     begin
-      if not ComponentRegistry.HasComponent(ClassType.Handle) then
+      if ComponentRegistry.FindOne(ClassType.Handle) = nil then
       begin
         LRegistration := RegisterType(ClassType.Handle);
 

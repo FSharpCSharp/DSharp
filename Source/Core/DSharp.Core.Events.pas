@@ -187,9 +187,25 @@ var
 implementation
 
 procedure GetMethodTypeData(Method: TRttiMethod; var TypeData: PTypeData);
-type
-  PParameterInfos = ^TParameterInfos;
-  TParameterInfos = array[0..255] of PPTypeInfo;
+
+  procedure WriteByte(var Dest: PByte; b: Byte);
+  begin
+    Dest[0] := b;
+    Inc(Dest);
+  end;
+
+  procedure WritePackedShortString(var Dest: PByte; const s: string);
+  begin
+    PShortString(Dest)^ := ShortString(s);
+    Inc(Dest, Dest[0] + 1);
+  end;
+
+  procedure WritePointer(var Dest: PByte; p: Pointer);
+  begin
+    PPointer(Dest)^ := p;
+    Inc(Dest, SizeOf(Pointer));
+  end;
+
 var
   params: TArray<TRttiParameter>;
   i: Integer;
@@ -201,25 +217,19 @@ begin
   p := @TypeData.ParamList;
   for i := Low(params) to High(params) do
   begin
-    TParamFlags(p[0]) := params[i].Flags;
-    Inc(p);
-    PShortString(p)^ := ShortString(params[i].Name);
-    Inc(p, p[0] + 1);
-    PShortString(p)^ := ShortString(params[i].ParamType.Name);
-    Inc(p, p[0] + 1);
+    WriteByte(p, Byte(params[i].Flags));
+    WritePackedShortString(p, params[i].Name);
+    WritePackedShortString(p, params[i].ParamType.Name);
   end;
   if method.MethodKind = mkFunction then
   begin
-    PShortString(p)^ := ShortString(method.ReturnType.Name);
-    Inc(p, p[0] + 1);
-    PPTypeInfo(p)^ := method.ReturnType.Handle;
-    Inc(p, 4);
+    WritePackedShortString(p, method.ReturnType.Name);
+    WritePointer(p, method.ReturnType.Handle);
   end;
-  TCallConv(p[0]) := method.CallingConvention;
-  Inc(p);
+  WriteByte(p, Byte(method.CallingConvention));
   for i := Low(params) to High(params) do
   begin
-    PParameterInfos(Cardinal(p))[i] := PPTypeInfo(Cardinal(params[i].ParamType.Handle) - 4);
+    WritePointer(p, Pointer(NativeInt(params[i].ParamType.Handle) - SizeOf(Pointer)));
   end;
 end;
 

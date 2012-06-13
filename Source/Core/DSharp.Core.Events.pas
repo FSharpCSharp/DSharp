@@ -43,6 +43,8 @@ uses
   TypInfo;
 
 type
+  PMethod = ^TMethod;
+
   PDelegate = ^IDelegate;
   IDelegate = interface
     procedure Invoke;
@@ -115,7 +117,7 @@ type
     FInvoke: T;
     FNotificationHandler: TNotificationHandler<TEvent<T>>;
     FOwner: TComponent;
-    function Cast(const Value: T): TMethod;
+    function Cast(Value: T): TMethod;
     function GetInvoke: T;
     procedure Notification(AComponent: TComponent; Operation: TOperation);
     procedure SetEventDispatcher(out ADispatcher: T; ATypeData: PTypeData);
@@ -241,7 +243,6 @@ type
   TVtable = array[0..3] of Pointer;
   PVtable = ^TVtable;
   PPVtable = ^PVtable;
-  PMethod = ^TMethod;
 begin
   // 3 is offset of Invoke, after QI, AddRef, Release
   PMethod(@AMethodPointer).Code := PPVtable(AMethodReference)^^[3];
@@ -645,7 +646,7 @@ begin
   inherited Assign(Source);
 end;
 
-function TEvent<T>.Cast(const Value: T): TMethod;
+function TEvent<T>.Cast(Value: T): TMethod;
 begin
   if PTypeInfo(TypeInfo(T)).Kind = tkInterface then
   begin
@@ -653,7 +654,7 @@ begin
   end
   else
   begin
-    Result := TMethod(Pointer(@Value)^);
+    Result := PMethod(@Value)^;
   end;
 end;
 
@@ -664,7 +665,7 @@ end;
 
 function TEvent<T>.GetInvokeBase: TMethod;
 begin
-  Result := TMethod(Pointer(@FInvoke)^);
+  Result := PMethod(@FInvoke)^;
 end;
 
 function TEvent<T>.IndexOf(AEvent: T): Integer;
@@ -730,7 +731,7 @@ begin
   end
   else
   begin
-    TMethod(Pointer(@ADispatcher)^) := LMethod;
+    PMethod(@ADispatcher)^ := LMethod;
   end;
 end;
 

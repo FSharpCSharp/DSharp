@@ -420,13 +420,11 @@ end;
 procedure TEvent.Invoke;
 asm
 {$IFDEF CPUX64}
-  MOV RAX,RCX
-  MOV RCX,[RAX].FInternalDispatcher.Data
-  JMP [RAX].FInternalDispatcher.Code
+  PUSH [RCX].FInternalDispatcher.Code
+  MOV RCX,[RCX].FInternalDispatcher.Data
 {$ELSE}
-  MOV EBX,EAX
-  MOV EAX,[EBX].FInternalDispatcher.Data
-  JMP [EBX].FInternalDispatcher.Code
+  PUSH [EAX].FInternalDispatcher.Code
+  MOV EAX,[EAX].FInternalDispatcher.Data
 {$ENDIF}
 end;
 

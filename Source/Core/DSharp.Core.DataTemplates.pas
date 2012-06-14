@@ -119,7 +119,7 @@ type
     function GetItemCount(const Item: TObject): Integer; overload; override; final;
     function GetItemCount(const Item: T): Integer; reintroduce; overload; virtual;
 
-    function GetTemplateDataClass: TClass; override;
+    function GetTemplateDataClass: TClass; override; final;
   end;
 
 implementation

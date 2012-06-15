@@ -73,7 +73,7 @@ end;
 
 function TObservableCollection<T>.GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
-  IEvent<TCollectionChangedEvent<T>>(Result) := inherited GetOnCollectionChanged;
+  IEvent<TCollectionChangedEvent<T>>(Result) := inherited OnCollectionChanged;
 end;
 
 function TObservableCollection<T>.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;

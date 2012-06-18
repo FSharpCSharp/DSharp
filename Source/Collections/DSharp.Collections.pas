@@ -288,12 +288,12 @@ type
     type
       TEnumerator = class(TEnumerator<T>)
       private
-        FList: IList<T>;
+        FList: TListBase<T>;
         FIndex: Integer;
       protected
         function GetCurrent: T; override;
       public
-        constructor Create(AList: IList<T>);
+        constructor Create(AList: TListBase<T>);
         function MoveNext: Boolean; override;
         property Current: T read GetCurrent;
       end;
@@ -857,7 +857,7 @@ end;
 
 { TListBase<T>.TEnumerator }
 
-constructor TListBase<T>.TEnumerator.Create(AList: IList<T>);
+constructor TListBase<T>.TEnumerator.Create(AList: TListBase<T>);
 begin
   inherited Create();
   FList := AList;

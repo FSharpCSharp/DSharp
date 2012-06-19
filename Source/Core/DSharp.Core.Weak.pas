@@ -44,8 +44,8 @@ type
 
   TWeak = class(TInterfacedObject, IWeak)
   private
+    FInstance: TObject;
     FReference: Pointer;
-    FObject: TObject;
     function GetIsAlive: Boolean;
     function GetTarget: IInterface;
     constructor Create(const Reference: IInterface);
@@ -72,38 +72,98 @@ type
 implementation
 
 uses
-  DSharp.Core.Detour;
+  DSharp.Core.Detour,
+  SyncObjs;
+
+type
+  TMethodCall = procedure(Self: TObject);
 
 var
-  WeakReferences: TDictionary<TObject,IWeak>;
+  Hooks: TDictionary<TClass, TMethodCall>;
+  Lock: TCriticalSection;
+  References: TDictionary<TObject, IWeak>;
+
+procedure FreeInstance(Self: TObject);
+var
+  LFreeInstance: TMethodCall;
+begin
+  Lock.Enter;
+  try
+    References.Remove(Self);
+    LFreeInstance := Hooks.Items[Self.ClassType];
+  finally
+    Lock.Leave;
+  end;
+
+  LFreeInstance(Self);
+end;
+
+procedure HookFreeInstance(Instance: TObject);
+begin
+  Lock.Enter;
+  try
+    if not Hooks.ContainsKey(Instance.ClassType) then
+    begin
+{$WARN SYMBOL_DEPRECATED OFF}
+      Hooks.Add(Instance.ClassType, PPointer(NativeInt(Instance.ClassType) + vmtFreeInstance)^);
+      PatchCode(Pointer(NativeInt(Instance.ClassType) + vmtFreeInstance), @FreeInstance);
+{$WARN SYMBOL_DEPRECATED ON}
+    end;
+  finally
+    Lock.Leave;
+  end;
+end;
 
 { TWeak }
 
 constructor TWeak.Create(const Reference: IInterface);
 begin
-  FObject := Reference as TObject;
-  WeakReferences.Add(FObject, Self);
+  FInstance := Reference as TObject;
   FReference := Pointer(Reference);
+
+  Lock.Enter;
+  try
+    References.Add(FInstance, Self);
+  finally
+    Lock.Leave;
+  end;
+
+  HookFreeInstance(FInstance);
 end;
 
 destructor TWeak.Destroy;
 begin
-  WeakReferences.Remove(FObject);
+  Lock.Enter;
+  try
+    References.Remove(FInstance);
+  finally
+    Lock.Leave;
+  end;
   inherited;
 end;
 
 class function TWeak.Get(const Reference: IInterface): IWeak;
 begin
-  if Assigned(Reference)
-    and not WeakReferences.TryGetValue(Reference as TObject, Result) then
+  if Assigned(Reference) then
   begin
-    Result := TWeak.Create(Reference);
+    Lock.Enter;
+    try
+      if not References.TryGetValue(Reference as TObject, Result) then
+        Result := TWeak.Create(Reference);
+    finally
+      Lock.Leave;
+    end;
   end;
 end;
 
 function TWeak.GetIsAlive: Boolean;
 begin
-  Result := WeakReferences.ContainsKey(FObject);
+  Lock.Enter;
+  try
+    Result := References.ContainsKey(FInstance);
+  finally
+    Lock.Leave;
+  end;
 end;
 
 function TWeak.GetTarget: IInterface;
@@ -118,11 +178,8 @@ end;
 
 function Weak<T>.GetIsAlive: Boolean;
 begin
-  if Assigned(FWeak) then
-  begin
-    if not FWeak.IsAlive then
-      FWeak := nil;
-  end;
+  if Assigned(FWeak) and not FWeak.IsAlive then
+    FWeak := nil;
   Result := Assigned(FWeak);
 end;
 
@@ -149,23 +206,14 @@ begin
   Result := Value.Target;
 end;
 
-procedure FreeInstance(Self: TObject);
-begin
-  WeakReferences.Remove(Self);
-
-  Self.CleanupInstance;
-  FreeMem(Pointer(Self));
-end;
-
-var
-  FreeInstanceBackup: TXRedirCode;
-
 initialization
-  WeakReferences := TDictionary<TObject,IWeak>.Create;
-  HookCode(@TObject.FreeInstance, @FreeInstance, FreeInstanceBackup);
+  Lock := TCriticalSection.Create;
+  Hooks := TDictionary<TClass, TMethodCall>.Create;
+  References := TDictionary<TObject, IWeak>.Create;
 
 finalization
-  UnhookCode(@TObject.FreeInstance, FreeInstanceBackup);
-  WeakReferences.Free;
+  References.Free;
+  Hooks.Free;
+  Lock.Free;
 
 end.

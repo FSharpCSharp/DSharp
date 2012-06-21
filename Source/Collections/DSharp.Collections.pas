@@ -243,6 +243,7 @@ type
     constructor Create; overload;
     constructor Create(Comparer: IComparer<T>); overload;
     constructor Create(Values: IEnumerable<T>); overload;
+    constructor Create(const Values: array of T); overload;
 
     destructor Destroy; override;
 
@@ -511,6 +512,12 @@ begin
 end;
 
 constructor TListBase<T>.Create(Values: IEnumerable<T>);
+begin
+  Create();
+  AddRange(Values);
+end;
+
+constructor TListBase<T>.Create(const Values: array of T);
 begin
   Create();
   AddRange(Values);

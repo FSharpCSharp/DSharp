@@ -37,15 +37,21 @@ type
     Offset: Integer;
   end;
 
-procedure HookCode(Proc, Dest: Pointer; var BackupCode: TXRedirCode);
-procedure UnhookCode(Proc: Pointer; var BackupCode: TXRedirCode);
+procedure HookCode(const Proc, Dest: Pointer; var BackupCode: TXRedirCode);
+procedure PatchCode(const Proc, Dest: Pointer);
+procedure UnhookCode(const Proc: Pointer; var BackupCode: TXRedirCode);
+procedure WriteMem(const Location, Buffer: Pointer; const Size: Cardinal);
 
 implementation
 
 uses
+  SysUtils,
   Windows;
 
-procedure HookCode(Proc, Dest: Pointer; var BackupCode: TXRedirCode);
+resourcestring
+  RMemoryWriteError = 'Error writing memory (%s)';
+
+procedure HookCode(const Proc, Dest: Pointer; var BackupCode: TXRedirCode);
 var
   Code: TXRedirCode;
   n: {$IF CompilerVersion > 22}NativeUInt{$ELSE}Cardinal{$IFEND};
@@ -58,7 +64,12 @@ begin
   end;
 end;
 
-procedure UnhookCode(Proc: Pointer; var BackupCode: TXRedirCode);
+procedure PatchCode(const Proc, Dest: Pointer);
+begin
+  WriteMem(Proc, @Dest, SizeOf(Pointer));
+end;
+
+procedure UnhookCode(const Proc: Pointer; var BackupCode: TXRedirCode);
 var
   n: {$IF CompilerVersion > 22}NativeUInt{$ELSE}Cardinal{$IFEND};
 begin
@@ -67,6 +78,25 @@ begin
     WriteProcessMemory(GetCurrentProcess, Proc, @BackupCode, SizeOf(BackupCode), n);
     BackupCode.Jump := 0;
   end;
+end;
+
+procedure WriteMem(const Location, Buffer: Pointer; const Size: Cardinal);
+var
+  WrittenBytes: {$IF COMPILERVERSION > 22}NativeUInt;{$ELSE}Cardinal;{$IFEND}
+  SaveFlag: Cardinal;
+begin
+  if VirtualProtect(Location, Size, PAGE_EXECUTE_READWRITE, @SaveFlag) then
+  try
+    if not WriteProcessMemory(GetCurrentProcess, Location, Buffer, Size, WrittenBytes) then
+      raise Exception.CreateResFmt(@RMemoryWriteError, [SysErrorMessage(GetLastError)]);
+  finally
+    VirtualProtect(Location, Size, SaveFlag, @SaveFlag);
+  end;
+
+  if WrittenBytes <> Size then
+    raise Exception.CreateResFmt(@RMemoryWriteError, [IntToStr(WrittenBytes)]);
+
+  FlushInstructionCache(GetCurrentProcess, Location, Size);
 end;
 
 end.

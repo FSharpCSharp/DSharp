@@ -86,30 +86,8 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection,
-  Windows;
-
-resourcestring
-  RMemoryWriteError = 'Error writing memory (%s)';
-
-procedure WriteMem(const Location, Buffer: Pointer; const Size: Cardinal);
-var
-  WrittenBytes: {$IF COMPILERVERSION > 22}NativeUInt;{$ELSE}Cardinal;{$IFEND}
-  SaveFlag: Cardinal;
-begin
-  if VirtualProtect(Location, Size, PAGE_EXECUTE_READWRITE, @SaveFlag) then
-  try
-    if not WriteProcessMemory(GetCurrentProcess, Location, Buffer, Size, WrittenBytes) then
-      raise Exception.CreateResFmt(@RMemoryWriteError, [SysErrorMessage(GetLastError)]);
-  finally
-    VirtualProtect(Location, Size, SaveFlag, @SaveFlag);
-  end;
-
-  if WrittenBytes <> Size then
-    raise Exception.CreateResFmt(@RMemoryWriteError, [IntToStr(WrittenBytes)]);
-
-  FlushInstructionCache(GetCurrentProcess, Location, Size);
-end;
+  DSharp.Core.Detour,
+  DSharp.Core.Reflection;
 
 { TIntercept }
 

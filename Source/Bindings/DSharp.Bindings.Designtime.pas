@@ -53,22 +53,14 @@ type
     function GetVerbCount: Integer; override;
   end;
 
-  TBindingProperty = class(TClassProperty, IProperty, IPropertyKind)
+  TBindingProperty = class(TClassProperty)
   private
-    FBinding: TBinding;
-    FBindingGroup: TBindingGroup;
     function FilterFunc(const ATestEditor: IProperty): Boolean;
+  protected
+    function GetIsDefault: Boolean; override;
   public
-    function AllEqual: Boolean; override;
-    function GetKind: TTypeKind;
-    function GetName: string; override;
+    constructor Create(const ADesigner: IDesigner; AComponent: TComponent); reintroduce;
     procedure GetProperties(Proc: TGetPropProc); override;
-    function GetPropInfo: PPropInfo; override;
-    function GetPropType: PTypeInfo;
-    function GetValue: string; override;
-
-    property Binding: TBinding read FBinding write FBinding;
-    property BindingGroup: TBindingGroup read FBindingGroup write FBindingGroup;
   end;
 
   TSourceProperty = class(TComponentProperty)
@@ -160,6 +152,21 @@ begin
   Result := SupportedClasses[FindSupportedClass(AComponent)];
 end;
 
+type
+  TComponentHelper = class helper for TComponent
+  private
+    function GetBinding: TBinding;
+  published
+    property Binding: TBinding read GetBinding;
+  end;
+
+{ TComponentHelper }
+
+function TComponentHelper.GetBinding: TBinding;
+begin
+  Result := FindBindingGroup(Self).GetBindingForTarget(Self);
+end;
+
 { TBindingSelectionEditor }
 
 procedure TBindingSelectionEditor.FilterProperties(
@@ -177,13 +184,14 @@ begin
       LBindingGroup := FindBindingGroup(ASelection[0]);
       if Assigned(LBindingGroup) then
       begin
-        LProperty := TBindingProperty.Create(Designer, 0);
-        LProperty.BindingGroup := LBindingGroup;
-        LProperty.Binding := LBindingGroup.GetBindingForTarget(ASelection[0] as TObject);
-        if LProperty.Binding.TargetPropertyName = '' then
+        with TComponent(ASelection[0]).Binding do
         begin
-          LProperty.Binding.TargetPropertyName := GetTargetPropertyName(ASelection[0]);
+          if TargetPropertyName = '' then
+          begin
+            TargetPropertyName := GetTargetPropertyName(ASelection[0]);
+          end;
         end;
+        LProperty := TBindingProperty.Create(Designer, TComponent(ASelection[0]));
         for i := 0 to ASelectionProperties.Count - 1 do
         begin
           if Supports(ASelectionProperties[i], IProperty)
@@ -220,9 +228,10 @@ end;
 
 { TBindingProperty }
 
-function TBindingProperty.AllEqual: Boolean;
+constructor TBindingProperty.Create(const ADesigner: IDesigner; AComponent: TComponent);
 begin
-  Result := True;
+  inherited Create(ADesigner, 1);
+  SetPropEntry(0, AComponent, TypInfo.GetPropInfo(TypeInfo(TComponentHelper), 'Binding'));
 end;
 
 function TBindingProperty.FilterFunc(const ATestEditor: IProperty): Boolean;
@@ -231,14 +240,9 @@ begin
     and not SameText(ATestEditor.GetName(), 'TargetPropertyName');
 end;
 
-function TBindingProperty.GetKind: TTypeKind;
+function TBindingProperty.GetIsDefault: Boolean;
 begin
-  Result := tkClass;
-end;
-
-function TBindingProperty.GetName: string;
-begin
-  Result := 'Binding';
+  Result := True;
 end;
 
 procedure TBindingProperty.GetProperties(Proc: TGetPropProc);
@@ -246,23 +250,8 @@ var
   Components: IDesignerSelections;
 begin
   Components := TDesignerSelections.Create;
-  Components.Add(FBinding);
+  Components.Add(TComponent(GetComponent(0)).Binding);
   GetComponentProperties(Components, tkProperties, Designer, Proc, FilterFunc);
-end;
-
-function TBindingProperty.GetPropInfo: PPropInfo;
-begin
-  Result := TRttiInstanceProperty(GetProperty('Binding')).PropInfo;
-end;
-
-function TBindingProperty.GetPropType: PTypeInfo;
-begin
-  Result := TypeInfo(TBinding);
-end;
-
-function TBindingProperty.GetValue: string;
-begin
-  Result := '(TBinding)';
 end;
 
 { TSourceProperty }

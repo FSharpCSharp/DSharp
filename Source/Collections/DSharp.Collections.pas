@@ -195,7 +195,7 @@ type
     function GetEnumeratorBase: IEnumerator; virtual;
     function IEnumerable.GetEnumerator = GetEnumeratorBase;
     function GetItemType: PTypeInfo; virtual;
-    function ToArrayBase: TArray<TValue>; virtual; abstract;
+    function ToArrayBase: TArray<TValue>;
     function ToListBase: IList; virtual; abstract;
     function IEnumerable.ToArray = ToArrayBase;
     function IEnumerable.ToList = ToListBase;
@@ -209,7 +209,6 @@ type
   protected
     function GetEnumeratorBase: IEnumerator; override;
     function GetItemType: PTypeInfo; override;
-    function ToArrayBase: TArray<TValue>; override;
     function ToListBase: IList; override;
   public
     function Contains(const Value: TValue): Boolean; overload; override;
@@ -239,7 +238,6 @@ type
     procedure SetCapacity(const Value: NativeInt); virtual;
     procedure SetItem(const Index: NativeInt; const Value: T); overload; virtual;
     procedure SetItem(const Index: NativeInt; const Value: TValue); overload;
-    function ToArrayBase: TArray<TValue>; override;
     property Comparer: IComparer<T> read FComparer;
   public
     constructor Create; overload;
@@ -334,7 +332,6 @@ type
     procedure SetCapacity(const Value: NativeInt);
   protected
     function GetCount: NativeInt; override;
-    function ToArrayBase: TArray<TValue>; override;
   public
     procedure Clear;
     function Peek: T;
@@ -430,6 +427,34 @@ begin
   Result := nil;
 end;
 
+function TEnumerable.ToArrayBase: TArray<TValue>;
+{$IF CompilerVersion = 21}
+type
+  PValue = ^TValue;
+{$IFEND}
+var
+  i: Integer;
+  LEnumerator: IEnumerator;
+begin
+  i := 0;
+  SetLength(Result, 2);
+  LEnumerator := GetEnumeratorBase();
+  while LEnumerator.MoveNext do
+  begin
+    if Length(Result) <= i then
+    begin
+      SetLength(Result, Length(Result) * 2);
+    end;
+{$IF CompilerVersion = 21}
+    PValue(@Result[i])^ := LEnumerator.Current;
+{$ELSE}
+    Result[i] := LEnumerator.Current;
+{$IFEND}
+    Inc(i);
+  end;
+  SetLength(Result, i);
+end;
+
 { TEnumerable<T> }
 
 function TEnumerable<T>.Contains(const Value: TValue): Boolean;
@@ -465,26 +490,6 @@ begin
   i := 0;
   SetLength(Result, 2);
   LEnumerator := GetEnumerator();
-  while LEnumerator.MoveNext do
-  begin
-    if Length(Result) <= i then
-    begin
-      SetLength(Result, Length(Result) * 2);
-    end;
-    Result[i] := LEnumerator.Current;
-    Inc(i);
-  end;
-  SetLength(Result, i);
-end;
-
-function TEnumerable<T>.ToArrayBase: TArray<TValue>;
-var
-  i: Integer;
-  LEnumerator: IEnumerator;
-begin
-  i := 0;
-  SetLength(Result, 2);
-  LEnumerator := GetEnumeratorBase();
   while LEnumerator.MoveNext do
   begin
     if Length(Result) <= i then
@@ -875,17 +880,6 @@ begin
   end;
 end;
 
-function TListBase<T>.ToArrayBase: TArray<TValue>;
-var
-  i: Integer;
-begin
-  SetLength(Result, Count);
-  for i := 0 to Count - 1 do
-  begin
-    Result[i] := GetItemBase(i);
-  end;
-end;
-
 { TListBase<T>.TEnumerator }
 
 constructor TListBase<T>.TEnumerator.Create(AList: TListBase<T>);
@@ -1128,17 +1122,6 @@ begin
   for i := 0 to FCount - 1 do
   begin
     Result[i] := FItems[i];
-  end;
-end;
-
-function TStack<T>.ToArrayBase: TArray<TValue>;
-var
-  i: Integer;
-begin
-  SetLength(Result, FCount);
-  for i := 0 to FCount - 1 do
-  begin
-    Result[i] := TValue.From<T>(FItems[i]);
   end;
 end;
 

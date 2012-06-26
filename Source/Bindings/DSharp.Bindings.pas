@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -82,7 +82,7 @@ type
     FConverter: IValueConverter;
     FEnabled: Boolean;
     FManaged: Boolean;
-    FNotificationHandler: TNotificationHandler<TBindingBase>;
+    FNotificationHandler: TNotificationHandler;
     FNotifyOnTargetUpdated: Boolean;
     FOnPropertyChanged: Event<TPropertyChangedEvent>;
     FOnTargetUpdated: TPropertyChangedEvent;
@@ -428,7 +428,7 @@ constructor TBindingBase.Create(Collection: TCollection);
 begin
   inherited;
 
-  FNotificationHandler := TNotificationHandler<TBindingBase>.Create(Self, Notification);
+  FNotificationHandler := TNotificationHandler.Create(Self, Notification);
   FValidationErrors := TList<IValidationResult>.Create();
   FValidationErrors.OnCollectionChanged.Add(DoValidationErrorsChanged);
   FValidationRules := TList<IValidationRule>.Create();

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,6 @@ uses
   ImgList,
   SysUtils,
   Types;
-
-{$IFDEF VER210}
-  {$MESSAGE HINT 'If you get F2084 Internal Error: L817 just compile again (not build)'}
-{$ENDIF}
 
 const
   CDefaultWidth = 100;

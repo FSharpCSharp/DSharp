@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -35,32 +35,32 @@ uses
   Classes;
 
 type
-  TNotificationEvent<T> = procedure(AComponent: TComponent;
+  TNotificationEvent = procedure(AComponent: TComponent;
     Operation: TOperation) of object;
 
-  TNotificationHandler<T> = class(TComponent)
+  TNotificationHandler = class(TComponent)
   private
-    FEvent: TNotificationEvent<T>;
-    FInstance: T;
+    FEvent: TNotificationEvent;
+    FInstance: TObject;
   protected
     procedure Notification(AComponent: TComponent;
       Operation: TOperation); override;
   public
-    constructor Create(AInstance: T; AEvent: TNotificationEvent<T>); reintroduce;
+    constructor Create(AInstance: TObject; AEvent: TNotificationEvent); reintroduce;
   end;
 
 implementation
 
 { TNotificationHandler<T> }
 
-constructor TNotificationHandler<T>.Create(AInstance: T;
-  AEvent: TNotificationEvent<T>);
+constructor TNotificationHandler.Create(AInstance: TObject;
+  AEvent: TNotificationEvent);
 begin
   FInstance := AInstance;
   FEvent := AEvent;
 end;
 
-procedure TNotificationHandler<T>.Notification(AComponent: TComponent;
+procedure TNotificationHandler.Notification(AComponent: TComponent;
   Operation: TOperation);
 begin
   inherited;

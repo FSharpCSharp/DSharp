@@ -119,6 +119,7 @@ type
     FNotifyPropertyChanged: INotifyPropertyChanged;
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
+    procedure WMChar(var Message: TWMChar); message WM_CHAR;
   protected
     procedure Change; override;
     procedure CMExit(var Message: TCMExit); message CM_EXIT;
@@ -380,7 +381,8 @@ uses
   DSharp.Bindings.CollectionView.Adapters,
   DSharp.Bindings.CollectionView.VCLAdapters,
   DSharp.Bindings.Exceptions,
-  DSharp.Core.Reflection;
+  DSharp.Core.Reflection,
+  Windows;
 
 { TButton }
 
@@ -581,6 +583,15 @@ constructor TEdit.Create(AOwner: TComponent);
 begin
   inherited;
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+end;
+
+procedure TEdit.WMChar(var Message: TWMChar);
+begin
+  inherited;
+  if Message.CharCode = VK_RETURN then
+  begin
+    NotifyPropertyChanged.DoPropertyChanged('Text', utExplicit);
+  end;
 end;
 
 procedure TEdit.Change;

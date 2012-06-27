@@ -701,6 +701,7 @@ begin
   begin
     FView.ItemIndex := ItemIndex;
 
+    NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
     NotifyPropertyChanged.DoPropertyChanged('View');
   end;
 end;

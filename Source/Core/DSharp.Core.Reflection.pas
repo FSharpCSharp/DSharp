@@ -566,6 +566,7 @@ implementation
 
 uses
   Classes,
+  Generics.Collections,
   Math,
   StrUtils,
   SysUtils;
@@ -578,6 +579,7 @@ type
 
 var
   Context: TRttiContext;
+  Enumerations: TDictionary<PTypeInfo, TStrings>;
 
 function FindType(const AName: string; out AType: TRttiType): Boolean;
 var
@@ -1856,6 +1858,9 @@ var
   LType: TRttiType;
   LMethod: TRttiMethod;
   LInterface: IInterface;
+  LStrings: TStrings;
+  LTypeData: PTypeData;
+  i: Integer;
 begin
   Result := False;
   if Assigned(ATypeInfo) then
@@ -1926,6 +1931,28 @@ begin
               Result := True;
             end;
           end;
+          tkClass:
+          begin
+            LType := GetRttiType(ATypeInfo);
+            if (Kind = tkEnumeration)
+              and LType.AsInstance.MetaclassType.InheritsFrom(TStrings) then
+            begin
+              if not Enumerations.TryGetValue(TypeInfo, LStrings) then
+              begin
+                LStrings := TStringList.Create;
+                with TRttiEnumerationType(GetType()) do
+                begin
+                  for i := MinValue to MaxValue do
+                  begin
+                    LStrings.Add(GetEnumName(Handle, i));
+                  end;
+                end;
+                Enumerations.Add(TypeInfo, LStrings);
+              end;
+              AResult := TValue.From<TStrings>(LStrings);
+              Result := True;
+            end;
+          end;
         end;
       end;
       tkFloat:
@@ -1961,6 +1988,33 @@ begin
             else
             begin
               AResult := TValue.FromString(FloatToStr(AsExtended));
+              Result := True;
+            end;
+          end;
+        end;
+      end;
+      tkSet:
+      begin
+        case ATypeInfo.Kind of
+          tkClass:
+          begin
+            LType := GetRttiType(ATypeInfo);
+            if LType.AsInstance.MetaclassType.InheritsFrom(TStrings) then
+            begin
+              LTypeData := GetTypeData(TypeInfo);
+              if not Enumerations.TryGetValue(LTypeData.CompType^, LStrings) then
+              begin
+                LStrings := TStringList.Create;
+                with TRttiEnumerationType(TRttiSetType(GetType()).ElementType) do
+                begin
+                  for i := MinValue to MaxValue do
+                  begin
+                    LStrings.Add(GetEnumName(Handle, i));
+                  end;
+                end;
+                Enumerations.Add(LTypeData.CompType^, LStrings);
+              end;
+              AResult := TValue.From<TStrings>(LStrings);
               Result := True;
             end;
           end;
@@ -2113,5 +2167,11 @@ begin
     end;
   end;
 end;
+
+initialization
+  Enumerations := TObjectDictionary<PTypeInfo, TStrings>.Create([doOwnsValues]);
+
+finalization
+  Enumerations.Free;
 
 end.

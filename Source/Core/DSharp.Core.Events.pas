@@ -403,6 +403,10 @@ end;
 function TEvent.GetInvoke: TMethod;
 begin
   Result := FInvoke;
+  if FTypeInfo.Kind = tkInterface then
+  begin
+    Self._AddRef;
+  end;
 end;
 
 function TEvent.GetOnChanged: TNotifyEvent;

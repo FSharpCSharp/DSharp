@@ -57,7 +57,9 @@ type
       AElementType: TClass): TElementConvention; static;
     class procedure SetBinding(AViewModel: TObject; APropertyName: string;
       AViewElement: TComponent; ABindingType: TBindingType;
-      AConvention: TElementConvention); static;
+      AConvention: TElementConvention); overload; static;
+    class procedure SetBinding(AViewModel: TObject; APropertyName: string;
+      AViewElement: TComponent; ATargetPropertyName: string); overload; static;
   end;
 
 implementation
@@ -158,6 +160,19 @@ class procedure ConventionManager.SetBinding(AViewModel: TObject;
   APropertyName: string; AViewElement: TComponent; ABindingType: TBindingType;
   AConvention: TElementConvention);
 var
+  LTargetPropertyName: string;
+begin
+  case ABindingType of
+    btProperty: LTargetPropertyName := AConvention.PropertyName;
+    btEvent: LTargetPropertyName := AConvention.EventName;
+  end;
+
+  SetBinding(AViewModel, APropertyName, AViewElement, LTargetPropertyName);
+end;
+
+class procedure ConventionManager.SetBinding(AViewModel: TObject;
+  APropertyName: string; AViewElement: TComponent; ATargetPropertyName: string);
+var
   LBindingGroup: TBindingGroup;
   LBinding: TBinding;
 begin
@@ -174,18 +189,8 @@ begin
   LBinding.Source := AViewModel;
   LBinding.SourcePropertyName := APropertyName;
   LBinding.Target := AViewElement;
-
-  case ABindingType of
-    btProperty:
-    begin
-      LBinding.TargetPropertyName := AConvention.PropertyName;
-    end;
-    btEvent:
-    begin
-      LBinding.TargetPropertyName := AConvention.EventName;
-    end;
-  end;
+  LBinding.TargetPropertyName := ATargetPropertyName;
 end;
 
-end.
+end.
 

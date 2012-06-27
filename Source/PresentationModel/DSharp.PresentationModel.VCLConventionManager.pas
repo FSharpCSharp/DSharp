@@ -162,7 +162,23 @@ begin
   AddElementConvention<TButton>('Caption', 'OnClick');
   AddElementConvention<TCheckBox>('Checked', 'OnClick');
   AddElementConvention<TColorBox>('Selected', 'OnChange');
-  AddElementConvention<TComboBox>('Text', 'OnChange');
+  AddElementConvention<TComboBox>('Text', 'OnChange')
+    .ApplyBinding :=
+      procedure(AViewModel: TObject; APropertyName: string;
+        AViewElement: TComponent; ABindingType: TBindingType;
+        AConvention: TElementConvention)
+      begin
+        if (ABindingType = btProperty)
+          and (AViewModel.GetProperty(APropertyName).PropertyType.TypeKind in [tkEnumeration, tkSet]) then
+        begin
+          SetBinding(AViewModel, APropertyName, AViewElement, 'Items');
+          SetBinding(AViewModel, APropertyName, AViewElement, 'ItemIndex');
+        end
+        else
+        begin
+          SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
+        end;
+      end;
   AddElementConvention<TCustomPresenter>('View.ItemsSource', 'OnCurrentChanged')
     .ApplyBinding :=
       procedure(AViewModel: TObject; APropertyName: string;
@@ -181,8 +197,17 @@ begin
         AViewElement: TComponent; ABindingType: TBindingType;
         AConvention: TElementConvention)
       begin
-        SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
-        ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
+        if (ABindingType = btProperty)
+          and (AViewModel.GetProperty(APropertyName).PropertyType.TypeKind in [tkEnumeration, tkSet]) then
+        begin
+          SetBinding(AViewModel, APropertyName, AViewElement, 'Items');
+          SetBinding(AViewModel, APropertyName, AViewElement, 'ItemIndex');
+        end
+        else
+        begin
+          SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
+          ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
+        end;
       end;
   AddElementConvention<TMemo>('Text', 'OnChange');
   AddElementConvention<TMonthCalendar>('Date', 'OnClick');

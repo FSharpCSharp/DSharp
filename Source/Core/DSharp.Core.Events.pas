@@ -94,7 +94,8 @@ type
   strict protected
     procedure Add(const AEvent: TMethod);
     procedure Assign(Source: IEvent);
-    function Cast(const Value): TMethod;
+    function Cast(const Value): TMethod; overload;
+    procedure Cast(const Method: TMethod; var Value); overload;
     procedure Clear;
     function GetCount: Integer;
     function GetEnabled: Boolean;
@@ -257,6 +258,12 @@ begin
   PMethod(@AMethodPointer).Data := Pointer(AMethodReference);
 end;
 
+procedure MethodPointerToMethodReference(const AMethodPointer; const AMethodReference);
+begin
+  PPointer(@AMethodReference)^ := PMethod(@AMethodPointer).Data;
+  IInterface(AMethodReference)._AddRef;
+end;
+
 procedure PassArg(Par: TRttiParameter; Params: PParameters; var Dest: TValue;
   CC: TCallConv; const Index: Integer; var Offset: Byte);
 const
@@ -385,6 +392,18 @@ begin
   end;
 end;
 
+procedure TEvent.Cast(const Method: TMethod; var Value);
+begin
+  if FTypeInfo.Kind = tkInterface then
+  begin
+    MethodPointerToMethodReference(Method, Value);
+  end
+  else
+  begin
+    PMethod(@Value)^ := Method;
+  end;
+end;
+
 procedure TEvent.Clear;
 begin
   FMethods.Clear;
@@ -403,10 +422,6 @@ end;
 function TEvent.GetInvoke: TMethod;
 begin
   Result := FInvoke;
-  if FTypeInfo.Kind = tkInterface then
-  begin
-    Self._AddRef;
-  end;
 end;
 
 function TEvent.GetOnChanged: TNotifyEvent;
@@ -600,6 +615,8 @@ begin
 end;
 
 procedure TEvent.SetDispatcher(ATypeData: PTypeData);
+var
+  LInvoke: IDelegate;
 begin
   if Assigned(FDispatcher.Code)
     and Assigned(FDispatcher.Data) then
@@ -610,8 +627,8 @@ begin
 
   if FTypeInfo.Kind = tkInterface then
   begin
-    PDelegate(@FInvoke)^ := Self;
-    Self._Release;
+    LInvoke := Self;
+    FInvoke := Cast(LInvoke);
   end
   else
   begin
@@ -716,7 +733,7 @@ end;
 
 function TEvent<T>.GetInvoke: T;
 begin
-  PMethod(@Result)^ := inherited GetInvoke();
+  Cast(inherited GetInvoke(), Result);
 end;
 
 function TEvent<T>.IndexOf(AEvent: T): Integer;

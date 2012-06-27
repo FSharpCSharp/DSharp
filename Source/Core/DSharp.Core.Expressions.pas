@@ -2130,7 +2130,10 @@ begin
   LObject := GetObject();
   if LObject.TryGetProperty(FPropertyName, LProperty) then
   begin
-    Result := LProperty.GetValue(LObject);
+    if LProperty.IsReadable then
+    begin
+      Result := LProperty.GetValue(LObject);
+    end;
   end else
   if LObject.TryGetField(FPropertyName, LField) then
   begin

@@ -45,7 +45,7 @@ uses
 type
   TGridViewPresenter = class(TCustomPresenter)
   private
-    FDataSource: TPresenterDataSource;
+    FDataSource: TGridViewPresenterDataSource;
     FGridView: TcxCustomGridView;
 
     procedure DoCellDblClick(Sender: TcxCustomGridTableView;
@@ -84,7 +84,7 @@ uses
 constructor TGridViewPresenter.Create(AOwner: TComponent);
 begin
   inherited;
-  FDataSource := TPresenterDataSource.Create(Self);
+  FDataSource := TGridViewPresenterDataSource.Create(Self);
 end;
 
 destructor TGridViewPresenter.Destroy;

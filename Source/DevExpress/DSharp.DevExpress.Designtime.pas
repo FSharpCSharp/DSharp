@@ -43,7 +43,10 @@ uses
 
 procedure Register;
 begin
-  RegisterComponents('DSharp', [TGridViewPresenter, TTreeListPresenter]);
+  RegisterComponents('DSharp', [TGridViewPresenter]);
+{$IF DECLARED(TTreeListPresenter)}
+  RegisterComponents('DSharp', [TTreeListPresenter]);
+{$IFEND}
 //  RegisterComponentEditor(TGridViewPresenter, TCustomPresenterComponentEditor);
 //  RegisterSelectionEditor(TGridViewPresenter, TCustomPresenterSelectionEditor);
 //  RegisterComponentEditor(TTreeListPresenter, TCustomPresenterComponentEditor);

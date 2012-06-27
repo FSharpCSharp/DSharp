@@ -32,13 +32,31 @@ unit DSharp.DevExpress.PresenterDataSource;
 interface
 
 uses
-  cxTL,
+{$IFDEF USE_TREELIST}
   cxTLData,
+{$ENDIF}
   cxCustomData,
   DSharp.Windows.CustomPresenter;
 
 type
-  TPresenterDataSource = class(TcxTreeListCustomDataSource)
+  TGridViewPresenterDataSource = class(TcxCustomDataSource)
+  private
+    FPresenter: TCustomPresenter;
+  protected
+    // Load all records mode
+    function GetRecordCount: Integer; override;
+    function GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle; override;
+
+    function GetValue(ARecordHandle: TcxDataRecordHandle;
+      AItemHandle: TcxDataItemHandle): Variant; override;
+    procedure SetValue(ARecordHandle: TcxDataRecordHandle;
+      AItemHandle: TcxDataItemHandle; const AValue: Variant); override;
+  public
+    constructor Create(APresenter: TCustomPresenter);
+  end;
+
+{$IFDEF USE_TREELIST}
+  TTreeListPresenterDataSource = class(TcxTreeListCustomDataSource)
   private
     FPresenter: TCustomPresenter;
   protected
@@ -59,6 +77,7 @@ type
   public
     constructor Create(APresenter: TCustomPresenter);
   end;
+{$ENDIF}
 
 implementation
 
@@ -67,14 +86,74 @@ uses
   DSharp.Core.DataTemplates,
   Variants;
 
-{ TPresenterDataSource }
+{ TGridViewPresenterDataSource }
 
-constructor TPresenterDataSource.Create(APresenter: TCustomPresenter);
+constructor TGridViewPresenterDataSource.Create(APresenter: TCustomPresenter);
 begin
+  inherited Create();
   FPresenter := APresenter;
 end;
 
-function TPresenterDataSource.GetChildCount(
+function TGridViewPresenterDataSource.GetRecordCount: Integer;
+var
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
+begin
+  Result := 0;
+
+  LItem := FPresenter.View.ItemsSource as TObject;
+  LItemTemplate := FPresenter.GetItemTemplate(LItem);
+  if Assigned(LItemTemplate) then
+  begin
+    Result := LItemTemplate.GetItemCount(LItem);
+  end;
+end;
+
+function TGridViewPresenterDataSource.GetRecordHandle(
+  ARecordIndex: Integer): TcxDataRecordHandle;
+var
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
+begin
+  Result := nil;
+
+  LItem := FPresenter.View.ItemsSource as TObject;
+  LItemTemplate := FPresenter.GetItemTemplate(LItem);
+  if Assigned(LItemTemplate) then
+  begin
+    Result := LItemTemplate.GetItem(LItem, ARecordIndex);
+  end;
+end;
+
+function TGridViewPresenterDataSource.GetValue(
+  ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant;
+var
+  LItemTemplate: IDataTemplate;
+begin
+  LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
+  Result := LItemTemplate.GetText(ARecordHandle, Integer(AItemHandle));
+end;
+
+procedure TGridViewPresenterDataSource.SetValue(
+  ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle;
+  const AValue: Variant);
+var
+  LItemTemplate: IDataTemplate;
+begin
+  LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
+  LItemTemplate.SetText(ARecordHandle, Integer(AItemHandle), VarToStrDef(AValue, ''));
+end;
+
+{ TTreeListPresenterDataSource }
+
+{$IFDEF USE_TREELIST}
+constructor TTreeListPresenterDataSource.Create(APresenter: TCustomPresenter);
+begin
+  inherited Create();
+  FPresenter := APresenter;
+end;
+
+function TTreeListPresenterDataSource.GetChildCount(
   AParentHandle: TcxDataRecordHandle): Integer;
 var
   LItemTemplate: IDataTemplate;
@@ -88,7 +167,7 @@ begin
   end;
 end;
 
-function TPresenterDataSource.GetChildRecordHandle(AParentHandle: TcxDataRecordHandle;
+function TTreeListPresenterDataSource.GetChildRecordHandle(AParentHandle: TcxDataRecordHandle;
   AChildIndex: Integer): TcxDataRecordHandle;
 var
   LItemTemplate: IDataTemplate;
@@ -102,23 +181,23 @@ begin
   end;
 end;
 
-function TPresenterDataSource.GetRecordCount: Integer;
+function TTreeListPresenterDataSource.GetRecordCount: Integer;
 begin
   Result := GetChildCount(GetRootRecordHandle);
 end;
 
-function TPresenterDataSource.GetRecordHandle(
+function TTreeListPresenterDataSource.GetRecordHandle(
   ARecordIndex: Integer): TcxDataRecordHandle;
 begin
   Result := GetChildRecordHandle(GetRootRecordHandle, ARecordIndex);
 end;
 
-function TPresenterDataSource.GetRootRecordHandle: TcxDataRecordHandle;
+function TTreeListPresenterDataSource.GetRootRecordHandle: TcxDataRecordHandle;
 begin
   Result := TcxDataRecordHandle(FPresenter.View.ItemsSource as TObject);
 end;
 
-function TPresenterDataSource.GetValue(ARecordHandle: TcxDataRecordHandle;
+function TTreeListPresenterDataSource.GetValue(ARecordHandle: TcxDataRecordHandle;
   AItemHandle: TcxDataItemHandle): Variant;
 var
   LItemTemplate: IDataTemplate;
@@ -127,7 +206,7 @@ begin
   Result := LItemTemplate.GetText(ARecordHandle, Integer(AItemHandle));
 end;
 
-procedure TPresenterDataSource.SetValue(ARecordHandle: TcxDataRecordHandle;
+procedure TTreeListPresenterDataSource.SetValue(ARecordHandle: TcxDataRecordHandle;
   AItemHandle: TcxDataItemHandle; const AValue: Variant);
 var
   LItemTemplate: IDataTemplate;
@@ -135,5 +214,6 @@ begin
   LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
   LItemTemplate.SetText(ARecordHandle, Integer(AItemHandle), VarToStrDef(AValue, ''));
 end;
+{$ENDIF}
 
 end.

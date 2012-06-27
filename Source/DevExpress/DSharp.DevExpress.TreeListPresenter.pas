@@ -31,6 +31,7 @@ unit DSharp.DevExpress.TreeListPresenter;
 
 interface
 
+{$IFDEF USE_TREELIST}
 uses
   Classes,
   cxGraphics,
@@ -44,7 +45,7 @@ uses
 type
   TTreeListPresenter = class(TCustomPresenter)
   private
-    FDataSource: TPresenterDataSource;
+    FDataSource: TTreeListPresenterDataSource;
     FTreeList: TcxVirtualTreeList;
 
     procedure DoCustomDrawDataCell(Sender: TcxCustomTreeList;
@@ -72,9 +73,11 @@ type
   published
     property TreeList: TcxVirtualTreeList read FTreeList write SetTreeList;
   end;
+{$ENDIF}
 
 implementation
 
+{$IFDEF USE_TREELIST}
 uses
   DSharp.Core.DataTemplates,
   DSharp.Windows.ControlTemplates,
@@ -85,7 +88,7 @@ uses
 constructor TTreeListPresenter.Create(AOwner: TComponent);
 begin
   inherited;
-  FDataSource := TPresenterDataSource.Create(Self);
+  FDataSource := TTreeListPresenterDataSource.Create(Self);
 end;
 
 destructor TTreeListPresenter.Destroy;
@@ -226,5 +229,6 @@ begin
   FTreeList := Value;
   InitControl();
 end;
+{$ENDIF}
 
 end.

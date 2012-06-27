@@ -26,6 +26,7 @@ package DevExpressPresenter;
 {$LIBSUFFIX '150'}
 {$RUNONLY}
 {$IMPLICITBUILD OFF}
+{$DEFINE USE_TREELIST}
 
 requires
   rtl,
@@ -39,3 +40,4 @@ contains
   DSharp.DevExpress.TreeListPresenter in '..\..\Source\DevExpress\DSharp.DevExpress.TreeListPresenter.pas';
 
 end.
+

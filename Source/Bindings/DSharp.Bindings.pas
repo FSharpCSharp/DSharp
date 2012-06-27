@@ -74,7 +74,8 @@ type
     function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
-    function GetUpdating: Boolean;
+    function GetUpdatingSource: Boolean;
+    function GetUpdatingTarget: Boolean;
   protected
     FActive: Boolean;
     FBindingGroup: TBindingGroup;
@@ -92,13 +93,16 @@ type
     FTargetProperty: IMemberExpression;
     FTargetPropertyName: string;
     FTargetUpdateTrigger: TUpdateTrigger;
-    FUpdateCount: Integer;
+    FUpdateSourceCount: Integer;
+    FUpdateTargetCount: Integer;
     FValidatesOnDataErrors: Boolean;
     FValidationErrors: IList<IValidationResult>;
     FValidationRules: IList<IValidationRule>;
     class var DataErrorValidationRule: IValidationRule;
-    procedure BeginUpdate;
-    procedure EndUpdate;
+    procedure BeginUpdateSource;
+    procedure BeginUpdateTarget;
+    procedure EndUpdateSource;
+    procedure EndUpdateTarget;
     procedure CompileExpressions; virtual; abstract;
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
@@ -143,7 +147,8 @@ type
       read GetOnPropertyChanged;
     property OnValidation: IEvent<TValidationEvent> read GetOnValidation;
     property TargetProperty: IMemberExpression read FTargetProperty;
-    property Updating: Boolean read GetUpdating;
+    property UpdatingSource: Boolean read GetUpdatingSource;
+    property UpdatingTarget: Boolean read GetUpdatingTarget;
     property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
     property ValidationRules: IList<IValidationRule> read GetValidationRules;
   published
@@ -414,9 +419,14 @@ begin
   end;
 end;
 
-procedure TBindingBase.BeginUpdate;
+procedure TBindingBase.BeginUpdateSource;
 begin
-  Inc(FUpdateCount);
+  Inc(FUpdateSourceCount);
+end;
+
+procedure TBindingBase.BeginUpdateTarget;
+begin
+  Inc(FUpdateTargetCount);
 end;
 
 class constructor TBindingBase.Create;
@@ -486,9 +496,14 @@ begin
   DoPropertyChanged('ValidationRules');
 end;
 
-procedure TBindingBase.EndUpdate;
+procedure TBindingBase.EndUpdateSource;
 begin
-  Dec(FUpdateCount);
+  Dec(FUpdateSourceCount);
+end;
+
+procedure TBindingBase.EndUpdateTarget;
+begin
+  Dec(FUpdateTargetCount);
 end;
 
 function TBindingBase.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
@@ -501,9 +516,14 @@ begin
   Result := FOnValidation;
 end;
 
-function TBindingBase.GetUpdating: Boolean;
+function TBindingBase.GetUpdatingSource: Boolean;
 begin
-  Result := FUpdateCount > 0;
+  Result := FUpdateSourceCount > 0;
+end;
+
+function TBindingBase.GetUpdatingTarget: Boolean;
+begin
+  Result := FUpdateTargetCount > 0;
 end;
 
 function TBindingBase.GetValidationErrors: IList<IValidationResult>;
@@ -802,17 +822,17 @@ end;
 procedure TBinding.DoSourcePropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  if (FUpdateCount = 0) and (FBindingMode in [bmOneWay..bmTwoWay])
+  if not UpdatingTarget and (FBindingMode in [bmOneWay..bmTwoWay])
     and (AUpdateTrigger = FTargetUpdateTrigger)
     and IsRootProperty(APropertyName, FSourceProperty) then
   begin
-    BeginUpdate();
+    BeginUpdateTarget();
     try
       DoTargetUpdated(ASender, APropertyName, AUpdateTrigger);
 
       UpdateTarget(True);
     finally
-      EndUpdate();
+      EndUpdateTarget();
     end;
   end;
 end;
@@ -829,11 +849,11 @@ end;
 procedure TBinding.DoTargetPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  if (FUpdateCount = 0) and (FBindingMode in [bmTwoWay..bmOneWayToSource])
+  if not UpdatingSource and (FBindingMode in [bmTwoWay..bmOneWayToSource])
     and (AUpdateTrigger = FSourceUpdateTrigger)
     and IsRootProperty(APropertyName, FTargetProperty) then
   begin
-    BeginUpdate();
+    BeginUpdateSource();
     try
       if Validate() then
       begin
@@ -849,7 +869,7 @@ begin
         end;
       end;
     finally
-      EndUpdate();
+      EndUpdateSource();
     end;
 
     if not ValidateCommitted()
@@ -1012,12 +1032,12 @@ begin
     and Assigned(FSource) and Assigned(FSourceProperty)
     and FTargetProperty.Member.IsReadable and FSourceProperty.Member.IsWritable then
   begin
-    BeginUpdate();
+    BeginUpdateSource();
     try
       FUpdateSourceExpression();
       FValidationErrors.Clear();
     finally
-      EndUpdate();
+      EndUpdateSource();
     end;
   end;
 end;
@@ -1033,7 +1053,7 @@ begin
     and Assigned(FSource) and Assigned(FSourceProperty)
     and FTargetProperty.Member.IsWritable and FSourceProperty.Member.IsReadable then
   begin
-    BeginUpdate();
+    BeginUpdateTarget();
     try
       if Assigned(FSourceCollectionChanged) then
       begin
@@ -1054,7 +1074,7 @@ begin
       FUpdateTargetExpression();
       FValidationErrors.Clear();
     finally
-      EndUpdate();
+      EndUpdateTarget();
     end;
   end;
 end;

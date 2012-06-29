@@ -106,7 +106,7 @@ end;
 
 function Mock<T>.GetMode: TMockMode;
 begin
-  Result := FMock.Mode;
+  Result := Mock.Mode;
 end;
 
 class operator Mock<T>.Implicit(var Value: Mock<T>): IMock<T>;
@@ -126,7 +126,7 @@ end;
 
 procedure Mock<T>.SetMode(const Value: TMockMode);
 begin
-  FMock.Mode := Value;
+  Mock.Mode := Value;
 end;
 
 procedure Mock<T>.Verify;

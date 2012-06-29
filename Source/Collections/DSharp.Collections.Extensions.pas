@@ -46,11 +46,20 @@ type
       TEqualityComparer = class(TDelegatedEqualityComparer<T>)
       public
         constructor Create(const AEquals: TEqualityComparison<T>);
-        function GetHashCode(const Value: T): Integer; overload; override;
+        function GetHashCode(const Value: T): Integer; override;
       end;
 
-      THashSet = class(TDictionary<T, Integer>)
+      IHashSet = interface
+        function Add(const Value: T): Boolean;
+        function Contains(const Value: T): Boolean;
+      end;
+
+      THashSet = class(TInterfacedObject, IHashSet)
+      private
+        FDictionary: TDictionary<T, Integer>;
       public
+        constructor Create(const AComparer: IEqualityComparer<T>);
+        destructor Destroy; override;
         function Add(const Value: T): Boolean;
         function Contains(const Value: T): Boolean;
       end;
@@ -233,12 +242,8 @@ begin
 end;
 
 function Enumerable<T>.Count: NativeInt;
-var
-  item: T;
 begin
-  Result := 0;
-  for item in Enumerable do
-    Inc(Result);
+  Result := Enumerable.Count;
 end;
 
 function Enumerable<T>.Count(predicate: TPredicate<T>): NativeInt;
@@ -289,7 +294,7 @@ begin
   Result := TYieldEnumerable<T>.Create(
     procedure
     var
-      hashSet: THashSet;
+      hashSet: IHashSet;
       item: T;
       return: Yield<T>;
     begin
@@ -340,7 +345,7 @@ begin
   Result := TYieldEnumerable<T>.Create(
     procedure
     var
-      hashSet: THashSet;
+      hashSet: IHashSet;
       item: T;
       return: Yield<T>;
     begin
@@ -403,7 +408,7 @@ begin
   Result := TYieldEnumerable<T>.Create(
     procedure
     var
-      hashSet: THashSet;
+      hashSet: IHashSet;
       item: T;
       return: Yield<T>;
     begin
@@ -777,7 +782,7 @@ begin
   Result := TYieldEnumerable<T>.Create(
     procedure
     var
-      hashSet: THashSet;
+      hashSet: IHashSet;
       item: T;
       return: Yield<T>;
     begin
@@ -867,16 +872,28 @@ end;
 
 { Enumerable<T>.THashSet }
 
+constructor Enumerable<T>.THashSet.Create(const AComparer: IEqualityComparer<T>);
+begin
+  inherited Create();
+  FDictionary := TDictionary<T, Integer>.Create(AComparer);
+end;
+
+destructor Enumerable<T>.THashSet.Destroy;
+begin
+  FDictionary.Free();
+  inherited;
+end;
+
 function Enumerable<T>.THashSet.Add(const Value: T): Boolean;
 begin
-  Result := not ContainsKey(Value);
+  Result := not FDictionary.ContainsKey(Value);
   if Result then
-    inherited Add(Value, 0);
+    FDictionary.Add(Value, 0);
 end;
 
 function Enumerable<T>.THashSet.Contains(const Value: T): Boolean;
 begin
-  Result := ContainsKey(Value);
+  Result := FDictionary.ContainsKey(Value);
 end;
 
 end.

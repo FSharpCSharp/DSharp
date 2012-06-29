@@ -352,6 +352,7 @@ type
     constructor Create(AOwnsObjects: Boolean = True); overload;
     constructor Create(Comparer: IComparer<T>; AOwnsObjects: Boolean = True); overload;
     constructor Create(Values: IEnumerable<T>; AOwnsObjects: Boolean = True); overload;
+    constructor Create(const Values: array of T; AOwnsObjects: Boolean = True); overload;
 
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
   end;
@@ -1041,6 +1042,13 @@ begin
 end;
 
 constructor TObjectList<T>.Create(Values: IEnumerable<T>;
+  AOwnsObjects: Boolean);
+begin
+  inherited Create(Values);
+  FOwnsObjects := AOwnsObjects;
+end;
+
+constructor TObjectList<T>.Create(const Values: array of T;
   AOwnsObjects: Boolean);
 begin
   inherited Create(Values);

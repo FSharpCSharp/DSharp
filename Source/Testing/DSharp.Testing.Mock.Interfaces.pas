@@ -37,6 +37,7 @@ uses
 
 type
   TMockAction = reference to function(var Args: array of TValue): TValue;
+  TMockMode = (Mock, Stub);
 
   IWhen<T> = interface
     function WhenCalling: T;
@@ -55,11 +56,14 @@ type
 
   IMock<T> = interface
     function GetInstance: T;
+    function GetMode: TMockMode;
+    procedure SetMode(const Value: TMockMode);
     procedure Verify;
     function WillExecute(const Action: TMockAction): IExpect<T>;
     function WillRaise(const Exception: TFunc<Exception>): IExpect<T>;
     function WillReturn(const Value: TValue): IExpect<T>;
     property Instance: T read GetInstance;
+    property Mode: TMockMode read GetMode write SetMode;
   end;
 
 implementation

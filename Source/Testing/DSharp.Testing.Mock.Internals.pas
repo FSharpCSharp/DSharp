@@ -79,6 +79,7 @@ type
     FExpectations: TObjectList<TExpectation>;
     FInstance: T;
     FInterceptor: TVirtualMethodInterceptor;
+    FMode: TMockMode;
     FState: TMockState;
     FType: TMockType;
     procedure CreateInterfaceMock(AType: TRttiType);
@@ -90,6 +91,8 @@ type
       const Args: TArray<TValue>; out Result: TValue);
     function FindExpectation(Method: TRttiMethod; Arguments: TArray<TValue>): TExpectation;
     function GetInstance: T;
+    function GetMode: TMockMode;
+    procedure SetMode(const Value: TMockMode);
   public
     constructor Create;
     destructor Destroy; override;
@@ -217,8 +220,11 @@ begin
       end
       else
       begin
-        raise EMockException.CreateFmt(CUnexpectedInvocation, [
-          Method.Parent.Name, Method.Name, TValue.ToString(@Args[0])]);
+        if FMode = Mock then
+        begin
+          raise EMockException.CreateFmt(CUnexpectedInvocation, [
+            Method.Parent.Name, Method.Name, TValue.ToString(@Args[0])]);
+        end;
       end;
     end;
   end;
@@ -323,6 +329,16 @@ end;
 function TMockWrapper<T>.GetInstance: T;
 begin
   Result := FInstance;
+end;
+
+function TMockWrapper<T>.GetMode: TMockMode;
+begin
+  Result := FMode;
+end;
+
+procedure TMockWrapper<T>.SetMode(const Value: TMockMode);
+begin
+  FMode := Value;
 end;
 
 procedure TMockWrapper<T>.Verify;

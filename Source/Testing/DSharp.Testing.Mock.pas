@@ -48,6 +48,8 @@ type
     FMock: IMock<T>;
     function GetInstance: T;
     function GetMock: IMock<T>;
+    function GetMode: TMockMode;
+    procedure SetMode(const Value: TMockMode);
     property Mock: IMock<T> read GetMock;
   public
     class function Create: Mock<T>; static;
@@ -56,14 +58,20 @@ type
     class operator Implicit(var Value: Mock<T>): T;
     class operator Implicit(Value: T): Mock<T>;
     procedure Verify;
-    function WillExecute(const Action: TMockAction): IExpect<T>;
+    function WillExecute: IExpect<T>; overload;
+    function WillExecute(const Action: TMockAction): IExpect<T>; overload;
     function WillRaise(const ExceptionClass: ExceptClass;
       const Msg: string = ''): IExpect<T>; overload;
     function WillRaise(const ExceptionClass: ExceptClass; const Msg: string;
       const Args: array of const): IExpect<T>; overload;
     function WillReturn<TResult>(const Value: TResult): IExpect<T>;
     property Instance: T read GetInstance;
+    property Mode: TMockMode read GetMode write SetMode;
   end;
+
+const
+  Mock = TMockMode.Mock;
+  Stub = TMockMode.Stub;
 
 implementation
 
@@ -96,6 +104,11 @@ begin
   Result := FMock;
 end;
 
+function Mock<T>.GetMode: TMockMode;
+begin
+  Result := FMock.Mode;
+end;
+
 class operator Mock<T>.Implicit(var Value: Mock<T>): IMock<T>;
 begin
   Result := Value.Mock;
@@ -111,9 +124,19 @@ begin
   Result.FMock := nil;
 end;
 
+procedure Mock<T>.SetMode(const Value: TMockMode);
+begin
+  FMock.Mode := Value;
+end;
+
 procedure Mock<T>.Verify;
 begin
   Mock.Verify;
+end;
+
+function Mock<T>.WillExecute: IExpect<T>;
+begin
+  Result := Mock.WillExecute(nil);
 end;
 
 function Mock<T>.WillExecute(const Action: TMockAction): IExpect<T>;

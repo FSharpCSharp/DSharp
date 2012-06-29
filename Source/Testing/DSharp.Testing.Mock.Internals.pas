@@ -94,6 +94,7 @@ type
       Arguments: TArray<TValue>): TExpectation;
     function GetInstance: T;
     function GetMode: TMockMode;
+    function HasExpectation(Method: TRttiMethod): Boolean;
     procedure SetMode(const Value: TMockMode);
   public
     constructor Create;
@@ -216,6 +217,10 @@ begin
     end;
     msExecuting:
     begin
+      // no expectation for this method defined and in stub mode
+      if (FMode = Stub) and not HasExpectation(Method) then
+        Exit;
+
       FCurrentExpectation := FindExpectation(Method, Args);
       if Assigned(FCurrentExpectation) and FCurrentExpectation.CanCall then
       begin
@@ -223,11 +228,8 @@ begin
       end
       else
       begin
-        if Assigned(FCurrentExpectation) or (FMode = Mock) then
-        begin
-          raise EMockException.CreateFmt(CUnexpectedInvocation, [
-            StripUnitName(Method.Parent.Name), Method.Name, TValue.ToString(@Args[0])]);
-        end;
+        raise EMockException.CreateFmt(CUnexpectedInvocation, [
+          StripUnitName(Method.Parent.Name), Method.Name, TValue.ToString(@Args[0])]);
       end;
     end;
   end;
@@ -308,6 +310,7 @@ function TMockWrapper<T>.FindExpectation(Method: TRttiMethod;
 var
   LExpectation: TExpectation;
 begin
+  Result := nil;
   for LExpectation in FExpectations do
   begin
     // only get expectation if corrent method
@@ -329,6 +332,21 @@ end;
 function TMockWrapper<T>.GetMode: TMockMode;
 begin
   Result := FMode;
+end;
+
+function TMockWrapper<T>.HasExpectation(Method: TRttiMethod): Boolean;
+var
+  LExpectation: TExpectation;
+begin
+  Result := False;
+  for LExpectation in FExpectations do
+  begin
+    if LExpectation.Method = Method then
+    begin
+      Result := True;
+      Break;
+    end;
+  end;
 end;
 
 procedure TMockWrapper<T>.SetMode(const Value: TMockMode);

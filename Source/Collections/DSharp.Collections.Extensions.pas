@@ -862,7 +862,7 @@ end;
 
 function Enumerable<T>.TEqualityComparer.GetHashCode(const Value: T): Integer;
 begin
-  Result := TEqualityComparer<T>.Default.GetHashCode(Value);
+  Result := 0;
 end;
 
 { Enumerable<T>.THashSet }

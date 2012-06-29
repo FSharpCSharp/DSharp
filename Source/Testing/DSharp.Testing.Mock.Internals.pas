@@ -55,6 +55,7 @@ type
   public
     destructor Destroy; override;
 
+    function CanCall: Boolean;
     function Execute(const Arguments: TArray<TValue>;
       ReturnType: TRttiType): TValue;
     function HasBeenMet: Boolean;
@@ -89,7 +90,8 @@ type
       const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
     procedure DoMethodCall(Method: TRttiMethod;
       const Args: TArray<TValue>; out Result: TValue);
-    function FindExpectation(Method: TRttiMethod; Arguments: TArray<TValue>): TExpectation;
+    function FindExpectation(Method: TRttiMethod;
+      Arguments: TArray<TValue>): TExpectation;
     function GetInstance: T;
     function GetMode: TMockMode;
     procedure SetMode(const Value: TMockMode);
@@ -141,6 +143,7 @@ var
   LType: TRttiType;
 begin
   FExpectations := TObjectList<TExpectation>.Create(True);
+  FState := msExecuting;
   LType := GetRttiType(TypeInfo(T));
   if LType is TRttiInstanceType then
   begin
@@ -214,16 +217,16 @@ begin
     msExecuting:
     begin
       FCurrentExpectation := FindExpectation(Method, Args);
-      if Assigned(FCurrentExpectation) then
+      if Assigned(FCurrentExpectation) and FCurrentExpectation.CanCall then
       begin
         Result := FCurrentExpectation.Execute(Args, Method.ReturnType);
       end
       else
       begin
-        if FMode = Mock then
+        if Assigned(FCurrentExpectation) or (FMode = Mock) then
         begin
           raise EMockException.CreateFmt(CUnexpectedInvocation, [
-            Method.Parent.Name, Method.Name, TValue.ToString(@Args[0])]);
+            StripUnitName(Method.Parent.Name), Method.Name, TValue.ToString(@Args[0])]);
         end;
       end;
     end;
@@ -305,20 +308,12 @@ function TMockWrapper<T>.FindExpectation(Method: TRttiMethod;
 var
   LExpectation: TExpectation;
 begin
-  Result := nil;
-
   for LExpectation in FExpectations do
   begin
-    // skip expectations not matching the required count
-    if not LExpectation.RequiredCountMatcher(LExpectation.CallCount + 1) then
-    begin
-      Continue;
-    end;
-
     // only get expectation if corrent method
     if (LExpectation.Method = Method)
       // and argument values match if they need to
-      and (LExpectation.AnyArguments  or TValue.Equals(LExpectation.Arguments, Arguments)) then
+      and (LExpectation.AnyArguments or TValue.Equals(LExpectation.Arguments, Arguments)) then
     begin
       Result := LExpectation;
       Break;
@@ -397,6 +392,11 @@ end;
 destructor TExpectation.Destroy;
 begin
   inherited;
+end;
+
+function TExpectation.CanCall: Boolean;
+begin
+  Result := FRequiredCountMatcher(FCallCount + 1);
 end;
 
 function TExpectation.Execute(const Arguments: TArray<TValue>;

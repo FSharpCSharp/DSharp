@@ -555,6 +555,8 @@ function TryGetRttiType(ATypeInfo: PTypeInfo; out AType: TRttiType): Boolean; ov
 function CompareValue(const Left, Right: TValue): Integer;
 function SameValue(const Left, Right: TValue): Boolean;
 
+function StripUnitName(const s: string): string;
+
 {$IFDEF VER210}
 function SplitString(const S: string; const Delimiter: Char): TStringDynArray;
 {$ENDIF}
@@ -675,6 +677,11 @@ function TryGetRttiType(ATypeInfo: PTypeInfo; out AType: TRttiType): Boolean; ov
 begin
   AType := Context.GetType(ATypeInfo);
   Result := Assigned(AType);
+end;
+
+function StripUnitName(const s: string): string;
+begin
+  Result := ReplaceText(s, 'System.', '');
 end;
 
 {$IFDEF VER210}
@@ -1818,36 +1825,53 @@ begin
     end;
     if Values[i].IsString then
     begin
-      Result := Result + '''' + Values[i].ToString + '''';
+      Result := Result + '''' + TValue.ToString(Values[i]) + '''';
     end
     else
     begin
-      Result := Result + Values[i].ToString;
+      Result := Result + TValue.ToString(Values[i]);
     end;
   end;
 end;
 
 class function TValueHelper.ToString(const Value: TValue): string;
+var
+  LInterface: IInterface;
+  LObject: TObject;
 begin
-  if Value.Kind = tkFloat then
-  begin
-    if Value.IsDate then
+  case Value.Kind of
+    tkFloat:
     begin
-      Result := DateToStr(Value.AsDate);
-    end else
-    if Value.IsDateTime then
-    begin
-      Result := DateTimeToStr(Value.AsDateTime);
-    end else
-    if Value.IsTime then
-    begin
-      Result := TimeToStr(Value.AsTime);
-    end else
-    begin
-      Result := Value.ToString;
+      if Value.IsDate then
+      begin
+        Result := DateToStr(Value.AsDate);
+      end else
+      if Value.IsDateTime then
+      begin
+        Result := DateTimeToStr(Value.AsDateTime);
+      end else
+      if Value.IsTime then
+      begin
+        Result := TimeToStr(Value.AsTime);
+      end else
+      begin
+        Result := Value.ToString;
+      end;
     end;
-  end else
-  begin
+    tkClass:
+    begin
+      LObject := Value.AsObject;
+      Result := Format('%s($%x)', [StripUnitName(LObject.ClassName),
+        NativeInt(LObject)]);
+    end;
+    tkInterface:
+    begin
+      LInterface := Value.AsInterface;
+      LObject := LInterface as TObject;
+      Result := Format('%s($%x) as %s', [StripUnitName(LObject.ClassName),
+        NativeInt(LInterface), StripUnitName(string(Value.TypeInfo.Name))]);
+    end
+  else
     Result := Value.ToString;
   end;
 end;

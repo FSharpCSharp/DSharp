@@ -44,14 +44,18 @@ type
     function WhenCallingWithAnyArguments: T;
   end;
 
+  ISequence<T> = interface(IWhen<T>)
+    function InSequence: IWhen<T>;
+  end;
+
   IExpect<T> = interface
-    function AtLeast(const Count: Cardinal): IWhen<T>;
-    function AtLeastOnce: IWhen<T>;
-    function AtMost(const Count: Cardinal): IWhen<T>;
-    function Between(const LowValue, HighValue: Cardinal): IWhen<T>;
-    function Exactly(const Count: Cardinal): IWhen<T>;
-    function Never: IWhen<T>;
-    function Once: IWhen<T>;
+    function AtLeast(const Count: Cardinal): ISequence<T>;
+    function AtLeastOnce: ISequence<T>;
+    function AtMost(const Count: Cardinal): ISequence<T>;
+    function Between(const LowValue, HighValue: Cardinal): ISequence<T>;
+    function Exactly(const Count: Cardinal): ISequence<T>;
+    function Never: ISequence<T>;
+    function Once: ISequence<T>;
   end;
 
   IMock<T> = interface

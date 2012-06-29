@@ -38,9 +38,12 @@ var
   ReturnValue: Boolean;
 begin
   // define expectations
-  FMockServer.WillReturn(True).Once.WhenCallingWithAnyArguments.SendMessage('');
-  FMockServer.WillReturn('This is the message from the server!').Once.WhenCalling.ReceiveMessage();
+  FMockServer.WillReturn(True).Once.InSequence.WhenCallingWithAnyArguments.SendMessage('');
+  FMockServer.WillReturn('This is the message from the server!').Once.InSequence.WhenCalling.ReceiveMessage();
+  FMockServer.WillReturn(True).Once.InSequence.WhenCallingWithAnyArguments.SendMessage('');
+  FMockServer.WillReturn('This is the message from the server!').Once.InSequence.WhenCalling.ReceiveMessage();
 
+  ReturnValue := FProtocolServer.Communicate;
   ReturnValue := FProtocolServer.Communicate;
   CheckTrue(ReturnValue, 'Communication with the Server Failed');
   FMockServer.Verify; // optional: can check if all expectations were met

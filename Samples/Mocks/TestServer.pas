@@ -16,6 +16,7 @@ type
     procedure TearDown; override;
   published
     procedure TestCommunicate;
+    procedure TestCommunicate_NotCallingReceiveMessage_When_SendMessageReturnsFalse;
   end;
 
 implementation
@@ -38,10 +39,23 @@ var
 begin
   // define expectations
   FMockServer.WillReturn(True).Once.WhenCallingWithAnyArguments.SendMessage('');
-  FMockServer.WillReturn('This is the message from the server!').Once.WhenCalling.ReceiveMessage;
+  FMockServer.WillReturn('This is the message from the server!').Once.WhenCalling.ReceiveMessage();
 
   ReturnValue := FProtocolServer.Communicate;
   CheckTrue(ReturnValue, 'Communication with the Server Failed');
+  FMockServer.Verify; // optional: can check if all expectations were met
+end;
+
+procedure TestTProtocolServer.TestCommunicate_NotCallingReceiveMessage_When_SendMessageReturnsFalse;
+var
+  ReturnValue: Boolean;
+begin
+  // define expectations
+  FMockServer.WillReturn(False).Once.WhenCallingWithAnyArguments.SendMessage('');
+  FMockServer.WillExecute.Never.WhenCalling.ReceiveMessage();
+
+  ReturnValue := FProtocolServer.Communicate;
+  CheckFalse(ReturnValue, 'Communication with the Server Failed');
   FMockServer.Verify; // optional: can check if all expectations were met
 end;
 

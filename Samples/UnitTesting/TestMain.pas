@@ -55,13 +55,7 @@ begin
   LGermanAccount := TAccount.Create('54321', 'EUR');
   LGermanAccount.Deposit(100);
 
-  FMockCurrencyService.WillReturn<Double>(1.38).Exactly(1).WhenCalling.GetConversionRate('EUR', 'USD');
-
-//  FMockCurrencyService.WillExecute(
-//    function(const Args: TArray<TValue>): TValue
-//    begin
-//      Result := 1.38
-//    end).Once.WhenCallingWithAnyArguments.GetConversionRate('', '');
+  FMockCurrencyService.WillReturn<Double>(1.38).Once.WhenCalling.GetConversionRate('EUR', 'USD');
   try
     FAccountService.TransferFunds(LGermanAccount, LAmericanAccount, 100);
 

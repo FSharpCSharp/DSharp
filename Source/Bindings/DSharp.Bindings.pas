@@ -48,9 +48,11 @@ uses
 
 type
   TBindingMode = (bmOneWay, bmTwoWay, bmOneWayToSource, bmOneTime);
+  TTriggerMode = (tmOneWay, tmTwoWay);
 
 const
   BindingModeDefault = bmTwoWay;
+  TriggerModeDefault = tmOneWay;
 
 type
   BindingAttribute = class(TCustomAttribute)
@@ -68,15 +70,8 @@ type
 
   TBindingGroup = class;
 
-  TBindingBase = class abstract(TCollectionItem,
-    INotifyPropertyChanged, IValidatable)
+  TBinding = class(TCollectionItem, INotifyPropertyChanged, IValidatable)
   private
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
-    function GetUpdatingSource: Boolean;
-    function GetUpdatingTarget: Boolean;
-  protected
     FActive: Boolean;
     FBindingGroup: TBindingGroup;
     FBindingMode: TBindingMode;
@@ -84,105 +79,47 @@ type
     FEnabled: Boolean;
     FManaged: Boolean;
     FNotificationHandler: TNotificationHandler;
+    FNotifyOnSourceUpdated: Boolean;
     FNotifyOnTargetUpdated: Boolean;
     FOnPropertyChanged: Event<TPropertyChangedEvent>;
+    FOnSourceUpdated: TPropertyChangedEvent;
     FOnTargetUpdated: TPropertyChangedEvent;
     FOnValidation: Event<TValidationEvent>;
     FPreventFocusChange: Boolean;
-    FTarget: TObject;
-    FTargetProperty: IMemberExpression;
-    FTargetPropertyName: string;
-    FTargetUpdateTrigger: TUpdateTrigger;
-    FUpdateSourceCount: Integer;
-    FUpdateTargetCount: Integer;
-    FValidatesOnDataErrors: Boolean;
-    FValidationErrors: IList<IValidationResult>;
-    FValidationRules: IList<IValidationRule>;
-    class var DataErrorValidationRule: IValidationRule;
-    procedure BeginUpdateSource;
-    procedure BeginUpdateTarget;
-    procedure EndUpdateSource;
-    procedure EndUpdateTarget;
-    procedure CompileExpressions; virtual; abstract;
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    procedure DoTargetPropertyChanged(ASender: TObject;
-      APropertyName: string; AUpdateTrigger: TUpdateTrigger); virtual; abstract;
-    procedure DoTargetUpdated(ASender: TObject; APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger);
-    procedure DoValidationErrorsChanged(Sender: TObject;
-      const Item: IValidationResult; Action: TCollectionChangedAction);
-    procedure DoValidationRulesChanged(Sender: TObject;
-      const Item: IValidationRule; Action: TCollectionChangedAction);
-    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
-    function GetOnValidation: IEvent<TValidationEvent>;
-    function GetValidationErrors: IList<IValidationResult>;
-    function GetValidationRules: IList<IValidationRule>;
-    procedure Notification(AComponent: TComponent; AOperation: TOperation); virtual;
-    procedure SetActive(const Value: Boolean);
-    procedure SetBindingGroup(const Value: TBindingGroup);
-    procedure SetBindingMode(const Value: TBindingMode); virtual;
-    procedure SetConverter(const Value: IValueConverter);
-    procedure SetEnabled(const Value: Boolean);
-    procedure SetTarget(const Value: TObject);
-    procedure SetTargetProperty;
-    procedure SetTargetPropertyName(const Value: string);
-  public
-    class constructor Create;
-    constructor Create(Collection: TCollection); override;
-    destructor Destroy; override;
-
-    procedure Assign(Source: TPersistent); override;
-    procedure UpdateTarget(IgnoreBindingMode: Boolean = True); virtual; abstract;
-    function Validate: Boolean; virtual; abstract;
-
-    procedure BeginEdit; virtual; abstract;
-    procedure CancelEdit; virtual; abstract;
-    procedure CommitEdit; virtual; abstract;
-
-    property Active: Boolean read FActive write SetActive;
-    property BindingGroup: TBindingGroup read FBindingGroup write SetBindingGroup;
-    property Converter: IValueConverter read FConverter write SetConverter;
-    property OnPropertyChanged: IEvent<TPropertyChangedEvent>
-      read GetOnPropertyChanged;
-    property OnValidation: IEvent<TValidationEvent> read GetOnValidation;
-    property TargetProperty: IMemberExpression read FTargetProperty;
-    property UpdatingSource: Boolean read GetUpdatingSource;
-    property UpdatingTarget: Boolean read GetUpdatingTarget;
-    property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
-    property ValidationRules: IList<IValidationRule> read GetValidationRules;
-  published
-    property BindingMode: TBindingMode read FBindingMode write SetBindingMode
-      default BindingModeDefault;
-    property Enabled: Boolean read FEnabled write SetEnabled default True;
-    property Managed: Boolean read FManaged write FManaged default True;
-    property NotifyOnTargetUpdated: Boolean read FNotifyOnTargetUpdated
-      write FNotifyOnTargetUpdated default False;
-    property OnTargetUpdated: TPropertyChangedEvent read FOnTargetUpdated
-      write FOnTargetUpdated;
-    property PreventFocusChange: Boolean
-      read FPreventFocusChange write FPreventFocusChange default False;
-    property Target: TObject read FTarget write SetTarget;
-    property TargetPropertyName: string read FTargetPropertyName
-      write SetTargetPropertyName;
-    property TargetUpdateTrigger: TUpdateTrigger read FTargetUpdateTrigger
-      write FTargetUpdateTrigger default UpdateTriggerDefault;
-    property ValidatesOnDataErrors: Boolean
-      read FValidatesOnDataErrors write FValidatesOnDataErrors default False;
-  end;
-
-  TBinding = class(TBindingBase)
-  protected
-    FNotifyOnSourceUpdated: Boolean;
-    FOnSourceUpdated: TPropertyChangedEvent;
     FSource: TObject;
     FSourceCollectionChanged: INotifyCollectionChanged;
     FSourceProperty: IMemberExpression;
     FSourcePropertyName: string;
     FSourceUpdateTrigger: TUpdateTrigger;
+    FTarget: TObject;
+    FTargetProperty: IMemberExpression;
+    FTargetPropertyName: string;
+    FTargetUpdateTrigger: TUpdateTrigger;
+    FTriggerMode: TTriggerMode;
+    FUpdateSourceCount: Integer;
     FUpdateSourceExpression: TCompiledExpression;
+    FUpdateTargetCount: Integer;
     FUpdateTargetExpression: TCompiledExpression;
-    procedure CompileExpressions; override;
+    FValidatesOnDataErrors: Boolean;
+    FValidationErrors: IList<IValidationResult>;
+    FValidationRules: IList<IValidationRule>;
+
+    class var DataErrorValidationRule: IValidationRule;
+
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+
+    procedure BeginUpdateSource;
+    procedure BeginUpdateTarget;
+
+    function CanUpdateSource(AUpdateTrigger: TUpdateTrigger): Boolean;
+    function CanUpdateTarget(AUpdateTrigger: TUpdateTrigger): Boolean;
+
+    procedure CompileExpressions;
+
+    procedure DoPropertyChanged(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction);
     procedure DoSourcePropertyChanged(ASender: TObject;
@@ -190,16 +127,46 @@ type
     procedure DoSourceUpdated(ASender: TObject; APropertyName: string;
       AUpdateTrigger: TUpdateTrigger);
     procedure DoTargetPropertyChanged(ASender: TObject;
-      APropertyName: string; AUpdateTrigger: TUpdateTrigger); override;
-    function GetDisplayName: string; override;
-    procedure Notification(AComponent: TComponent; AOperation: TOperation); override;
+      APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+    procedure DoTargetUpdated(ASender: TObject; APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger);
+    procedure DoValidationErrorsChanged(Sender: TObject;
+      const Item: IValidationResult; Action: TCollectionChangedAction);
+    procedure DoValidationRulesChanged(Sender: TObject;
+      const Item: IValidationRule; Action: TCollectionChangedAction);
+
+    procedure EndUpdateSource;
+    procedure EndUpdateTarget;
+
+    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
+    function GetOnValidation: IEvent<TValidationEvent>;
+    function GetValidationErrors: IList<IValidationResult>;
+    function GetValidationRules: IList<IValidationRule>;
+
+    function IsUpdatingSource: Boolean;
+    function IsUpdatingTarget: Boolean;
+
+    procedure Notification(AComponent: TComponent; AOperation: TOperation);
     procedure RaiseValidationError;
-    procedure SetBindingMode(const Value: TBindingMode); override;
+
+    procedure SetActive(const Value: Boolean);
+    procedure SetBindingGroup(const Value: TBindingGroup);
+    procedure SetBindingMode(const Value: TBindingMode);
+    procedure SetConverter(const Value: IValueConverter);
+    procedure SetEnabled(const Value: Boolean);
     procedure SetSource(const Value: TObject);
     procedure SetSourceProperty;
     procedure SetSourcePropertyName(const Value: string);
+    procedure SetTarget(const Value: TObject);
+    procedure SetTargetProperty;
+    procedure SetTargetPropertyName(const Value: string);
+
     function ValidateCommitted: Boolean;
+  protected
+    function GetDisplayName: string; override;
   public
+    class constructor Create;
+    constructor Create(Collection: TCollection); overload; override;
     constructor Create(ASource: TObject = nil; ASourcePropertyName: string = '';
       ATarget: TObject = nil; ATargetPropertyName: string = '';
       ABindingMode: TBindingMode = BindingModeDefault;
@@ -208,24 +175,52 @@ type
 
     procedure Assign(Source: TPersistent); override;
     procedure UpdateSource(IgnoreBindingMode: Boolean = True);
-    procedure UpdateTarget(IgnoreBindingMode: Boolean = True); override;
-    function Validate: Boolean; override;
+    procedure UpdateTarget(IgnoreBindingMode: Boolean = True);
+    function Validate: Boolean;
 
-    procedure BeginEdit; override;
-    procedure CancelEdit; override;
-    procedure CommitEdit; override;
+    procedure BeginEdit;
+    procedure CancelEdit;
+    procedure CommitEdit;
 
+    property Active: Boolean read FActive write SetActive;
+    property BindingGroup: TBindingGroup read FBindingGroup write SetBindingGroup;
+    property Converter: IValueConverter read FConverter write SetConverter;
+    property OnPropertyChanged: IEvent<TPropertyChangedEvent>
+      read GetOnPropertyChanged;
+    property OnValidation: IEvent<TValidationEvent> read GetOnValidation;
     property SourceProperty: IMemberExpression read FSourceProperty;
+    property TargetProperty: IMemberExpression read FTargetProperty;
+    property ValidationErrors: IList<IValidationResult> read GetValidationErrors;
+    property ValidationRules: IList<IValidationRule> read GetValidationRules;
   published
+    property BindingMode: TBindingMode read FBindingMode write SetBindingMode
+      default BindingModeDefault;
+    property Enabled: Boolean read FEnabled write SetEnabled default True;
+    property Managed: Boolean read FManaged write FManaged default True;
     property NotifyOnSourceUpdated: Boolean read FNotifyOnSourceUpdated
       write FNotifyOnSourceUpdated default False;
+    property NotifyOnTargetUpdated: Boolean read FNotifyOnTargetUpdated
+      write FNotifyOnTargetUpdated default False;
     property OnSourceUpdated: TPropertyChangedEvent read FOnSourceUpdated
       write FOnSourceUpdated;
+    property OnTargetUpdated: TPropertyChangedEvent read FOnTargetUpdated
+      write FOnTargetUpdated;
+    property PreventFocusChange: Boolean
+      read FPreventFocusChange write FPreventFocusChange default False;
     property Source: TObject read FSource write SetSource;
     property SourcePropertyName: string read FSourcePropertyName
       write SetSourcePropertyName;
     property SourceUpdateTrigger: TUpdateTrigger read FSourceUpdateTrigger
       write FSourceUpdateTrigger default UpdateTriggerDefault;
+    property Target: TObject read FTarget write SetTarget;
+    property TargetPropertyName: string read FTargetPropertyName
+      write SetTargetPropertyName;
+    property TargetUpdateTrigger: TUpdateTrigger read FTargetUpdateTrigger
+      write FTargetUpdateTrigger default UpdateTriggerDefault;
+    property TriggerMode: TTriggerMode read FTriggerMode
+      write FTriggerMode default TriggerModeDefault;
+    property ValidatesOnDataErrors: Boolean
+      read FValidatesOnDataErrors write FValidatesOnDataErrors default False;
   end;
 
   IBindable = interface
@@ -403,38 +398,14 @@ begin
   FTargetPropertyName := ATargetPropertyName;
 end;
 
-{ TBindingBase }
+{ TBinding }
 
-procedure TBindingBase.Assign(Source: TPersistent);
-begin
-  if Assigned(Source) and (Source is TBindingBase) then
-  begin
-    Active := TBindingBase(Source).Active;
-//    BindingGroup := TBindingBase(Source).BindingGroup;
-    Converter := TBindingBase(Source).Converter;
-    Enabled := TBindingBase(Source).Enabled;
-    Target := TBindingBase(Source).Target;
-    TargetPropertyName := TBindingBase(Source).TargetPropertyName;
-    TargetUpdateTrigger := TBindingBase(Source).TargetUpdateTrigger;
-  end;
-end;
-
-procedure TBindingBase.BeginUpdateSource;
-begin
-  Inc(FUpdateSourceCount);
-end;
-
-procedure TBindingBase.BeginUpdateTarget;
-begin
-  Inc(FUpdateTargetCount);
-end;
-
-class constructor TBindingBase.Create;
+class constructor TBinding.Create;
 begin
   DataErrorValidationRule := TDataErrorValidationRule.Create();
 end;
 
-constructor TBindingBase.Create(Collection: TCollection);
+constructor TBinding.Create(Collection: TCollection);
 begin
   inherited;
 
@@ -451,13 +422,38 @@ begin
   begin
     FBindingGroup := TBindingGroup(Collection.Owner);
     FManaged := Assigned(FBindingGroup);
-    FActive := FEnabled and Assigned(FBindingGroup) 
+    FActive := FEnabled and Assigned(FBindingGroup)
       and not (csDesigning in FBindingGroup.ComponentState);
   end;
 end;
 
-destructor TBindingBase.Destroy;
+constructor TBinding.Create(ASource: TObject; ASourcePropertyName: string;
+  ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
+  AConverter: IValueConverter);
 begin
+  Create(nil);
+  FActive := False;
+
+  FBindingMode := ABindingMode;
+
+  FSourcePropertyName := ASourcePropertyName;
+  SetSource(ASource);
+  FTargetPropertyName := ATargetPropertyName;
+  SetTarget(ATarget);
+
+  SetConverter(AConverter);
+  FActive := True;
+
+  UpdateTarget(True);
+end;
+
+destructor TBinding.Destroy;
+begin
+  if IsValid(FSource) then  // workaround for already freed non TComponent source
+  begin
+    SetSource(nil);
+  end;
+
   SetBindingGroup(nil);
   SetTarget(nil);
 
@@ -468,234 +464,20 @@ begin
   inherited;
 end;
 
-procedure TBindingBase.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
-end;
-
-procedure TBindingBase.DoTargetUpdated(ASender: TObject; APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  if FNotifyOnTargetUpdated and Assigned(FOnTargetUpdated) then
-  begin
-    FOnTargetUpdated(ASender, APropertyName, AUpdateTrigger);
-  end;
-end;
-
-procedure TBindingBase.DoValidationErrorsChanged(Sender: TObject;
-  const Item: IValidationResult; Action: TCollectionChangedAction);
-begin
-  DoPropertyChanged('ValidationErrors');
-end;
-
-procedure TBindingBase.DoValidationRulesChanged(Sender: TObject;
-  const Item: IValidationRule; Action: TCollectionChangedAction);
-begin
-  Validate();
-  DoPropertyChanged('ValidationRules');
-end;
-
-procedure TBindingBase.EndUpdateSource;
-begin
-  Dec(FUpdateSourceCount);
-end;
-
-procedure TBindingBase.EndUpdateTarget;
-begin
-  Dec(FUpdateTargetCount);
-end;
-
-function TBindingBase.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
-begin
-  Result := FOnPropertyChanged;
-end;
-
-function TBindingBase.GetOnValidation: IEvent<TValidationEvent>;
-begin
-  Result := FOnValidation;
-end;
-
-function TBindingBase.GetUpdatingSource: Boolean;
-begin
-  Result := FUpdateSourceCount > 0;
-end;
-
-function TBindingBase.GetUpdatingTarget: Boolean;
-begin
-  Result := FUpdateTargetCount > 0;
-end;
-
-function TBindingBase.GetValidationErrors: IList<IValidationResult>;
-begin
-  Result := FValidationErrors;
-end;
-
-function TBindingBase.GetValidationRules: IList<IValidationRule>;
-begin
-  Result := FValidationRules;
-end;
-
-procedure TBindingBase.Notification(AComponent: TComponent;
-  AOperation: TOperation);
-begin
-  if AOperation = opRemove then
-  begin
-    if AComponent = FTarget then
-    begin
-      FTarget := nil;
-      if not FManaged then
-      begin
-        Free;
-      end;
-    end;
-  end;
-end;
-
-function TBindingBase.QueryInterface(const IID: TGUID; out Obj): HResult;
-begin
-  if GetInterface(IID, Obj) then
-    Result := 0
-  else
-    Result := E_NOINTERFACE;
-end;
-
-procedure TBindingBase.SetActive(const Value: Boolean);
-begin
-  if FEnabled and (FActive <> Value) then
-  begin
-    FActive := Value;
-
-    if FActive then
-    begin
-      UpdateTarget(True);
-    end;
-  end;
-end;
-
-procedure TBindingBase.SetBindingGroup(const Value: TBindingGroup);
-begin
-  if FBindingGroup <> Value then
-  begin
-    FBindingGroup := Value;
-
-    if Assigned(FBindingGroup) then
-    begin
-      Collection := FBindingGroup.Bindings;
-    end;
-  end;
-end;
-
-procedure TBindingBase.SetBindingMode(const Value: TBindingMode);
-begin
-  FBindingMode := Value;
-
-  SetTargetProperty();
-end;
-
-procedure TBindingBase.SetConverter(const Value: IValueConverter);
-begin
-  if FConverter <> Value then
-  begin
-    FConverter := Value;
-    CompileExpressions();
-    UpdateTarget(True);
-  end;
-end;
-
-procedure TBindingBase.SetEnabled(const Value: Boolean);
-begin
-  FEnabled := Value;
-  if not FEnabled and FActive then
-  begin
-    FActive := False;
-  end;
-end;
-
-procedure TBindingBase.SetTarget(const Value: TObject);
-var
-  LNotifyPropertyChanged: INotifyPropertyChanged;
-  LPropertyChanged: IEvent<TPropertyChangedEvent>;
-begin
-  if FTarget <> Value then
-  begin
-    if Assigned(FTarget) then
-    begin
-      if FTarget is TComponent then
-      begin
-        TComponent(FTarget).RemoveFreeNotification(FNotificationHandler);
-      end;
-
-      if Supports(FTarget, INotifyPropertyChanged, LNotifyPropertyChanged) then
-      begin
-        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Remove(DoTargetPropertyChanged);
-      end;
-    end;
-
-    FTarget := Value;
-    SetTargetProperty();
-
-    if Assigned(FTarget) then
-    begin
-      if FTarget is TComponent then
-      begin
-        TComponent(FTarget).FreeNotification(FNotificationHandler);
-      end;
-
-      if Supports(FTarget, INotifyPropertyChanged, LNotifyPropertyChanged) then
-      begin
-        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Add(DoTargetPropertyChanged);
-      end;
-    end;
-
-    UpdateTarget(True);
-  end;
-end;
-
-procedure TBindingBase.SetTargetProperty;
-begin
-  FTargetProperty := Expression.PropertyAccess(
-    Expression.Constant(FTarget), FTargetPropertyName);
-
-  CompileExpressions();
-end;
-
-procedure TBindingBase.SetTargetPropertyName(const Value: string);
-begin
-  if not SameText(FTargetPropertyName, Value) then
-  begin
-    FTargetPropertyName := Value;
-    if Assigned(FTarget) then
-    begin
-      SetTargetProperty();
-
-      UpdateTarget(True);
-    end;
-  end;
-end;
-
-function TBindingBase._AddRef: Integer;
-begin
-  Result := -1;
-end;
-
-function TBindingBase._Release: Integer;
-begin
-  Result := -1;
-end;
-
-{ TBinding }
-
 procedure TBinding.Assign(Source: TPersistent);
 begin
-  inherited;
   if Assigned(Source) and (Source is TBinding) then
   begin
+    Self.Active := TBinding(Source).Active;
+//    Self.BindingGroup := TBinding(Source).BindingGroup;
+    Self.Converter := TBinding(Source).Converter;
+    Self.Enabled := TBinding(Source).Enabled;
     Self.Source := TBinding(Source).Source;
     Self.SourcePropertyName := TBinding(Source).SourcePropertyName;
     Self.SourceUpdateTrigger := TBinding(Source).SourceUpdateTrigger;
+    Self.Target := TBinding(Source).Target;
+    Self.TargetPropertyName := TBinding(Source).TargetPropertyName;
+    Self.TargetUpdateTrigger := TBinding(Source).TargetUpdateTrigger;
   end;
 end;
 
@@ -708,6 +490,16 @@ begin
   begin
     LEditable.BeginEdit();
   end;
+end;
+
+procedure TBinding.BeginUpdateSource;
+begin
+  Inc(FUpdateSourceCount);
+end;
+
+procedure TBinding.BeginUpdateTarget;
+begin
+  Inc(FUpdateTargetCount);
 end;
 
 procedure TBinding.CancelEdit;
@@ -730,6 +522,22 @@ begin
   begin
     LEditable.EndEdit();
   end;
+end;
+
+function TBinding.CanUpdateSource(AUpdateTrigger: TUpdateTrigger): Boolean;
+begin
+  Result := FActive and not IsUpdatingSource
+    and (FBindingMode in [bmTwoWay..bmOneWayToSource])
+    and (AUpdateTrigger = FSourceUpdateTrigger)
+    and ((FTriggerMode = tmTwoWay) or not IsUpdatingTarget);
+end;
+
+function TBinding.CanUpdateTarget(AUpdateTrigger: TUpdateTrigger): Boolean;
+begin
+  Result := FActive and not IsUpdatingTarget
+    and (FBindingMode in [bmOneWay..bmTwoWay])
+    and (AUpdateTrigger = FTargetUpdateTrigger)
+    and ((FTriggerMode = tmTwoWay) or not IsUpdatingSource);
 end;
 
 procedure TBinding.CompileExpressions;
@@ -776,34 +584,32 @@ begin
   end;
 end;
 
-constructor TBinding.Create(ASource: TObject; ASourcePropertyName: string;
-  ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
-  AConverter: IValueConverter);
+procedure TBinding.DoTargetUpdated(ASender: TObject; APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
 begin
-  Create(nil);
-  FActive := False;
-
-  FBindingMode := ABindingMode;
-
-  FSourcePropertyName := ASourcePropertyName;
-  SetSource(ASource);
-  FTargetPropertyName := ATargetPropertyName;
-  SetTarget(ATarget);
-
-  SetConverter(AConverter);
-  FActive := True;
-
-  UpdateTarget(True);
+  if FNotifyOnTargetUpdated and Assigned(FOnTargetUpdated) then
+  begin
+    FOnTargetUpdated(ASender, APropertyName, AUpdateTrigger);
+  end;
 end;
 
-destructor TBinding.Destroy;
+procedure TBinding.DoValidationErrorsChanged(Sender: TObject;
+  const Item: IValidationResult; Action: TCollectionChangedAction);
 begin
-  if IsValid(FSource) then  // workaround for already freed non TComponent source
-  begin
-    SetSource(nil);
-  end;
+  DoPropertyChanged('ValidationErrors');
+end;
 
-  inherited;
+procedure TBinding.DoValidationRulesChanged(Sender: TObject;
+  const Item: IValidationRule; Action: TCollectionChangedAction);
+begin
+  Validate();
+  DoPropertyChanged('ValidationRules');
+end;
+
+procedure TBinding.DoPropertyChanged(const APropertyName: string;
+  AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
 end;
 
 procedure TBinding.DoSourceCollectionChanged(Sender: TObject;
@@ -822,8 +628,7 @@ end;
 procedure TBinding.DoSourcePropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  if not UpdatingTarget and (FBindingMode in [bmOneWay..bmTwoWay])
-    and (AUpdateTrigger = FTargetUpdateTrigger)
+  if CanUpdateTarget(AUpdateTrigger)
     and IsRootProperty(APropertyName, FSourceProperty) then
   begin
     BeginUpdateTarget();
@@ -849,8 +654,7 @@ end;
 procedure TBinding.DoTargetPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  if not UpdatingSource and (FBindingMode in [bmTwoWay..bmOneWayToSource])
-    and (AUpdateTrigger = FSourceUpdateTrigger)
+  if CanUpdateSource(AUpdateTrigger)
     and IsRootProperty(APropertyName, FTargetProperty) then
   begin
     BeginUpdateSource();
@@ -880,6 +684,16 @@ begin
   end;
 end;
 
+procedure TBinding.EndUpdateSource;
+begin
+  Dec(FUpdateSourceCount);
+end;
+
+procedure TBinding.EndUpdateTarget;
+begin
+  Dec(FUpdateTargetCount);
+end;
+
 function TBinding.GetDisplayName: string;
 const
   BindingModeNames: array[TBindingMode] of string = ('-->', '<->', '<--', '*->');
@@ -900,10 +714,38 @@ begin
   end;
 end;
 
+function TBinding.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
+begin
+  Result := FOnPropertyChanged;
+end;
+
+function TBinding.GetOnValidation: IEvent<TValidationEvent>;
+begin
+  Result := FOnValidation;
+end;
+
+function TBinding.GetValidationErrors: IList<IValidationResult>;
+begin
+  Result := FValidationErrors;
+end;
+
+function TBinding.GetValidationRules: IList<IValidationRule>;
+begin
+  Result := FValidationRules;
+end;
+
+function TBinding.IsUpdatingSource: Boolean;
+begin
+  Result := FUpdateSourceCount > 0;
+end;
+
+function TBinding.IsUpdatingTarget: Boolean;
+begin
+  Result := FUpdateTargetCount > 0;
+end;
+
 procedure TBinding.Notification(AComponent: TComponent; AOperation: TOperation);
 begin
-  inherited;
-
   if AOperation = opRemove then
   begin
     if AComponent = FSource then
@@ -914,7 +756,24 @@ begin
         Free;
       end;
     end;
+
+    if AComponent = FTarget then
+    begin
+      FTarget := nil;
+      if not FManaged then
+      begin
+        Free;
+      end;
+    end;
   end;
+end;
+
+function TBinding.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
 end;
 
 procedure TBinding.RaiseValidationError;
@@ -922,11 +781,60 @@ begin
   raise EValidationError.Create(Self);
 end;
 
+procedure TBinding.SetActive(const Value: Boolean);
+begin
+  if FEnabled and (FActive <> Value) then
+  begin
+    FActive := Value;
+
+    if FActive then
+    begin
+      UpdateTarget(True);
+    end;
+  end;
+end;
+
+procedure TBinding.SetBindingGroup(const Value: TBindingGroup);
+begin
+  if FBindingGroup <> Value then
+  begin
+    FBindingGroup := Value;
+
+    if Assigned(FBindingGroup) then
+    begin
+      Collection := FBindingGroup.Bindings;
+    end;
+  end;
+end;
+
 procedure TBinding.SetBindingMode(const Value: TBindingMode);
 begin
-  inherited;
+  if FBindingMode <> Value then
+  begin
+    FBindingMode := Value;
 
-  SetSourceProperty();
+    SetTargetProperty();
+    SetSourceProperty();
+  end;
+end;
+
+procedure TBinding.SetConverter(const Value: IValueConverter);
+begin
+  if FConverter <> Value then
+  begin
+    FConverter := Value;
+    CompileExpressions();
+    UpdateTarget(True);
+  end;
+end;
+
+procedure TBinding.SetEnabled(const Value: Boolean);
+begin
+  FEnabled := Value;
+  if not FEnabled and FActive then
+  begin
+    FActive := False;
+  end;
 end;
 
 procedure TBinding.SetSource(const Value: TObject);
@@ -1018,6 +926,70 @@ begin
     if Assigned(FSource) then
     begin
       SetSourceProperty;
+
+      UpdateTarget(True);
+    end;
+  end;
+end;
+
+procedure TBinding.SetTarget(const Value: TObject);
+var
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+  LPropertyChanged: IEvent<TPropertyChangedEvent>;
+begin
+  if FTarget <> Value then
+  begin
+    if Assigned(FTarget) then
+    begin
+      if FTarget is TComponent then
+      begin
+        TComponent(FTarget).RemoveFreeNotification(FNotificationHandler);
+      end;
+
+      if Supports(FTarget, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      begin
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Remove(DoTargetPropertyChanged);
+      end;
+    end;
+
+    FTarget := Value;
+    SetTargetProperty();
+
+    if Assigned(FTarget) then
+    begin
+      if FTarget is TComponent then
+      begin
+        TComponent(FTarget).FreeNotification(FNotificationHandler);
+      end;
+
+      if Supports(FTarget, INotifyPropertyChanged, LNotifyPropertyChanged) then
+      begin
+        LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
+        LPropertyChanged.Add(DoTargetPropertyChanged);
+      end;
+    end;
+
+    UpdateTarget(True);
+  end;
+end;
+
+procedure TBinding.SetTargetProperty;
+begin
+  FTargetProperty := Expression.PropertyAccess(
+    Expression.Constant(FTarget), FTargetPropertyName);
+
+  CompileExpressions();
+end;
+
+procedure TBinding.SetTargetPropertyName(const Value: string);
+begin
+  if not SameText(FTargetPropertyName, Value) then
+  begin
+    FTargetPropertyName := Value;
+    if Assigned(FTarget) then
+    begin
+      SetTargetProperty();
 
       UpdateTarget(True);
     end;
@@ -1166,13 +1138,23 @@ begin
 
   if FValidatesOnDataErrors then
   begin
-    LValidationResult := TBindingBase.DataErrorValidationRule.Validate(TValue.From<TBinding>(Self));
+    LValidationResult := DataErrorValidationRule.Validate(TValue.From<TBinding>(Self));
     if not LValidationResult.IsValid then
     begin
       FValidationErrors.Add(LValidationResult);
       Result := False;
     end;
   end;
+end;
+
+function TBinding._AddRef: Integer;
+begin
+  Result := -1;
+end;
+
+function TBinding._Release: Integer;
+begin
+  Result := -1;
 end;
 
 { TBindingGroup }

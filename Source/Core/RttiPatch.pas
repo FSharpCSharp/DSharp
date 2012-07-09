@@ -18,6 +18,9 @@ uses
   TypInfo,
   Windows;
 
+var
+  IsPatched: Boolean = False;
+
 {--------------------------------------------------------------------------------------------------}
 
 type
@@ -567,13 +570,14 @@ begin
 end;
 
 initialization
-  if ExtractFileName(ParamStr(0)) <> 'bds.exe' then
+  if not IsPatched and (ExtractFileName(ParamStr(0)) <> 'bds.exe') then
   try
     PatchRtti;
+    IsPatched := True;
   except
     on e: Exception do
       if not (e is EAbort) then
-//        MessageBox(0, PChar(e.ClassName + ': ' + e.Message), PChar(ExtractFileName(ParamStr(0))), MB_OK or MB_ICONERROR);
+        MessageBox(0, PChar(e.ClassName + ': ' + e.Message), PChar(ExtractFileName(ParamStr(0))), MB_OK or MB_ICONERROR);
   end;
 {$IFEND}
 {$IFEND}

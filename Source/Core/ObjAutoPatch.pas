@@ -10,6 +10,9 @@ implementation
 uses
   ObjAuto, PatchUtils, SysUtils, TypInfo, Windows;
 
+var
+  IsPatched: Boolean = False;
+
 {--------------------------------------------------------------------------------------------------}
 
 const
@@ -108,9 +111,10 @@ begin
 end;
 
 initialization
-  if ExtractFileName(ParamStr(0)) <> 'bds.exe' then
+  if not IsPatched and (ExtractFileName(ParamStr(0)) <> 'bds.exe') then
   try
     PatchObjAuto;
+    IsPatched := True;
   except
     on e: Exception do
       if not (e is EAbort) then

@@ -170,7 +170,10 @@ end;
 procedure TCustomPresenter.DoColumnDefinitionsChanged(Sender: TObject;
   const Item: TColumnDefinition; Action: TCollectionNotification);
 begin
-  InitColumns();
+  if not (csDesigning in ComponentState) then
+  begin
+    InitColumns();
+  end;
 end;
 
 procedure TCustomPresenter.DoDblClick(Sender: TObject);

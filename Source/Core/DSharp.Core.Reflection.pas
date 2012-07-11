@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -296,6 +296,7 @@ type
   private
     function GetParameterCount: Integer;
   public
+    function Format(const Args: array of TValue; SkipSelf: Boolean = True): string;
     property ParameterCount: Integer read GetParameterCount;
   end;
 
@@ -1137,6 +1138,24 @@ begin
 end;
 
 { TRttiMethodHelper }
+
+function TRttiMethodHelper.Format(const Args: array of TValue;
+  SkipSelf: Boolean): string;
+begin
+  Result := StripUnitName(Parent.Name) + '.' + Name + '(';
+  if SkipSelf then
+  begin
+    if Length(Args) > 1 then
+    begin
+      Result := Result + TValue.ToString(@Args[1]);
+    end;
+  end
+  else
+  begin
+    Result := Result + TValue.ToString(@Args[0])
+  end;
+  Result := Result + ')';
+end;
 
 function TRttiMethodHelper.GetParameterCount: Integer;
 begin

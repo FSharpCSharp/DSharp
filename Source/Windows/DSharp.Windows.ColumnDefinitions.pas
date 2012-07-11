@@ -44,6 +44,7 @@ uses
   Types;
 
 const
+  CDefaultMinWidth = 30;
   CDefaultWidth = 100;
 
 type
@@ -78,6 +79,7 @@ type
     FImageIndexOffset: Integer;
     FImageIndexPropertyExpression: IMemberExpression;
     FImageIndexPropertyName: string;
+    FMinWidth: Integer;
     FOnCustomDraw: TCustomDrawEvent;
     FOnGetHint: TGetHintEvent;
     FOnGetImageIndex: TGetImageIndexEvent;
@@ -105,6 +107,7 @@ type
     property HintPropertyName: string read FHintPropertyName write SetHintPropertyName;
     property ImageIndexOffset: Integer read FImageIndexOffset write FImageIndexOffset default 0;
     property ImageIndexPropertyName: string read FImageIndexPropertyName write SetImageIndexPropertyName;
+    property MinWidth: Integer read FMinWidth write FMinWidth default CDefaultMinWidth;
     property OnCustomDraw: TCustomDrawEvent read FOnCustomDraw write FOnCustomDraw;
     property OnGetHint: TGetHintEvent read FOnGetHint write FOnGetHint;
     property OnGetImageIndex: TGetImageIndexEvent read FOnGetImageIndex write FOnGetImageIndex;
@@ -118,7 +121,8 @@ type
   IColumnDefinitions = interface
     ['{FBD9C07D-E910-4291-AF4C-E7786E83372A}']
     function Add(const Caption: string; Width: Integer = CDefaultWidth;
-      Alignment: TAlignment = taLeftJustify): TColumnDefinition;
+      Alignment: TAlignment = taLeftJustify;
+      MinWidth: Integer = CDefaultMinWidth): TColumnDefinition;
     function GetCount: Integer;
     function GetItem(Index: Integer): TColumnDefinition;
     function GetMainColumnIndex: Integer;
@@ -147,7 +151,8 @@ type
   public
     constructor Create(AOwner: TPersistent = nil); override; final;
     function Add(const Caption: string; Width: Integer = CDefaultWidth;
-      Alignment: TAlignment = taLeftJustify): TColumnDefinition; overload;
+      Alignment: TAlignment = taLeftJustify;
+      MinWidth: Integer = CDefaultMinWidth): TColumnDefinition; overload;
   end;
 
 implementation
@@ -162,6 +167,7 @@ uses
 constructor TColumnDefinition.Create(Collection: TCollection);
 begin
   inherited;
+  FMinWidth := CDefaultMinWidth;
   FVisible := True;
   FWidth := CDefaultWidth;
 end;
@@ -175,6 +181,7 @@ begin
     LSource := TColumnDefinition(Source);
     Caption := LSource.Caption;
     CustomFilter := LSource.CustomFilter;
+    MinWidth := LSource.MinWidth;
     ImageIndexPropertyName := LSource.ImageIndexPropertyName;
     OnCustomDraw := LSource.OnCustomDraw;
     OnGetText := LSource.OnGetText;
@@ -280,11 +287,12 @@ begin
 end;
 
 function TColumnDefinitions.Add(const Caption: string;
-  Width: Integer; Alignment: TAlignment): TColumnDefinition;
+  Width: Integer; Alignment: TAlignment; MinWidth: Integer): TColumnDefinition;
 begin
   Result := TColumnDefinition.Create(nil);
   Result.Alignment := Alignment;
   Result.Caption := Caption;
+  Result.MinWidth := MinWidth;
   Result.Width := Width;
   Result.Collection := Self;
 end;

@@ -21,6 +21,9 @@ type
 
 implementation
 
+uses
+  DSharp.Testing.Mock.Sequences;
+
 procedure TestTProtocolServer.SetUp;
 begin
   FProtocolServer := TProtocolServer.Create(FMockServer);
@@ -36,14 +39,22 @@ end;
 procedure TestTProtocolServer.TestCommunicate;
 var
   ReturnValue: Boolean;
+  seq: Sequence;
 begin
   // define expectations
-  FMockServer.WillReturn(True).Once.InSequence.WhenCallingWithAnyArguments.SendMessage('');
-  FMockServer.WillReturn('This is the message from the server!').Once.InSequence.WhenCalling.ReceiveMessage();
+  FMockServer.WillReturn(True)
+    .InSequence(seq).Once
+    .WhenCallingWithAnyArguments.SendMessage('');
+
+  FMockServer.WillReturn('This is the message from the server!')
+    .InSequence(seq).Once
+    .WhenCalling.ReceiveMessage();
 
   ReturnValue := FProtocolServer.Communicate;
+
   CheckTrue(ReturnValue, 'Communication with the Server Failed');
   FMockServer.Verify; // optional: can check if all expectations were met
+  seq.Verify;
 end;
 
 procedure TestTProtocolServer.TestCommunicate_NotCallingReceiveMessage_When_SendMessageReturnsFalse;

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -112,7 +112,7 @@ var
   LType: TRttiType;
 type
   PVtable = ^TVtable;
-  TVtable = array[0..2] of Pointer;
+  TVtable = array[0..MaxInt div SizeOf(Pointer) - 1] of Pointer;
 begin
   LType := FContext.GetType(TypeInfo);
   FInterfaceID := TRttiInterfaceType(LType).GUID;

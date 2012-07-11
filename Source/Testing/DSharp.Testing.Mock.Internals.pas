@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,69 +32,29 @@ unit DSharp.Testing.Mock.Internals;
 interface
 
 uses
+  DSharp.Core.Times,
 {$IF COMPILERVERSION < 23}
   DSharp.Core.VirtualInterface,
 {$IFEND}
+  DSharp.Testing.Mock.Expectation,
   DSharp.Testing.Mock.Interfaces,
   Generics.Collections,
   Rtti,
-  SysUtils,
-  TestFramework;
+  SysUtils;
 
 type
-  TCountMatcher = record
-  private
-    FMin: Cardinal;
-    FMax: Cardinal;
-  public
-    constructor Create(const Min, Max: Cardinal);
-
-    property Min: Cardinal read FMin;
-    property Max: Cardinal read FMax;
-
-    class operator Equal(const Matcher: TCountMatcher; const Value: Cardinal): Boolean;
-    class operator GreaterThanOrEqual(const Matcher: TCountMatcher; const Value: Cardinal): Boolean;
-  end;
-
-  TExpectation = class
-  private
-    FAction: TMockAction;
-    FAnyArguments: Boolean;
-    FArguments: TArray<TValue>;
-    FCallCount: Cardinal;
-    FException: TFunc<Exception>;
-    FCountMatcher: TCountMatcher;
-    FMethod: TRttiMethod;
-    FResult: TValue;
-  public
-    destructor Destroy; override;
-
-    function CanCall: Boolean;
-    function Execute(const Arguments: TArray<TValue>;
-      ReturnType: TRttiType): TValue;
-    function HasBeenMet: Boolean;
-
-    property Action: TMockAction read FAction write FAction;
-    property AnyArguments: Boolean read FAnyArguments write FAnyArguments;
-    property Arguments: TArray<TValue> read FArguments write FArguments;
-    property CallCount: Cardinal read FCallCount write FCallCount;
-    property Exception: TFunc<Exception> read FException write FException;
-    property Matcher: TCountMatcher read FCountMatcher write FCountMatcher;
-    property Method: TRttiMethod read FMethod write FMethod;
-    property Result: TValue read FResult write FResult;
-  end;
-
   TMockState = (msDefining, msExecuting);
   TMockType = (mtUndefined, mtObject, mtInterface);
 
-  TMockWrapper<T> = class(TInterfacedObject, IMock<T>, IExpect<T>, IWhen<T>, ISequence<T>)
+  TMockWrapper<T> = class(TInterfacedObject,
+    IMock<T>, IExpect<T>, IExpectInSequence<T>, IWhen<T>)
   private
     FCurrentExpectation: TExpectation;
+    FCurrentSequence: ISequence;
     FExpectations: TObjectList<TExpectation>;
     FInstance: T;
     FInterceptor: TVirtualMethodInterceptor;
     FMode: TMockMode;
-    FSequences: TDictionary<string, TList<TExpectation>>;
     FState: TMockState;
     FType: TMockType;
     procedure CreateInterfaceMock(AType: TRttiType);
@@ -109,6 +69,7 @@ type
     function GetInstance: T;
     function GetMode: TMockMode;
     function HasExpectation(Method: TRttiMethod): Boolean;
+    procedure SetExpectedTimes(const Times: Times);
     procedure SetMode(const Value: TMockMode);
   public
     constructor Create;
@@ -116,37 +77,33 @@ type
     procedure Verify;
 
     // IExpect<T>
-    function AtLeast(const Count: Cardinal): ISequence<T>;
-    function AtLeastOnce: ISequence<T>;
-    function AtMost(const Count: Cardinal): ISequence<T>;
-    function AtMostOnce: ISequence<T>;
-    function Between(const LowValue, HighValue: Cardinal): ISequence<T>;
-    function Exactly(const Count: Cardinal): ISequence<T>;
+    function Any: IWhen<T>;
+    function AtLeast(const Count: Cardinal): IWhen<T>;
+    function AtLeastOnce: IWhen<T>;
+    function AtMost(const Count: Cardinal): IWhen<T>;
+    function AtMostOnce: IWhen<T>;
+    function Between(const LowValue, HighValue: Cardinal): IWhen<T>;
+    function Exactly(const Count: Cardinal): IWhen<T>;
     function Never: IWhen<T>;
-    function Once: ISequence<T>;
+    function Once: IWhen<T>;
+
+    // IExpectInSequence<T>
+    function InSequence(Sequence: ISequence): IExpect<T>;
 
     // IWhen<T>
     function WhenCalling: T;
     function WhenCallingWithAnyArguments: T;
 
-    // ISequence<T>
-    function InSequence(const Name: string = ''): IWhen<T>;
-
     // IMock<T>
-    function WillExecute(const Action: TMockAction): IExpect<T>;
-    function WillRaise(const E: TFunc<Exception>): IExpect<T>;
-    function WillReturn(const Value: TValue): IExpect<T>;
+    function WillExecute(const Action: TMockAction): IExpectInSequence<T>;
+    function WillRaise(const E: TFunc<Exception>): IExpectInSequence<T>;
+    function WillReturn(const Value: TValue): IExpectInSequence<T>;
   end;
 
-  EMockException = ETestFailure;
-
 const
-  CCreationError = 'unable to create mock for type: %0:s';
+  CCreationError = 'unable to create mock for type: %s (contains no methods or typeinfo)';
   CUnmetExpectations = 'not all expected invocations were performed';
-  CUnmetSequencialExpectations = 'not all sequencial invocations were performed';
-  CUnexpectedInvocation = 'unexpected invocation of: %0:s.%1:s(%2:s)';
-
-  Undefined = Cardinal(-1);
+  CUnexpectedInvocation = 'unexpected invocation of: %s';
 
 type
   Mock<T> = class(TVirtualInterface);
@@ -158,27 +115,6 @@ uses
   RTLConsts,
   TypInfo;
 
-{ TCountMatcher }
-
-constructor TCountMatcher.Create(const Min, Max: Cardinal);
-begin
-  FMin := Min;
-  FMax := Max;
-end;
-
-class operator TCountMatcher.Equal(const Matcher: TCountMatcher;
-  const Value: Cardinal): Boolean;
-begin
-  Result := ((Matcher.Min = Undefined) or (Matcher.Min <= Value))
-    and ((Matcher.Max = Undefined) or (Matcher.Max >= Value));
-end;
-
-class operator TCountMatcher.GreaterThanOrEqual(const Matcher: TCountMatcher;
-  const Value: Cardinal): Boolean;
-begin
-  Result := (Matcher.Max = Undefined) or (Matcher.Max >= Value);
-end;
-
 { TMockWrapper<T> }
 
 constructor TMockWrapper<T>.Create;
@@ -186,7 +122,6 @@ var
   LType: TRttiType;
 begin
   FExpectations := TObjectList<TExpectation>.Create(True);
-  FSequences := TObjectDictionary<string, TList<TExpectation>>.Create([doOwnsValues]);
   FState := msExecuting;
   LType := GetRttiType(TypeInfo(T));
   if LType is TRttiInstanceType then
@@ -209,7 +144,6 @@ begin
   begin
     DestroyObjectMock();
   end;
-  FSequences.Free();
   FExpectations.Free();
 end;
 
@@ -271,70 +205,67 @@ begin
       if Assigned(FCurrentExpectation) then
       begin
         Result := FCurrentExpectation.Execute(Args, Method.ReturnType);
-
-        for LSequence in FSequences.Values do
-        begin
-          if (LSequence.Count > 0) and (LSequence[0] = FCurrentExpectation)
-            and not LSequence[0].CanCall then
-          begin
-            LSequence.Delete(0);
-          end;
-        end;
       end
       else
       begin
         raise EMockException.CreateFmt(CUnexpectedInvocation, [
-          StripUnitName(Method.Parent.Name), Method.Name, TValue.ToString(@Args[0])]);
+          Method.Format(Args, True)]);
       end;
     end;
   end;
 end;
 
-function TMockWrapper<T>.AtLeast(const Count: Cardinal): ISequence<T>;
+function TMockWrapper<T>.Any: IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(Count, Undefined);
+  SetExpectedTimes(Times.Any);
   Result := Self;
 end;
 
-function TMockWrapper<T>.AtLeastOnce: ISequence<T>;
+function TMockWrapper<T>.AtLeast(const Count: Cardinal): IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(1, Undefined);
+  SetExpectedTimes(Times.AtLeast(Count));
   Result := Self;
 end;
 
-function TMockWrapper<T>.AtMost(const Count: Cardinal): ISequence<T>;
+function TMockWrapper<T>.AtLeastOnce: IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(Undefined, Count);
+  SetExpectedTimes(Times.AtLeastOnce);
   Result := Self;
 end;
 
-function TMockWrapper<T>.AtMostOnce: ISequence<T>;
+function TMockWrapper<T>.AtMost(const Count: Cardinal): IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(Undefined, 1);
+  SetExpectedTimes(Times.AtMost(Count));
   Result := Self;
 end;
 
-function TMockWrapper<T>.Between(const LowValue, HighValue: Cardinal): ISequence<T>;
+function TMockWrapper<T>.AtMostOnce: IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(LowValue, HighValue);
+  SetExpectedTimes(Times.AtMostOnce);
   Result := Self;
 end;
 
-function TMockWrapper<T>.Exactly(const Count: Cardinal): ISequence<T>;
+function TMockWrapper<T>.Between(const LowValue, HighValue: Cardinal): IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(Count, Count);
+  SetExpectedTimes(Times.Between(LowValue, HighValue));
+  Result := Self;
+end;
+
+function TMockWrapper<T>.Exactly(const Count: Cardinal): IWhen<T>;
+begin
+  SetExpectedTimes(Times.Exactly(Count));
   Result := Self;
 end;
 
 function TMockWrapper<T>.Never: IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(0, 0);
+  SetExpectedTimes(Times.Never);
   Result := Self;
 end;
 
-function TMockWrapper<T>.Once: ISequence<T>;
+function TMockWrapper<T>.Once: IWhen<T>;
 begin
-  FCurrentExpectation.Matcher := TCountMatcher.Create(1, 1);
+  SetExpectedTimes(Times.Once);
   Result := Self;
 end;
 
@@ -350,7 +281,7 @@ begin
     if (LExpectation.Method = Method)
       // and argument values match if they need to
       and (LExpectation.AnyArguments or TValue.Equals(LExpectation.Arguments, Arguments))
-      and LExpectation.CanCall then
+      and LExpectation.AllowsInvocation then
     begin
       Result := LExpectation;
       Break;
@@ -383,17 +314,23 @@ begin
   end;
 end;
 
-function TMockWrapper<T>.InSequence(const Name: string): IWhen<T>;
-var
-  LSequence: TList<TExpectation>;
+function TMockWrapper<T>.InSequence(Sequence: ISequence): IExpect<T>;
 begin
-  if not FSequences.TryGetValue(Name, LSequence) then
-  begin
-    LSequence := TList<TExpectation>.Create;
-    FSequences.Add(Name, LSequence);
-  end;
-  LSequence.Add(FCurrentExpectation);
+  FCurrentSequence := Sequence;
   Result := Self;
+end;
+
+procedure TMockWrapper<T>.SetExpectedTimes(const Times: Times);
+begin
+  if Assigned(FCurrentSequence) then
+  begin
+    FCurrentSequence.ExpectInvocation(FCurrentExpectation, Times);
+    FCurrentSequence := nil;
+  end
+  else
+  begin
+    FCurrentExpectation.ExpectedCount := Times;
+  end;
 end;
 
 procedure TMockWrapper<T>.SetMode(const Value: TMockMode);
@@ -406,17 +343,9 @@ var
   LExpectation: TExpectation;
   LSequence: TList<TExpectation>;
 begin
-  for LSequence in FSequences.Values do
-  begin
-    if LSequence.Count > 0 then
-    begin
-      raise EMockException.Create(CUnmetSequencialExpectations);
-    end;
-  end;
-
   for LExpectation in FExpectations do
   begin
-    if not LExpectation.HasBeenMet then
+    if not LExpectation.IsSatisfied then
     begin
       raise EMockException.Create(CUnmetExpectations);
     end;
@@ -434,7 +363,7 @@ begin
   Result := FInstance;
 end;
 
-function TMockWrapper<T>.WillExecute(const Action: TMockAction): IExpect<T>;
+function TMockWrapper<T>.WillExecute(const Action: TMockAction): IExpectInSequence<T>;
 begin
   FCurrentExpectation := TExpectation.Create();
   FCurrentExpectation.Action := Action;
@@ -443,7 +372,7 @@ begin
   FExpectations.Add(FCurrentExpectation);
 end;
 
-function TMockWrapper<T>.WillRaise(const E: TFunc<Exception>): IExpect<T>;
+function TMockWrapper<T>.WillRaise(const E: TFunc<Exception>): IExpectInSequence<T>;
 begin
   FCurrentExpectation := TExpectation.Create();
   FCurrentExpectation.Exception := E;
@@ -452,54 +381,13 @@ begin
   FExpectations.Add(FCurrentExpectation);
 end;
 
-function TMockWrapper<T>.WillReturn(const Value: TValue): IExpect<T>;
+function TMockWrapper<T>.WillReturn(const Value: TValue): IExpectInSequence<T>;
 begin
   FCurrentExpectation := TExpectation.Create();
   FCurrentExpectation.Result := Value;
   Result := Self;
   FState := msDefining;
   FExpectations.Add(FCurrentExpectation);
-end;
-
-{ TExpectation }
-
-destructor TExpectation.Destroy;
-begin
-  inherited;
-end;
-
-function TExpectation.CanCall: Boolean;
-begin
-  Result := FCountMatcher >= (FCallCount + 1);
-end;
-
-function TExpectation.Execute(const Arguments: TArray<TValue>;
-  ReturnType: TRttiType): TValue;
-type
-  PValueArray = ^TValueArray;
-  TValueArray = TArray<TValue>;
-begin
-  try
-    if Assigned(FAction) then
-    begin
-      Result := FAction(PValueArray(@Arguments)^);
-    end else
-    if Assigned(FException) then
-    begin
-      raise FException;
-    end;
-  finally
-    Inc(FCallCount);
-    if not FResult.IsEmpty then
-    begin
-      Result := FResult;
-    end;
-  end;
-end;
-
-function TExpectation.HasBeenMet: Boolean;
-begin
-  Result := FCountMatcher = FCallCount;
 end;
 
 end.

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ unit DSharp.Testing.Mock.Interfaces;
 interface
 
 uses
+  DSharp.Core.Times,
   Rtti,
   SysUtils;
 
@@ -39,24 +40,31 @@ type
   TMockAction = reference to function(var Args: array of TValue): TValue;
   TMockMode = (Mock, Stub);
 
+  ISequence = interface
+    procedure ExpectInvocation(Action: TObject; const Times: Times);
+    procedure RecordInvocation(Action: TObject);
+    procedure Verify;
+  end;
+
   IWhen<T> = interface
     function WhenCalling: T;
     function WhenCallingWithAnyArguments: T;
   end;
 
-  ISequence<T> = interface(IWhen<T>)
-    function InSequence(const Name: string = ''): IWhen<T>;
+  IExpect<T> = interface
+    function Any: IWhen<T>;
+    function AtLeast(const Count: Cardinal): IWhen<T>;
+    function AtLeastOnce: IWhen<T>;
+    function AtMost(const Count: Cardinal): IWhen<T>;
+    function AtMostOnce: IWhen<T>;
+    function Between(const LowValue, HighValue: Cardinal): IWhen<T>;
+    function Exactly(const Count: Cardinal): IWhen<T>;
+    function Never: IWhen<T>;
+    function Once: IWhen<T>;
   end;
 
-  IExpect<T> = interface
-    function AtLeast(const Count: Cardinal): ISequence<T>;
-    function AtLeastOnce: ISequence<T>;
-    function AtMost(const Count: Cardinal): ISequence<T>;
-    function AtMostOnce: ISequence<T>;
-    function Between(const LowValue, HighValue: Cardinal): ISequence<T>;
-    function Exactly(const Count: Cardinal): ISequence<T>;
-    function Never: IWhen<T>;
-    function Once: ISequence<T>;
+  IExpectInSequence<T> = interface(IExpect<T>)
+    function InSequence(Sequence: ISequence): IExpect<T>; overload;
   end;
 
   IMock<T> = interface
@@ -64,12 +72,14 @@ type
     function GetMode: TMockMode;
     procedure SetMode(const Value: TMockMode);
     procedure Verify;
-    function WillExecute(const Action: TMockAction): IExpect<T>;
-    function WillRaise(const Exception: TFunc<Exception>): IExpect<T>;
-    function WillReturn(const Value: TValue): IExpect<T>;
+    function WillExecute(const Action: TMockAction): IExpectInSequence<T>;
+    function WillRaise(const Exception: TFunc<Exception>): IExpectInSequence<T>;
+    function WillReturn(const Value: TValue): IExpectInSequence<T>;
     property Instance: T read GetInstance;
     property Mode: TMockMode read GetMode write SetMode;
   end;
+
+  EMockException = class(EAbort);
 
 implementation
 

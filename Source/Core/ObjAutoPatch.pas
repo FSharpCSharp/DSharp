@@ -40,6 +40,22 @@ const
   );
 {$IFEND}
 
+  SetLengthBytes: array[0..29] of SmallInt = (
+    $8B, $45, $F8,
+    $0F, $BF, $40, $08,
+    $50,
+    $8D, $47, $0C,
+    $B9, -1, -1, -1, -1,
+    $8B, $15, -1, -1, -1, -1,
+    $E8, -1, -1, -1, -1,
+    $83, $C4, $04
+  );
+
+  ParamCountBytes: array[0..6] of Byte = (
+    $8B, $45, $F8,
+    $0F, $B6, $40, $01
+  );
+
 function GetTypeSize(TypeInfo: PTypeInfo): Integer;
 var
   TypeData: PTypeData;
@@ -100,6 +116,7 @@ end;
 procedure PatchObjAuto;
 var
   P: PByte;
+  n: Cardinal;
 begin
   // Replace ObjAuto.GetTypeSize
   UseFunction(@ObjAuto.ObjectInvoke); // The linker would remove GetTypeSize and the patch would fail
@@ -108,6 +125,16 @@ begin
     RedirectFunction(P, @GetTypeSize)
   else
     raise Exception.Create('Patching ObjAuto.GetTypeSize failed. Do you have set a breakpoint in the method?');
+
+  // Replace SetLength(ParamOffsets, TypeData^.PropCount) with SetLength(ParamOffsets, TypeData^.ParamCount);
+  P := FindMethodBytes(PByte(GetActualAddr(@ObjAuto.GetInvokeInstance)), SetLengthBytes, 300);
+  if P <> nil then
+  begin
+    if not WriteProcessMemory(GetCurrentProcess, P, @ParamCountBytes, SizeOf(ParamCountBytes), n) then
+      RaiseLastOSError;
+  end
+  else
+    raise Exception.Create('Patching TBaseMethodHandlerInstance.Create failed. Do you have set a breakpoint in the method?');
 end;
 
 initialization

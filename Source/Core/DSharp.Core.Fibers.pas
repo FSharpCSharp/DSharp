@@ -96,8 +96,8 @@ function ConvertFiberToThread: Pointer; stdcall; external kernel32;
 function ConvertThreadToFiber(lpParameter: Pointer): Pointer; stdcall; external kernel32;
 function CreateFiber(dwStackSize: Cardinal; lpStartAddress: Pointer;
   lpParameter: Pointer): Pointer; stdcall; external kernel32;
-function DeleteFiber(lpFiber: Pointer): Boolean; stdcall; external kernel32;
-function SwitchToFiber(lpFiber: Pointer): Boolean; stdcall; external kernel32;
+procedure DeleteFiber(lpFiber: Pointer); stdcall; external kernel32;
+procedure SwitchToFiber(lpFiber: Pointer); stdcall; external kernel32;
 {$ENDIF}
 
 function GetCurrentFiber: Pointer;

@@ -49,7 +49,7 @@ type
     // methods to build the tree structure
     function GetItem(const Item: TObject; const Index: Integer): TObject;
     function GetItemCount(const Item: TObject): Integer;
-    function GetItems(const Item: TObject): IList<TObject>;
+    function GetItems(const Item: TObject): IList;
     function GetItemTemplate(const Item: TObject): IDataTemplate;
 
     function CompareItems(const Item1, Item2: TObject; const ColumnIndex: Integer): Integer;
@@ -81,7 +81,7 @@ type
     function GetItem(const Item: TObject;
       const Index: Integer): TObject; virtual;
     function GetItemCount(const Item: TObject): Integer; virtual;
-    function GetItems(const Item: TObject): IList<TObject>; virtual;
+    function GetItems(const Item: TObject): IList; virtual;
     function GetItemTemplate(const Item: TObject): IDataTemplate; virtual;
 
     function CompareItems(const Item1, Item2: TObject;
@@ -118,6 +118,8 @@ type
       const Index: Integer): TObject; reintroduce; overload; virtual;
     function GetItemCount(const Item: TObject): Integer; overload; override; final;
     function GetItemCount(const Item: T): Integer; reintroduce; overload; virtual;
+    function GetItems(const Item: TObject): IList; overload; override; final;
+    function GetItems(const Item: T): IList; reintroduce; overload; virtual;
 
     function GetTemplateDataClass: TClass; override; final;
   end;
@@ -212,7 +214,7 @@ begin
   end;
 end;
 
-function TDataTemplate.GetItems(const Item: TObject): IList<TObject>;
+function TDataTemplate.GetItems(const Item: TObject): IList;
 begin
   Result := nil;
 end;
@@ -309,6 +311,16 @@ end;
 function TDataTemplate<T>.GetItemCount(const Item: T): Integer;
 begin
   Result := inherited GetItemCount(Item);
+end;
+
+function TDataTemplate<T>.GetItems(const Item: TObject): IList;
+begin
+  Result := GetItems(T(Item));
+end;
+
+function TDataTemplate<T>.GetItems(const Item: T): IList;
+begin
+  Result := inherited GetItems(Item);
 end;
 
 function TDataTemplate<T>.GetTemplateDataClass: TClass;

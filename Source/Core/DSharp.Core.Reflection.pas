@@ -640,7 +640,7 @@ var
   LType: TRttiType;
 begin
   LType := Context.GetType(ThisClass);
-  Result := LType.IsCovariantTo(OtherClass.ClassInfo);
+  Result := Assigned(LType) and LType.IsCovariantTo(OtherClass.ClassInfo);
 end;
 
 function IsTypeCovariantTo(ThisType, OtherType: PTypeInfo): Boolean;
@@ -648,7 +648,7 @@ var
   LType: TRttiType;
 begin
   LType := Context.GetType(ThisType);
-  Result := LType.IsCovariantTo(OtherType);
+  Result := Assigned(LType) and LType.IsCovariantTo(OtherType);
 end;
 
 function MergeStrings(Values: TStringDynArray; const Delimiter: string): string;

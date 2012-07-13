@@ -484,7 +484,9 @@ end;
 
 function TSpringContainer.ResolveLazy(LazyType: TRttiType): TValue;
 var
+{$IF CompilerVersion > 21}
   Intf: IInterface;
+{$IFEND}
   LazyContentType: TRttiType;
   Value: TValue;
 begin

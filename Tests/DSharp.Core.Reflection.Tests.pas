@@ -1,4 +1,4 @@
-unit DSharp.Core.Reflection.Testing;
+unit DSharp.Core.Reflection.Tests;
 
 interface
 

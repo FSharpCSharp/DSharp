@@ -86,8 +86,6 @@ var
   LNotifyPropertyChanged: INotifyPropertyChanged;
   LPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
-//  inherited;
-
   if Supports(TObject(Value), INotifyPropertyChanged, LNotifyPropertyChanged) then
   begin
     LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;

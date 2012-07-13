@@ -66,6 +66,7 @@ type
   end;
 
   IEnumerable = interface
+    function AsObject: TObject;
     function GetCount: NativeInt;
     function GetItemType: PTypeInfo;
     function Contains(const Value: TValue): Boolean;
@@ -200,6 +201,7 @@ type
     function IEnumerable.ToArray = ToArrayBase;
     function IEnumerable.ToList = ToListBase;
   public
+    function AsObject: TObject;
     function Contains(const Value: TValue): Boolean; virtual;
     property Count: NativeInt read GetCount;
     property ItemType: PTypeInfo read GetItemType;
@@ -400,6 +402,11 @@ begin
 end;
 
 { TEnumerable }
+
+function TEnumerable.AsObject: TObject;
+begin
+  Result := Self;
+end;
 
 function TEnumerable.Contains(const Value: TValue): Boolean;
 begin

@@ -30,8 +30,10 @@ package DevExpressPresenter;
 
 requires
   rtl,
-  cxGridD15,
-  cxTreeListD15,
+  cxGridRS15,
+{$IFDEF USE_TREELIST}
+  cxTreeListRS15,
+{$ENDIF}
   TreeViewPresenter;
 
 contains

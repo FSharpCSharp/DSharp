@@ -112,7 +112,7 @@ uses
 
 procedure Register;
 begin
-  RegisterComponents('Data binding', [TBindingGroup]);
+  RegisterComponents('DSharp', [TBindingGroup]);
   RegisterComponentEditor(TBindingGroup, TBindingGroupComponentEditor);
   RegisterPropertyEditor(TypeInfo(TObject), TBinding, 'Source', TSourceProperty);
   RegisterPropertyEditor(TypeInfo(string), TBinding, 'SourcePropertyName', TSourcePropertyNameProperty);

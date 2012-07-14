@@ -56,7 +56,7 @@ end;
 
 procedure Register;
 begin
-  RegisterComponents('Virtual Controls', [TTreeViewPresenter]);
+  RegisterComponents('DSharp', [TTreeViewPresenter]);
   RegisterComponentEditor(TCustomPresenter, TCustomPresenterComponentEditor);
   RegisterSelectionEditor(TCustomPresenter, TCustomPresenterSelectionEditor);
   RegisterPropertyEditor(TypeInfo(TCheckSupport), TTreeViewPresenter, 'CheckSupport', TNonSortedEnumProperty);

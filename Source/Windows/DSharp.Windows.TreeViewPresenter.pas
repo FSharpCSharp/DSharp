@@ -1098,20 +1098,43 @@ end;
 
 procedure TTreeViewPresenter.GetItemsNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Data: Pointer; var Abort: Boolean);
+var
+  LNodeData: PNodeData;
 begin
-  Abort := PNodeData(Sender.GetNodeData(Node)).ItemsAsObject = TObject(Data);
+  LNodeData := PNodeData(Sender.GetNodeData(Node));
+  Abort := Assigned(LNodeData) and (LNodeData.ItemsAsObject = TObject(Data));
 end;
 
 function TTreeViewPresenter.GetNodeItem(Tree: TBaseVirtualTree;
   Node: PVirtualNode): TObject;
+var
+  LNodeData: PNodeData;
 begin
-  Result := PNodeData(Tree.GetNodeData(Node)).Item;
+  LNodeData := PNodeData(Tree.GetNodeData(Node));
+  if Assigned(LNodeData) then
+  begin
+    Result := LNodeData.Item;
+  end
+  else
+  begin
+    Result := nil;
+  end;
 end;
 
 function TTreeViewPresenter.GetNodeItems(Tree: TBaseVirtualTree;
   Node: PVirtualNode): TObject;
+var
+  LNodeData: PNodeData;
 begin
-  Result := PNodeData(Tree.GetNodeData(Node)).ItemsAsObject;
+  LNodeData := PNodeData(Tree.GetNodeData(Node));
+  if Assigned(LNodeData) then
+  begin
+    Result := LNodeData.ItemsAsObject;
+  end
+  else
+  begin
+    Result := nil;
+  end;
 end;
 
 function TTreeViewPresenter.GetParentItem(const Level: Integer): TObject;
@@ -1452,8 +1475,14 @@ end;
 
 procedure TTreeViewPresenter.SetNodeItem(Tree: TBaseVirtualTree;
   Node: PVirtualNode; Item: TObject);
+var
+  LNodeData: PNodeData;
 begin
-  PNodeData(Tree.GetNodeData(Node)).Item := Item;
+  LNodeData := PNodeData(Tree.GetNodeData(Node));
+  if Assigned(LNodeData) then
+  begin
+    LNodeData.Item := Item;
+  end;
 end;
 
 procedure TTreeViewPresenter.SetNodeItems(Tree: TBaseVirtualTree;

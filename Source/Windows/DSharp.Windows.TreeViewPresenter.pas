@@ -554,6 +554,7 @@ procedure TTreeViewPresenter.DoDragOver(Sender: TBaseVirtualTree;
 var
   LItem: TObject;
   LNode: PVirtualNode;
+  LItemNode: PVirtualNode;
 begin
   if Pt.Y > -1 then
   begin
@@ -568,7 +569,26 @@ begin
     end
     else
     begin
-      Accept := Assigned(GetNodeItemsAsObject(Sender, LNode));
+      if Sender = Source then
+      begin
+        if not Assigned(LNode) then
+        begin
+          LNode := Sender.RootNode;
+        end;
+        Accept := Assigned(GetNodeItemsAsObject(Sender, LNode));
+        if Accept then
+        begin
+          for LItemNode in Sender.SelectedNodes do
+          begin
+            if (LItemNode = LNode) or (LItemNode.Parent = LNode) or
+              Sender.HasAsParent(LNode, LItemNode) then
+            begin
+              Accept := False;
+              Break;
+            end;
+          end;
+        end;
+      end;
     end;
   end;
 end;
@@ -1199,7 +1219,14 @@ begin
   end
   else
   begin
-    Result := nil;
+    if Node = Tree.RootNode then
+    begin
+      Result := View.ItemsSource.AsObject;
+    end
+    else
+    begin
+      Result := nil;
+    end;
   end;
 end;
 

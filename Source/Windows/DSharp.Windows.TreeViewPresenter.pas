@@ -57,7 +57,8 @@ type
   TDragOverEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
     var AllowDrop: Boolean) of object;
   TDragDropEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
-    DragOperation: TDragOperation; var DropMode: TDropMode) of object;
+    DragOperation: TDragOperation; var DropMode: TDropMode;
+    var Handled: Boolean) of object;
 
   TCheckSupport = (csNone, csSimple, csTriState, csRadio);
   TSelectionMode = (smSingle, smLevel, smMulti);
@@ -140,7 +141,8 @@ type
     procedure GetItemsNode(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Data: Pointer; var Abort: Boolean);
     function GetNodeItem(Tree: TBaseVirtualTree; Node: PVirtualNode): TObject;
-    function GetNodeItems(Tree: TBaseVirtualTree; Node: PVirtualNode): TObject;
+    function GetNodeItems(Tree: TBaseVirtualTree; Node: PVirtualNode): IList;
+    function GetNodeItemsAsObject(Tree: TBaseVirtualTree; Node: PVirtualNode): TObject;
     function GetParentItem(const Level: Integer): TObject;
     function GetSelectedItem: TObject;
     function GetSelectedItems: IList<TObject>;
@@ -497,16 +499,18 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
   LSelectedNodes: TNodeArray;
+  LHandled: Boolean;
 begin
   LNode := Sender.DropTargetNode;
   LItem := GetNodeItem(Sender, LNode);
+  LHandled := False;
 
   LSelectedNodes := Sender.GetSortedSelection(False);
   if ssCtrl in Shift then
   begin
     if Assigned(FOnDragDrop) then
     begin
-      FOnDragDrop(Sender, Source, LItem, doCopy, Mode);
+      FOnDragDrop(Sender, Source, LItem, doCopy, Mode, LHandled);
     end;
     Sender.ReinitNode(LNode, True);
   end
@@ -514,20 +518,26 @@ begin
   begin
     if Assigned(FOnDragDrop) then
     begin
-      FOnDragDrop(Sender, Source, LItem, doMove, Mode);
+      FOnDragDrop(Sender, Source, LItem, doMove, Mode, LHandled);
     end;
-    if Sender = Source then
+
+    if not LHandled and (Sender = Source) then
     begin
-      for i := Low(LSelectedNodes) to High(LSelectedNodes) do
-      begin
-        case Mode of
-          dmNowhere: FTreeView.MoveTo(LSelectedNodes[i], nil, amAddChildLast, False);
-          dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
-          dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
-          dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
+      BeginUpdate;
+      try
+        for i := Low(LSelectedNodes) to High(LSelectedNodes) do
+        begin
+          FCurrentNode := LSelectedNodes[i].Parent;
+          case Mode of
+            dmNowhere: FTreeView.MoveTo(LSelectedNodes[i], nil, amAddChildLast, False);
+            dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
+            dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+            dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
+          end;
         end;
+      finally
+        EndUpdate;
       end;
-      Refresh();
     end;
   end;
 end;
@@ -761,7 +771,7 @@ begin
 
   if Assigned(ParentNode) then
   begin
-    LParentItems := GetNodeItems(Sender, ParentNode);
+    LParentItems := GetNodeItemsAsObject(Sender, ParentNode);
     if Assigned(LParentItems) then
     begin
       // assume covariance to TListBase<TObject>
@@ -839,9 +849,15 @@ begin
         end;
         if LAllowed then
         begin
-          for i := Low(LNodes) to High(LNodes) do
-          begin
-            FTreeView.MoveTo(LNodes[i], LNodes[i].PrevSibling, amInsertBefore, False);
+          BeginUpdate;
+          try
+            for i := Low(LNodes) to High(LNodes) do
+            begin
+              FCurrentNode := LNodes[i].Parent;
+              FTreeView.MoveTo(LNodes[i], LNodes[i].PrevSibling, amInsertBefore, False);
+            end;
+          finally
+            EndUpdate;
           end;
         end;
       end;
@@ -859,9 +875,15 @@ begin
         end;
         if LAllowed then
         begin
-          for i := High(LNodes) downto Low(LNodes) do
-          begin
-            FTreeView.MoveTo(LNodes[i], LNodes[i].NextSibling, amInsertAfter, False);
+          BeginUpdate;
+          try
+            for i := High(LNodes) downto Low(LNodes) do
+            begin
+              FCurrentNode := LNodes[i].Parent;
+              FTreeView.MoveTo(LNodes[i], LNodes[i].NextSibling, amInsertAfter, False);
+            end;
+          finally
+            EndUpdate;
           end;
         end;
       end;
@@ -917,25 +939,36 @@ procedure TTreeViewPresenter.DoNodeMoved(Sender: TBaseVirtualTree;
 var
   LItem: TObject;
   LItems: IList;
-  LItemTemplate: IDataTemplate;
 begin
+  LItem := GetNodeItem(Sender, Node);
+
+  if Node.Parent <> FCurrentNode then
+  begin
+    LItems := GetNodeItems(Sender, FCurrentNode);
+    if Assigned(LItems) then
+    begin
+      LItems.Remove(LItem);
+    end;
+  end;
+
   if Sender.GetNodeLevel(Node) = 0 then
   begin
-    LItem := GetNodeItem(Sender, Node);
-    View.ItemsSource.Move(View.ItemsSource.IndexOf(LItem), Node.Index);
+    LItems := View.ItemsSource;
   end
   else
   begin
-    LItem := GetNodeItem(Sender, Node.Parent);
-    LItemTemplate := GetItemTemplate(LItem);
-    if Assigned(LItemTemplate) then
+    LItems := GetNodeItems(Sender, Node.Parent);
+  end;
+
+  if Assigned(LItems) then
+  begin
+    if Node.Parent <> FCurrentNode then
     begin
-      LItems := LItemTemplate.GetItems(LItem);
-      if Assigned(LItems) then
-      begin
-        LItem := GetNodeItem(Sender, Node);
-        LItems.Move(LItems.IndexOf(LItem), Node.Index);
-      end;
+      LItems.Insert(Node.Index, LItem);
+    end
+    else
+    begin
+      LItems.Move(LItems.IndexOf(LItem), Node.Index);
     end;
   end;
 end;
@@ -1122,6 +1155,29 @@ begin
 end;
 
 function TTreeViewPresenter.GetNodeItems(Tree: TBaseVirtualTree;
+  Node: PVirtualNode): IList;
+var
+  LNodeData: PNodeData;
+begin
+  LNodeData := PNodeData(Tree.GetNodeData(Node));
+  if Assigned(LNodeData) then
+  begin
+    Result := LNodeData.Items;
+  end
+  else
+  begin
+    if Node = Tree.RootNode then
+    begin
+      Result := View.ItemsSource;
+    end
+    else
+    begin
+      Result := nil;
+    end;
+  end;
+end;
+
+function TTreeViewPresenter.GetNodeItemsAsObject(Tree: TBaseVirtualTree;
   Node: PVirtualNode): TObject;
 var
   LNodeData: PNodeData;

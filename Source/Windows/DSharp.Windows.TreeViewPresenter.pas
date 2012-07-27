@@ -531,7 +531,13 @@ begin
           case Mode of
             dmNowhere: FTreeView.MoveTo(LSelectedNodes[i], nil, amAddChildLast, False);
             dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
-            dmOnNode: FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+            dmOnNode:
+            begin
+              if FCurrentNode <> LNode then
+              begin
+                FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+              end;
+            end;
             dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
           end;
         end;
@@ -559,6 +565,10 @@ begin
     if Assigned(FOnDragOver) then
     begin
       FOnDragOver(Sender, Source, LItem, Accept);
+    end
+    else
+    begin
+      Accept := Assigned(GetNodeItemsAsObject(Sender, LNode));
     end;
   end;
 end;

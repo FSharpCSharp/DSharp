@@ -61,7 +61,7 @@ type
     var Handled: Boolean) of object;
 
   TCheckSupport = (csNone, csSimple, csTriState, csRadio);
-  TSelectionMode = (smSingle, smLevel, smMulti);
+  TSelectionMode = (smSingle, smLevel, smMulti, smNone);
 
   TTreeViewPresenter = class(TCustomPresenter)
   private
@@ -373,15 +373,18 @@ end;
 procedure TTreeViewPresenter.DoChange(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 begin
-  UpdateSelectedItems();
-
-  DoPropertyChanged('View');
-  DoPropertyChanged('SelectedItem');
-  DoPropertyChanged('SelectedItems');
-
-  if Assigned(FOnSelectionChanged) then
+  if FSelectionMode <> smNone then
   begin
-    FOnSelectionChanged(Self);
+    UpdateSelectedItems();
+
+    DoPropertyChanged('View');
+    DoPropertyChanged('SelectedItem');
+    DoPropertyChanged('SelectedItems');
+
+    if Assigned(FOnSelectionChanged) then
+    begin
+      FOnSelectionChanged(Self);
+    end;
   end;
 end;
 
@@ -1023,7 +1026,8 @@ procedure TTreeViewPresenter.DoSelectedItemsChanged(Sender: TObject;
 var
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) and not (csDestroying in ComponentState) then
+  if Assigned(FTreeView) and not (csDestroying in ComponentState)
+    and (FSelectionMode <> smNone) then
   begin
     if FCollectionChanging = 0 then
     begin
@@ -1249,7 +1253,7 @@ end;
 
 function TTreeViewPresenter.GetSelectedItem: TObject;
 begin
-  if FSelectedItems.Count > 0 then
+  if (FSelectedItems.Count > 0) and (FSelectionMode <> smNone) then
   begin
     Result := FSelectedItems[0];
   end
@@ -1261,6 +1265,10 @@ end;
 
 function TTreeViewPresenter.GetSelectedItems: IList<TObject>;
 begin
+  if (FSelectedItems.Count > 0) and (FSelectionMode <> smNone) then
+  begin
+    FSelectedItems.Clear;
+  end;
   Result := FSelectedItems;
 end;
 
@@ -1410,6 +1418,17 @@ begin
     begin
       FTreeView.TreeOptions.SelectionOptions :=
         FTreeView.TreeOptions.SelectionOptions - [toLevelSelectConstraint];
+    end;
+
+    if FSelectionMode = smNone then
+    begin
+      FTreeView.TreeOptions.PaintOptions :=
+        FTreeView.TreeOptions.PaintOptions + [toHideSelection, toAlwaysHideSelection];
+    end
+    else
+    begin
+      FTreeView.TreeOptions.PaintOptions :=
+        FTreeView.TreeOptions.PaintOptions - [toHideSelection, toAlwaysHideSelection];
     end;
 
     if FShowHeader then
@@ -1604,7 +1623,8 @@ end;
 
 procedure TTreeViewPresenter.SetSelectedItem(const Value: TObject);
 begin
-  if (Value <> SelectedItem) or (SelectedItems.Count > 1) then
+  if ((Value <> SelectedItem) or (SelectedItems.Count > 1))
+    and (FSelectionMode <> smNone) then
   begin
     FSelectedItems.Clear();
     if Assigned(Value) then
@@ -1620,7 +1640,8 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) and not (csDestroying in FTreeView.ComponentState) then
+  if Assigned(FTreeView) and not (csDestroying in FTreeView.ComponentState)
+    and (FSelectionMode <> smNone) then
   begin
     FTreeView.BeginUpdate();
     FTreeView.ClearSelection();
@@ -1741,7 +1762,7 @@ var
   LSelectedItems: IList<TObject>;
   LSelectedNodes: TNodeArray;
 begin
-  if Assigned(FTreeView) then
+  if Assigned(FTreeView) and (FSelectionMode <> smNone) then
   begin
     Inc(FCollectionChanging);
     LSelectedItems := TList<TObject>.Create();

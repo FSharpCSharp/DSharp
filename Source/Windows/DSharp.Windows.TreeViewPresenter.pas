@@ -1265,7 +1265,7 @@ end;
 
 function TTreeViewPresenter.GetSelectedItems: IList<TObject>;
 begin
-  if (FSelectedItems.Count > 0) and (FSelectionMode <> smNone) then
+  if (FSelectedItems.Count > 0) and (FSelectionMode = smNone) then
   begin
     FSelectedItems.Clear;
   end;

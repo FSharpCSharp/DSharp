@@ -68,10 +68,14 @@ type
   TSetTextEvent = procedure(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject; const Value: string) of object;
 
+  TColumnType = (ctText, ctCheckBox, ctProgressBar);
+
   TColumnDefinition = class(TCollectionItem)
   private
+    FAllowEdit: Boolean;
     FAlignment: TAlignment;
     FCaption: string;
+    FColumnType: TColumnType;
     FCustomFilter: string;
     FFilter: TPredicate<TObject>;
     FHintPropertyName: string;
@@ -93,6 +97,8 @@ type
     procedure SetHintPropertyName(const Value: string);
     procedure SetImageIndexPropertyName(const Value: string);
     procedure SetTextPropertyName(const Value: string);
+  protected
+    function GetDisplayName: string; override;
   public
     constructor Create(Collection: TCollection); override;
     procedure Assign(Source: TPersistent); override;
@@ -100,8 +106,10 @@ type
     property ImageIndexPropertyExpression: IMemberExpression read FImageIndexPropertyExpression;
     property TextPropertyExpression: IMemberExpression read FTextPropertyExpression;
   published
+    property AllowEdit: Boolean read FAllowEdit write FAllowEdit default False;
     property Alignment: TAlignment read FAlignment write FAlignment default taLeftJustify;
     property Caption: string read FCaption write FCaption;
+    property ColumnType: TColumnType read FColumnType write FColumnType default ctText;
     property CustomFilter: string read FCustomFilter write SetCustomFilter;
     property Filter: TPredicate<TObject> read FFilter;
     property HintPropertyName: string read FHintPropertyName write SetHintPropertyName;
@@ -170,6 +178,11 @@ begin
   FMinWidth := CDefaultMinWidth;
   FVisible := True;
   FWidth := CDefaultWidth;
+end;
+
+function TColumnDefinition.GetDisplayName: string;
+begin
+  Result := FCaption;
 end;
 
 procedure TColumnDefinition.Assign(Source: TPersistent);

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ interface
 uses
   ActiveX,
   Classes,
+  ComCtrls,
   Controls,
   DSharp.Bindings.Collections,
   DSharp.Bindings.Notifications,
@@ -72,6 +73,7 @@ type
     FCollectionChanging: Integer;
     FCurrentNode: PVirtualNode;
     FExpandedItems: IList<TObject>;
+    FHitInfo: THitInfo;
     FListMode: Boolean;
     FOnCompare: TCompareEvent;
     FOnDragBegin: TDragBeginEvent;
@@ -79,6 +81,7 @@ type
     FOnDragOver: TDragOverEvent;
     FOnKeyAction: TKeyEvent;
     FOnSelectionChanged: TNotifyEvent;
+    FProgressBar: TProgressBar;
     FSelectedItems: IList<TObject>;
     FShowHeader: Boolean;
     FSelectionMode: TSelectionMode;
@@ -105,6 +108,10 @@ type
     procedure DoDragOver(Sender: TBaseVirtualTree; Source: TObject;
       Shift: TShiftState; State: TDragState; Pt: TPoint; Mode: TDropMode;
       var Effect: Integer; var Accept: Boolean);
+    procedure DoEdited(Sender: TBaseVirtualTree; Node: PVirtualNode;
+      Column: TColumnIndex);
+    procedure DoEditing(Sender: TBaseVirtualTree; Node: PVirtualNode;
+      Column: TColumnIndex; var Allowed: Boolean);
     procedure DoExpanded(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoFilterNode(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoFocusChanged(Sender: TBaseVirtualTree; Node: PVirtualNode;
@@ -126,11 +133,19 @@ type
     procedure DoKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure DoMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure DoMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure DoMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure DoNewText(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; NewText: string);
     procedure DoNodeMoved(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoPaintText(Sender: TBaseVirtualTree; const TargetCanvas: TCanvas;
       Node: PVirtualNode; Column: TColumnIndex; TextType: TVSTTextType);
+
+    procedure DrawCheckBox(TargetCanvas: TCanvas; Node: PVirtualNode;
+      Column: TColumnIndex; CellRect: TRect; Value: Boolean);
+    procedure DrawProgressBar(TargetCanvas: TCanvas; Node: PVirtualNode;
+      Column: TColumnIndex; CellRect: TRect; Value: Integer);
 
     procedure ExpandNode(Node: PVirtualNode);
     function GetCheckedItem: TObject;
@@ -146,6 +161,9 @@ type
     function GetParentItem(const Level: Integer): TObject;
     function GetSelectedItem: TObject;
     function GetSelectedItems: IList<TObject>;
+
+    function CalcCheckBoxRect(const Rect: TRect): TRect;
+    function IsMouseInCheckBox(Node: PVirtualNode; Column: TColumnIndex): Boolean;
 
     procedure ReadMultiSelect(Reader: TReader);
     procedure ResetRootNodeCount;
@@ -233,6 +251,8 @@ uses
   DSharp.Windows.ColumnDefinitions.ControlTemplate,
   DSharp.Windows.ControlTemplates,
   Math,
+  Rtti,
+  Themes,
   Windows;
 
 const
@@ -245,6 +265,9 @@ type
     Items: IList;
     ItemsAsObject: TObject;
   end;
+
+var
+  CheckBoxSize: Byte;
 
 procedure Synchronize(Target, Source: IList<TObject>);
 var
@@ -286,6 +309,9 @@ begin
   FAllowMove := True;
   FShowHeader := True;
   FSorting := True;
+  FProgressBar := TProgressBar.Create(Self);
+  FProgressBar.Smooth := True;
+  FProgressBar.Visible := False;
 end;
 
 destructor TTreeViewPresenter.Destroy;
@@ -312,6 +338,14 @@ procedure TTreeViewPresenter.BeginUpdate;
 begin
   inherited;
   FTreeView.BeginUpdate();
+end;
+
+function TTreeViewPresenter.CalcCheckBoxRect(const Rect: TRect): TRect;
+begin
+  Result.Left := Rect.Left + (RectWidth(Rect) - CheckBoxSize) div 2;
+  Result.Top := Rect.Top + (RectHeight(Rect) - CheckBoxSize) div 2;
+  Result.Right := Result.Left + CheckBoxSize;
+  Result.Bottom := Result.Top + CheckBoxSize;
 end;
 
 procedure TTreeViewPresenter.DefineProperties(Filer: TFiler);
@@ -345,13 +379,27 @@ procedure TTreeViewPresenter.DoAfterCellPaint(Sender: TBaseVirtualTree;
   CellRect: TRect);
 var
   LItem: TObject;
-  LItemTemplate: IControlTemplate;
+  LDataTemplate: IDataTemplate;
+  LControlTemplate: IControlTemplate;
+  LValue: TValue;
 begin
   LItem := GetNodeItem(Sender, Node);
-  if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
+  LDataTemplate := GetItemTemplate(LItem);
+  if Supports(LDataTemplate, IControlTemplate, LControlTemplate) then
   begin
-    LItemTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList,
+    LControlTemplate.CustomDraw(LItem, Column, TargetCanvas, CellRect, ImageList,
       dmAfterCellPaint, Sender.Selected[Node]);
+  end;
+
+  if Assigned(ColumnDefinitions) and (Column > -1) then
+  begin
+    LValue := LDataTemplate.GetValue(LItem, Column);
+    case ColumnDefinitions[Column].ColumnType of
+      TColumnType.ctCheckBox:
+        DrawCheckBox(TargetCanvas, Node, Column, CellRect, LValue.AsBoolean);
+      TColumnType.ctProgressBar:
+        DrawProgressBar(TargetCanvas, Node, Column, CellRect, LValue.AsInteger);
+    end;
   end;
 end;
 
@@ -476,7 +524,8 @@ begin
   else
   begin
     if ([hiOnItemButton..hiOnItemCheckbox] * LHitInfo.HitPositions = [])
-      and Assigned(LHitInfo.HitNode) then
+      and Assigned(LHitInfo.HitNode)
+      and not IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
     begin
       inherited;
     end;
@@ -594,6 +643,23 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TTreeViewPresenter.DoEdited(Sender: TBaseVirtualTree;
+  Node: PVirtualNode; Column: TColumnIndex);
+begin
+  if FTreeView.Header.SortColumn = Column then
+  begin
+    FTreeView.Sort(Node.Parent, FTreeView.Header.SortColumn, FTreeView.Header.SortDirection);
+  end;
+end;
+
+procedure TTreeViewPresenter.DoEditing(Sender: TBaseVirtualTree;
+  Node: PVirtualNode; Column: TColumnIndex; var Allowed: Boolean);
+begin
+  Allowed := Assigned(ColumnDefinitions)
+    and (Column > -1) and (ColumnDefinitions[Column].ColumnType = ctText)
+    and ColumnDefinitions[Column].AllowEdit;
 end;
 
 procedure TTreeViewPresenter.DoExpanded(Sender: TBaseVirtualTree;
@@ -932,13 +998,11 @@ end;
 procedure TTreeViewPresenter.DoMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
-  LCursorPos: TPoint;
   LHitInfo: THitInfo;
 begin
   if not (ssDouble in Shift) then
   begin
-    LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
-    FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
+    FTreeView.GetHitTestInfoAt(X, Y, False, LHitInfo);
     if not Assigned(LHitInfo.HitNode) then
     begin
       if FAllowClearSelection then
@@ -949,6 +1013,70 @@ begin
       begin
         Abort;
       end;
+    end
+    else
+    begin
+      if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
+      begin
+        FTreeView.RepaintNode(LHitInfo.HitNode);
+      end;
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.DoMouseMove(Sender: TObject; Shift: TShiftState;
+  X, Y: Integer);
+var
+  LHitInfo: THitInfo;
+begin
+  if GetAsyncKeyState(VK_LBUTTON) = 0 then
+  begin
+    FTreeView.GetHitTestInfoAt(X, Y, True, LHitInfo);
+
+    if Assigned(FHitInfo.HitNode) and (FHitInfo.HitNode <> LHitInfo.HitNode) then
+    begin
+      FTreeView.RepaintNode(FHitInfo.HitNode);
+    end;
+
+    if Assigned(LHitInfo.HitNode) then
+    begin
+      FTreeView.RepaintNode(LHitInfo.HitNode);
+    end;
+
+    FHitInfo := LHitInfo;
+
+    if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
+      FHitInfo.HitPositions := [hiOnItemCheckbox];
+  end;
+end;
+
+procedure TTreeViewPresenter.DoMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  LHitInfo: THitInfo;
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
+begin
+  if Assigned(FHitInfo.HitNode) then
+  begin
+    FTreeView.GetHitTestInfoAt(X, Y, False, LHitInfo);
+    if (FHitInfo.HitNode = LHitInfo.HitNode)
+      and (FHitInfo.HitColumn = LHitInfo.HitColumn)
+      and IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
+    begin
+      LItem := GetNodeItem(FTreeView, LHitInfo.HitNode);
+      LItemTemplate := GetItemTemplate(LItem);
+      if Assigned(LItemTemplate) and ColumnDefinitions[LHitInfo.HitColumn].AllowEdit then
+      begin
+        LItemTemplate.SetValue(LItem, LHitInfo.HitColumn,
+          not LItemTemplate.GetValue(LItem, LHitInfo.HitColumn).AsBoolean);
+      end;
+    end;
+
+    FTreeView.RepaintNode(FHitInfo.HitNode);
+    if LHitInfo.HitNode <> FHitInfo.HitNode then
+    begin
+      FTreeView.RepaintNode(LHitInfo.HitNode);
     end;
   end;
 end;
@@ -980,7 +1108,7 @@ begin
     LItems := GetNodeItems(Sender, FCurrentNode);
     if Assigned(LItems) then
     begin
-      LItems.Remove(LItem);
+      LItems.Extract(LItem);
     end;
   end;
 
@@ -1101,6 +1229,89 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.DrawCheckBox(TargetCanvas: TCanvas;
+  Node: PVirtualNode; Column: TColumnIndex; CellRect: TRect; Value: Boolean);
+var
+  LThemedButton: TThemedButton;
+  LCheckBoxRect: TRect;
+  LDetails: TThemedElementDetails;
+  LState: Cardinal;
+begin
+  LCheckBoxRect := CalcCheckBoxRect(CellRect);
+
+  if Value then
+  begin
+    LThemedButton := tbCheckBoxCheckedNormal;
+  end
+  else
+  begin
+    LThemedButton := tbCheckBoxUncheckedNormal;
+  end;
+
+  if IsMouseInCheckBox(Node, Column) then
+  begin
+    Inc(LThemedButton);
+  end;
+
+  if (FHitInfo.HitNode = Node) and (FHitInfo.HitColumn = Column)
+    and (hiOnItemCheckbox in FHitInfo.HitPositions)
+    and (GetAsyncKeyState(VK_LBUTTON) <> 0)
+    and ColumnDefinitions[FHitInfo.HitColumn].AllowEdit then
+  begin
+    if Value then
+    begin
+      LThemedButton := tbCheckBoxCheckedPressed;
+    end
+    else
+    begin
+      LThemedButton := tbCheckBoxUncheckedPressed;
+    end;
+  end;
+
+  if ThemeServices.ThemesEnabled and
+    (toThemeAware in FTreeView.TreeOptions.PaintOptions) then
+  begin
+    LDetails := ThemeServices.GetElementDetails(LThemedButton);
+    ThemeServices.DrawElement(TargetCanvas.Handle, LDetails, LCheckBoxRect);
+  end
+  else
+  begin
+    LState := DFCS_BUTTONCHECK;
+    if LThemedButton in [tbCheckBoxCheckedNormal, tbCheckBoxCheckedHot] then
+    begin
+      LState := LState or DFCS_CHECKED;
+    end;
+
+    DrawFrameControl(TargetCanvas.Handle, LCheckBoxRect, DFC_BUTTON, LState);
+  end;
+end;
+
+procedure TTreeViewPresenter.DrawProgressBar(TargetCanvas: TCanvas;
+  Node: PVirtualNode; Column: TColumnIndex; CellRect: TRect; Value: Integer);
+var
+  LDetails: TThemedElementDetails;
+begin
+  if ThemeServices.ThemesEnabled and
+    (toThemeAware in FTreeView.TreeOptions.PaintOptions) then
+  begin
+    InflateRect(CellRect, -1, -1);
+    LDetails := ThemeServices.GetElementDetails(tpBar);
+    ThemeServices.DrawElement(TargetCanvas.Handle, LDetails, CellRect, nil);
+    InflateRect(CellRect, -2, -2);
+    CellRect.Right := CellRect.Left + Trunc(RectWidth(CellRect) * Value / 100);
+    LDetails := ThemeServices.GetElementDetails(tpChunk);
+    ThemeServices.DrawElement(TargetCanvas.Handle, LDetails, CellRect, nil);
+  end
+  else
+  begin
+    InflateRect(CellRect, -1, -1);
+    FProgressBar.Position := Value;
+    FProgressBar.Height := RectHeight(CellRect);
+    FProgressBar.Width := RectWidth(CellRect);
+    FProgressBar.PaintTo(TargetCanvas, CellRect.Left, 1);
+  end;
+end;
+
 procedure TTreeViewPresenter.EndUpdate;
 begin
   inherited;
@@ -1110,11 +1321,12 @@ end;
 procedure TTreeViewPresenter.ExpandNode(Node: PVirtualNode);
 begin
   while Assigned(Node) do
-  try
-    FTreeView.Expanded[Node] := True;
+  begin
+    if [vsChecking..vsExpanded] * Node.States = [] then
+    begin
+      FTreeView.Expanded[Node] := True;
+    end;
     Node := Node.Parent;
-  except
-    // some weird AV from VirtualTrees (probably a timing problem)
   end;
 end;
 
@@ -1346,6 +1558,8 @@ begin
     FTreeView.OnDragAllowed := DoDragAllowed;
     FTreeView.OnDragDrop := DoDragDrop;
     FTreeView.OnDragOver := DoDragOver;
+    FTreeView.OnEdited := DoEdited;
+    FTreeView.OnEditing := DoEditing;
     FTreeView.OnExpanded := DoExpanded;
     FTreeView.OnFocusChanged := DoFocusChanged;
     FTreeView.OnFreeNode := DoFreeNode;
@@ -1357,6 +1571,8 @@ begin
     FTreeView.OnInitNode := DoInitNode;
     FTreeView.OnKeyDown := DoKeyDown;
     FTreeView.OnMouseDown := DoMouseDown;
+    FTreeView.OnMouseMove := DoMouseMove;
+    FTreeView.OnMouseUp := DoMouseUp;
     FTreeView.OnNewText := DoNewText;
     FTreeView.OnNodeMoved := DoNodeMoved;
     FTreeView.OnPaintText := DoPaintText;
@@ -1424,11 +1640,15 @@ begin
     begin
       FTreeView.TreeOptions.PaintOptions :=
         FTreeView.TreeOptions.PaintOptions + [toHideSelection, toAlwaysHideSelection];
+      FTreeView.TreeOptions.SelectionOptions :=
+        FTreeView.TreeOptions.SelectionOptions + [toDisableDrawSelection];
     end
     else
     begin
       FTreeView.TreeOptions.PaintOptions :=
         FTreeView.TreeOptions.PaintOptions - [toHideSelection, toAlwaysHideSelection];
+      FTreeView.TreeOptions.SelectionOptions :=
+        FTreeView.TreeOptions.SelectionOptions - [toDisableDrawSelection];
     end;
 
     if FShowHeader then
@@ -1461,6 +1681,28 @@ begin
       FTreeView.TreeOptions.PaintOptions + [toHideFocusRect, toUseExplorerTheme];
     FTreeView.TreeOptions.SelectionOptions :=
       FTreeView.TreeOptions.SelectionOptions + [toExtendedFocus, toFullRowSelect, toRightClickSelect];
+  end;
+end;
+
+function TTreeViewPresenter.IsMouseInCheckBox(Node: PVirtualNode;
+  Column: TColumnIndex): Boolean;
+var
+  LCursorPos: TPoint;
+  LHitInfo: THitInfo;
+  LRect: TRect;
+begin
+  if Assigned(Node) and Assigned(ColumnDefinitions) and (Column > -1)
+    and (ColumnDefinitions[Column].ColumnType = TColumnType.ctCheckBox) then
+  begin
+    LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
+    FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
+    LRect := FTreeView.GetDisplayRect(Node, Column, False);
+    LRect := CalcCheckBoxRect(LRect);
+    Result := PtInRect(LRect, LCursorPos);
+  end
+  else
+  begin
+    Result := False;
   end;
 end;
 
@@ -1694,6 +1936,10 @@ end;
 procedure TTreeViewPresenter.SetTreeView(const Value: TVirtualStringTree);
 begin
   FTreeView := Value;
+  if not (csDesigning in ComponentState) then
+  begin
+    FProgressBar.Parent := FTreeView;
+  end;
   InitControl();
 end;
 
@@ -1745,7 +1991,7 @@ begin
         begin
           LExpandedItems.Add(LItem);
         end;
-        LNode := FTreeView.GetNextInitialized(LNode);
+        LNode := FTreeView.GetNext(LNode);
       end;
 
       Synchronize(FExpandedItems, LExpandedItems);
@@ -1784,5 +2030,8 @@ begin
     end;
   end;
 end;
+
+initialization
+  CheckBoxSize := GetSystemMetrics(SM_CYMENUCHECK);
 
 end.

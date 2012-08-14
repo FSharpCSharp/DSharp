@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,13 @@ uses
   TypInfo;
 
 type
-  TCollectionChangedAction = (caAdd, caRemove, caReplace, caMove);
+  TCollectionChangedAction = (
+    caAdd,
+    caRemove,
+    caReplace,
+    caMove,
+    caExtract //internal use only
+  );
   TCollectionChangedEvent<T> = procedure(Sender: TObject; const Item: T;
     Action: TCollectionChangedAction) of object;
 
@@ -96,6 +102,7 @@ type
     procedure Clear;
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
+    function Extract(const Value: TValue): TValue;
     function First: TValue;
     function GetItem(const Index: NativeInt): TValue;
     function GetOnCollectionChanged: IEvent;
@@ -131,6 +138,7 @@ type
     procedure Clear;
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
+    function Extract(const Value: T): T;
     function First: T;
     function GetItem(const Index: NativeInt): T;
     function GetOnCollectionChanged: IEvent<TCollectionChangedEvent<T>>;
@@ -259,6 +267,8 @@ type
     function Contains(const Value: T): Boolean; override;
     procedure Delete(const Index: NativeInt); virtual;
     procedure DeleteRange(const Index, Count: NativeInt);
+    function Extract(const Value: T): T; overload; virtual;
+    function Extract(const Value: TValue): TValue; overload;
     function First: T; virtual;
     function IndexOf(const Value: T): NativeInt; overload; virtual;
     function IndexOf(const Value: TValue): NativeInt; overload;
@@ -311,6 +321,8 @@ type
     FItems: TArray<T>;
     FCount: NativeInt;
     procedure Grow;
+    procedure InternalDelete(const Index: NativeInt;
+      const Action: TCollectionChangedAction);
   protected
     function GetCapacity: NativeInt; override;
     function GetCount: NativeInt; override;
@@ -320,6 +332,7 @@ type
   public
     procedure Clear; override;
     procedure Delete(const Index: NativeInt); override;
+    function Extract(const Value: T): T; override;
     procedure Insert(const Index: NativeInt; const Value: T); override;
     procedure Move(const OldIndex, NewIndex: NativeInt); override;
     procedure Sort(Comparer: IComparer<T>); override;
@@ -618,6 +631,16 @@ begin
     Delete(Index);
 end;
 
+function TListBase<T>.Extract(const Value: T): T;
+begin
+  // implemented in descendants
+end;
+
+function TListBase<T>.Extract(const Value: TValue): TValue;
+begin
+  Result := TValue.From<T>(Extract(Value.AsType<T>));
+end;
+
 function TListBase<T>.First: T;
 begin
   Result := Items[0];
@@ -777,8 +800,15 @@ begin
 end;
 
 procedure TListBase<T>.Notify(const Value: T; const Action: TCollectionChangedAction);
+var
+  LAction: TCollectionChangedAction;
 begin
-  FOnCollectionChanged.Invoke(Self, Value, Action);
+  case Action of
+    caExtract: LAction := caRemove;
+  else
+    LAction := Action;
+  end;
+  FOnCollectionChanged.Invoke(Self, Value, LAction);
 end;
 
 function TListBase<T>.Remove(const Value: T): NativeInt;
@@ -925,22 +955,24 @@ begin
 end;
 
 procedure TList<T>.Delete(const Index: NativeInt);
-var
-  LItem: T;
 begin
-  if (Index < 0) or (Index >= Count) then
-    raise EArgumentOutOfRangeException.CreateRes(@SArgumentOutOfRange);
+  InternalDelete(Index, caRemove);
+end;
 
-  LItem := FItems[Index];
-  FItems[Index] := Default(T);
-  Dec(FCount);
-  if Index < FCount then
+function TList<T>.Extract(const Value: T): T;
+var
+  i: NativeInt;
+begin
+  i := IndexOf(Value);
+  if i = -1 then
   begin
-    System.Move(FItems[Index + 1], FItems[Index], (FCount - Index) * SizeOf(T));
-    FillChar(FItems[FCount], SizeOf(T), 0);
+    Result := Default(T);
+  end
+  else
+  begin
+    Result := FItems[i];
+    InternalDelete(i, caExtract);
   end;
-
-  Notify(LItem, caRemove);
 end;
 
 function TList<T>.GetCapacity: NativeInt;
@@ -985,6 +1017,26 @@ begin
   FItems[Index] := Value;
   Inc(FCount);
   Notify(Value, caAdd);
+end;
+
+procedure TList<T>.InternalDelete(const Index: NativeInt;
+  const Action: TCollectionChangedAction);
+var
+  LItem: T;
+begin
+  if (Index < 0) or (Index >= Count) then
+    raise EArgumentOutOfRangeException.CreateRes(@SArgumentOutOfRange);
+
+  LItem := FItems[Index];
+  FItems[Index] := Default(T);
+  Dec(FCount);
+  if Index < FCount then
+  begin
+    System.Move(FItems[Index + 1], FItems[Index], (FCount - Index) * SizeOf(T));
+    FillChar(FItems[FCount], SizeOf(T), 0);
+  end;
+
+  Notify(LItem, Action);
 end;
 
 procedure TList<T>.Move(const OldIndex, NewIndex: NativeInt);

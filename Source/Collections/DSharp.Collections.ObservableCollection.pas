@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,7 @@ begin
     LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
     case Action of
       caAdd: LPropertyChanged.Add(DoItemPropertyChanged);
-      caRemove: LPropertyChanged.Remove(DoItemPropertyChanged);
+      caRemove, caExtract: LPropertyChanged.Remove(DoItemPropertyChanged);
     end;
   end;
 

@@ -34,7 +34,8 @@ interface
 uses
   DSharp.Core.DataTemplates,
   DSharp.Windows.ColumnDefinitions,
-  DSharp.Windows.ControlTemplates;
+  DSharp.Windows.ControlTemplates,
+  Rtti;
 
 type
   TColumnDefinitionsControlTemplate = class(TControlTemplate)
@@ -52,8 +53,9 @@ type
     function GetItemTemplate(const Item: TObject): IDataTemplate; override;
 
     function GetText(const Item: TObject; const ColumnIndex: Integer): string; override;
-    procedure SetText(const Item: TObject; const ColumnIndex: Integer;
-      const Value: string); override;
+    function GetValue(const Item: TObject; const ColumnIndex: Integer): TValue; override;
+    procedure SetValue(const Item: TObject; const ColumnIndex: Integer;
+      const Value: TValue); override;
 
     property ColumnDefinitions: IColumnDefinitions
       read FColumnDefinitions write FColumnDefinitions;
@@ -172,6 +174,21 @@ end;
 
 function TColumnDefinitionsControlTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
+begin
+  if Assigned(Item) and Assigned(FColumnDefinitions)
+    and (ColumnIndex < FColumnDefinitions.Count) and (ColumnIndex > -1)
+    and (FColumnDefinitions[ColumnIndex].ColumnType <> ctText) then
+  begin
+    Result := '';
+  end
+  else
+  begin
+    Result := inherited;
+  end;
+end;
+
+function TColumnDefinitionsControlTemplate.GetValue(const Item: TObject;
+  const ColumnIndex: Integer): TValue;
 var
   LColumnDefinition: TColumnDefinition;
 begin
@@ -188,7 +205,7 @@ begin
     if Assigned(LColumnDefinition.TextPropertyExpression) then
     begin
       (LColumnDefinition.TextPropertyExpression.Expression as IParameterExpression).Value := Item;
-      Result := LColumnDefinition.TextPropertyExpression.Value.ToString;
+      Result := LColumnDefinition.TextPropertyExpression.Value;
     end else
     begin
       Result := inherited;
@@ -200,8 +217,8 @@ begin
   end;
 end;
 
-procedure TColumnDefinitionsControlTemplate.SetText(const Item: TObject;
-  const ColumnIndex: Integer; const Value: string);
+procedure TColumnDefinitionsControlTemplate.SetValue(const Item: TObject;
+  const ColumnIndex: Integer; const Value: TValue);
 var
   LColumnDefinition: TColumnDefinition;
 begin
@@ -213,7 +230,7 @@ begin
     if Assigned(LColumnDefinition.OnSetText) then
     begin
       LColumnDefinition.OnSetText(
-        FColumnDefinitions.Owner, LColumnDefinition, Item, Value);
+        FColumnDefinitions.Owner, LColumnDefinition, Item, Value.ToString);
     end else
     if Assigned(LColumnDefinition.TextPropertyExpression) then
     begin

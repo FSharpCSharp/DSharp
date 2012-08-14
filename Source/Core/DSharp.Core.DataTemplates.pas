@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,8 @@ unit DSharp.Core.DataTemplates;
 interface
 
 uses
-  DSharp.Collections;
+  DSharp.Collections,
+  Rtti;
 
 type
   IDataTemplate = interface
@@ -41,10 +42,13 @@ type
     function GetHint(const Item: TObject; const ColumnIndex: Integer): string;
     function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer;
     function GetText(const Item: TObject; const ColumnIndex: Integer): string;
+    function GetValue(const Item: TObject; const ColumnIndex: Integer): TValue;
 
     // methods to edit items
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
       const Value: string);
+    procedure SetValue(const Item: TObject; const ColumnIndex: Integer;
+      const Value: TValue);
 
     // methods to build the tree structure
     function GetItem(const Item: TObject; const Index: Integer): TObject;
@@ -74,9 +78,13 @@ type
       const ColumnIndex: Integer): Integer; virtual;
     function GetText(const Item: TObject;
       const ColumnIndex: Integer): string; virtual;
+    function GetValue(const Item: TObject;
+      const ColumnIndex: Integer): TValue; virtual;
 
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
       const Value: string); virtual;
+    procedure SetValue(const Item: TObject; const ColumnIndex: Integer;
+      const Value: TValue); virtual;
 
     function GetItem(const Item: TObject;
       const Index: Integer): TObject; virtual;
@@ -107,11 +115,19 @@ type
       const Value: string); overload; override; final;
     procedure SetText(const Item: T; const ColumnIndex: Integer;
       const Value: string); reintroduce; overload; virtual;
+    procedure SetValue(const Item: TObject; const ColumnIndex: Integer;
+      const Value: TValue); overload; override; final;
+    procedure SetValue(const Item: T; const ColumnIndex: Integer;
+      const Value: TValue); reintroduce; overload; virtual;
 
     function GetText(const Item: TObject;
       const ColumnIndex: Integer): string; overload; override; final;
     function GetText(const Item: T;
       const ColumnIndex: Integer): string; reintroduce; overload; virtual;
+    function GetValue(const Item: TObject;
+      const ColumnIndex: Integer): TValue; overload; override; final;
+    function GetValue(const Item: T;
+      const ColumnIndex: Integer): TValue; reintroduce; overload; virtual;
     function GetItem(const Item: TObject;
       const Index: Integer): TObject; overload; override; final;
     function GetItem(const Item: T;
@@ -128,7 +144,8 @@ implementation
 
 uses
   DSharp.Core.Reflection,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 { TDataTemplate }
 
@@ -145,7 +162,7 @@ begin
     begin
       if Item2.InheritsFrom(GetTemplateDataClass) then
       begin
-        Result := CompareText(GetText(Item1, ColumnIndex), GetText(Item2, ColumnIndex));
+        Result := CompareValue(GetValue(Item1, ColumnIndex), GetValue(Item2, ColumnIndex));
       end else
       begin
         Result := -1;
@@ -162,8 +179,8 @@ begin
 
         if Assigned(LItemTemplate1) and Assigned(LItemTemplate2) then
         begin
-          Result := CompareText(LItemTemplate1.GetText(Item1, ColumnIndex),
-            LItemTemplate2.GetText(Item2, ColumnIndex));
+          Result := CompareValue(LItemTemplate1.GetValue(Item1, ColumnIndex),
+            LItemTemplate2.GetValue(Item2, ColumnIndex));
         end;
       end;
     end;
@@ -215,8 +232,20 @@ begin
 end;
 
 function TDataTemplate.GetItems(const Item: TObject): IList;
+var
+  LProperty: TRttiProperty;
 begin
   Result := nil;
+
+  for LProperty in Item.GetProperties do
+  begin
+    if (LProperty.Visibility = mvPublished)
+      and LProperty.RttiType.IsCovariantTo(TypeInfo(IList<TObject>)) then
+    begin
+      Result := IList<TObject>(LProperty.GetValue(Item).AsInterface).AsList;
+      Break;
+    end;
+  end;
 end;
 
 function TDataTemplate.GetItemTemplate(const Item: TObject): IDataTemplate;
@@ -252,6 +281,12 @@ end;
 function TDataTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
 begin
+  Result := GetValue(Item, ColumnIndex).ToString;
+end;
+
+function TDataTemplate.GetValue(const Item: TObject;
+  const ColumnIndex: Integer): TValue;
+begin
   Result := '(not available)';
 end;
 
@@ -263,7 +298,13 @@ end;
 procedure TDataTemplate.SetText(const Item: TObject; const ColumnIndex: Integer;
   const Value: string);
 begin
+  SetValue(Item, ColumnIndex, Value);
+end;
 
+procedure TDataTemplate.SetValue(const Item: TObject;
+  const ColumnIndex: Integer; const Value: TValue);
+begin
+  // implemented in descendants
 end;
 
 { TDataTemplate<T> }
@@ -340,6 +381,18 @@ begin
   Result := inherited GetText(Item, ColumnIndex);
 end;
 
+function TDataTemplate<T>.GetValue(const Item: TObject;
+  const ColumnIndex: Integer): TValue;
+begin
+  Result := GetValue(T(Item), ColumnIndex);
+end;
+
+function TDataTemplate<T>.GetValue(const Item: T;
+  const ColumnIndex: Integer): TValue;
+begin
+  Result := inherited GetValue(Item, ColumnIndex);
+end;
+
 procedure TDataTemplate<T>.SetText(const Item: TObject;
   const ColumnIndex: Integer; const Value: string);
 begin
@@ -350,6 +403,18 @@ procedure TDataTemplate<T>.SetText(const Item: T; const ColumnIndex: Integer;
   const Value: string);
 begin
   inherited SetText(Item, ColumnIndex, Value);
+end;
+
+procedure TDataTemplate<T>.SetValue(const Item: TObject;
+  const ColumnIndex: Integer; const Value: TValue);
+begin
+  SetValue(T(Item), ColumnIndex, Value);
+end;
+
+procedure TDataTemplate<T>.SetValue(const Item: T; const ColumnIndex: Integer;
+  const Value: TValue);
+begin
+  inherited SetValue(Item, ColumnIndex, Value);
 end;
 
 end.

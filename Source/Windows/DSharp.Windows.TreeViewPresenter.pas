@@ -164,6 +164,8 @@ type
 
     function CalcCheckBoxRect(const Rect: TRect): TRect;
     function IsMouseInCheckBox(Node: PVirtualNode; Column: TColumnIndex): Boolean;
+    function IsMouseInToggleIcon(HitInfo: THitInfo): Boolean;
+    procedure ToggleIcon(Node: PVirtualNode; Column: TColumnIndex);
 
     procedure ReadMultiSelect(Reader: TReader);
     procedure ResetRootNodeCount;
@@ -253,6 +255,7 @@ uses
   Math,
   Rtti,
   Themes,
+  TypInfo,
   Windows;
 
 const
@@ -515,19 +518,30 @@ begin
   LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
   FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
 
-  if FListMode and Assigned(LHitInfo.HitNode)
-    and ((hiOnNormalIcon in LHitInfo.HitPositions)
-    or (not Assigned(OnDoubleClick) and not Assigned(Action))) then
+  if not IsMouseInToggleIcon(LHitInfo) then
   begin
-    FTreeView.ToggleNode(LHitInfo.HitNode);
+    if FListMode and Assigned(LHitInfo.HitNode)
+      and (LHitInfo.HitColumn < 1)
+      and ((hiOnNormalIcon in LHitInfo.HitPositions)
+      or (not Assigned(OnDoubleClick) and not Assigned(Action))) then
+    begin
+      FTreeView.ToggleNode(LHitInfo.HitNode);
+    end
+    else
+    begin
+      if ([hiOnItemButton..hiOnItemCheckbox] * LHitInfo.HitPositions = [])
+        and Assigned(LHitInfo.HitNode)
+        and not IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
+      begin
+        inherited;
+      end;
+    end;
   end
   else
   begin
-    if ([hiOnItemButton..hiOnItemCheckbox] * LHitInfo.HitPositions = [])
-      and Assigned(LHitInfo.HitNode)
-      and not IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
+    if ColumnDefinitions[LHitInfo.HitColumn].ToggleMode = tmDoubleClick then
     begin
-      inherited;
+      ToggleIcon(LHitInfo.HitNode, LHitInfo.HitColumn);
     end;
   end;
 end;
@@ -792,7 +806,15 @@ begin
   LItemTemplate := GetItemTemplate(LItem);
   if Assigned(LItemTemplate) then
   begin
-    CellText := LItemTemplate.GetText(LItem, Column);
+    if Assigned(ColumnDefinitions) and (Column > -1)
+      and (ColumnDefinitions[Column].ColumnType = TColumnType.ctText) then
+    begin
+      CellText := LItemTemplate.GetText(LItem, Column);
+    end
+    else
+    begin
+      CellText := '';
+    end;
   end;
 end;
 
@@ -1056,20 +1078,35 @@ var
   LHitInfo: THitInfo;
   LItem: TObject;
   LItemTemplate: IDataTemplate;
+  LColumnDefinition: TColumnDefinition;
 begin
   if Assigned(FHitInfo.HitNode) then
   begin
     FTreeView.GetHitTestInfoAt(X, Y, False, LHitInfo);
     if (FHitInfo.HitNode = LHitInfo.HitNode)
       and (FHitInfo.HitColumn = LHitInfo.HitColumn)
-      and IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
+      and Assigned(ColumnDefinitions) and (LHitInfo.HitColumn > -1)
+      and (LHitInfo.HitColumn < ColumnDefinitions.Count) then
     begin
       LItem := GetNodeItem(FTreeView, LHitInfo.HitNode);
       LItemTemplate := GetItemTemplate(LItem);
-      if Assigned(LItemTemplate) and ColumnDefinitions[LHitInfo.HitColumn].AllowEdit then
+      LColumnDefinition := ColumnDefinitions[LHitInfo.HitColumn];
+
+      if Assigned(LItemTemplate) then
       begin
-        LItemTemplate.SetValue(LItem, LHitInfo.HitColumn,
-          not LItemTemplate.GetValue(LItem, LHitInfo.HitColumn).AsBoolean);
+        if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn)
+          and LColumnDefinition.AllowEdit then
+        begin
+          LItemTemplate.SetValue(LItem, LHitInfo.HitColumn,
+            not LItemTemplate.GetValue(LItem, LHitInfo.HitColumn).AsBoolean);
+        end;
+
+        if (hiOnNormalIcon in FHitInfo.HitPositions)
+          and (hiOnNormalIcon in LHitInfo.HitPositions)
+          and (LColumnDefinition.ToggleMode = tmClick) then
+        begin
+          ToggleIcon(LHitInfo.HitNode, LHitInfo.HitColumn);
+        end;
       end;
     end;
 
@@ -1706,6 +1743,13 @@ begin
   end;
 end;
 
+function TTreeViewPresenter.IsMouseInToggleIcon(HitInfo: THitInfo): Boolean;
+begin
+  Result := Assigned(ColumnDefinitions) and (hiOnNormalIcon in HitInfo.HitPositions)
+    and (HitInfo.HitColumn > -1) and (HitInfo.HitColumn < ColumnDefinitions.Count)
+    and (ColumnDefinitions[HitInfo.HitColumn].ToggleMode <> tmNone);
+end;
+
 procedure TTreeViewPresenter.ReadMultiSelect(Reader: TReader);
 begin
   if Reader.ReadBoolean then
@@ -1941,6 +1985,31 @@ begin
     FProgressBar.Parent := FTreeView;
   end;
   InitControl();
+end;
+
+procedure TTreeViewPresenter.ToggleIcon(Node: PVirtualNode;
+  Column: TColumnIndex);
+var
+  LItem: TObject;
+  LColumnDefinition: TColumnDefinition;
+  LValue: TValue;
+begin
+  LItem := GetNodeItem(FTreeView, Node);
+  LColumnDefinition := ColumnDefinitions[Column];
+  LColumnDefinition.ImageIndexPropertyExpression.Instance := LItem;
+  LValue := LColumnDefinition.ImageIndexPropertyExpression.Value;
+  if LValue.Kind = tkEnumeration then
+  begin
+    if LValue.AsOrdinal < LValue.TypeData.MaxValue then
+    begin
+      TValue.Make(LValue.AsOrdinal + 1, LValue.TypeInfo, LValue);
+    end
+    else
+    begin
+      TValue.Make(LValue.TypeData.MinValue, LValue.TypeInfo, LValue);
+    end;
+    LColumnDefinition.ImageIndexPropertyExpression.Value := LValue;
+  end;
 end;
 
 procedure TTreeViewPresenter.UpdateCheckedItems;

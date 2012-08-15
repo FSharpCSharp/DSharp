@@ -69,6 +69,7 @@ type
     Item: TObject; const Value: string) of object;
 
   TColumnType = (ctText, ctCheckBox, ctProgressBar);
+  TToggleMode = (tmNone, tmClick, tmDoubleClick);
 
   TColumnDefinition = class(TCollectionItem)
   private
@@ -91,6 +92,7 @@ type
     FOnSetText: TSetTextEvent;
     FTextPropertyExpression: IMemberExpression;
     FTextPropertyName: string;
+    FToggleMode: TToggleMode;
     FVisible: Boolean;
     FWidth: Integer;
     procedure SetCustomFilter(const Value: string);
@@ -122,6 +124,7 @@ type
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
     property TextPropertyName: string read FTextPropertyName write SetTextPropertyName;
+    property ToggleMode: TToggleMode read FToggleMode write FToggleMode default tmNone;
     property Visible: Boolean read FVisible write FVisible default True;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;

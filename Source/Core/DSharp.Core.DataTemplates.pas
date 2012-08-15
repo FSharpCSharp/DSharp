@@ -280,8 +280,18 @@ end;
 
 function TDataTemplate.GetText(const Item: TObject;
   const ColumnIndex: Integer): string;
+var
+  LValue: TValue;
 begin
-  Result := GetValue(Item, ColumnIndex).ToString;
+  LValue := GetValue(Item, ColumnIndex);
+  if LValue.IsEmpty then
+  begin
+    Result := '';
+  end
+  else
+  begin
+    Result := LValue.ToString;
+  end;
 end;
 
 function TDataTemplate.GetValue(const Item: TObject;

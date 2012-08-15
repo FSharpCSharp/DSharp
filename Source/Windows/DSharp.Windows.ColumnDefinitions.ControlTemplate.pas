@@ -116,7 +116,7 @@ begin
     end else
     if Assigned(LColumnDefinition.HintPropertyExpression) then
     begin
-      (LColumnDefinition.HintPropertyExpression.Expression as IParameterExpression).Value := Item;
+      LColumnDefinition.HintPropertyExpression.Instance := Item;
       Result := LColumnDefinition.HintPropertyExpression.Value.ToString;
     end else
     begin
@@ -146,7 +146,7 @@ begin
     end else
     if Assigned(LColumnDefinition.ImageIndexPropertyExpression) then
     begin
-      (LColumnDefinition.ImageIndexPropertyExpression.Expression as IParameterExpression).Value := Item;
+      LColumnDefinition.ImageIndexPropertyExpression.Instance := Item;
       Result := LColumnDefinition.ImageIndexPropertyExpression.Value.AsOrdinal;
     end else
     begin
@@ -204,11 +204,11 @@ begin
     end else
     if Assigned(LColumnDefinition.TextPropertyExpression) then
     begin
-      (LColumnDefinition.TextPropertyExpression.Expression as IParameterExpression).Value := Item;
+      LColumnDefinition.TextPropertyExpression.Instance := Item;
       Result := LColumnDefinition.TextPropertyExpression.Value;
     end else
     begin
-      Result := inherited;
+      Result := '';
     end;
   end
   else
@@ -234,7 +234,7 @@ begin
     end else
     if Assigned(LColumnDefinition.TextPropertyExpression) then
     begin
-      (LColumnDefinition.TextPropertyExpression.Expression as IParameterExpression).Value := Item;
+      LColumnDefinition.TextPropertyExpression.Instance := Item;
       LColumnDefinition.TextPropertyExpression.Value := Value;
     end;
   end;

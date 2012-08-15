@@ -106,8 +106,11 @@ type
   IMemberExpression = interface(IParameterExpression)
     ['{88F4CEFF-7C9B-4815-BD77-9BBDEDFA3693}']
     function GetExpression: IExpression;
+    function GetInstance: TValue;
     function GetMember: TRttiMember;
+    procedure SetInstance(const Value: TValue);
     property Expression: IExpression read GetExpression;
+    property Instance: TValue read GetInstance write SetInstance;
     property Member: TRttiMember read GetMember;
   end;
 
@@ -454,8 +457,9 @@ type
     FExpression: IExpression;
     FName: string;
     function GetExpression: IExpression;
+    function GetInstance: TValue;
     function GetName: string;
-    function GetObject: TObject;
+    procedure SetInstance(const Value: TValue);
   protected
     function GetMember: TRttiMember; virtual;
     function GetValue: TValue; virtual;
@@ -1922,7 +1926,22 @@ end;
 
 function TMemberExpression.GetExpression: IExpression;
 begin
-  Result := FExpression
+  Result := FExpression;
+end;
+
+function TMemberExpression.GetInstance: TValue;
+var
+  Delegate: TCompiledExpression;
+begin
+  if Assigned(FExpression) then
+  begin
+    Delegate := FExpression.Compile();
+    Result := Delegate();
+  end
+  else
+  begin
+    Result := nil;
+  end;
 end;
 
 function TMemberExpression.GetMember: TRttiMember;
@@ -1935,24 +1954,19 @@ begin
   Result := FName;
 end;
 
-function TMemberExpression.GetObject: TObject;
-var
-  Delegate: TCompiledExpression;
-begin
-  if Assigned(FExpression) then
-  begin
-    Delegate := FExpression.Compile();
-    Result := Delegate().ToObject();
-  end
-  else
-  begin
-    Result := nil;
-  end;
-end;
-
 function TMemberExpression.GetValue: TValue;
 begin
   Result := Execute();
+end;
+
+procedure TMemberExpression.SetInstance(const Value: TValue);
+var
+  LExpression: IParameterExpression;
+begin
+  if Supports(FExpression, IParameterExpression, LExpression) then
+  begin
+    LExpression.Value := Value;
+  end;
 end;
 
 procedure TMemberExpression.SetValue(const Value: TValue);
@@ -2109,7 +2123,7 @@ function TPropertyExpression.GetMember: TRttiMember;
 var
   LObject: TObject;
 begin
-  LObject := GetObject();
+  LObject := GetInstance().AsObject;
   LObject.TryGetMember(FPropertyName, Result);
 end;
 
@@ -2127,7 +2141,7 @@ var
   LResult: TMethod;
 begin
   Result := TValue.Empty;
-  LObject := GetObject();
+  LObject := GetInstance().AsObject;
   if LObject.TryGetProperty(FPropertyName, LProperty) then
   begin
     if LProperty.IsReadable then
@@ -2243,7 +2257,7 @@ var
   LProperty: TRttiProperty;
   LValue: TValue;
 begin
-  LObject := GetObject();
+  LObject := GetInstance().AsObject;
   LValue := Value;
 {$IFDEF VER210}
   if LValue.IsEmpty then
@@ -2305,7 +2319,7 @@ begin
       LMethod := GetMethod();
       if Assigned(LMethod) then
       begin
-        LObject := GetObject();
+        LObject := GetInstance().AsObject;
         SetLength(LArguments, Length(ArgumentDelegates));
         for i := Low(ArgumentDelegates) to High(ArgumentDelegates) do
           LArguments[i] := ArgumentDelegates[i]();
@@ -2359,7 +2373,7 @@ function TMethodExpression.GetMethod: TRttiMethod;
 var
   LObject: TObject;
 begin
-  LObject := GetObject();
+  LObject := GetInstance().AsObject;
   Result := LObject.GetMethod(FName);
 end;
 

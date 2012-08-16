@@ -143,17 +143,17 @@ begin
     begin
       Result := LColumnDefinition.OnGetImageIndex(
         FColumnDefinitions.Owner, LColumnDefinition, Item);
+      Result := Result + LColumnDefinition.ImageIndexOffset;
     end else
     if Assigned(LColumnDefinition.ImageIndexPropertyExpression) then
     begin
       LColumnDefinition.ImageIndexPropertyExpression.Instance := Item;
       Result := LColumnDefinition.ImageIndexPropertyExpression.Value.AsOrdinal;
+      Result := Result + LColumnDefinition.ImageIndexOffset;
     end else
     begin
       Result := inherited;
     end;
-
-    Result := Result + LColumnDefinition.ImageIndexOffset;
   end
   else
   begin

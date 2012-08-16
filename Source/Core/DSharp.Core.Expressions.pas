@@ -1961,12 +1961,17 @@ end;
 
 procedure TMemberExpression.SetInstance(const Value: TValue);
 var
-  LExpression: IParameterExpression;
+  LParameterExpression: IParameterExpression;
+  LMemberExpression: IMemberExpression;
 begin
-  if Supports(FExpression, IParameterExpression, LExpression) then
+  if Supports(FExpression, IParameterExpression, LParameterExpression) then
   begin
-    LExpression.Value := Value;
-  end;
+    LParameterExpression.Value := Value;
+  end else
+  if Supports(FExpression, IMemberExpression, LMemberExpression) then
+  begin
+    LMemberExpression.Instance := Value;
+  end
 end;
 
 procedure TMemberExpression.SetValue(const Value: TValue);
@@ -2123,7 +2128,7 @@ function TPropertyExpression.GetMember: TRttiMember;
 var
   LObject: TObject;
 begin
-  LObject := GetInstance().AsObject;
+  LObject := GetInstance().ToObject;
   LObject.TryGetMember(FPropertyName, Result);
 end;
 
@@ -2141,7 +2146,7 @@ var
   LResult: TMethod;
 begin
   Result := TValue.Empty;
-  LObject := GetInstance().AsObject;
+  LObject := GetInstance().ToObject;
   if LObject.TryGetProperty(FPropertyName, LProperty) then
   begin
     if LProperty.IsReadable then
@@ -2257,7 +2262,7 @@ var
   LProperty: TRttiProperty;
   LValue: TValue;
 begin
-  LObject := GetInstance().AsObject;
+  LObject := GetInstance().ToObject;
   LValue := Value;
 {$IFDEF VER210}
   if LValue.IsEmpty then
@@ -2269,7 +2274,10 @@ begin
   begin
     if FIndex = -1 then
     begin
-      LProperty.SetValue(LObject, LValue);
+      if LProperty.IsWritable then
+      begin
+        LProperty.SetValue(LObject, LValue);
+      end;
     end
     else
     begin
@@ -2319,7 +2327,7 @@ begin
       LMethod := GetMethod();
       if Assigned(LMethod) then
       begin
-        LObject := GetInstance().AsObject;
+        LObject := GetInstance().ToObject;
         SetLength(LArguments, Length(ArgumentDelegates));
         for i := Low(ArgumentDelegates) to High(ArgumentDelegates) do
           LArguments[i] := ArgumentDelegates[i]();
@@ -2373,7 +2381,7 @@ function TMethodExpression.GetMethod: TRttiMethod;
 var
   LObject: TObject;
 begin
-  LObject := GetInstance().AsObject;
+  LObject := GetInstance().ToObject;
   Result := LObject.GetMethod(FName);
 end;
 

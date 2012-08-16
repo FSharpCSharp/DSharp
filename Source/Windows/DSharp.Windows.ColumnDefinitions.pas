@@ -68,7 +68,7 @@ type
   TSetTextEvent = procedure(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject; const Value: string) of object;
 
-  TColumnType = (ctText, ctCheckBox, ctProgressBar);
+  TColumnType = (ctText, ctCheckBox, ctProgressBar, ctImage);
   TToggleMode = (tmNone, tmClick, tmDoubleClick);
 
   TColumnDefinition = class(TCollectionItem)
@@ -223,7 +223,7 @@ begin
       FFilter :=
         function(Item: TObject): Boolean
         begin
-          IParameterExpression(FTextPropertyExpression.Expression).Value := Item;
+          FTextPropertyExpression.Instance := Item;
           Result := ContainsText(FTextPropertyExpression.Value.ToString, FCustomFilter);
         end;
     end

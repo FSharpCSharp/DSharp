@@ -146,6 +146,8 @@ type
       Column: TColumnIndex; CellRect: TRect; Value: Boolean);
     procedure DrawProgressBar(TargetCanvas: TCanvas; Node: PVirtualNode;
       Column: TColumnIndex; CellRect: TRect; Value: Integer);
+    procedure DrawImage(TargetCanvas: TCanvas; Node: PVirtualNode;
+      Column: TColumnIndex; CellRect: TRect; Value: Integer);
 
     procedure ExpandNode(Node: PVirtualNode);
     function GetCheckedItem: TObject;
@@ -163,6 +165,7 @@ type
     function GetSelectedItems: IList<TObject>;
 
     function CalcCheckBoxRect(const Rect: TRect): TRect;
+    function CalcImageRect(const Rect: TRect): TRect;
     function IsMouseInCheckBox(Node: PVirtualNode; Column: TColumnIndex): Boolean;
     function IsMouseInToggleIcon(HitInfo: THitInfo): Boolean;
     procedure ToggleIcon(Node: PVirtualNode; Column: TColumnIndex);
@@ -351,6 +354,14 @@ begin
   Result.Bottom := Result.Top + CheckBoxSize;
 end;
 
+function TTreeViewPresenter.CalcImageRect(const Rect: TRect): TRect;
+begin
+  Result.Left := Rect.Left + (RectWidth(Rect) - ImageList.Width) div 2;
+  Result.Top := Rect.Top + (RectHeight(Rect) - ImageList.Height) div 2;
+  Result.Right := Result.Left + ImageList.Width;
+  Result.Bottom := Result.Top + ImageList.Height;
+end;
+
 procedure TTreeViewPresenter.DefineProperties(Filer: TFiler);
 begin
   inherited;
@@ -401,7 +412,10 @@ begin
       TColumnType.ctCheckBox:
         DrawCheckBox(TargetCanvas, Node, Column, CellRect, LValue.AsBoolean);
       TColumnType.ctProgressBar:
-        DrawProgressBar(TargetCanvas, Node, Column, CellRect, LValue.AsInteger);
+        DrawProgressBar(TargetCanvas, Node, Column, CellRect, LValue.AsOrdinal);
+      TColumnType.ctImage:
+        DrawImage(TargetCanvas, Node, Column, CellRect, LValue.AsOrdinal +
+          ColumnDefinitions[Column].ImageIndexOffset);
     end;
   end;
 end;
@@ -1323,6 +1337,18 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.DrawImage(TargetCanvas: TCanvas;
+  Node: PVirtualNode; Column: TColumnIndex; CellRect: TRect; Value: Integer);
+var
+  LRect: TRect;
+begin
+  if Assigned(ImageList) then
+  begin
+    LRect := CalcImageRect(CellRect);
+    ImageList.Draw(TargetCanvas, LRect.Left, LRect.Top, Value);
+  end;
+end;
+
 procedure TTreeViewPresenter.DrawProgressBar(TargetCanvas: TCanvas;
   Node: PVirtualNode; Column: TColumnIndex; CellRect: TRect; Value: Integer);
 var
@@ -1744,10 +1770,27 @@ begin
 end;
 
 function TTreeViewPresenter.IsMouseInToggleIcon(HitInfo: THitInfo): Boolean;
+var
+  LCursorPos: TPoint;
+  LRect: TRect;
 begin
-  Result := Assigned(ColumnDefinitions) and (hiOnNormalIcon in HitInfo.HitPositions)
-    and (HitInfo.HitColumn > -1) and (HitInfo.HitColumn < ColumnDefinitions.Count)
-    and (ColumnDefinitions[HitInfo.HitColumn].ToggleMode <> tmNone);
+  if Assigned(ColumnDefinitions) and (HitInfo.HitColumn > -1)
+    and (HitInfo.HitColumn < ColumnDefinitions.Count) then
+  begin
+    if ColumnDefinitions[HitInfo.HitColumn].ColumnType = ctImage then
+    begin
+      LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
+      LRect := FTreeView.GetDisplayRect(HitInfo.HitNode, HitInfo.HitColumn, False);
+      LRect := CalcImageRect(LRect);
+      if PtInRect(LRect, LCursorPos) then
+      begin
+        Include(HitInfo.HitPositions, hiOnNormalIcon);
+      end;
+    end;
+
+    Result := (hiOnNormalIcon in HitInfo.HitPositions)
+      and (ColumnDefinitions[HitInfo.HitColumn].ToggleMode <> tmNone);
+  end;
 end;
 
 procedure TTreeViewPresenter.ReadMultiSelect(Reader: TReader);
@@ -1991,14 +2034,11 @@ procedure TTreeViewPresenter.ToggleIcon(Node: PVirtualNode;
   Column: TColumnIndex);
 var
   LItem: TObject;
+  LItemTemplate: IDataTemplate;
   LColumnDefinition: TColumnDefinition;
   LValue: TValue;
-begin
-  LItem := GetNodeItem(FTreeView, Node);
-  LColumnDefinition := ColumnDefinitions[Column];
-  LColumnDefinition.ImageIndexPropertyExpression.Instance := LItem;
-  LValue := LColumnDefinition.ImageIndexPropertyExpression.Value;
-  if LValue.Kind = tkEnumeration then
+
+  procedure ToggleValue;
   begin
     if LValue.AsOrdinal < LValue.TypeData.MaxValue then
     begin
@@ -2008,7 +2048,33 @@ begin
     begin
       TValue.Make(LValue.TypeData.MinValue, LValue.TypeInfo, LValue);
     end;
-    LColumnDefinition.ImageIndexPropertyExpression.Value := LValue;
+  end;
+
+begin
+  LItem := GetNodeItem(FTreeView, Node);
+  LColumnDefinition := ColumnDefinitions[Column];
+  if LColumnDefinition.ColumnType = ctImage then
+  begin
+    LItemTemplate := GetItemTemplate(LItem);
+    if Assigned(LItemTemplate) then
+    begin
+      LValue := LItemTemplate.GetValue(LItem, Column);
+      if LValue.IsOrdinal then
+      begin
+        ToggleValue;
+        LItemTemplate.SetValue(LItem, Column, LValue);
+      end;
+    end;
+  end
+  else
+  begin
+    LColumnDefinition.ImageIndexPropertyExpression.Instance := LItem;
+    LValue := LColumnDefinition.ImageIndexPropertyExpression.Value;
+    if LValue.IsOrdinal then
+    begin
+      ToggleValue;
+      LColumnDefinition.ImageIndexPropertyExpression.Value := LValue;
+    end;
   end;
 end;
 

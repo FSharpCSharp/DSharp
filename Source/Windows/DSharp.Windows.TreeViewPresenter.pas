@@ -379,7 +379,7 @@ begin
     while Assigned(LNode) do
     begin
       LItem := GetNodeItem(FTreeView, LNode);
-      if Assigned(LItem) and (Items.IndexOf(LItem) > -1) then
+      if Assigned(LItem) and Items.Contains(LItem) then
       begin
         FTreeView.DeleteNode(LNode);
       end;
@@ -605,7 +605,7 @@ begin
 
     if not LHandled and (Sender = Source) then
     begin
-      BeginUpdate;
+      Inc(FUpdateCount);
       try
         for i := Low(LSelectedNodes) to High(LSelectedNodes) do
         begin
@@ -618,13 +618,14 @@ begin
               if FCurrentNode <> LNode then
               begin
                 FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+                ExpandNode(LNode);
               end;
             end;
             dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);
           end;
         end;
       finally
-        EndUpdate;
+        Dec(FUpdateCount);
       end;
     end;
   end;
@@ -857,7 +858,7 @@ begin
 
     if Sender.SortColumn = -1 then
     begin
-      Refresh;
+      Refresh();
     end;
   end;
 end;
@@ -986,7 +987,7 @@ begin
         end;
         if LAllowed then
         begin
-          BeginUpdate;
+          Inc(FUpdateCount);
           try
             for i := Low(LNodes) to High(LNodes) do
             begin
@@ -994,7 +995,7 @@ begin
               FTreeView.MoveTo(LNodes[i], LNodes[i].PrevSibling, amInsertBefore, False);
             end;
           finally
-            EndUpdate;
+            Dec(FUpdateCount);
           end;
         end;
       end;
@@ -1012,7 +1013,7 @@ begin
         end;
         if LAllowed then
         begin
-          BeginUpdate;
+          Inc(FUpdateCount);
           try
             for i := High(LNodes) downto Low(LNodes) do
             begin
@@ -1020,7 +1021,7 @@ begin
               FTreeView.MoveTo(LNodes[i], LNodes[i].NextSibling, amInsertAfter, False);
             end;
           finally
-            EndUpdate;
+            Dec(FUpdateCount);
           end;
         end;
       end;
@@ -1243,7 +1244,7 @@ var
   LSelectedNode: PVirtualNode;
 begin
   if Assigned(FTreeView) and not (csDestroying in ComponentState)
-    and (UpdateCount = 0) then
+    and (FUpdateCount = 0) then
   begin
     case Action of
       caAdd:
@@ -1869,7 +1870,7 @@ begin
     while Assigned(LNode) do
     begin
       LItem := GetNodeItem(FTreeView, LNode);
-      if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
+      if Assigned(LItem) and Value.Contains(LItem) then
       begin
         FTreeView.CheckState[LNode] := csCheckedNormal;
       end
@@ -1877,7 +1878,7 @@ begin
       begin
         FTreeView.CheckState[LNode] := csUncheckedNormal;
       end;
-      LNode := FTreeView.GetNextInitialized(LNode);
+      LNode := FTreeView.GetNext(LNode);
     end;
   end;
 end;
@@ -1905,7 +1906,7 @@ begin
     while Assigned(LNode) do
     begin
       LItem := GetNodeItem(FTreeView, LNode);
-      if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
+      if Assigned(LItem) and Value.Contains(LItem) then
       begin
         ExpandNode(LNode);
       end;
@@ -1986,7 +1987,7 @@ begin
       while Assigned(LNode) do
       begin
         LItem := GetNodeItem(FTreeView, LNode);
-        if Assigned(LItem) and (Value.IndexOf(LItem) > -1) then
+        if Assigned(LItem) and Value.Contains(LItem) then
         begin
           FTreeView.Selected[LNode] := True;
         end;
@@ -2124,7 +2125,7 @@ begin
     Inc(FCollectionChanging);
     LExpandedItems := TList<TObject>.Create();
     try
-      LNode := FTreeView.GetFirst();
+      LNode := FTreeView.GetFirstInitialized();
       while Assigned(LNode) do
       begin
         LItem := GetNodeItem(FTreeView, LNode);
@@ -2132,7 +2133,7 @@ begin
         begin
           LExpandedItems.Add(LItem);
         end;
-        LNode := FTreeView.GetNext(LNode);
+        LNode := FTreeView.GetNextInitialized(LNode);
       end;
 
       Synchronize(FExpandedItems, LExpandedItems);

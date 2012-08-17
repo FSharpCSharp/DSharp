@@ -52,7 +52,6 @@ type
     FNotifyPropertyChanged: INotifyPropertyChanged;
     FOnDoubleClick: TNotifyEvent;
     FPopupMenu: TPopupMenu;
-    FUpdateCount: Integer;
     FUseColumnDefinitions: Boolean;
     FView: TCollectionView;
     procedure DoColumnDefinitionsChanged(Sender: TObject; const Item: TColumnDefinition;
@@ -66,6 +65,7 @@ type
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
     procedure WriteColumnDefinitions(Writer: TWriter);
   protected
+    FUpdateCount: Integer;
     procedure DefineProperties(Filer: TFiler); override;
     procedure DoDblClick(Sender: TObject); virtual;
     procedure DoPropertyChanged(const APropertyName: string;
@@ -81,7 +81,6 @@ type
     procedure InitProperties; virtual;
     procedure Loaded; override;
     procedure SetCurrentItem(const Value: TObject); virtual;
-    property UpdateCount: Integer read FUpdateCount;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;

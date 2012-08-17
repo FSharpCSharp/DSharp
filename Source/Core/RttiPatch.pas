@@ -500,6 +500,27 @@ end;
 
 {--------------------------------------------------------------------------------------------------}
 
+function IsManaged(TypeInfo: PTypeInfo): Boolean;
+var
+  elTypePtr: PPTypeInfo;
+begin
+  if TypeInfo = nil then
+    Exit(False);
+  case TypeInfo^.Kind of
+    tkDynArray, tkUString, tkWString, tkLString, tkInterface, tkVariant, tkMethod:
+      Result := True;
+    tkRecord:
+      Result := GetTypeData(TypeInfo)^.ManagedFldCount > 0;
+    tkArray:
+    begin
+      elTypePtr := GetTypeData(TypeInfo)^.ArrayData.ElType;
+      Result := (elTypePtr <> nil) and IsManaged(elTypePtr^);
+    end;
+  else
+    Result := False;
+  end;
+end;
+
 procedure PatchRtti;
 var
   Ctx: TRttiContext;
@@ -529,6 +550,8 @@ begin
   end
   else
     raise Exception.Create('Patching TMethodImplementation.TInvokeInfo.SaveArguments failed. Do you have set a breakpoint in the method?');
+
+  RedirectFunction(@Rtti.IsManaged, @IsManaged);
 {$IFEND}
 
   // Fix TRttiIntfMethod.DispatchInvoke

@@ -553,7 +553,9 @@ begin
   end
   else
   begin
-    if ColumnDefinitions[LHitInfo.HitColumn].ToggleMode = tmDoubleClick then
+    if Assigned(ColumnDefinitions) and (LHitInfo.HitColumn > -1)
+      and (LHitInfo.HitColumn < ColumnDefinitions.Count)
+      and (ColumnDefinitions[LHitInfo.HitColumn].ToggleMode = tmDoubleClick) then
     begin
       ToggleIcon(LHitInfo.HitNode, LHitInfo.HitColumn);
     end;
@@ -1790,6 +1792,10 @@ begin
 
     Result := (hiOnNormalIcon in HitInfo.HitPositions)
       and (ColumnDefinitions[HitInfo.HitColumn].ToggleMode <> tmNone);
+  end
+  else
+  begin
+    Result := False;
   end;
 end;
 

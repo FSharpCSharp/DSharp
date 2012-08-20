@@ -506,6 +506,7 @@ type
     class function ToString(const Value: TValue): string; overload; static;
     class function ToString(const Values: TArray<TValue>): string; overload; static;
     class function Equals(const Left, Right: TArray<TValue>): Boolean; overload; static;
+    class function Equals<T>(const Left, Right: T): Boolean; overload; static;
 
     class function From(ABuffer: Pointer; ATypeInfo: PTypeInfo): TValue; overload; static;
     class function FromBoolean(const Value: Boolean): TValue; static;
@@ -562,6 +563,8 @@ function StripUnitName(const s: string): string;
 function SplitString(const S: string; const Delimiter: Char): TStringDynArray;
 {$ENDIF}
 
+function Supports(const Instance: TValue; const IID: TGUID; out Intf): Boolean; overload;
+
 const
   ObjCastGUID: TGUID = '{CEDF24DE-80A4-447D-8C75-EB871DC121FD}';
 
@@ -570,6 +573,7 @@ implementation
 uses
   Classes,
   Generics.Collections,
+  Generics.Defaults,
   Math,
   StrUtils,
   SysUtils;
@@ -706,6 +710,18 @@ begin
   end;
 end;
 {$ENDIF}
+
+function Supports(const Instance: TValue; const IID: TGUID; out Intf): Boolean; overload;
+begin
+  if Instance.Kind in [tkClass, tkInterface] then
+  begin
+    Result := Supports(Instance.ToObject, IID, Intf);
+  end
+  else
+  begin
+    Result := False;
+  end;
+end;
 
 function CompareValue(const Left, Right: TValue): Integer;
 begin
@@ -1666,6 +1682,11 @@ begin
       end;
     end
   end;
+end;
+
+class function TValueHelper.Equals<T>(const Left, Right: T): Boolean;
+begin
+  Result := TEqualityComparer<T>.Default.Equals(Left, Right);
 end;
 
 class function TValueHelper.From(ABuffer: Pointer;

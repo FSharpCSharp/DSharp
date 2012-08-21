@@ -290,7 +290,7 @@ begin
   end
   else
   begin
-    Result := LValue.ToString;
+    Result := TValue.ToString(LValue);
   end;
 end;
 

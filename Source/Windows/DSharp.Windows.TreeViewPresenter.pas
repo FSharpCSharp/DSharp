@@ -1085,7 +1085,10 @@ begin
     FHitInfo := LHitInfo;
 
     if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
-      FHitInfo.HitPositions := [hiOnItemCheckbox];
+      FHitInfo.HitPositions := [hiOnItem, hiOnItemCheckbox];
+
+    if IsMouseInToggleIcon(LHitInfo) then
+      FHitInfo.HitPositions := [hiOnItem, hiOnNormalIcon];
   end;
 end;
 
@@ -1119,7 +1122,7 @@ begin
         end;
 
         if (hiOnNormalIcon in FHitInfo.HitPositions)
-          and (hiOnNormalIcon in LHitInfo.HitPositions)
+          and IsMouseInToggleIcon(LHitInfo)
           and (LColumnDefinition.ToggleMode = tmClick) then
         begin
           ToggleIcon(LHitInfo.HitNode, LHitInfo.HitColumn);

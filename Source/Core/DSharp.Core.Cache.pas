@@ -81,14 +81,16 @@ implementation
 
 constructor TCache<T>.Create(Instance: T);
 begin
+  inherited Create();
+
   FInstance := Instance;
   FStorage := T.Create();
 end;
 
 destructor TCache<T>.Destroy;
 begin
-  Restore();
   FStorage.Free();
+
   inherited Destroy();
 end;
 
@@ -107,9 +109,7 @@ end;
 
 procedure TCache<T>.SetInstance(const Value: T);
 begin
-  Restore();
   FInstance := Value;
-  Store();
 end;
 
 procedure TCache<T>.Store;

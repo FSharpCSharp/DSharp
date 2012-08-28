@@ -37,7 +37,9 @@ type
     Offset: Integer;
   end;
 
+function GetVirtualMethodIndex(ClassType: TClass; Code: Pointer): Integer;
 procedure HookCode(const Proc, Dest: Pointer; var BackupCode: TXRedirCode);
+procedure OverrideVirtualMethod(ClassType: TClass; Index: Integer; Code: Pointer);
 procedure PatchCode(const Proc, Dest: Pointer);
 procedure UnhookCode(const Proc: Pointer; var BackupCode: TXRedirCode);
 procedure WriteMem(const Location, Buffer: Pointer; const Size: Cardinal);
@@ -51,6 +53,19 @@ uses
 resourcestring
   RMemoryWriteError = 'Error writing memory (%s)';
 
+function GetVirtualMethodIndex(ClassType: TClass; Code: Pointer): Integer;
+var
+  p: PPointer;
+begin
+  Result := 0;
+  p := PPointer(ClassType);
+  while p^ <> Code do
+  begin
+    Inc(p);
+    Inc(Result);
+  end;
+end;
+
 procedure HookCode(const Proc, Dest: Pointer; var BackupCode: TXRedirCode);
 var
   Code: TXRedirCode;
@@ -62,6 +77,11 @@ begin
     Code.Offset := PByte(Dest) - PByte(Proc) - SizeOf(Code);
     WriteProcessMemory(GetCurrentProcess, Proc, @Code, SizeOf(Code), n);
   end;
+end;
+
+procedure OverrideVirtualMethod(ClassType: TClass; Index: Integer; Code: Pointer);
+begin
+  PatchCode(Pointer(NativeInt(ClassType) + SizeOf(Pointer) * Index), Code);
 end;
 
 procedure PatchCode(const Proc, Dest: Pointer);

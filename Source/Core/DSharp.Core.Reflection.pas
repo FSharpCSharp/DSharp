@@ -32,6 +32,8 @@ unit DSharp.Core.Reflection;
 interface
 
 uses
+  DSharp.Core.DependencyProperty,
+  Generics.Collections,
   Rtti,
   Types,
   TypInfo;
@@ -214,6 +216,10 @@ type
     ///	</param>
     {$ENDREGION}
     function TryGetType(out AType: TRttiType): Boolean;
+
+{$IF CompilerVersion < 23}
+    class function QualifiedClassName: string;
+{$IFEND}
   end;
 
   {$REGION 'Documentation'}
@@ -277,13 +283,13 @@ type
   {$ENDREGION}
   TRttiMemberHelper = class helper for TRttiMember
   private
-    function GetIsReadable: Boolean;
-    function GetIsWritable: Boolean;
-    function GetRttiType: TRttiType;
+    function GetMemberIsReadable: Boolean;
+    function GetMemberIsWritable: Boolean;
+    function GetMemberRttiType: TRttiType;
   public
-    property IsReadable: Boolean read GetIsReadable;
-    property IsWritable: Boolean read GetIsWritable;
-    property RttiType: TRttiType read GetRttiType;
+    property IsReadable: Boolean read GetMemberIsReadable;
+    property IsWritable: Boolean read GetMemberIsWritable;
+    property RttiType: TRttiType read GetMemberRttiType;
   end;
 
   {$REGION 'Documentation'}
@@ -390,6 +396,7 @@ type
     ///	</param>
     {$ENDREGION}
     function GetMethod(ACodeAddress: Pointer): TRttiMethod; overload;
+    function GetProperty(const AName: string): TRttiProperty;
 
     function GetStandardConstructor: TRttiMethod;
 
@@ -530,6 +537,37 @@ type
     function IsWord: Boolean;
   end;
 
+  TRttiDependencyProperty = class(TRttiInstanceProperty)
+  private
+    FDependencyProperty: TDependencyProperty;
+    FPropInfo: TPropInfo;
+//    FGetter: TRttiMethod;
+//    FSetter: TRttiMethod;
+    class var FRegister: TDictionary<TPair<TClass, string>, TRttiDependencyProperty>;
+
+    function GetIsReadable: Boolean; //override;
+    function GetIsWritable: Boolean; //override;
+    function DoGetValue(Instance: Pointer): TValue; //override;
+    procedure DoSetValue(Instance: Pointer; const AValue: TValue); //override;
+    function GetPropInfo: PPropInfo;
+  public
+    class constructor Create;
+    class destructor Destroy;
+
+    constructor Create(DependencyProperty: TDependencyProperty);
+    destructor Destroy; override;
+
+    class function FindByName(Parent: TRttiType; PropertyName: string): TRttiDependencyProperty;
+  end;
+
+  TArrayHelper = class
+  public
+    class function Concat<T>(const Arrays: array of TArray<T>): TArray<T>; static;
+{$IF CompilerVersion = 21}
+    class function ToArray<T>(Enumerable: TEnumerable<T>; Count: Integer): TArray<T>; static;
+{$IFEND}
+  end;
+
   PObject = ^TObject;
 
 function FindType(const AName: string; out AType: TRttiType): Boolean; overload;
@@ -572,17 +610,13 @@ implementation
 
 uses
   Classes,
-  Generics.Collections,
+  DSharp.Core.Detour,
+  DSharp.Core.Framework,
   Generics.Defaults,
   Math,
   StrUtils,
+  SysConst,
   SysUtils;
-
-type
-  TArrayHelper = class
-  public
-    class function Concat<T>(const Arrays: array of TArray<T>): TArray<T>; static;
-  end;
 
 var
   Context: TRttiContext;
@@ -874,6 +908,22 @@ begin
   end;
 end;
 
+{$IF CompilerVersion = 21}
+class function TArrayHelper.ToArray<T>(Enumerable: TEnumerable<T>;
+  Count: Integer): TArray<T>;
+var
+  LItem: T;
+begin
+  SetLength(Result, Count);
+  Count := 0;
+  for LItem in Enumerable do
+  begin
+    Result[Count] := LItem;
+    Inc(Count);
+  end;
+end;
+{$IFEND}
+
 { TObjectHelper }
 
 function TObjectHelper.GetField(const AName: string): TRttiField;
@@ -937,10 +987,20 @@ end;
 function TObjectHelper.GetProperty(const AName: string): TRttiProperty;
 var
   LType: TRttiType;
+  LParent: TObject;
 begin
   Result := nil;
   if TryGetType(LType) then
     Result := LType.GetProperty(AName);
+
+  if not Assigned(Result) and (Self is TComponent) then
+  begin
+    LParent := TFramework.GetParent(TComponent(Self));
+    if Assigned(LParent) then
+    begin
+      Result := LParent.GetProperty(AName);
+    end;
+  end;
 end;
 
 function TObjectHelper.GetType: TRttiType;
@@ -962,6 +1022,19 @@ function TObjectHelper.HasProperty(const AName: string): Boolean;
 begin
   Result := GetProperty(AName) <> nil;
 end;
+
+{$IF CompilerVersion < 23}
+class function TObjectHelper.QualifiedClassName: string;
+var
+  LUnitName: string;
+begin
+  LUnitName := UnitName;
+  if LUnitName = '' then
+    Result := ClassName
+  else
+    Result := LUnitName + '.' + ClassName;
+end;
+{$IFEND}
 
 function TObjectHelper.TryGetField(const AName: string;
   out AField: TRttiField): Boolean;
@@ -1106,7 +1179,7 @@ end;
 
 { TRttiMemberHelper }
 
-function TRttiMemberHelper.GetIsReadable: Boolean;
+function TRttiMemberHelper.GetMemberIsReadable: Boolean;
 begin
   Result := True;
   if Self is TRttiField then
@@ -1123,7 +1196,7 @@ begin
   end;
 end;
 
-function TRttiMemberHelper.GetIsWritable: Boolean;
+function TRttiMemberHelper.GetMemberIsWritable: Boolean;
 begin
   Result := False;
   if Self is TRttiField then
@@ -1136,7 +1209,7 @@ begin
   end;
 end;
 
-function TRttiMemberHelper.GetRttiType: TRttiType;
+function TRttiMemberHelper.GetMemberRttiType: TRttiType;
 begin
   Result := nil;
   if Self is TRttiField then
@@ -1396,6 +1469,16 @@ end;
 function TRttiTypeHelper.GetMethodCount: Integer;
 begin
   Result := Length(GetMethods);
+end;
+
+function TRttiTypeHelper.GetProperty(const AName: string): TRttiProperty;
+begin
+  Result := inherited GetProperty(AName);
+
+  if not Assigned(Result) then
+  begin
+    Result := TRttiDependencyProperty.FindByName(Self, AName);
+  end;
 end;
 
 function TRttiTypeHelper.GetStandardConstructor: TRttiMethod;
@@ -2230,6 +2313,136 @@ begin
       Result := TryCast(ATypeInfo, AResult);
     end;
   end;
+end;
+
+type
+  TRttiObjectAccess = class helper for TRttiObject
+    procedure Init(Parent: TRttiType; PropInfo: PPropInfo);
+  end;
+
+procedure TRttiObjectAccess.Init(Parent: TRttiType; PropInfo: PPropInfo);
+begin
+  Self.FParent := Parent;
+  Self.FHandle := PropInfo;
+end;
+
+{ TRttiDependencyProperty }
+
+class constructor TRttiDependencyProperty.Create;
+begin
+  FRegister := TObjectDictionary<TPair<TClass, string>, TRttiDependencyProperty>.Create([doOwnsValues]);
+
+  OverrideVirtualMethod(TRttiDependencyProperty, 5, @TRttiDependencyProperty.GetIsReadable);
+  OverrideVirtualMethod(TRttiDependencyProperty, 6, @TRttiDependencyProperty.GetIsWritable);
+  OverrideVirtualMethod(TRttiDependencyProperty, 7, @TRttiDependencyProperty.DoGetValue);
+  OverrideVirtualMethod(TRttiDependencyProperty, 8, @TRttiDependencyProperty.DoSetValue);
+  OverrideVirtualMethod(TRttiDependencyProperty, 12, @TRttiDependencyProperty.GetPropInfo);
+end;
+
+class destructor TRttiDependencyProperty.Destroy;
+begin
+  FRegister.Free;
+end;
+
+constructor TRttiDependencyProperty.Create(
+  DependencyProperty: TDependencyProperty);
+//var
+//  LMethod: TRttiMethod;
+//  LParameters: TArray<TRttiParameter>;
+begin
+  FDependencyProperty := DependencyProperty;
+
+  FPropInfo.PropType := Pointer(NativeInt(FDependencyProperty.PropertyType) - SizeOf(PTypeInfo));
+  FPropInfo.Name := ShortString(FDependencyProperty.Name);
+  Init(GetRttiType(FDependencyProperty.OwnerType), @FPropInfo);
+
+//  for LMethod in Parent.GetMethods do
+//  begin
+//    if LMethod.IsClassMethod and LMethod.IsStatic then
+//    begin
+//      if (LMethod.MethodKind = mkClassProcedure)
+//        and SameText(LMethod.Name, 'Set' + Name) then
+//      begin
+//        LParameters := LMethod.GetParameters;
+//        if (Length(LParameters) = 2)
+//          and (LParameters[0].ParamType.Handle = TypeInfo(TObject))
+//          and (LParameters[1].ParamType.Handle = FDependencyProperty.PropertyType) then
+//        begin
+//          FSetter := LMethod;
+//          Continue;
+//        end;
+//      end;
+//
+//      if (LMethod.MethodKind = mkClassFunction)
+//        and SameText(LMethod.Name, 'Get' + Name) then
+//      begin
+//        LParameters := LMethod.GetParameters;
+//        if (Length(LParameters) = 1)
+//          and (LParameters[0].ParamType.Handle = TypeInfo(TObject)) then
+//        begin
+//          FGetter := LMethod;
+//          Continue;
+//        end;
+//      end;
+//    end;
+//  end;
+
+  FRegister.Add(TPair<TClass, string>.Create(FDependencyProperty.OwnerType,
+    FDependencyProperty.Name), Self);
+end;
+
+destructor TRttiDependencyProperty.Destroy;
+begin
+  FRegister.Remove(TPair<TClass, string>.Create(FDependencyProperty.OwnerType,
+    FDependencyProperty.Name));
+  inherited;
+end;
+
+function TRttiDependencyProperty.DoGetValue(Instance: Pointer): TValue;
+begin
+  Result := FDependencyProperty.GetValue(TComponent(Instance));
+end;
+
+procedure TRttiDependencyProperty.DoSetValue(Instance: Pointer;
+  const AValue: TValue);
+begin
+  FDependencyProperty.SetValue(Instance, AValue);
+end;
+
+class function TRttiDependencyProperty.FindByName(Parent: TRttiType;
+  PropertyName: string): TRttiDependencyProperty;
+begin
+  for Result in FRegister.Values do
+  begin
+    if (Result.Parent = Parent) and SameText(Result.Name, PropertyName) then
+    begin
+      Exit;
+    end;
+  end;
+
+  if Assigned(Parent.BaseType) then
+  begin
+    Result := FindByName(Parent.BaseType, PropertyName);
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TRttiDependencyProperty.GetIsReadable: Boolean;
+begin
+  Result := True;
+end;
+
+function TRttiDependencyProperty.GetIsWritable: Boolean;
+begin
+  Result := True;
+end;
+
+function TRttiDependencyProperty.GetPropInfo: PPropInfo;
+begin
+  Result := Handle;
 end;
 
 initialization

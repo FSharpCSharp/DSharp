@@ -300,6 +300,23 @@ begin
   end;
 end;
 
+{$IF CompilerVersion < 23}
+type
+  TThemeServicesHelper = class helper for TThemeServices
+    function Enabled: Boolean;
+  end;
+
+function TThemeServicesHelper.Enabled: Boolean;
+begin
+  Result := ThemesEnabled;
+end;
+
+function StyleServices: TThemeServices;
+begin
+  Result := ThemeServices;
+end;
+{$IFEND}
+
 { TTreeViewPresenter }
 
 constructor TTreeViewPresenter.Create(AOwner: TComponent);
@@ -1325,11 +1342,11 @@ begin
     end;
   end;
 
-  if ThemeServices.ThemesEnabled and
+  if StyleServices.Enabled and
     (toThemeAware in FTreeView.TreeOptions.PaintOptions) then
   begin
-    LDetails := ThemeServices.GetElementDetails(LThemedButton);
-    ThemeServices.DrawElement(TargetCanvas.Handle, LDetails, LCheckBoxRect);
+    LDetails := StyleServices.GetElementDetails(LThemedButton);
+    StyleServices.DrawElement(TargetCanvas.Handle, LDetails, LCheckBoxRect);
   end
   else
   begin
@@ -1360,16 +1377,16 @@ procedure TTreeViewPresenter.DrawProgressBar(TargetCanvas: TCanvas;
 var
   LDetails: TThemedElementDetails;
 begin
-  if ThemeServices.ThemesEnabled and
+  if StyleServices.Enabled and
     (toThemeAware in FTreeView.TreeOptions.PaintOptions) then
   begin
     InflateRect(CellRect, -1, -1);
-    LDetails := ThemeServices.GetElementDetails(tpBar);
-    ThemeServices.DrawElement(TargetCanvas.Handle, LDetails, CellRect, nil);
+    LDetails := StyleServices.GetElementDetails(tpBar);
+    StyleServices.DrawElement(TargetCanvas.Handle, LDetails, CellRect, nil);
     InflateRect(CellRect, -2, -2);
     CellRect.Right := CellRect.Left + Trunc(RectWidth(CellRect) * Value / 100);
-    LDetails := ThemeServices.GetElementDetails(tpChunk);
-    ThemeServices.DrawElement(TargetCanvas.Handle, LDetails, CellRect, nil);
+    LDetails := StyleServices.GetElementDetails(tpChunk);
+    StyleServices.DrawElement(TargetCanvas.Handle, LDetails, CellRect, nil);
   end
   else
   begin

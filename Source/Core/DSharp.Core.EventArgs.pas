@@ -38,6 +38,10 @@ type
 
   TEventArgs = class(TInterfacedObject, IEventArgs);
 
+  {$M+}
+  TEventHandler<T: IEventArgs> =
+    procedure(Sender: TObject; EventArgs: T) of object;
+
 implementation
 
 end.

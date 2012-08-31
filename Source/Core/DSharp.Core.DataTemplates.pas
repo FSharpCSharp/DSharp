@@ -236,16 +236,6 @@ var
   LProperty: TRttiProperty;
 begin
   Result := nil;
-
-  for LProperty in Item.GetProperties do
-  begin
-    if (LProperty.Visibility = mvPublished)
-      and LProperty.RttiType.IsCovariantTo(TypeInfo(IList<TObject>)) then
-    begin
-      Result := IList<TObject>(LProperty.GetValue(Item).AsInterface).AsList;
-      Break;
-    end;
-  end;
 end;
 
 function TDataTemplate.GetItemTemplate(const Item: TObject): IDataTemplate;

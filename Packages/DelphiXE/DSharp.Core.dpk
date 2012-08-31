@@ -49,6 +49,7 @@ contains
   DSharp.Core.EventArgs in '..\..\Source\Core\DSharp.Core.EventArgs.pas',
   DSharp.Core.Events in '..\..\Source\Core\DSharp.Core.Events.pas',
   DSharp.Core.Expressions in '..\..\Source\Core\DSharp.Core.Expressions.pas',
+  DSharp.Core.Extensions in '..\..\Source\Core\DSharp.Core.Extensions.pas',
   DSharp.Core.Fibers in '..\..\Source\Core\DSharp.Core.Fibers.pas',
   DSharp.Core.Framework in '..\..\Source\Core\DSharp.Core.Framework.pas',
   DSharp.Core.Generics in '..\..\Source\Core\DSharp.Core.Generics.pas',

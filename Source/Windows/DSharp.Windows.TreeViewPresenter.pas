@@ -422,7 +422,8 @@ begin
       dmAfterCellPaint, Sender.Selected[Node]);
   end;
 
-  if Assigned(ColumnDefinitions) and (Column > -1) then
+  if Assigned(LDataTemplate) and Assigned(ColumnDefinitions) and (Column > -1)
+    and (Column < ColumnDefinitions.Count) then
   begin
     LValue := LDataTemplate.GetValue(LItem, Column);
     case ColumnDefinitions[Column].ColumnType of
@@ -705,8 +706,9 @@ end;
 procedure TTreeViewPresenter.DoEditing(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex; var Allowed: Boolean);
 begin
-  Allowed := Assigned(ColumnDefinitions)
-    and (Column > -1) and (ColumnDefinitions[Column].ColumnType = ctText)
+  Allowed := Assigned(ColumnDefinitions) and (Column > -1)
+    and (Column < ColumnDefinitions.Count)
+    and (ColumnDefinitions[Column].ColumnType = ctText)
     and ColumnDefinitions[Column].AllowEdit;
 end;
 
@@ -841,13 +843,14 @@ begin
   if Assigned(LItemTemplate) then
   begin
     if Assigned(ColumnDefinitions) and (Column > -1)
-      and (ColumnDefinitions[Column].ColumnType = TColumnType.ctText) then
+      and (Column < ColumnDefinitions.Count)
+      and (ColumnDefinitions[Column].ColumnType <> TColumnType.ctText) then
     begin
-      CellText := LItemTemplate.GetText(LItem, Column);
+      CellText := '';
     end
     else
     begin
-      CellText := '';
+      CellText := LItemTemplate.GetText(LItem, Column);
     end;
   end;
 end;
@@ -1778,6 +1781,7 @@ var
   LRect: TRect;
 begin
   if Assigned(Node) and Assigned(ColumnDefinitions) and (Column > -1)
+    and (Column < ColumnDefinitions.Count)
     and (ColumnDefinitions[Column].ColumnType = TColumnType.ctCheckBox) then
   begin
     LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);

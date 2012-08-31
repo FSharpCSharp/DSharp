@@ -45,16 +45,17 @@ type
 
   {$SCOPEDENUMS ON}
   TFrameworkPropertyMetadataOption = (
-    /// <summary>
-    ///   No options are specified; the dependency property uses the default
-    ///   behavior of the property system.
-    /// </summary>
+    ///	<summary>
+    ///	  No options are specified; the dependency property uses the default
+    ///	  behavior of the property system.
+    ///	</summary>
     None,
-    /// <summary>
-    ///   The values of this dependency property are inherited by child
-    ///   elements.
-    /// </summary>
-    Inherits);
+
+    ///	<summary>
+    ///	  The values of this dependency property are inherited by child elements.
+    ///	</summary>
+    Inherits
+  );
   {$SCOPEDENUMS OFF}
   TFrameworkPropertyMetadataOptions = set of TFrameworkPropertyMetadataOption;
 
@@ -148,6 +149,17 @@ type
     property Name: string read FName;
     property OwnerType: TClass read FOwnerType;
     property PropertyType: PTypeInfo read FPropertyType;
+  end;
+
+  DependencyProperty<T> = record
+  private
+    FInstance: TDependencyProperty;
+  public
+    procedure ClearValue(Target: TComponent);
+    function GetValue(Target: TComponent): T;
+    procedure SetValue(Target: TComponent; const Value: T);
+
+    class operator Implicit(const Value: TDependencyProperty): DependencyProperty<T>;
   end;
 
 implementation
@@ -444,6 +456,29 @@ begin
   finally
     FLock.Release;
   end;
+end;
+
+{ DependencyProperty<T> }
+
+procedure DependencyProperty<T>.ClearValue(Target: TComponent);
+begin
+  FInstance.ClearValue(Target);
+end;
+
+function DependencyProperty<T>.GetValue(Target: TComponent): T;
+begin
+  Result := FInstance.GetValue(Target).AsType<T>;
+end;
+
+procedure DependencyProperty<T>.SetValue(Target: TComponent; const Value: T);
+begin
+  FInstance.SetValue(Target, TValue.From<T>(Value));
+end;
+
+class operator DependencyProperty<T>.Implicit(
+  const Value: TDependencyProperty): DependencyProperty<T>;
+begin
+  Result.FInstance := Value;
 end;
 
 end.

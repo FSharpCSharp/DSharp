@@ -232,8 +232,6 @@ begin
 end;
 
 function TDataTemplate.GetItems(const Item: TObject): IList;
-var
-  LProperty: TRttiProperty;
 begin
   Result := nil;
 end;

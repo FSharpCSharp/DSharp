@@ -4,9 +4,10 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, 
-  Dialogs, DSharp.Windows.ColumnDefinitions, DSharp.Bindings,
+  Dialogs, DSharp.Windows.ColumnDefinitions, ExtCtrls, StdCtrls, ComCtrls,
+  Grids, DSharp.Bindings.VCLControls, DSharp.Bindings,
   DSharp.Windows.CustomPresenter, DSharp.Windows.TreeViewPresenter, Menus,
-  ActnList, ImgList, VirtualTrees, ComCtrls, ToolWin;
+  ActnList, ImgList, VirtualTrees, ToolWin;
 
 type
   TContactsOverviewView = class(TFrame)

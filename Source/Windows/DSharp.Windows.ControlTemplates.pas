@@ -90,8 +90,7 @@ function TControlTemplate<T>.CustomDraw(const Item: T; const ColumnIndex: Intege
   TargetCanvas: TCanvas; CellRect: TRect; ImageList: TCustomImageList;
   DrawMode: TDrawMode; Selected: Boolean): Boolean;
 begin
-  TControlTemplate(Self).CustomDraw(Item, ColumnIndex,
-    TargetCanvas, CellRect, ImageList, DrawMode, Selected);
+  Result := False;
 end;
 
 end.

@@ -35,7 +35,7 @@ uses
   DSharp.Logging;
 
 type
-  TSmartInspectLogging = class(TBaseLogging)
+  TSmartInspectLog = class(TLogBase)
   protected
     procedure LogEntry(const ALogEntry: TLogEntry); override;
   end;
@@ -43,13 +43,14 @@ type
 implementation
 
 uses
+  DSharp.Core.Reflection,
   DSharp.Logging.SmartInspect.Helper,
   SiAuto,
   SysUtils;
 
-{ TSmartInspectLogging }
+{ TSmartInspectLog }
 
-procedure TSmartInspectLogging.LogEntry(const ALogEntry: TLogEntry);
+procedure TSmartInspectLog.LogEntry(const ALogEntry: TLogEntry);
 begin
   case ALogEntry.LogKind of
     lkEnterMethod:
@@ -57,42 +58,50 @@ begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+          SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
-          SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+          SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
       end
       else
-        SiMain.EnterMethod(ALogEntry.Name);
+        SiMain.EnterMethod(ALogEntry.Text);
     end;
     lkLeaveMethod:
     begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+          SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
-          SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+          SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
       end
       else
-        SiMain.LeaveMethod(ALogEntry.Name);
+        SiMain.LeaveMethod(ALogEntry.Text);
     end;
     lkMessage:
     begin
-       SiMain.LogMessage(ALogEntry.Name);
+      SiMain.LogMessage(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
+    end;
+    lkWarning:
+    begin
+      SiMain.LogWarning(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
+    end;
+    lkError:
+    begin
+      SiMain.LogError(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
     end;
     lkException:
     begin
-      SiMain.LogException(ALogEntry.Value.AsType<Exception>, ALogEntry.Name);
+      SiMain.LogException(ALogEntry.Value.AsType<Exception>, ALogEntry.Text);
     end;
     lkValue:
     begin
-      SiMain.LogValue(ALogEntry.Name, ALogEntry.Value);
+      SiMain.LogValue(ALogEntry.Text, ALogEntry.Value);
     end;
   end;
 end;
 
 initialization
   Si.Enabled := True;
-  RegisterLogging(TSmartInspectLogging.Create);
+  RegisterLogging(TSmartInspectLog.Create);
 
 end.

@@ -38,20 +38,20 @@ uses
   Windows;
 
 type
-  TConsoleLogging = class(TTextLogging)
+  TConsoleLog = class(TTextLog)
   protected
     procedure WriteLine(const Text: string); override;
   end;
 
-{ TConsoleLogging }
+{ TConsoleLog }
 
-procedure TConsoleLogging.WriteLine(const Text: string);
+procedure TConsoleLog.WriteLine(const Text: string);
 begin
   Writeln(Text);
 end;
 
 initialization
   AllocConsole;
-  RegisterLogging(TConsoleLogging.Create);
+  RegisterLogging(TConsoleLog.Create);
 
 end.

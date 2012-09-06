@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -35,42 +35,83 @@ uses
   Classes,
   Generics.Collections,
   Rtti,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 type
-  TLogKind = (lkEnterMethod, lkLeaveMethod, lkMessage, lkException, lkValue);
+  TLogKind = (
+    lkEnterMethod,
+    lkLeaveMethod,
+    lkMessage,
+    lkWarning,
+    lkError,
+    lkException,
+    lkValue);
 
   TLogEntry = record
-    LogKind: TLogKind;
-    Name: string;
-    Value: TValue;
-    constructor Create(const AName: string; const AValue: TValue;
+  private
+    FLogKind: TLogKind;
+    FText: string;
+    FValues: TArray<TValue>;
+    function GetValue: TValue;
+  public
+    constructor Create(const AText: string; const AValues: array of TValue;
       const ALogKind: TLogKind);
+
+    property LogKind: TLogKind read FLogKind;
+    property Text: string read FText;
+    property Values: TArray<TValue> read FValues;
+    property Value: TValue read GetValue;
   end;
 
-  TBaseLogging = class abstract
+  ILog = interface
+    ['{23190A44-748D-457D-A6BF-DBD739AE325B}']
+    procedure LogEntry(const ALogEntry: TLogEntry);
+
+    procedure EnterMethod(const AName: string); overload;
+    procedure EnterMethod(AClass: TClass; const AName: string); overload;
+    procedure EnterMethod(AInstance: TObject; const AName: string); overload;
+    procedure LeaveMethod(const AName: string); overload;
+    procedure LeaveMethod(AClass: TClass; const AName: string); overload;
+    procedure LeaveMethod(AInstance: TObject; const AName: string); overload;
+    procedure LogError(const ATitle: string); overload;
+    procedure LogError(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogException(AException: Exception = nil; const ATitle: string = '');
+    procedure LogMessage(const ATitle: string); overload;
+    procedure LogMessage(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogValue(const AName: string; const AValue: TValue);
+    procedure LogWarning(const ATitle: string); overload;
+    procedure LogWarning(const ATitle: string; const AValues: array of TValue); overload;
+  end;
+
+  TLogBase = class abstract(TInterfacedObject, ILog)
   protected
     procedure LogEntry(const ALogEntry: TLogEntry); virtual; abstract;
   public
     procedure EnterMethod(const AName: string); overload;
-    procedure EnterMethod(const AClass: TClass; const AName: string); overload;
-    procedure EnterMethod(const AInstance: TObject; const AName: string); overload;
+    procedure EnterMethod(AClass: TClass; const AName: string); overload;
+    procedure EnterMethod(AInstance: TObject; const AName: string); overload;
     procedure LeaveMethod(const AName: string); overload;
-    procedure LeaveMethod(const AClass: TClass; const AName: string); overload;
-    procedure LeaveMethod(const AInstance: TObject; const AName: string); overload;
-    procedure LogException(const AException: Exception; const ATitle: string = '');
-    procedure LogMessage(const AMessage: string);
+    procedure LeaveMethod(AClass: TClass; const AName: string); overload;
+    procedure LeaveMethod(AInstance: TObject; const AName: string); overload;
+    procedure LogError(const ATitle: string); overload;
+    procedure LogError(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogException(AException: Exception = nil; const ATitle: string = '');
+    procedure LogMessage(const ATitle: string); overload;
+    procedure LogMessage(const ATitle: string; const AValues: array of TValue); overload;
     procedure LogValue(const AName: string; const AValue: TValue); overload;
     procedure LogValue<T>(const AName: string; const AValue: T); overload;
+    procedure LogWarning(const ATitle: string); overload;
+    procedure LogWarning(const ATitle: string; const AValues: array of TValue); overload;
   end;
 
-  TTextLogging = class(TBaseLogging)
+  TTextLog = class abstract(TLogBase)
   protected
     procedure LogEntry(const ALogEntry: TLogEntry); override;
     procedure WriteLine(const Text: string); virtual; abstract;
   end;
 
-  TStringsLogging = class(TTextLogging)
+  TStringsLog = class(TTextLog)
   private
     FStrings: TStrings;
   protected
@@ -79,9 +120,25 @@ type
     constructor Create(AStrings: TStrings);
   end;
 
-function Logging: TBaseLogging;
-procedure RegisterLogging(ALogging: TBaseLogging);
-procedure UnregisterLogging(ALogging: TBaseLogging);
+  LogManager = record
+  private
+    class var
+      FGetLog: TFunc<PTypeInfo, ILog>;
+      FNullLog: ILog;
+  public
+    class constructor Create;
+    class property GetLog: TFunc<PTypeInfo, ILog> read FGetLog write FGetLog;
+
+    type
+      TNullLog = class(TLogBase)
+      protected
+        procedure LogEntry(const ALogEntry: TLogEntry); override;
+      end;
+  end;
+
+function Logging(ATypeInfo: PTypeInfo = nil): ILog;
+procedure RegisterLogging(ALog: ILog);
+procedure UnregisterLogging(ALog: ILog);
 
 implementation
 
@@ -89,127 +146,170 @@ uses
   DSharp.Core.Reflection;
 
 type
-  TLogging = class(TBaseLogging)
+  TLogProxy = class(TLogBase)
   private
-    FLoggings: TList<TBaseLogging>;
+    FLogs: TList<ILog>;
   protected
     procedure LogEntry(const ALogEntry: TLogEntry); override;
-    property Loggings: TList<TBaseLogging> read FLoggings;
+    property Logs: TList<ILog> read FLogs;
   public
     constructor Create;
     destructor Destroy; override;
   end;
 
 var
-  GLogging: TLogging;
+  GLog: ILog;
 
 resourcestring
   REnterMethod = 'Enter: ';
   RLeaveMethod = 'Leave: ';
 
-function Logging: TBaseLogging;
+function Format(const Format: string; const Args: array of TValue): string;
 begin
-  if not Assigned(GLogging) then
-    GLogging := TLogging.Create;
-  Result := GLogging;
+  Result := SysUtils.Format(Format, TValue.ToVarRecs(Args));
 end;
 
-procedure RegisterLogging(ALogging: TBaseLogging);
+function Logging(ATypeInfo: PTypeInfo = nil): ILog;
 begin
-  TLogging(Logging).Loggings.Add(ALogging);
+  if not Assigned(GLog) then
+    GLog := TLogProxy.Create;
+  Result := GLog;
 end;
 
-procedure UnregisterLogging(ALogging: TBaseLogging);
+procedure RegisterLogging(ALog: ILog);
 begin
-  TLogging(Logging).Loggings.Remove(ALogging);
+  (Logging as TLogProxy).Logs.Add(ALog);
 end;
 
-{ TBaseLogging }
-
-procedure TBaseLogging.EnterMethod(const AName: string);
+procedure UnregisterLogging(ALog: ILog);
 begin
-  LogEntry(TLogEntry.Create(AName, TValue.Empty, lkEnterMethod));
+  (Logging as TLogProxy).Logs.Remove(ALog);
 end;
 
-procedure TBaseLogging.EnterMethod(const AClass: TClass; const AName: string);
+{ TLogBase }
+
+procedure TLogBase.EnterMethod(const AName: string);
 begin
-  LogEntry(TLogEntry.Create(AName, TValue.From<TClass>(AClass), lkEnterMethod));
+  LogEntry(TLogEntry.Create(AName, [], lkEnterMethod));
 end;
 
-procedure TBaseLogging.EnterMethod(const AInstance: TObject; const AName: string);
+procedure TLogBase.EnterMethod(AClass: TClass; const AName: string);
 begin
-  LogEntry(TLogEntry.Create(AName, TValue.From<TObject>(AInstance), lkEnterMethod));
+  LogEntry(TLogEntry.Create(AName, [AClass], lkEnterMethod));
 end;
 
-procedure TBaseLogging.LeaveMethod(const AName: string);
+procedure TLogBase.EnterMethod(AInstance: TObject; const AName: string);
 begin
-  LogEntry(TLogEntry.Create(AName, TValue.Empty, lkLeaveMethod));
+  LogEntry(TLogEntry.Create(AName, [AInstance], lkEnterMethod));
 end;
 
-procedure TBaseLogging.LeaveMethod(const AClass: TClass; const AName: string);
+procedure TLogBase.LeaveMethod(const AName: string);
 begin
-  LogEntry(TLogEntry.Create(AName, TValue.From<TClass>(AClass), lkLeaveMethod));
+  LogEntry(TLogEntry.Create(AName, [], lkLeaveMethod));
 end;
 
-procedure TBaseLogging.LeaveMethod(const AInstance: TObject; const AName: string);
+procedure TLogBase.LeaveMethod(AClass: TClass; const AName: string);
 begin
-  LogEntry(TLogEntry.Create(AName, TValue.From<TObject>(AInstance), lkLeaveMethod));
+  LogEntry(TLogEntry.Create(AName, [AClass], lkLeaveMethod));
 end;
 
-procedure TBaseLogging.LogException(const AException: Exception; const ATitle: string);
+procedure TLogBase.LeaveMethod(AInstance: TObject; const AName: string);
 begin
-  LogEntry(TLogEntry.Create(ATitle, TValue.From<Exception>(AException), lkException));
+  LogEntry(TLogEntry.Create(AName, [AInstance], lkLeaveMethod));
 end;
 
-procedure TBaseLogging.LogMessage(const AMessage: string);
+procedure TLogBase.LogError(const ATitle: string);
 begin
-  LogEntry(TLogEntry.Create(AMessage, TValue.Empty, lkMessage));
+  LogError(ATitle, []);
 end;
 
-procedure TBaseLogging.LogValue(const AName: string; const AValue: TValue);
+procedure TLogBase.LogError(const ATitle: string;
+  const AValues: array of TValue);
 begin
-  LogEntry(TLogEntry.Create(AName, AValue, lkValue));
+  LogEntry(TLogEntry.Create(ATitle, AValues, lkError));
 end;
 
-procedure TBaseLogging.LogValue<T>(const AName: string; const AValue: T);
+procedure TLogBase.LogException(AException: Exception; const ATitle: string);
 begin
-  LogEntry(TLogEntry.Create(AName, TValue.From<T>(AValue), lkValue));
+  if not Assigned(AException) then
+  begin
+    AException := ExceptObject as Exception;
+  end;
+  LogEntry(TLogEntry.Create(ATitle, [AException], lkException));
 end;
 
-{ TLogging }
-
-constructor TLogging.Create;
+procedure TLogBase.LogMessage(const ATitle: string);
 begin
-  FLoggings := TObjectList<TBaseLogging>.Create();
+  LogMessage(ATitle, []);
 end;
 
-destructor TLogging.Destroy;
+procedure TLogBase.LogMessage(const ATitle: string;
+  const AValues: array of TValue);
 begin
-  FLoggings.Free();
+  LogEntry(TLogEntry.Create(ATitle, AValues, lkMessage));
+end;
+
+procedure TLogBase.LogValue(const AName: string; const AValue: TValue);
+begin
+  LogEntry(TLogEntry.Create(AName, [AValue], lkValue));
+end;
+
+procedure TLogBase.LogValue<T>(const AName: string; const AValue: T);
+begin
+  LogEntry(TLogEntry.Create(AName, [TValue.From<T>(AValue)], lkValue));
+end;
+
+procedure TLogBase.LogWarning(const ATitle: string);
+begin
+  LogWarning(ATitle, []);
+end;
+
+procedure TLogBase.LogWarning(const ATitle: string;
+  const AValues: array of TValue);
+begin
+  LogEntry(TLogEntry.Create(ATitle, AValues, lkWarning));
+end;
+
+{ TLogProxy }
+
+constructor TLogProxy.Create;
+begin
+  FLogs := TList<ILog>.Create();
+end;
+
+destructor TLogProxy.Destroy;
+begin
+  FLogs.Free();
   inherited;
 end;
 
-procedure TLogging.LogEntry(const ALogEntry: TLogEntry);
+procedure TLogProxy.LogEntry(const ALogEntry: TLogEntry);
 var
-  LLogging: TBaseLogging;
+  LLog: ILog;
 begin
-  for LLogging in FLoggings do
-    LLogging.LogEntry(ALogEntry);
+  for LLog in FLogs do
+    LLog.LogEntry(ALogEntry);
 end;
 
 { TLogEntry }
 
-constructor TLogEntry.Create(const AName: string; const AValue: TValue;
-  const ALogKind: TLogKind);
+constructor TLogEntry.Create(const AText: string;
+  const AValues: array of TValue; const ALogKind: TLogKind);
+var
+  i: Integer;
 begin
-  Name := AName;
-  Value := AValue;
-  LogKind := ALogKind;
+  FLogKind := ALogKind;
+  FText := AText;
+  SetLength(FValues, Length(AValues));
+  for i := Low(AValues) to High(AValues) do
+  begin
+    FValues[i] := AValues[i];
+  end;
 end;
 
-{ TTextLogger }
+{ TTextLog }
 
-procedure TTextLogging.LogEntry(const ALogEntry: TLogEntry);
+procedure TTextLog.LogEntry(const ALogEntry: TLogEntry);
 var
   LMessage: string;
 begin
@@ -224,7 +324,7 @@ begin
         else if ALogEntry.Value.IsObject then
           LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
       end;
-      LMessage := LMessage + ALogEntry.Name;
+      LMessage := LMessage + ALogEntry.Text;
     end;
     lkLeaveMethod:
     begin
@@ -236,20 +336,30 @@ begin
         else if ALogEntry.Value.IsObject then
           LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
       end;
-      LMessage := LMessage + ALogEntry.Name;
+      LMessage := LMessage + ALogEntry.Text;
     end;
     lkMessage:
     begin
-      LMessage := ALogEntry.Name;
+      LMessage := Format('INFO: ' + ALogEntry.Text, ALogEntry.Values);
+    end;
+    lkWarning:
+    begin
+      LMessage := Format('WARN: ' + ALogEntry.Text, ALogEntry.Values);
+    end;
+    lkError:
+    begin
+      LMessage := Format('ERROR: ' + ALogEntry.Text, ALogEntry.Values);
     end;
     lkException:
     begin
-      LMessage := ALogEntry.Value.AsType<Exception>.Message;
+      if ALogEntry.Text <> '' then
+        LMessage := ALogEntry.Text + ': ';
+      LMessage := LMessage + ALogEntry.Value.AsType<Exception>.ToString;
     end;
     lkValue:
     begin
-      if ALogEntry.Name <> '' then
-        LMessage := ALogEntry.Name + ': ';
+      if ALogEntry.Text <> '' then
+        LMessage := ALogEntry.Text + ': ';
       LMessage := LMessage + TValue.ToString(ALogEntry.Value);
     end;
   end;
@@ -257,21 +367,41 @@ begin
   WriteLine(LMessage);
 end;
 
-{ TStringsLogger }
+{ TStringsLog }
 
-constructor TStringsLogging.Create(AStrings: TStrings);
+constructor TStringsLog.Create(AStrings: TStrings);
 begin
   FStrings := AStrings;
 end;
 
-procedure TStringsLogging.WriteLine(const Text: string);
+procedure TStringsLog.WriteLine(const Text: string);
 begin
   FStrings.Add(Text);
 end;
 
-initialization
+function TLogEntry.GetValue: TValue;
+begin
+  if Length(FValues) > 0 then
+    Result := FValues[0];
+end;
 
-finalization
-  FreeAndNil(GLogging);
+{ LogManager }
+
+class constructor LogManager.Create;
+begin
+  FNullLog := TNullLog.Create;
+  FGetLog :=
+    function(TypeInfo: PTypeInfo): ILog
+    begin
+      Result := FNullLog;
+    end;
+end;
+
+{ LogManager.TNullLog }
+
+procedure LogManager.TNullLog.LogEntry(const ALogEntry: TLogEntry);
+begin
+  // nothing to do
+end;
 
 end.

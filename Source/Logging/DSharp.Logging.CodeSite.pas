@@ -35,7 +35,7 @@ uses
   DSharp.Logging;
 
 type
-  TCodeSiteLogging = class(TBaseLogging)
+  TCodeSiteLog = class(TLogBase)
   protected
     procedure LogEntry(const ALogEntry: TLogEntry); override;
   end;
@@ -44,12 +44,13 @@ implementation
 
 uses
   CodeSiteLogging,
+  DSharp.Core.Reflection,
   DSharp.Logging.CodeSite.Helper,
   SysUtils;
 
-{ TCodeSiteLogging }
+{ TCodeSiteLog }
 
-procedure TCodeSiteLogging.LogEntry(const ALogEntry: TLogEntry);
+procedure TCodeSiteLog.LogEntry(const ALogEntry: TLogEntry);
 begin
   case ALogEntry.LogKind of
     lkEnterMethod:
@@ -57,41 +58,49 @@ begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          CodeSite.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+          CodeSite.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
-          CodeSite.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+          CodeSite.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
       end
       else
-        CodeSite.EnterMethod(ALogEntry.Name);
+        CodeSite.EnterMethod(ALogEntry.Text);
     end;
     lkLeaveMethod:
     begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          CodeSite.ExitMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Name)
+          CodeSite.ExitMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
-          CodeSite.ExitMethod(ALogEntry.Value.AsObject, ALogEntry.Name)
+          CodeSite.ExitMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
       end
       else
-        CodeSite.ExitMethod(ALogEntry.Name);
+        CodeSite.ExitMethod(ALogEntry.Text);
     end;
     lkMessage:
     begin
-      CodeSite.SendMsg(ALogEntry.Name);
+      CodeSite.SendFmtMsg(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
+    end;
+    lkWarning:
+    begin
+      CodeSite.SendWarning(Format(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values)));
+    end;
+    lkError:
+    begin
+      CodeSite.SendError(Format(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values)));
     end;
     lkException:
     begin
-      CodeSite.SendException(ALogEntry.Name, ALogEntry.Value.AsType<Exception>);
+      CodeSite.SendException(ALogEntry.Text, ALogEntry.Value.AsType<Exception>);
     end;
     lkValue:
     begin
-      CodeSite.Send(ALogEntry.Name, ALogEntry.Value);
+      CodeSite.Send(ALogEntry.Text, ALogEntry.Value);
     end;
   end;
 end;
 
 initialization
-  RegisterLogging(TCodeSiteLogging.Create);
+  RegisterLogging(TCodeSiteLog.Create);
 
 end.

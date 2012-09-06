@@ -148,8 +148,8 @@ begin
     varByte: Send(Msg, Byte(Value));
     varWord: Send(Msg, Word(Value));
     varLongWord: Send(Msg, LongWord(Value));
-    varInt64: Send(Msg, Int64(Value));
-//    varUInt64: LogUInt64(ALevel, AName, AValue, AIncludeHex);
+    varInt64: Send(Msg, TVarData(Value).VInt64);
+    varUInt64: Send(Msg, TVarData(Value).VUInt64);
     varString, varUString: Send(Msg, VarToStr(Value));
   else
     Send(Msg, VarToStr(Value));

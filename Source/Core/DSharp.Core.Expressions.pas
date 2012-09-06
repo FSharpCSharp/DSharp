@@ -474,6 +474,7 @@ type
   TPropertyExpression = class(TMemberExpression, IValueExpression)
   private
     FIndex: Integer;
+    FProperty: TRttiProperty;
     FPropertyName: string;
     function GetIndexedValue(const Instance: TValue): TValue;
     procedure SetIndexedValue(const Instance, Value: TValue);
@@ -1989,26 +1990,34 @@ var
   LPos: Integer;
 begin
   FExpression := AExpression;
+  FIndex := -1;
   FName := APropertyName;
+  FProperty := TRttiDependencyProperty.FindByName(APropertyName);
 
-  LPropertyName := APropertyName;
-  while ContainsText(LPropertyName, '.') do
+  if Assigned(FProperty) then
   begin
-    LObjectName := LeftStr(LPropertyName, Pred(Pos('.', LPropertyName)));
-    FExpression := TPropertyExpression.Create(FExpression, LObjectName);
-    LPropertyName := RightStr(LPropertyName, Length(LPropertyName) - Pos('.', LPropertyName));
-  end;
-  LPos := Pos('[', LPropertyName);
-  if LPos > 0 then
-  begin
-    FIndex := StrToIntDef(Copy(LPropertyName, Succ(LPos),
-      Pos(']', LPropertyName) - Succ(LPos)), -1);
-    FPropertyName := LeftStr(LPropertyName, Pred(LPos));
+    FPropertyName := FProperty.Name;
   end
   else
   begin
-    FIndex := -1;
-    FPropertyName := LPropertyName;
+    LPropertyName := APropertyName;
+    while ContainsText(LPropertyName, '.') do
+    begin
+      LObjectName := LeftStr(LPropertyName, Pred(Pos('.', LPropertyName)));
+      FExpression := TPropertyExpression.Create(FExpression, LObjectName);
+      LPropertyName := RightStr(LPropertyName, Length(LPropertyName) - Pos('.', LPropertyName));
+    end;
+    LPos := Pos('[', LPropertyName);
+    if LPos > 0 then
+    begin
+      FIndex := StrToIntDef(Copy(LPropertyName, Succ(LPos),
+        Pos(']', LPropertyName) - Succ(LPos)), -1);
+      FPropertyName := LeftStr(LPropertyName, Pred(LPos));
+    end
+    else
+    begin
+      FPropertyName := LPropertyName;
+    end;
   end;
 end;
 
@@ -2128,8 +2137,15 @@ function TPropertyExpression.GetMember: TRttiMember;
 var
   LObject: TObject;
 begin
-  LObject := GetInstance().ToObject;
-  LObject.TryGetMember(FPropertyName, Result);
+  if Assigned(FProperty) then
+  begin
+    Result := FProperty;
+  end
+  else
+  begin
+    LObject := GetInstance().ToObject;
+    LObject.TryGetMember(FPropertyName, Result);
+  end;
 end;
 
 type
@@ -2147,7 +2163,8 @@ var
 begin
   Result := TValue.Empty;
   LObject := GetInstance().ToObject;
-  if LObject.TryGetProperty(FPropertyName, LProperty) then
+  LProperty := FProperty;
+  if Assigned(FProperty) or LObject.TryGetProperty(FPropertyName, LProperty) then
   begin
     if LProperty.IsReadable then
     begin
@@ -2270,7 +2287,8 @@ begin
     TValue.Make(nil, Member.RttiType.Handle, LValue);
   end;
 {$ENDIF}
-  if LObject.TryGetProperty(FPropertyName, LProperty) then
+  LProperty := FProperty;
+  if Assigned(LProperty) or LObject.TryGetProperty(FPropertyName, LProperty) then
   begin
     if FIndex = -1 then
     begin

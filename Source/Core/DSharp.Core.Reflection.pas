@@ -471,6 +471,8 @@ type
     property MethodCount: Integer read GetMethodCount;
   end;
 
+  TValue = Rtti.TValue;
+
   {$REGION 'Documentation'}
   ///	<summary>
   ///	  Extends <see cref="Rtti.TValue">TValue</see> for easier RTTI use.
@@ -509,15 +511,18 @@ type
     function AsWord: Word;
 
     function ToObject: TObject;
+    function ToVarRec: TVarRec;
 
     class function ToString(const Value: TValue): string; overload; static;
-    class function ToString(const Values: TArray<TValue>): string; overload; static;
+    class function ToString(const Values: array of TValue): string; overload; static;
+    class function ToVarRecs(const Values: array of TValue): TArray<TVarRec>; static;
     class function Equals(const Left, Right: TArray<TValue>): Boolean; overload; static;
     class function Equals<T>(const Left, Right: T): Boolean; overload; static;
 
     class function From(ABuffer: Pointer; ATypeInfo: PTypeInfo): TValue; overload; static;
     class function FromBoolean(const Value: Boolean): TValue; static;
     class function FromString(const Value: string): TValue; static;
+    class function FromVarRec(const Value: TVarRec): TValue; static;
 
     function IsBoolean: Boolean;
     function IsByte: Boolean;
@@ -541,8 +546,8 @@ type
   private
     FDependencyProperty: TDependencyProperty;
     FPropInfo: TPropInfo;
-//    FGetter: TRttiMethod;
-//    FSetter: TRttiMethod;
+    FGetter: TRttiMethod;
+    FSetter: TRttiMethod;
     class var FRegister: TDictionary<TPair<TClass, string>, TRttiDependencyProperty>;
 
     function GetIsReadable: Boolean; //override;
@@ -557,7 +562,8 @@ type
     constructor Create(DependencyProperty: TDependencyProperty);
     destructor Destroy; override;
 
-    class function FindByName(Parent: TRttiType; PropertyName: string): TRttiDependencyProperty;
+    class function FindByName(const FullPropertyName: string): TRttiDependencyProperty; overload;
+    class function FindByName(Parent: TRttiType; const PropertyName: string): TRttiDependencyProperty; overload;
   end;
 
   TArrayHelper = class
@@ -1800,6 +1806,30 @@ begin
   Result := TValue.From<string>(Value);
 end;
 
+class function TValueHelper.FromVarRec(const Value: TVarRec): TValue;
+begin
+  case Value.VType of
+    vtInteger: Result := Value.VInteger;
+    vtBoolean: Result := Value.VBoolean;
+    vtChar: Result := string(Value.VChar);
+    vtExtended: Result := Value.VExtended^;
+    vtString: Result := string(Value.VString^);
+    vtPointer: Result := TValue.From<Pointer>(Value.VPointer);
+    vtPChar: Result := string(Value.VPChar);
+    vtObject: Result := Value.VObject;
+    vtClass: Result := Value.VClass;
+    vtWideChar: Result := string(Value.VWideChar);
+    vtPWideChar: Result := string(Value.VPWideChar);
+    vtAnsiString: Result := string(AnsiString(Value.VAnsiString));
+    vtCurrency: Result := Value.VCurrency^;
+    vtVariant: Result := TValue.FromVariant(Value.VVariant^);
+    vtInterface: Result := TValue.From<IInterface>(IInterface(Value.VInterface));
+    vtWideString: Result := WideString(Value.VWideString);
+    vtInt64: Result := Value.VInt64^;
+    vtUnicodeString: Result := string(Value.VUnicodeString);
+  end;
+end;
+
 function TValueHelper.GetType: TRttiType;
 begin
   Result := Context.GetType(TypeInfo);
@@ -1935,7 +1965,7 @@ begin
     Result := AsObject;
 end;
 
-class function TValueHelper.ToString(const Values: TArray<TValue>): string;
+class function TValueHelper.ToString(const Values: array of TValue): string;
 var
   i: Integer;
 begin
@@ -1954,6 +1984,70 @@ begin
     begin
       Result := Result + TValue.ToString(Values[i]);
     end;
+  end;
+end;
+
+function TValueHelper.ToVarRec: TVarRec;
+begin
+  case Kind of
+    tkInteger:
+    begin
+      Result.VType := vtInteger;
+      Result.VInteger := AsInteger;
+    end;
+    tkChar:
+    begin
+      Result.VType := vtChar;
+      Result.VChar := AsType<AnsiChar>;
+    end;
+    tkEnumeration:
+    begin
+      if IsBoolean then
+      begin
+        Result.VType := vtBoolean;
+        Result.VBoolean := AsBoolean;
+      end
+      else
+      begin
+        Result.VType := vtInteger;
+        Result.VInteger := AsInteger;
+      end;
+    end;
+    tkFloat:
+    begin
+      if IsCurrency then
+      begin
+        Result.VType := vtCurrency;
+        Result.VCurrency := GetReferenceToRawData;
+      end
+      else
+      begin
+        Result.VType := vtExtended;
+        Result.VExtended := GetReferenceToRawData;
+      end;
+    end;
+    tkString, tkUString:
+    begin
+      Result.VType := vtUnicodeString;
+      Result.VUnicodeString := Pointer(AsString);
+    end;
+    tkClass, tkInterface:
+    begin
+      Result.VType := vtUnicodeString;
+      Result.VUnicodeString := Pointer(ToObject.ToString);
+    end;
+  end;
+end;
+
+class function TValueHelper.ToVarRecs(
+  const Values: array of TValue): TArray<TVarRec>;
+var
+  i: Integer;
+begin
+  SetLength(Result, Length(Values));
+  for i := Low(Values) to High(Values) do
+  begin
+    Result[i] := Values[i].ToVarRec;
   end;
 end;
 
@@ -2346,9 +2440,9 @@ end;
 
 constructor TRttiDependencyProperty.Create(
   DependencyProperty: TDependencyProperty);
-//var
-//  LMethod: TRttiMethod;
-//  LParameters: TArray<TRttiParameter>;
+var
+  LMethod: TRttiMethod;
+  LParameters: TArray<TRttiParameter>;
 begin
   FDependencyProperty := DependencyProperty;
 
@@ -2356,36 +2450,39 @@ begin
   FPropInfo.Name := ShortString(FDependencyProperty.Name);
   Init(GetRttiType(FDependencyProperty.OwnerType), @FPropInfo);
 
-//  for LMethod in Parent.GetMethods do
-//  begin
-//    if LMethod.IsClassMethod and LMethod.IsStatic then
-//    begin
-//      if (LMethod.MethodKind = mkClassProcedure)
-//        and SameText(LMethod.Name, 'Set' + Name) then
-//      begin
-//        LParameters := LMethod.GetParameters;
-//        if (Length(LParameters) = 2)
-//          and (LParameters[0].ParamType.Handle = TypeInfo(TObject))
-//          and (LParameters[1].ParamType.Handle = FDependencyProperty.PropertyType) then
-//        begin
-//          FSetter := LMethod;
-//          Continue;
-//        end;
-//      end;
-//
-//      if (LMethod.MethodKind = mkClassFunction)
-//        and SameText(LMethod.Name, 'Get' + Name) then
-//      begin
-//        LParameters := LMethod.GetParameters;
-//        if (Length(LParameters) = 1)
-//          and (LParameters[0].ParamType.Handle = TypeInfo(TObject)) then
-//        begin
-//          FGetter := LMethod;
-//          Continue;
-//        end;
-//      end;
-//    end;
-//  end;
+  for LMethod in Parent.GetMethods do
+  begin
+    if Assigned(FGetter) and Assigned(FSetter) then
+      Break;
+
+    if LMethod.IsClassMethod and LMethod.IsStatic then
+    begin
+      if not Assigned(FGetter) and (LMethod.MethodKind = mkClassFunction)
+        and SameText(LMethod.Name, 'Get' + Name) then
+      begin
+        LParameters := LMethod.GetParameters;
+        if (Length(LParameters) = 1)
+          and (LParameters[0].ParamType.Handle = TypeInfo(TObject)) then
+        begin
+          FGetter := LMethod;
+          Continue;
+        end;
+      end;
+
+      if not Assigned(FSetter) and (LMethod.MethodKind = mkClassProcedure)
+        and SameText(LMethod.Name, 'Set' + Name) then
+      begin
+        LParameters := LMethod.GetParameters;
+        if (Length(LParameters) = 2)
+          and (LParameters[0].ParamType.Handle = TypeInfo(TObject))
+          and (LParameters[1].ParamType.Handle = FDependencyProperty.PropertyType) then
+        begin
+          FSetter := LMethod;
+          Continue;
+        end;
+      end;
+    end;
+  end;
 
   FRegister.Add(TPair<TClass, string>.Create(FDependencyProperty.OwnerType,
     FDependencyProperty.Name), Self);
@@ -2400,17 +2497,52 @@ end;
 
 function TRttiDependencyProperty.DoGetValue(Instance: Pointer): TValue;
 begin
-  Result := FDependencyProperty.GetValue(TComponent(Instance));
+  if Assigned(FGetter) then
+  begin
+    Result := FGetter.Invoke(FDependencyProperty.OwnerType, [TObject(Instance)]);
+  end
+  else
+  begin
+    Result := FDependencyProperty.GetValue(TComponent(Instance));
+  end;
 end;
 
 procedure TRttiDependencyProperty.DoSetValue(Instance: Pointer;
   const AValue: TValue);
 begin
-  FDependencyProperty.SetValue(Instance, AValue);
+  if Assigned(FSetter) then
+  begin
+    FSetter.Invoke(FDependencyProperty.OwnerType, [Instance, AValue]);
+  end
+  else
+  begin
+    FDependencyProperty.SetValue(Instance, AValue);
+  end;
+end;
+
+class function TRttiDependencyProperty.FindByName(
+  const FullPropertyName: string): TRttiDependencyProperty;
+var
+  LScope: string;
+  LName: string;
+  LProp: TRttiDependencyProperty;
+begin
+  Result := nil;
+  LScope := Copy(FullPropertyName, 1, LastDelimiter('.', FullPropertyName) - 1);
+  LName := Copy(FullPropertyName, LastDelimiter('.', FullPropertyName) + 1);
+  for LProp in FRegister.Values do
+  begin
+    if SameText(LProp.Name, LName)
+      and EndsText(LScope, LProp.FDependencyProperty.OwnerType.QualifiedClassName) then
+    begin
+      Result := LProp;
+      Break;
+    end;
+  end;
 end;
 
 class function TRttiDependencyProperty.FindByName(Parent: TRttiType;
-  PropertyName: string): TRttiDependencyProperty;
+  const PropertyName: string): TRttiDependencyProperty;
 begin
   for Result in FRegister.Values do
   begin

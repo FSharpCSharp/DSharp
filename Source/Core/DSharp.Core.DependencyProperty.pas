@@ -429,7 +429,7 @@ begin
     begin
       if Value.IsObject then
       begin
-        if not Value.IsInstanceOf(GetTypeData(PropertyType).ClassType) then
+        if not Value.IsEmpty and not Value.IsInstanceOf(GetTypeData(PropertyType).ClassType) then
         begin
           raise EInvalidCast.CreateRes(@SInvalidCast);
         end;

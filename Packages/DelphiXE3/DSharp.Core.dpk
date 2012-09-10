@@ -35,8 +35,10 @@ requires
 
 contains
   DSharp.Collections in '..\..\Source\Collections\DSharp.Collections.pas',
+  DSharp.Collections.Extensions in '..\..\Source\Collections\DSharp.Collections.Extensions.pas',
   DSharp.Collections.Fibers in '..\..\Source\Collections\DSharp.Collections.Fibers.pas',
   DSharp.Collections.Threading in '..\..\Source\Collections\DSharp.Collections.Threading.pas',
+  DSharp.Collections.Yield in '..\..\Source\Collections\DSharp.Collections.Yield.pas',
   DSharp.Core.Cache in '..\..\Source\Core\DSharp.Core.Cache.pas',
   DSharp.Core.Collections in '..\..\Source\Core\DSharp.Core.Collections.pas',
   DSharp.Core.CopyOperator in '..\..\Source\Core\DSharp.Core.CopyOperator.pas',
@@ -65,8 +67,6 @@ contains
   DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
   DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas',
   DSharp.Core.VirtualInterface in '..\..\Source\Core\DSharp.Core.VirtualInterface.pas',
-  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
-  DSharp.Collections.Yield in '..\..\Source\Collections\DSharp.Collections.Yield.pas',
-  DSharp.Collections.Extensions in '..\..\Source\Collections\DSharp.Collections.Extensions.pas';
+  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas';
 
 end.

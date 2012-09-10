@@ -32,37 +32,74 @@ unit DSharp.Collections.Extensions;
 interface
 
 uses
-  DSharp.Collections,
   Generics.Collections,
   Generics.Defaults,
+  DSharp.Collections,
   SysUtils;
 
 type
+  TEqualityComparer<T> = class(TDelegatedEqualityComparer<T>)
+  public
+    constructor Create(const AEquals: TEqualityComparison<T>);
+    function GetHashCode(const Value: T): Integer; override;
+  end;
+
+  IHashSet<T> = interface
+    function Add(const Value: T): Boolean;
+    function Contains(const Value: T): Boolean;
+  end;
+
+  IGrouping<TKey, T> = interface(IEnumerable<T>)
+    function GetKey: TKey;
+    property Key: TKey read GetKey;
+  end;
+
+  ILookup<TKey, T> = interface(IEnumerable<IGrouping<TKey, T>>)
+    function GetItem(const Key: TKey): IEnumerable<T>;
+    property Item[const Key: TKey]: IEnumerable<T> read GetItem;
+  end;
+
+  THashSet<T> = class(TInterfacedObject, IHashSet<T>)
+  private
+    FDictionary: TDictionary<T, Integer>;
+  public
+    constructor Create(const AComparer: IEqualityComparer<T>);
+    destructor Destroy; override;
+    function Add(const Value: T): Boolean;
+    function Contains(const Value: T): Boolean;
+  end;
+
+  TGrouping<TKey, T> = class(TEnumerable<T>, IGrouping<TKey, T>)
+  private
+    FKey: TKey;
+    FValues: IEnumerable<T>;
+    function GetKey: TKey;
+  public
+    constructor Create(const Key: TKey; Values: IEnumerable<T>);
+    function GetEnumerator: IEnumerator<T>; override;
+  end;
+
+  TLookup<TKey, T> = class(TEnumerable<IGrouping<TKey, T>>, ILookup<TKey, T>)
+  private
+    FMap: TDictionary<TKey, IList<T>>;
+    FKeys: IList<TKey>;
+    procedure Add(key: TKey; item: T);
+    function GetItem(const Key: TKey): IEnumerable<T>;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    function GetEnumerator: IEnumerator<IGrouping<TKey, T>>; override;
+  end;
+
   Enumerable<T> = record
   private
     Enumerable: IEnumerable<T>;
 
     type
-      TEqualityComparer = class(TDelegatedEqualityComparer<T>)
-      public
-        constructor Create(const AEquals: TEqualityComparison<T>);
-        function GetHashCode(const Value: T): Integer; override;
-      end;
+      TEqualityComparer = TEqualityComparer<T>;
+      IHashSet = IHashSet<T>;
+      THashSet = THashSet<T>;
 
-      IHashSet = interface
-        function Add(const Value: T): Boolean;
-        function Contains(const Value: T): Boolean;
-      end;
-
-      THashSet = class(TInterfacedObject, IHashSet)
-      private
-        FDictionary: TDictionary<T, Integer>;
-      public
-        constructor Create(const AComparer: IEqualityComparer<T>);
-        destructor Destroy; override;
-        function Add(const Value: T): Boolean;
-        function Contains(const Value: T): Boolean;
-      end;
   public
     function All(predicate: TPredicate<T>): Boolean;
 
@@ -99,6 +136,13 @@ type
     function FirstOrDefault: T; overload;
     function FirstOrDefault(predicate: TPredicate<T>): T; overload;
 
+    function GroupBy<TKey>(keySelector: TFunc<T, TKey>): Enumerable<IGrouping<TKey, T>>; overload;
+    function GroupBy<TKey>(keySelector: TFunc<T, TKey>; comparer: IEqualityComparer<TKey>): Enumerable<IGrouping<TKey, T>>; overload;
+    function GroupBy<TKey>(keySelector: TFunc<T, TKey>; comparison: TEqualityComparison<TKey>): Enumerable<IGrouping<TKey, T>>; overload;
+    function GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>): Enumerable<IGrouping<TKey, TElement>>; overload;
+    function GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>; comparer: IEqualityComparer<TKey>): Enumerable<IGrouping<TKey, TElement>>; overload;
+    function GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>; comparison: TEqualityComparison<TKey>): Enumerable<IGrouping<TKey, TElement>>; overload;
+
     function Intersect(second: IEnumerable<T>): Enumerable<T>; overload;
     function Intersect(second: IEnumerable<T>; comparer: IEqualityComparer<T>): Enumerable<T>; overload;
     function Intersect(second: IEnumerable<T>; comparison: TEqualityComparison<T>): Enumerable<T>; overload;
@@ -127,6 +171,13 @@ type
     function Skip(count: NativeInt): Enumerable<T>;
     function SkipWhile(predicate: TPredicate<T>): Enumerable<T>; overload;
     function SkipWhile(predicate: TFunc<T, NativeInt, Boolean>): Enumerable<T>; overload;
+
+    function ToLookup<TKey>(keySelector: TFunc<T, TKey>): ILookup<TKey, T>; overload;
+    function ToLookup<TKey>(keySelector: TFunc<T, TKey>; comparer: IEqualityComparer<TKey>): ILookup<TKey, T>; overload;
+    function ToLookup<TKey>(keySelector: TFunc<T, TKey>; comparison: TEqualityComparison<TKey>): ILookup<TKey, T>; overload;
+    function ToLookup<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>): ILookup<TKey, TElement>; overload;
+    function ToLookup<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>; comparer: IEqualityComparer<TKey>): ILookup<TKey, TElement>; overload;
+    function ToLookup<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>; comparison: TEqualityComparison<TKey>): ILookup<TKey, TElement>; overload;
 
     function Take(count: NativeInt): Enumerable<T>;
     function TakeWhile(predicate: TPredicate<T>): Enumerable<T>; overload;
@@ -392,6 +443,70 @@ begin
     if predicate(Result) then
       Exit;
   Result := Default(T);
+end;
+
+function Enumerable<T>.GroupBy<TKey>(
+  keySelector: TFunc<T, TKey>): Enumerable<IGrouping<TKey, T>>;
+begin
+  Result := GroupBy<TKey, T>(keySelector,
+   function(element: T): T
+    begin
+      Result := element;
+    end, TEqualityComparer<TKey>.Default());
+end;
+
+function Enumerable<T>.GroupBy<TKey>(keySelector: TFunc<T, TKey>;
+  comparer: IEqualityComparer<TKey>): Enumerable<IGrouping<TKey, T>>;
+begin
+  Result := GroupBy<TKey, T>(keySelector,
+   function(element: T): T
+    begin
+      Result := element;
+    end, comparer);
+end;
+
+function Enumerable<T>.GroupBy<TKey>(keySelector: TFunc<T, TKey>;
+  comparison: TEqualityComparison<TKey>): Enumerable<IGrouping<TKey, T>>;
+begin
+  Result := GroupBy<TKey, T>(keySelector,
+   function(element: T): T
+    begin
+      Result := element;
+    end, TEqualityComparer<TKey>.Create(comparison));
+end;
+
+function Enumerable<T>.GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>;
+  elementSelector: TFunc<T, TElement>): Enumerable<IGrouping<TKey, TElement>>;
+begin
+  Result := GroupBy<TKey, TElement>(keySelector,
+    elementSelector, TEqualityComparer<TKey>.Default);
+end;
+
+function Enumerable<T>.GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>;
+  elementSelector: TFunc<T, TElement>;
+  comparer: IEqualityComparer<TKey>): Enumerable<IGrouping<TKey, TElement>>;
+var
+  this: Enumerable<T>;
+begin
+  this := Self;
+  Result :=
+    TYieldEnumerable<IGrouping<TKey, TElement>>.Create(
+    procedure
+    var
+      result: Yield<IGrouping<TKey, TElement>>;
+      lookup: ILookup<TKey, TElement>;
+    begin
+      lookup := this.ToLookup<TKey, TElement>(keySelector, elementSelector, comparer);
+      for result in lookup do;
+    end);
+end;
+
+function Enumerable<T>.GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>;
+  elementSelector: TFunc<T, TElement>;
+  comparison: TEqualityComparison<TKey>): Enumerable<IGrouping<TKey, TElement>>;
+begin
+  Result := GroupBy<TKey, TElement>(keySelector,
+    elementSelector, TEqualityComparer<TKey>.Create(comparison));
 end;
 
 function Enumerable<T>.Intersect(second: IEnumerable<T>): Enumerable<T>;
@@ -768,6 +883,70 @@ begin
     end);
 end;
 
+function Enumerable<T>.ToLookup<TKey>(
+  keySelector: TFunc<T, TKey>): ILookup<TKey, T>;
+begin
+  Result := ToLookup<TKey, T>(keySelector,
+    function(element: T): T
+    begin
+      Result := element;
+    end, TEqualityComparer<TKey>.Default);
+end;
+
+function Enumerable<T>.ToLookup<TKey>(keySelector: TFunc<T, TKey>;
+  comparer: IEqualityComparer<TKey>): ILookup<TKey, T>;
+begin
+  Result := ToLookup<TKey, T>(keySelector,
+    function(element: T): T
+    begin
+      Result := element;
+    end, comparer);
+end;
+
+function Enumerable<T>.ToLookup<TKey>(keySelector: TFunc<T, TKey>;
+  comparison: TEqualityComparison<TKey>): ILookup<TKey, T>;
+begin
+  Result := ToLookup<TKey, T>(keySelector,
+    function(element: T): T
+    begin
+      Result := element;
+    end, TEqualityComparer<TKey>.Create(comparison));
+end;
+
+function Enumerable<T>.ToLookup<TKey, TElement>(keySelector: TFunc<T, TKey>;
+  elementSelector: TFunc<T, TElement>): ILookup<TKey, TElement>;
+begin
+  Result := ToLookup<TKey, TElement>(keySelector, elementSelector,
+    TEqualityComparer<TKey>.Default);
+end;
+
+function Enumerable<T>.ToLookup<TKey, TElement>(keySelector: TFunc<T, TKey>;
+  elementSelector: TFunc<T, TElement>;
+  comparer: IEqualityComparer<TKey>): ILookup<TKey, TElement>;
+var
+  lookup: TLookup<TKey, TElement>;
+  item: T;
+  key: TKey;
+  element: TElement;
+begin
+  lookup := TLookup<TKey, TElement>.Create;
+  for item in Self do
+  begin
+    key := keySelector(item);
+    element := elementSelector(item);
+    lookup.Add(key, element);
+  end;
+  Result := lookup;
+end;
+
+function Enumerable<T>.ToLookup<TKey, TElement>(keySelector: TFunc<T, TKey>;
+  elementSelector: TFunc<T, TElement>;
+  comparison: TEqualityComparison<TKey>): ILookup<TKey, TElement>;
+begin
+  Result := ToLookup<TKey, TElement>(keySelector, elementSelector,
+    TEqualityComparer<TKey>.Create(comparison));
+end;
+
 function Enumerable<T>.Union(second: IEnumerable<T>): Enumerable<T>;
 begin
   Result := Union(second, TEqualityComparer.Default);
@@ -857,43 +1036,109 @@ begin
   Result.Enumerable := Value;
 end;
 
-{ Enumerable<T>.TEqualityComparer }
+{ TEqualityComparer<T> }
 
-constructor Enumerable<T>.TEqualityComparer.Create(
+constructor TEqualityComparer<T>.Create(
   const AEquals: TEqualityComparison<T>);
 begin
   inherited Create(AEquals, nil);
 end;
 
-function Enumerable<T>.TEqualityComparer.GetHashCode(const Value: T): Integer;
+function TEqualityComparer<T>.GetHashCode(const Value: T): Integer;
 begin
   Result := 0;
 end;
 
-{ Enumerable<T>.THashSet }
+{ THashSet<T> }
 
-constructor Enumerable<T>.THashSet.Create(const AComparer: IEqualityComparer<T>);
+constructor THashSet<T>.Create(const AComparer: IEqualityComparer<T>);
 begin
   inherited Create();
   FDictionary := TDictionary<T, Integer>.Create(AComparer);
 end;
 
-destructor Enumerable<T>.THashSet.Destroy;
+destructor THashSet<T>.Destroy;
 begin
   FDictionary.Free();
   inherited;
 end;
 
-function Enumerable<T>.THashSet.Add(const Value: T): Boolean;
+function THashSet<T>.Add(const Value: T): Boolean;
 begin
   Result := not FDictionary.ContainsKey(Value);
   if Result then
     FDictionary.Add(Value, 0);
 end;
 
-function Enumerable<T>.THashSet.Contains(const Value: T): Boolean;
+function THashSet<T>.Contains(const Value: T): Boolean;
 begin
   Result := FDictionary.ContainsKey(Value);
+end;
+
+{ TGrouping<TKey, T> }
+
+constructor TGrouping<TKey, T>.Create(const Key: TKey; Values: IEnumerable<T>);
+begin
+  inherited Create;
+  FKey := Key;
+  FValues := Values;
+end;
+
+function TGrouping<TKey, T>.GetEnumerator: IEnumerator<T>;
+begin
+  Result := FValues.GetEnumerator;
+end;
+
+function TGrouping<TKey, T>.GetKey: TKey;
+begin
+  Result := FKey;
+end;
+
+{ TLookup<TKey, T> }
+
+constructor TLookup<TKey, T>.Create;
+begin
+  inherited;
+  FMap := TDictionary<TKey, IList<T>>.Create;
+  FKeys := TList<TKey>.Create;
+end;
+
+destructor TLookup<TKey, T>.Destroy;
+begin
+  FMap.Free;
+  inherited;
+end;
+
+procedure TLookup<TKey, T>.Add(key: TKey; item: T);
+var
+  list: IList<T>;
+begin
+  if not FMap.TryGetValue(key, list) then
+  begin
+    list := TList<T>.Create;
+    FMap.Add(key, list);
+    FKeys.Add(key);
+  end;
+  list.Add(item);
+end;
+
+function TLookup<TKey, T>.GetEnumerator: IEnumerator<IGrouping<TKey, T>>;
+begin
+  Result := Enumerable<TKey>(FKeys).Select<IGrouping<TKey, T>>(
+    function(key: TKey): IGrouping<TKey, T>
+    begin
+      Result := TGrouping<TKey, T>.Create(key, FMap[key]);
+    end).GetEnumerator;
+end;
+
+function TLookup<TKey, T>.GetItem(const Key: TKey): IEnumerable<T>;
+var
+  list: IList<T>;
+begin
+  if FMap.TryGetValue(Key, list) then
+    Result := list
+  else
+    Result := TEnumerable<T>.Create;
 end;
 
 end.

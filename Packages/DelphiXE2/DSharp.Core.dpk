@@ -35,6 +35,7 @@ requires
 
 contains
   DSharp.Collections in '..\..\Source\Collections\DSharp.Collections.pas',
+  DSharp.Collections.Extensions in '..\..\Source\Collections\DSharp.Collections.Extensions.pas',
   DSharp.Collections.Fibers in '..\..\Source\Collections\DSharp.Collections.Fibers.pas',
   DSharp.Collections.Threading in '..\..\Source\Collections\DSharp.Collections.Threading.pas',
   DSharp.Collections.Yield in '..\..\Source\Collections\DSharp.Collections.Yield.pas',

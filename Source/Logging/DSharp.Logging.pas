@@ -312,29 +312,31 @@ end;
 procedure TTextLog.LogEntry(const ALogEntry: TLogEntry);
 var
   LMessage: string;
+  LValue: TValue;
 begin
+  LValue := ALogEntry.Value;
   case ALogEntry.LogKind of
     lkEnterMethod:
     begin
       LMessage := REnterMethod;
-      if not ALogEntry.Value.IsEmpty then
+      if not LValue.IsEmpty then
       begin
-        if ALogEntry.Value.IsClass then
-          LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
-        else if ALogEntry.Value.IsObject then
-          LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+        if LValue.IsClass then
+          LMessage := LMessage + LValue.AsClass.ClassName + '.'
+        else if LValue.IsObject then
+          LMessage := LMessage + LValue.AsObject.ClassName + '.';
       end;
       LMessage := LMessage + ALogEntry.Text;
     end;
     lkLeaveMethod:
     begin
       LMessage := RLeaveMethod;
-      if not ALogEntry.Value.IsEmpty then
+      if not LValue.IsEmpty then
       begin
-        if ALogEntry.Value.IsClass then
-          LMessage := LMessage + ALogEntry.Value.AsClass.ClassName + '.'
-        else if ALogEntry.Value.IsObject then
-          LMessage := LMessage + ALogEntry.Value.AsObject.ClassName + '.';
+        if LValue.IsClass then
+          LMessage := LMessage + LValue.AsClass.ClassName + '.'
+        else if LValue.IsObject then
+          LMessage := LMessage + LValue.AsObject.ClassName + '.';
       end;
       LMessage := LMessage + ALogEntry.Text;
     end;
@@ -354,13 +356,13 @@ begin
     begin
       if ALogEntry.Text <> '' then
         LMessage := ALogEntry.Text + ': ';
-      LMessage := LMessage + ALogEntry.Value.AsType<Exception>.ToString;
+      LMessage := LMessage + LValue.AsType<Exception>.ToString;
     end;
     lkValue:
     begin
       if ALogEntry.Text <> '' then
         LMessage := ALogEntry.Text + ': ';
-      LMessage := LMessage + TValue.ToString(ALogEntry.Value);
+      LMessage := LMessage + TValue.ToString(LValue);
     end;
   end;
 

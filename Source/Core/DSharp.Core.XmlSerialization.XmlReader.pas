@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,6 @@ interface
 uses
   DSharp.Core.XmlSerialization,
   Rtti,
-  SysUtils,
   XMLIntf;
 
 type
@@ -54,7 +53,6 @@ type
     procedure ReadObject(var AValue: TValue);
   public
     constructor Create;
-    destructor Destroy; override;
 
     function IsStartElement(): Boolean; overload;
     function IsStartElement(const AName: string): Boolean; overload;
@@ -70,6 +68,7 @@ implementation
 
 uses
   DSharp.Core.Reflection,
+  SysUtils,
   TypInfo,
   Variants,
   XMLDoc,
@@ -89,12 +88,6 @@ constructor TXmlReader.Create;
 begin
   FDocument := TXMLDocument.Create(nil);
   FDocument.Active := True;
-end;
-
-destructor TXmlReader.Destroy;
-begin
-
-  inherited;
 end;
 
 procedure TXmlReader.CreateObject(var AValue: TValue);
@@ -159,6 +152,11 @@ var
   LValue: TValue;
 begin
   LObject := AValue.AsObject;
+
+  if LObject.TryGetMethod('Clear', LMethod) then
+  begin
+    LMethod.Invoke(LObject, []);
+  end;
 
   if LObject.HasMethod('GetEnumerator')
     and LObject.TryGetMethod('Add', LMethod) then

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,6 @@ type
     procedure WriteObject(const AValue: TValue);
   public
     constructor Create;
-    destructor Destroy; override;
 
     procedure WriteStartElement(const AName: string);
     procedure WriteEndElement(const AName: string);
@@ -85,12 +84,6 @@ begin
   FDocument.Version := '1.0';
 end;
 
-destructor TXmlWriter.Destroy;
-begin
-
-  inherited;
-end;
-
 function TXmlWriter.GetXml: string;
 begin
   Result := FormatXMLData(FDocument.XML.Text);
@@ -124,19 +117,26 @@ begin
   LObject := AValue.AsObject;
   if LObject.HasMethod('Add') and LObject.TryGetMethod('GetEnumerator', LMethod) then
   begin
-//    LEnumerator := LMethod.Invoke(LObject, []).AsObject;
     LEnumerator := LMethod.Invoke(LObject, []);
 
     try
       LType := LEnumerator.GetType();
       if LType.TryGetMethod('MoveNext', LMethod)
         and LType.TryGetProperty('Current', LProperty) then
-//      if LEnumerator.GetType.TryGetMethod('MoveNext', LMethod)
-//        and LEnumerator.GetType.TryGetProperty('Current', LProperty) then
       begin
         while LMethod.Invoke(LEnumerator, []).AsBoolean do
         begin
-          LValue := LProperty.GetValue(LEnumerator.GetReferenceToRawData);
+          if LEnumerator.IsObject then
+          begin
+            LValue := LProperty.GetValue(LEnumerator.AsObject);
+          end else
+          if LEnumerator.IsInterface then
+          begin
+            LValue := LProperty.GetValue(Pointer(LEnumerator.AsInterface));
+          end else
+          begin
+            LValue := LProperty.GetValue(LEnumerator.GetReferenceToRawData);
+          end;
 
           WriteStartElement(LProperty.PropertyType.Name);
           WriteValue(LValue);

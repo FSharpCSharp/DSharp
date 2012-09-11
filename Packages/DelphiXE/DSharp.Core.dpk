@@ -57,6 +57,7 @@ contains
   DSharp.Core.Lambda in '..\..\Source\Core\DSharp.Core.Lambda.pas',
   DSharp.Core.Lazy in '..\..\Source\Core\DSharp.Core.Lazy.pas',
   DSharp.Core.NotificationHandler in '..\..\Source\Core\DSharp.Core.NotificationHandler.pas',
+  DSharp.Core.Nullable in '..\..\Source\Core\DSharp.Core.Nullable.pas',
   DSharp.Core.Properties in '..\..\Source\Core\DSharp.Core.Properties.pas',
   DSharp.Core.Reflection in '..\..\Source\Core\DSharp.Core.Reflection.pas',
   DSharp.Core.Threading in '..\..\Source\Core\DSharp.Core.Threading.pas',

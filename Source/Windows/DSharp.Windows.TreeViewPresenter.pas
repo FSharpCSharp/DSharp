@@ -202,12 +202,18 @@ type
       Action: TCollectionChangedAction);
     procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction); override;
+    function GetCanMoveCurrentToNext: Boolean; override;
+    function GetCanMoveCurrentToPrevious: Boolean; override;
     function GetCurrentItem: TObject; override;
     procedure SetCurrentItem(const Value: TObject); override;
     procedure InitColumns; override;
     procedure InitControl; override;
     procedure InitEvents; override;
     procedure InitProperties; override;
+    procedure MoveCurrentToFirst; override;
+    procedure MoveCurrentToLast; override;
+    procedure MoveCurrentToNext; override;
+    procedure MoveCurrentToPrevious; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -790,6 +796,10 @@ procedure TTreeViewPresenter.DoFreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 begin
   SetNodeItems(Sender, Node, nil);
+  if FHitInfo.HitNode = Node then
+  begin
+    FHitInfo.HitNode := nil;
+  end;
 end;
 
 procedure TTreeViewPresenter.DoGetHint(Sender: TBaseVirtualTree;
@@ -1284,10 +1294,10 @@ begin
         // find node to select after deleting current node
         if FTreeView.Selected[LNode] and (FSelectionMode = smSingle) then
         begin
-          LSelectedNode := FTreeView.GetNextSibling(LNode);
+          LSelectedNode := FTreeView.GetNextVisibleSibling(LNode);
 
           if not Assigned(LSelectedNode) then
-            LSelectedNode := FTreeView.GetPreviousSibling(LNode);
+            LSelectedNode := FTreeView.GetPreviousVisibleSibling(LNode);
           if not Assigned(LSelectedNode) then
             LSelectedNode := LNode.Parent;
           if Assigned(LSelectedNode) then
@@ -1427,6 +1437,34 @@ end;
 procedure TTreeViewPresenter.FullExpand;
 begin
   FTreeView.FullExpand();
+end;
+
+function TTreeViewPresenter.GetCanMoveCurrentToNext: Boolean;
+var
+  LNode: PVirtualNode;
+begin
+  Result := False;
+
+  if Assigned(FTreeView) then
+  begin
+    LNode := FTreeView.GetFirstSelected();
+    LNode := FTreeView.GetNextVisible(LNode);
+    Result := Assigned(LNode);
+  end;
+end;
+
+function TTreeViewPresenter.GetCanMoveCurrentToPrevious: Boolean;
+var
+  LNode: PVirtualNode;
+begin
+  Result := False;
+
+  if Assigned(FTreeView) then
+  begin
+    LNode := FTreeView.GetFirstSelected();
+    LNode := FTreeView.GetPreviousVisible(LNode);
+    Result := Assigned(LNode);
+  end;
 end;
 
 function TTreeViewPresenter.GetCheckedItem: TObject;
@@ -1821,6 +1859,68 @@ begin
   else
   begin
     Result := False;
+  end;
+end;
+
+procedure TTreeViewPresenter.MoveCurrentToFirst;
+var
+  LNode: PVirtualNode;
+begin
+  if Assigned(FTreeView) then
+  begin
+    LNode := FTreeView.GetFirstVisible();
+    if Assigned(LNode) then
+    begin
+      FTreeView.Selected[LNode] := True;
+      FTreeView.ScrollIntoView(LNode, True, True);
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.MoveCurrentToLast;
+var
+  LNode: PVirtualNode;
+begin
+  if Assigned(FTreeView) then
+  begin
+    LNode := FTreeView.GetLastVisible();
+    if Assigned(LNode) then
+    begin
+      FTreeView.Selected[LNode] := True;
+      FTreeView.ScrollIntoView(LNode, True, True);
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.MoveCurrentToNext;
+var
+  LNode: PVirtualNode;
+begin
+  if Assigned(FTreeView) then
+  begin
+    LNode := FTreeView.GetFirstSelected();
+    LNode := FTreeView.GetNextVisibleSibling(LNode);
+    if Assigned(LNode) then
+    begin
+      FTreeView.Selected[LNode] := True;
+      FTreeView.ScrollIntoView(LNode, True, True);
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.MoveCurrentToPrevious;
+var
+  LNode: PVirtualNode;
+begin
+  if Assigned(FTreeView) then
+  begin
+    LNode := FTreeView.GetFirstSelected();
+    LNode := FTreeView.GetPreviousVisibleSibling(LNode);
+    if Assigned(LNode) then
+    begin
+      FTreeView.Selected[LNode] := True;
+      FTreeView.ScrollIntoView(LNode, True, True);
+    end;
   end;
 end;
 

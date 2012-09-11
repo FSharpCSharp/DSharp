@@ -44,7 +44,8 @@ uses
   SysUtils;
 
 type
-  TCustomPresenter = class(TComponent, ICollectionView, INotifyPropertyChanged)
+  TCustomPresenter = class(TComponent, ICollectionViewNavigation,
+    ICollectionView, INotifyPropertyChanged)
   private
     FAction: TBasicAction;
     FColumnDefinitions: IColumnDefinitions;
@@ -66,6 +67,8 @@ type
     procedure WriteColumnDefinitions(Writer: TWriter);
   protected
     FUpdateCount: Integer;
+    function GetCanMoveCurrentToNext: Boolean; virtual;
+    function GetCanMoveCurrentToPrevious: Boolean; virtual;
     procedure DefineProperties(Filer: TFiler); override;
     procedure DoDblClick(Sender: TObject); virtual;
     procedure DoPropertyChanged(const APropertyName: string;
@@ -80,6 +83,10 @@ type
     procedure InitEvents; virtual;
     procedure InitProperties; virtual;
     procedure Loaded; override;
+    procedure MoveCurrentToFirst; virtual;
+    procedure MoveCurrentToLast; virtual;
+    procedure MoveCurrentToNext; virtual;
+    procedure MoveCurrentToPrevious; virtual;
     procedure SetCurrentItem(const Value: TObject); virtual;
   public
     constructor Create(AOwner: TComponent); override;
@@ -95,7 +102,8 @@ type
 
     property ColumnDefinitions: IColumnDefinitions
       read FColumnDefinitions write SetColumnDefinitions;
-    property View: TCollectionView read FView implements ICollectionView;
+    property View: TCollectionView read FView
+      implements ICollectionView, ICollectionViewNavigation;
   published
     property Action: TBasicAction read FAction write SetAction;
     property ImageList: TCustomImageList read FImageList write SetImageList;
@@ -114,11 +122,18 @@ type
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged); override;
     procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction); override;
+    function GetCanMoveCurrentToNext: Boolean; override;
+    function GetCanMoveCurrentToPrevious: Boolean; override;
     function GetCurrentItem: TObject; override;
     procedure SetCurrentItem(const Value: TObject); override;
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
     constructor Create(Presenter: TCustomPresenter);
+
+    procedure MoveCurrentToFirst; override;
+    procedure MoveCurrentToLast; override;
+    procedure MoveCurrentToNext; override;
+    procedure MoveCurrentToPrevious; override;
   end;
 
 implementation
@@ -219,6 +234,16 @@ begin
   end;
 end;
 
+function TCustomPresenter.GetCanMoveCurrentToNext: Boolean;
+begin
+  Result := False; // implemented by descendants
+end;
+
+function TCustomPresenter.GetCanMoveCurrentToPrevious: Boolean;
+begin
+  Result := False; // implemented by descendants
+end;
+
 function TCustomPresenter.GetCurrentItem: TObject;
 begin
   Result := nil; // implemented by descendants
@@ -268,6 +293,26 @@ begin
     InitColumns();
     Refresh();
   end;
+end;
+
+procedure TCustomPresenter.MoveCurrentToFirst;
+begin
+  // implemented by descendants
+end;
+
+procedure TCustomPresenter.MoveCurrentToLast;
+begin
+  // implemented by descendants
+end;
+
+procedure TCustomPresenter.MoveCurrentToNext;
+begin
+  // implemented by descendants
+end;
+
+procedure TCustomPresenter.MoveCurrentToPrevious;
+begin
+  // implemented by descendants
 end;
 
 procedure TCustomPresenter.Notification(AComponent: TComponent;
@@ -404,6 +449,8 @@ end;
 procedure TCollectionViewPresenterAdapter.DoFilterChanged(Sender: TObject);
 begin
   FPresenter.ApplyFilter;
+
+  NotifyPropertyChanged(FPresenter, Self, 'View');
 end;
 
 procedure TCollectionViewPresenterAdapter.DoItemPropertyChanged(
@@ -424,9 +471,39 @@ begin
   NotifyPropertyChanged(FPresenter, Self, 'View');
 end;
 
+function TCollectionViewPresenterAdapter.GetCanMoveCurrentToNext: Boolean;
+begin
+  Result := FPresenter.GetCanMoveCurrentToNext;
+end;
+
+function TCollectionViewPresenterAdapter.GetCanMoveCurrentToPrevious: Boolean;
+begin
+  Result := FPresenter.GetCanMoveCurrentToPrevious;
+end;
+
 function TCollectionViewPresenterAdapter.GetCurrentItem: TObject;
 begin
   Result := FPresenter.GetCurrentItem();
+end;
+
+procedure TCollectionViewPresenterAdapter.MoveCurrentToFirst;
+begin
+  FPresenter.MoveCurrentToFirst;
+end;
+
+procedure TCollectionViewPresenterAdapter.MoveCurrentToLast;
+begin
+  FPresenter.MoveCurrentToLast;
+end;
+
+procedure TCollectionViewPresenterAdapter.MoveCurrentToNext;
+begin
+  FPresenter.MoveCurrentToNext;
+end;
+
+procedure TCollectionViewPresenterAdapter.MoveCurrentToPrevious;
+begin
+  FPresenter.MoveCurrentToPrevious;
 end;
 
 procedure TCollectionViewPresenterAdapter.SetCurrentItem(const Value: TObject);

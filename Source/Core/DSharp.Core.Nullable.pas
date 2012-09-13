@@ -54,6 +54,7 @@ type
 
     class operator Implicit(const Value: Nullable<T>): T;
     class operator Implicit(const Value: Nullable<T>): Variant;
+    class operator Implicit(const Value: Pointer): Nullable<T>;
     class operator Implicit(const Value: T): Nullable<T>;
     class operator Implicit(const Value: Variant): Nullable<T>;
     class operator Equal(const Left, Right: Nullable<T>): Boolean;
@@ -140,6 +141,14 @@ begin
     Result := TValue.From<T>(Value.Value).AsVariant
   else
     Result := Null;
+end;
+
+class operator Nullable<T>.Implicit(const Value: Pointer): Nullable<T>;
+begin
+  if Value = nil then
+    Result.Clear
+  else
+    Result := Nullable<T>.Create(T(Value^));
 end;
 
 class operator Nullable<T>.Implicit(const Value: T): Nullable<T>;

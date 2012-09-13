@@ -120,7 +120,7 @@ begin
     LEnumerator := LMethod.Invoke(LObject, []);
 
     try
-      LType := LEnumerator.GetType();
+      LType := LEnumerator.RttiType;
       if LType.TryGetMethod('MoveNext', LMethod)
         and LType.TryGetProperty('Current', LProperty) then
       begin

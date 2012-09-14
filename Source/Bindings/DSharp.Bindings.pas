@@ -602,7 +602,6 @@ end;
 procedure TBinding.DoValidationRulesChanged(Sender: TObject;
   const Item: IValidationRule; Action: TCollectionChangedAction);
 begin
-  Validate();
   DoPropertyChanged('ValidationRules');
 end;
 
@@ -1305,7 +1304,6 @@ end;
 procedure TBindingGroup.DoValidationRulesChanged(Sender: TObject;
   const Item: IValidationRule; Action: TCollectionChangedAction);
 begin
-  Validate();
   DoPropertyChanged('ValidationRules');
 end;
 

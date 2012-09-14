@@ -264,12 +264,12 @@ object MainForm: TMainForm
     Top = 80
     ColumnDefinitions = <
       item
-        Caption = 'Lastname'
-        TextPropertyName = 'Lastname'
-      end
-      item
         Caption = 'Firstname'
         TextPropertyName = 'Firstname'
+      end
+      item
+        Caption = 'Lastname'
+        TextPropertyName = 'Lastname'
       end>
   end
   object BindingGroup: TBindingGroup
@@ -277,60 +277,60 @@ object MainForm: TMainForm
     Top = 80
     Bindings = <
       item
-        Target = Lastname
-        TargetPropertyName = 'Text'
         Source = ContactsPresenter
         SourcePropertyName = 'View.CurrentItem.Lastname'
+        Target = Lastname
+        TargetPropertyName = 'Text'
       end
       item
-        Target = Firstname
-        TargetPropertyName = 'Text'
         Source = ContactsPresenter
         SourcePropertyName = 'View.CurrentItem.Firstname'
+        Target = Firstname
+        TargetPropertyName = 'Text'
       end
       item
         BindingMode = bmOneWay
+        Source = InventoryPresenter
+        SourcePropertyName = 'View.CurrentItem.Name'
         Target = NodeName
         TargetPropertyName = 'Text'
-        Source = InventoryPresenter
-        SourcePropertyName = 'View.CurrentItem.Name'
       end
       item
-        Target = NodeValue
-        TargetPropertyName = 'Text'
         Source = InventoryPresenter
         SourcePropertyName = 'View.CurrentItem.Value'
+        Target = NodeValue
+        TargetPropertyName = 'Text'
       end
       item
         BindingMode = bmOneWay
-        Target = DeleteContact
-        TargetPropertyName = 'Enabled'
         Source = ContactsPresenter
         SourcePropertyName = 'View.CurrentItem'
+        Target = DeleteContact
+        TargetPropertyName = 'Enabled'
       end
       item
-        Target = LabeledEdit1
-        TargetPropertyName = 'Text'
         Source = TreeView1
         SourcePropertyName = 'View.CurrentItem.Name'
+        Target = LabeledEdit1
+        TargetPropertyName = 'Text'
       end
       item
-        Target = LabeledEdit2
-        TargetPropertyName = 'Text'
         Source = TreeView1
         SourcePropertyName = 'View.CurrentItem.Value'
+        Target = LabeledEdit2
+        TargetPropertyName = 'Text'
       end
       item
-        Target = Edit1
-        TargetPropertyName = 'Text'
         Source = ComboBox1
         SourcePropertyName = 'Text'
+        Target = Edit1
+        TargetPropertyName = 'Text'
       end
       item
-        Target = Edit2
-        TargetPropertyName = 'Text'
         Source = InventoryPresenter
         SourcePropertyName = 'View.ItemsSource[2].ChildNodes[0].Value'
+        Target = Edit2
+        TargetPropertyName = 'Text'
       end>
   end
   object InventoryPresenter: TTreeViewPresenter

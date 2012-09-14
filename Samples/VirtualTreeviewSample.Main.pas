@@ -119,10 +119,13 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   xmlItems: IXNodeList;
+  list: IList<TObject>;
 begin
-  ContactsPresenter.View.ItemsSource := TObservableCollection<TObject>.Create();
-  ContactsPresenter.View.ItemsSource.Add(TContact.Create('John', 'Doe'));
-  ContactsPresenter.View.ItemsSource.Add(TContact.Create('Jane', 'Doe'));
+  list := TObservableCollection<TObject>.Create();
+  list.Add(TContact.Create('John', 'Doe'));
+  list.Add(TContact.Create('Jane', 'Doe'));
+  list.Add(TContact.Create('Baby', 'Doe'));
+  ContactsPresenter.View.ItemsSource := list.AsList;
 
   xmlItems := TXNodeList.Create();
   xmlItems.AddRange(
@@ -136,7 +139,6 @@ begin
 
   ComboBox1.View.ItemsSource := ContactsPresenter.View.ItemsSource;
   ComboBox1.View.ItemTemplate := DataTemplate(['Firstname']);
-  ComboBox1.View.ItemsSource.Add(TContact.Create('Baby', 'Doe'));
 
   // connect the contacts list to the stringgrid
   StringGrid1.View.ItemsSource := ContactsPresenter.View.ItemsSource;
@@ -146,7 +148,7 @@ begin
   StringGrid1.Rows[0].CommaText := ',Lastname,Firstname';
 
   // connect navigation of VirtualTreeView (presenter) with StringGrid
-  TBinding.Create(ContactsPresenter, 'View.CurrentItem', StringGrid1, 'View.CurrentItem');
+//  TBinding.Create(ContactsPresenter, 'View.CurrentItem', StringGrid1, 'View.CurrentItem');
 
   ContactsPresenter.View.Filter.Add(FilterContact);
 end;

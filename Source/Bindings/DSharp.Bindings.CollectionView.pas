@@ -310,6 +310,8 @@ begin
     end;
     UpdateItems(True);
 
+    MoveCurrentToFirst;
+
     DoPropertyChanged('ItemsSource');
   end;
 end;

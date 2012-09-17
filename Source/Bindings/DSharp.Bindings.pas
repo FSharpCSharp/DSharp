@@ -1486,7 +1486,7 @@ begin
 
   for LBinding in FBindings do
   begin
-    Result := Result and LBinding.Validate();
+    Result := LBinding.Validate() and Result;
 
     FValidationErrors.AddRange(LBinding.ValidationErrors.ToArray);
   end;

@@ -897,23 +897,26 @@ procedure TBinding.SetSourceProperty;
 var
   LSourceCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
-  if Assigned(FSourceCollectionChanged) then
+  if not Assigned(BindingGroup) or not (csDesigning in BindingGroup.ComponentState) then
   begin
-    LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
-    LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
-  end;
+    if Assigned(FSourceCollectionChanged) then
+    begin
+      LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+      LSourceCollectionChanged.Remove(DoSourceCollectionChanged);
+    end;
 
-  FSourceProperty := Expression.PropertyAccess(
-    Expression.Constant(FSource), FSourcePropertyName);
+    FSourceProperty := Expression.PropertyAccess(
+      Expression.Constant(FSource), FSourcePropertyName);
 
-  CompileExpressions();
+    CompileExpressions();
 
-  if Assigned(FSourceProperty) and FSourceProperty.Member.RttiType.IsInstance
-    and Supports(FSourceProperty.Value.AsObject,
-    INotifyCollectionChanged, FSourceCollectionChanged) then
-  begin
-    LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
-    LSourceCollectionChanged.Add(DoSourceCollectionChanged);
+    if Assigned(FSourceProperty) and FSourceProperty.Member.RttiType.IsInstance
+      and Supports(FSourceProperty.Value.AsObject,
+      INotifyCollectionChanged, FSourceCollectionChanged) then
+    begin
+      LSourceCollectionChanged := FSourceCollectionChanged.OnCollectionChanged;
+      LSourceCollectionChanged.Add(DoSourceCollectionChanged);
+    end;
   end;
 end;
 
@@ -975,10 +978,13 @@ end;
 
 procedure TBinding.SetTargetProperty;
 begin
-  FTargetProperty := Expression.PropertyAccess(
-    Expression.Constant(FTarget), FTargetPropertyName);
+  if not Assigned(BindingGroup) or not (csDesigning in BindingGroup.ComponentState) then
+  begin
+    FTargetProperty := Expression.PropertyAccess(
+      Expression.Constant(FTarget), FTargetPropertyName);
 
-  CompileExpressions();
+    CompileExpressions();
+  end;
 end;
 
 procedure TBinding.SetTargetPropertyName(const Value: string);

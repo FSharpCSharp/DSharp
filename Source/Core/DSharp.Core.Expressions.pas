@@ -2135,16 +2135,22 @@ end;
 
 function TPropertyExpression.GetMember: TRttiMember;
 var
-  LObject: TObject;
+  LInstance: TValue;
+  LType: TRttiType;
 begin
+  Result := nil;
   if Assigned(FProperty) then
   begin
     Result := FProperty;
   end
   else
   begin
-    LObject := GetInstance().ToObject;
-    LObject.TryGetMember(FPropertyName, Result);
+    LInstance := GetInstance();
+    LType := LInstance.RttiType;
+    if Assigned(LType) then
+    begin
+      LType.TryGetMember(FPropertyName, Result);
+    end;
   end;
 end;
 
@@ -2156,56 +2162,61 @@ type
 function TPropertyExpression.GetValue: TValue;
 var
   LField: TRttiField;
+  LInstance: TValue;
   LMethod: TRttiMethod;
-  LObject: TObject;
   LProperty: TRttiProperty;
   LResult: TMethod;
+  LType: TRttiType;
 begin
   Result := TValue.Empty;
-  LObject := GetInstance().ToObject;
-  LProperty := FProperty;
-  if Assigned(FProperty) or LObject.TryGetProperty(FPropertyName, LProperty) then
+  LInstance := GetInstance();
+  LType := LInstance.RttiType;
+  if Assigned(LType) then
   begin
-    if LProperty.IsReadable then
+    LProperty := FProperty;
+    if Assigned(LProperty) or LType.TryGetProperty(FPropertyName, LProperty) then
     begin
-      Result := LProperty.GetValue(LObject);
-    end;
-  end else
-  if LObject.TryGetField(FPropertyName, LField) then
-  begin
-    Result := LField.GetValue(LObject);
-  end else
-  if LObject.TryGetMethod(FPropertyName, LMethod) then
-  begin
-    if LMethod.IsClassMethod then
+      if LProperty.IsReadable then
+      begin
+        Result := LProperty.GetValue(LInstance.AsPointer);
+      end;
+    end else
+    if LType.TryGetField(FPropertyName, LField) then
     begin
-      LResult.Code := LMethod.CodeAddress;
-      LResult.Data := LObject.ClassType;
-      Result := TValue.From(LResult);
-    end
-    else
+      Result := LField.GetValue(LInstance.AsPointer);
+    end else
+    if LType.TryGetMethod(FPropertyName, LMethod) then
     begin
-      if LMethod.IsStatic then
+      if LMethod.IsClassMethod then
       begin
         LResult.Code := LMethod.CodeAddress;
+        LResult.Data := LInstance.AsObject.ClassType;
+        Result := TValue.From(LResult);
       end
       else
       begin
-        case LMethod.DispatchKind of
-          dkVtable: LResult.Code := PVtable(LObject.ClassType)^[LMethod.VirtualIndex];
-          dkDynamic: LResult.Code := GetDynaMethod(LObject.ClassType, LMethod.VirtualIndex);
-        else
+        if LMethod.IsStatic then
+        begin
           LResult.Code := LMethod.CodeAddress;
+        end
+        else
+        begin
+          case LMethod.DispatchKind of
+            dkVtable: LResult.Code := PVtable(LInstance.AsObject.ClassType)^[LMethod.VirtualIndex];
+            dkDynamic: LResult.Code := GetDynaMethod(LInstance.AsObject.ClassType, LMethod.VirtualIndex);
+          else
+            LResult.Code := LMethod.CodeAddress;
+          end;
         end;
+        LResult.Data := LInstance.AsPointer;
+        Result := TValue.From(LResult);
       end;
-      LResult.Data := LObject;
-      Result := TValue.From(LResult);
     end;
-  end;
 
-  if FIndex > -1 then
-  begin
-    Result := GetIndexedValue(Result);
+    if FIndex > -1 then
+    begin
+      Result := GetIndexedValue(Result);
+    end;
   end;
 end;
 
@@ -2275,11 +2286,12 @@ end;
 procedure TPropertyExpression.SetValue(const Value: TValue);
 var
   LField: TRttiField;
-  LObject: TObject;
+  LInstance: TValue;
   LProperty: TRttiProperty;
+  LType: TRttiType;
   LValue: TValue;
 begin
-  LObject := GetInstance().ToObject;
+  LInstance := GetInstance();
   LValue := Value;
 {$IFDEF VER210}
   if LValue.IsEmpty then
@@ -2287,24 +2299,28 @@ begin
     TValue.Make(nil, Member.RttiType.Handle, LValue);
   end;
 {$ENDIF}
-  LProperty := FProperty;
-  if Assigned(LProperty) or LObject.TryGetProperty(FPropertyName, LProperty) then
+  LType := LInstance.RttiType;
+  if Assigned(LType) then
   begin
-    if FIndex = -1 then
+    LProperty := FProperty;
+    if Assigned(LProperty) or LType.TryGetProperty(FPropertyName, LProperty) then
     begin
-      if LProperty.IsWritable then
+      if FIndex = -1 then
       begin
-        LProperty.SetValue(LObject, LValue);
+        if LProperty.IsWritable then
+        begin
+          LProperty.SetValue(LInstance.AsPointer, LValue);
+        end;
+      end
+      else
+      begin
+        SetIndexedValue(LProperty.GetValue(LInstance.AsPointer), LValue);
       end;
-    end
-    else
+    end else
+    if LType.TryGetField(FPropertyName, LField) then
     begin
-      SetIndexedValue(LProperty.GetValue(LObject), LValue);
+      LField.SetValue(LInstance.AsPointer, LValue);
     end;
-  end else
-  if LObject.TryGetField(FPropertyName, LField) then
-  begin
-    LField.SetValue(LObject, LValue);
   end;
 end;
 
@@ -2335,7 +2351,7 @@ begin
     function: TValue
     var
       LMethod: TRttiMethod;
-      LObject: TObject;
+      LInstance: TValue;
       LArguments: TArray<TValue>;
       i: Integer;
     begin
@@ -2345,17 +2361,17 @@ begin
       LMethod := GetMethod();
       if Assigned(LMethod) then
       begin
-        LObject := GetInstance().ToObject;
+        LInstance := GetInstance();
         SetLength(LArguments, Length(ArgumentDelegates));
         for i := Low(ArgumentDelegates) to High(ArgumentDelegates) do
           LArguments[i] := ArgumentDelegates[i]();
         if LMethod.IsClassMethod then
         begin
-          Result := LMethod.Invoke(LObject.ClassType, LArguments);
+          Result := LMethod.Invoke(LInstance.AsObject.ClassType, LArguments);
         end
         else
         begin
-          Result := LMethod.Invoke(LObject, LArguments);
+          Result := LMethod.Invoke(LInstance.AsPointer, LArguments);
         end;
       end;
     end;
@@ -2397,10 +2413,16 @@ end;
 
 function TMethodExpression.GetMethod: TRttiMethod;
 var
-  LObject: TObject;
+  LInstance: TValue;
+  LType: TRttiType;
 begin
-  LObject := GetInstance().ToObject;
-  Result := LObject.GetMethod(FName);
+  Result := nil;
+  LInstance := GetInstance();
+  LType := LInstance.RttiType;
+  if Assigned(LType) then
+  begin
+    Result := LType.GetMethod(FName);
+  end;
 end;
 
 function TMethodExpression.ToString: string;

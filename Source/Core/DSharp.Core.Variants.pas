@@ -65,6 +65,8 @@ type
     function FixupIdent(const AText: string): string; override;
   public
     procedure Cast(var Dest: TVarData; const Source: TVarData); override;
+    procedure CastTo(var Dest: TVarData; const Source: TVarData;
+      const AVarType: TVarType); override;
     procedure Clear(var V: TVarData); override;
     procedure Copy(var Dest: TVarData; const Source: TVarData;
       const Indirect: Boolean); override;
@@ -180,6 +182,18 @@ begin
     TConstantExpression.Create(Variant(Source));
   ExpressionStack.Push(TExpressionVarData(Dest).VExpressionInfo.Expression);
   Dest.VType := VarType;
+end;
+
+procedure TExpressionVariantType.CastTo(var Dest: TVarData;
+  const Source: TVarData; const AVarType: TVarType);
+var
+  LExpression: IExpression;
+begin
+  LExpression := TExpressionVarData(Source).VExpressionInfo.Expression;
+  if Assigned(LExpression) then
+  begin
+    Variant(Dest) := LExpression.Execute.AsVariant;
+  end;
 end;
 
 procedure TExpressionVariantType.Clear(var V: TVarData);

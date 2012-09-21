@@ -107,36 +107,32 @@ end;
 procedure TXmlWriter.WriteEnumerable(const AValue: TValue);
 var
   LObject: TObject;
-//  LEnumerator: TObject;
   LEnumerator: TValue;
   LMethod: TRttiMethod;
   LProperty: TRttiProperty;
   LValue: TValue;
   LType: TRttiType;
+  LFreeEnumerator: Boolean;
 begin
   LObject := AValue.AsObject;
   if LObject.HasMethod('Add') and LObject.TryGetMethod('GetEnumerator', LMethod) then
   begin
     LEnumerator := LMethod.Invoke(LObject, []);
-
+    LFreeEnumerator := LEnumerator.IsObject;
     try
+
       LType := LEnumerator.RttiType;
+      if LType is TRttiInterfaceType then
+      begin
+        LEnumerator := LEnumerator.ToObject;
+        LType := LEnumerator.RttiType;
+      end;
       if LType.TryGetMethod('MoveNext', LMethod)
         and LType.TryGetProperty('Current', LProperty) then
       begin
         while LMethod.Invoke(LEnumerator, []).AsBoolean do
         begin
-          if LEnumerator.IsObject then
-          begin
-            LValue := LProperty.GetValue(LEnumerator.AsObject);
-          end else
-          if LEnumerator.IsInterface then
-          begin
-            LValue := LProperty.GetValue(Pointer(LEnumerator.AsInterface));
-          end else
-          begin
-            LValue := LProperty.GetValue(LEnumerator.GetReferenceToRawData);
-          end;
+          LValue := LProperty.GetValue(LEnumerator.AsPointer);
 
           WriteStartElement(LProperty.PropertyType.Name);
           WriteValue(LValue);
@@ -144,7 +140,7 @@ begin
         end;
       end;
     finally
-      if LEnumerator.IsObject then
+      if LFreeEnumerator then
         LEnumerator.AsObject.Free();
     end;
   end;

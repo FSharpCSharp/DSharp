@@ -52,7 +52,7 @@ type
     procedure ReadEvent(var AValue: TValue);
     procedure ReadObject(var AValue: TValue);
   public
-    constructor Create;
+    constructor Create(const AFilename: string = '');
 
     function IsStartElement(): Boolean; overload;
     function IsStartElement(const AName: string): Boolean; overload;
@@ -84,10 +84,14 @@ end;
 
 { TXmlReader }
 
-constructor TXmlReader.Create;
+constructor TXmlReader.Create(const AFilename: string);
 begin
   FDocument := TXMLDocument.Create(nil);
   FDocument.Active := True;
+  if AFilename <> '' then
+  begin
+    FDocument.LoadFromFile(AFilename);
+  end;
 end;
 
 procedure TXmlReader.CreateObject(var AValue: TValue);

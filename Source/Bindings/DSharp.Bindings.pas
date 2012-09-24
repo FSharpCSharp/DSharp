@@ -229,6 +229,8 @@ type
   end;
 
   TBindingCollection = class(TOwnedCollection<TBinding>)
+  public
+    constructor Create(AOwner: TPersistent); override;
   end;
 
   TBindingGroup = class(TComponent, INotifyPropertyChanged, IValidatable)
@@ -1160,6 +1162,14 @@ end;
 function TBinding._Release: Integer;
 begin
   Result := -1;
+end;
+
+{ TBindingCollection }
+
+constructor TBindingCollection.Create(AOwner: TPersistent);
+begin
+  inherited;
+  PropName := 'Bindings';
 end;
 
 { TBindingGroup }

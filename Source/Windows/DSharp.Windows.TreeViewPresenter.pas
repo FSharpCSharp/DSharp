@@ -1872,7 +1872,10 @@ begin
     if Assigned(LNode) then
     begin
       FTreeView.Selected[LNode] := True;
-      FTreeView.ScrollIntoView(LNode, True, True);
+      if FTreeView.HandleAllocated then
+      begin
+        FTreeView.ScrollIntoView(LNode, True, True);
+      end;
     end;
   end;
 end;
@@ -1887,7 +1890,10 @@ begin
     if Assigned(LNode) then
     begin
       FTreeView.Selected[LNode] := True;
-      FTreeView.ScrollIntoView(LNode, True, True);
+      if FTreeView.HandleAllocated then
+      begin
+        FTreeView.ScrollIntoView(LNode, True, True);
+      end;
     end;
   end;
 end;
@@ -1903,7 +1909,10 @@ begin
     if Assigned(LNode) then
     begin
       FTreeView.Selected[LNode] := True;
-      FTreeView.ScrollIntoView(LNode, True, True);
+      if FTreeView.HandleAllocated then
+      begin
+        FTreeView.ScrollIntoView(LNode, True, True);
+      end;
     end;
   end;
 end;
@@ -1919,7 +1928,10 @@ begin
     if Assigned(LNode) then
     begin
       FTreeView.Selected[LNode] := True;
-      FTreeView.ScrollIntoView(LNode, True, True);
+      if FTreeView.HandleAllocated then
+      begin
+        FTreeView.ScrollIntoView(LNode, True, True);
+      end;
     end;
   end;
 end;
@@ -2119,7 +2131,8 @@ begin
       end;
       LNode := FTreeView.GetFirstSelected();
       FTreeView.FocusedNode := LNode;
-      if Assigned(LNode) and (FCollectionChanging = 0) then
+      if Assigned(LNode) and (FCollectionChanging = 0)
+        and FTreeView.HandleAllocated then
       begin
         FTreeView.ScrollIntoView(LNode, True, True);
       end;

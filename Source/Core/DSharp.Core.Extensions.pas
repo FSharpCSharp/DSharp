@@ -41,8 +41,10 @@ type
   TComponentHelper = class helper for TComponent
   private
     function GetDataContext: TObject;
+    function GetIsComponentInitialized: Boolean;
     function GetOnDataContextChanged: IEvent<TPropertyChangedEvent>;
     procedure SetDataContext(const Value: TObject);
+    procedure SetIsComponentInitialized(const Value: Boolean);
   public
     ///	<summary>
     ///	  Clears the local value of a property. The property to be cleared is
@@ -72,6 +74,12 @@ type
     property DataContext: TObject read GetDataContext write SetDataContext;
 
     ///	<summary>
+    ///	  Gets or sets if a TComponent is already initialized.
+    ///	</summary>
+    property IsComponentInitialized: Boolean read GetIsComponentInitialized
+      write SetIsComponentInitialized;
+
+    ///	<summary>
     ///	  Occurs when the data context for this element changes.
     ///	</summary>
     property OnDataContextChanged: IEvent<TPropertyChangedEvent>
@@ -85,6 +93,7 @@ type
   private
     class var
       FDataContextProperty: TDependencyProperty;
+      FIsComponentInitializedProperty: TDependencyProperty;
       FOnDataContextChangedProperty: TDependencyProperty;
     class procedure DoDataContextChanged(Component: TComponent;
       EventArgs: IDependencyPropertyChangedEventArgs);
@@ -92,6 +101,8 @@ type
     class constructor Create;
 
     class property DataContextProperty: TDependencyProperty read FDataContextProperty;
+    class property IsComponentInitializedProperty: TDependencyProperty
+      read FIsComponentInitializedProperty;
     class property OnDataContextChangedProperty: TDependencyProperty
       read FOnDataContextChangedProperty;
   end;
@@ -106,6 +117,11 @@ end;
 function TComponentHelper.GetDataContext: TObject;
 begin
   Result := TComponentExtensions.DataContextProperty.GetValue(Self).AsObject;
+end;
+
+function TComponentHelper.GetIsComponentInitialized: Boolean;
+begin
+  Result := TComponentExtensions.IsComponentInitializedProperty.GetValue(Self).AsBoolean;
 end;
 
 function TComponentHelper.GetOnDataContextChanged: IEvent<TPropertyChangedEvent>;
@@ -138,6 +154,11 @@ begin
   TComponentExtensions.DataContextProperty.SetValue(Self, Value);
 end;
 
+procedure TComponentHelper.SetIsComponentInitialized(const Value: Boolean);
+begin
+  TComponentExtensions.IsComponentInitializedProperty.SetValue(Self, Value);
+end;
+
 procedure TComponentHelper.SetValue(Prop: TDependencyProperty; const Value: TValue);
 begin
   Prop.SetValue(Self, Value);
@@ -150,6 +171,9 @@ begin
   FDataContextProperty := TDependencyProperty.RegisterAttached('DataContext',
     TypeInfo(TObject), TComponent, TPropertyMetadata.Create(
     [TFrameworkPropertyMetadataOption.Inherits], DoDataContextChanged));
+
+  FIsComponentInitializedProperty := TDependencyProperty.RegisterAttached(
+    'IsComponentInitialized', TypeInfo(Boolean), TComponent, TPropertyMetadata.Create(False));
 
   FOnDataContextChangedProperty := TDependencyProperty.RegisterAttached('OnDataContextChanged',
     TypeInfo(IEvent<TPropertyChangedEvent>), TComponent,

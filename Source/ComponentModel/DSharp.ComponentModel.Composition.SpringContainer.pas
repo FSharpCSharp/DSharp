@@ -102,7 +102,8 @@ type
 implementation
 
 uses
-  Spring.Collections;
+  Spring.Collections,
+  Spring.Services;
 
 {$IF CompilerVersion = 21}
 type
@@ -352,7 +353,7 @@ begin
   if ClassType.TryGetAttributeOfType<PartCreationPolicyAttribute>(LPartCreationPolicyAttribute)
     and (LPartCreationPolicyAttribute.Policy = cpShared) then
   begin
-    Result.AsSingleton;
+    Result.AsSingleton(TRefCounting.True);
   end;
 end;
 

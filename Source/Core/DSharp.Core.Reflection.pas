@@ -2658,6 +2658,12 @@ function TValueHelper.TryConvert(ATypeInfo: PTypeInfo;
 begin
   Result := False;
 
+  if ATypeInfo = System.TypeInfo(TValue) then
+  begin
+    AResult:= Self;
+    Exit(True);
+  end;
+
   if Assigned(ATypeInfo) then
   begin
     Result := Conversions[Kind, ATypeInfo.Kind](Self, ATypeInfo, AResult);

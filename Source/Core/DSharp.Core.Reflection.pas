@@ -599,6 +599,7 @@ type
 
     class function FindByName(Parent: TRttiType;
       const PropertyName: string): TRttiPropertyExtension; overload;
+    class function FindByName(const FullPropertyName: string): TRttiPropertyExtension; overload;
 
     property Getter: TFunc<Pointer, TValue> read FGetter write FGetter;
     property Setter: TProc<Pointer, TValue> read FSetter write FSetter;
@@ -619,8 +620,6 @@ type
 
     constructor Create(DependencyProperty: TDependencyProperty);
     destructor Destroy; override;
-
-    class function FindByName(const FullPropertyName: string): TRttiDependencyProperty; overload;
   end;
 
   TArrayHelper = class
@@ -2790,6 +2789,27 @@ begin
   end;
 end;
 
+class function TRttiPropertyExtension.FindByName(
+  const FullPropertyName: string): TRttiPropertyExtension;
+var
+  LScope: string;
+  LName: string;
+  LProp: TRttiPropertyExtension;
+begin
+  Result := nil;
+  LScope := Copy(FullPropertyName, 1, LastDelimiter('.', FullPropertyName) - 1);
+  LName := Copy(FullPropertyName, LastDelimiter('.', FullPropertyName) + 1);
+  for LProp in FRegister.Values do
+  begin
+    if SameText(LProp.Name, LName)
+      and EndsText(LScope, LProp.Parent.AsInstance.MetaclassType.QualifiedClassName) then
+    begin
+      Result := LProp;
+      Break;
+    end;
+  end;
+end;
+
 function TRttiPropertyExtension.GetIsReadable: Boolean;
 begin
   Result := Assigned(FGetter);
@@ -2911,27 +2931,6 @@ begin
   else
   begin
     FDependencyProperty.SetValue(Instance, AValue);
-  end;
-end;
-
-class function TRttiDependencyProperty.FindByName(
-  const FullPropertyName: string): TRttiDependencyProperty;
-var
-  LScope: string;
-  LName: string;
-  LProp: TRttiPropertyExtension;
-begin
-  Result := nil;
-  LScope := Copy(FullPropertyName, 1, LastDelimiter('.', FullPropertyName) - 1);
-  LName := Copy(FullPropertyName, LastDelimiter('.', FullPropertyName) + 1);
-  for LProp in FRegister.Values do
-  begin
-    if (LProp is TRttiDependencyProperty) and SameText(LProp.Name, LName)
-      and EndsText(LScope, TRttiDependencyProperty(LProp).FDependencyProperty.OwnerType.QualifiedClassName) then
-    begin
-      Result := TRttiDependencyProperty(LProp);
-      Break;
-    end;
   end;
 end;
 

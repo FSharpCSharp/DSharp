@@ -32,6 +32,8 @@ unit DSharp.Bindings.Validations;
 interface
 
 uses
+  DSharp.Collections,
+  DSharp.Core.DependencyProperty,
   DSharp.Core.Validations,
   Rtti;
 
@@ -42,11 +44,24 @@ type
     function Validate(const Value: TValue): IValidationResult; override;
   end;
 
+  Validation = class
+  private
+    class var
+      FErrors: DependencyProperty<IList<IValidationResult>>;
+    class function GetHasError(Instance: TObject): Boolean; static;
+  public
+    class constructor Create;
+
+    class property Errors: DependencyProperty<IList<IValidationResult>> read FErrors;
+    class property HasError[Instance: TObject]: Boolean read GetHasError;
+  end;
+
 implementation
 
 uses
+  Classes,
   DSharp.Bindings,
-  DSharp.Collections,
+  DSharp.Core.Reflection,
   DSharp.Core.Utils;
 
 { TDataErrorValidationRule }
@@ -123,6 +138,32 @@ begin
       end;
     end;
   end;
+end;
+
+{ Validation }
+
+class constructor Validation.Create;
+begin
+  TRttiPropertyExtension.Create(Validation.ClassInfo, 'HasError', TypeInfo(Boolean)).Getter :=
+    function(Instance: Pointer): TValue
+    begin
+      Result := Validation.GetHasError(Instance);
+    end;
+  FErrors := TDependencyProperty.RegisterAttached('Errors', TypeInfo(IList<IValidationResult>), Validation,
+    TPropertyMetadata.Create(
+    procedure(Sender: TComponent; EventArgs: IDependencyPropertyChangedEventArgs)
+    begin
+      NotifyPropertyChanged(Sender, 'Validation.Errors');
+      NotifyPropertyChanged(Sender, 'Validation.HasError');
+    end));
+end;
+
+class function Validation.GetHasError(Instance: TObject): Boolean;
+var
+  LErrors: IList<IValidationResult>;
+begin
+  LErrors := Validation.Errors.GetValue(Instance as TComponent);
+  Result := Assigned(LErrors) and (LErrors.Count > 0);
 end;
 
 end.

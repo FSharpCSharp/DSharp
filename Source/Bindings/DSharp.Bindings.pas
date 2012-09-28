@@ -100,6 +100,7 @@ type
     FUpdateSourceExpression: TCompiledExpression;
     FUpdateTargetCount: Integer;
     FUpdateTargetExpression: TCompiledExpression;
+    FValidateCount: Integer;
     FValidatesOnDataErrors: Boolean;
     FValidationErrors: IList<IValidationResult>;
     FValidationRules: IList<IValidationRule>;
@@ -112,6 +113,7 @@ type
 
     procedure BeginUpdateSource;
     procedure BeginUpdateTarget;
+    procedure BeginValidate;
 
     function CanUpdateSource(AUpdateTrigger: TUpdateTrigger): Boolean;
     function CanUpdateTarget(AUpdateTrigger: TUpdateTrigger): Boolean;
@@ -137,6 +139,7 @@ type
 
     procedure EndUpdateSource;
     procedure EndUpdateTarget;
+    procedure EndValidate;
 
     function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
     function GetOnValidation: IEvent<TValidationEvent>;
@@ -145,6 +148,7 @@ type
 
     function IsUpdatingSource: Boolean;
     function IsUpdatingTarget: Boolean;
+    function IsValidating: Boolean;
 
     procedure Notification(AComponent: TComponent; AOperation: TOperation);
     procedure RaiseValidationError;
@@ -362,6 +366,27 @@ begin
   end;
 end;
 
+function IsPropertyExtension(const Name: string): Boolean;
+var
+  LPos: Integer;
+  LPropertyName: string;
+begin
+  LPropertyName := Name;
+
+  repeat
+    LPos := PosEx('[', LPropertyName, LastDelimiter('.', LPropertyName));
+    if LPos > 0 then
+    begin
+      LPropertyName := LeftStr(LPropertyName, Pred(LPos));
+    end;
+    Result := TRttiPropertyExtension.FindByName(LPropertyName) <> nil;
+    if not Result then
+    begin
+      LPropertyName := Copy(LPropertyName, 1, LastDelimiter('.', LPropertyName) - 1);
+    end;
+  until Result or not ContainsText(LPropertyName, '.');
+end;
+
 function IsRootProperty(const Name: string; Expression: IParameterExpression): Boolean;
 var
   LRoot: string;
@@ -376,6 +401,9 @@ begin
     LRoot := LeftStr(LRoot, Pred(Pos('[', LRoot)));
   end;
   Result := SameText(Name, LRoot);
+
+  if not Result and ContainsStr(Name, '.') then
+    Result := IsPropertyExtension(Name);
 end;
 
 procedure NotifyPropertyChanged(ASender: TObject; const APropertyName: string;
@@ -504,6 +532,11 @@ begin
   Inc(FUpdateTargetCount);
 end;
 
+procedure TBinding.BeginValidate;
+begin
+  Inc(FValidateCount);
+end;
+
 procedure TBinding.CancelEdit;
 var
   LEditable: IEditable;
@@ -598,6 +631,13 @@ end;
 procedure TBinding.DoValidationErrorsChanged(Sender: TObject;
   const Item: IValidationResult; Action: TCollectionChangedAction);
 begin
+  if Target is TComponent then
+  begin
+    // set to nil first to trigger changed event
+    Validation.Errors.SetValue(TComponent(Target), nil);
+    Validation.Errors.SetValue(TComponent(Target), FValidationErrors);
+  end;
+
   DoPropertyChanged('ValidationErrors');
 end;
 
@@ -655,7 +695,7 @@ end;
 procedure TBinding.DoTargetPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  if CanUpdateSource(AUpdateTrigger)
+  if CanUpdateSource(AUpdateTrigger) and not IsValidating
     and IsRootProperty(APropertyName, FTargetProperty) then
   begin
     BeginUpdateSource();
@@ -693,6 +733,11 @@ end;
 procedure TBinding.EndUpdateTarget;
 begin
   Dec(FUpdateTargetCount);
+end;
+
+procedure TBinding.EndValidate;
+begin
+  Dec(FValidateCount);
 end;
 
 function TBinding.GetDisplayName: string;
@@ -743,6 +788,11 @@ end;
 function TBinding.IsUpdatingTarget: Boolean;
 begin
   Result := FUpdateTargetCount > 0;
+end;
+
+function TBinding.IsValidating: Boolean;
+begin
+  Result := FValidateCount > 0;
 end;
 
 procedure TBinding.Notification(AComponent: TComponent; AOperation: TOperation);
@@ -1070,70 +1120,75 @@ begin
   Result := True;
 
   LValidationRule := nil;
+  BeginValidate();
   try
-    if Assigned(FTarget) and Assigned(FTargetProperty)
-      and FTargetProperty.Member.IsReadable then
-    begin
-      LTargetValue := FTargetProperty.Value;
-
-      for LValidationRule in FValidationRules do
+    try
+      if Assigned(FTarget) and Assigned(FTargetProperty)
+        and FTargetProperty.Member.IsReadable then
       begin
-        if LValidationRule.ValidationStep = vsRawProposedValue then
-        begin
-          LValidationResult := LValidationRule.Validate(LTargetValue);
-          if Assigned(LValidationResult) then
-          begin
-            FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
-            if not LValidationResult.IsValid then
-            begin
-              FValidationErrors.Add(LValidationResult);
-              Result := False;
-              Break;
-            end;
-          end;
-        end;
-      end;
-
-      if Result then
-      begin
-        LConverted := False;
+        LTargetValue := FTargetProperty.Value;
 
         for LValidationRule in FValidationRules do
         begin
-          if LValidationRule.ValidationStep = vsConvertedProposedValue then
+          if LValidationRule.ValidationStep = vsRawProposedValue then
           begin
-            if not LConverted then
+            LValidationResult := LValidationRule.Validate(LTargetValue);
+            if Assigned(LValidationResult) then
             begin
-              if Assigned(FConverter) then
+              FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
+              if not LValidationResult.IsValid then
               begin
-                LSourceValue := FConverter.ConvertBack(LTargetValue);
-              end
-              else
+                FValidationErrors.Add(LValidationResult);
+                Result := False;
+                Break;
+              end;
+            end;
+          end;
+        end;
+
+        if Result then
+        begin
+          LConverted := False;
+
+          for LValidationRule in FValidationRules do
+          begin
+            if LValidationRule.ValidationStep = vsConvertedProposedValue then
+            begin
+              if not LConverted then
               begin
-                LSourceValue := LTargetValue;
+                if Assigned(FConverter) then
+                begin
+                  LSourceValue := FConverter.ConvertBack(LTargetValue);
+                end
+                else
+                begin
+                  LSourceValue := LTargetValue;
+                end;
+
+                LConverted := True;
               end;
 
-              LConverted := True;
-            end;
-
-            LValidationResult := LValidationRule.Validate(LSourceValue);
-            FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
-            if not LValidationResult.IsValid then
-            begin
-              FValidationErrors.Add(LValidationResult);
-              Result := False;
-              Break;
+              LValidationResult := LValidationRule.Validate(LSourceValue);
+              FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
+              if not LValidationResult.IsValid then
+              begin
+                FValidationErrors.Add(LValidationResult);
+                Result := False;
+                Break;
+              end;
             end;
           end;
         end;
       end;
+    except
+      on E: Exception do
+      begin
+        FOnValidation.Invoke(Self, LValidationRule, TValidationResult.Create(False, E.Message));
+        Result := False;
+      end;
     end;
-  except
-    on E: Exception do
-    begin
-      FOnValidation.Invoke(Self, LValidationRule, TValidationResult.Create(False, E.Message));
-      Result := False;
-    end;
+  finally
+    EndValidate();
   end;
 end;
 
@@ -1145,11 +1200,16 @@ begin
 
   if FValidatesOnDataErrors then
   begin
-    LValidationResult := DataErrorValidationRule.Validate(TValue.From<TBinding>(Self));
-    if not LValidationResult.IsValid then
-    begin
-      FValidationErrors.Add(LValidationResult);
-      Result := False;
+    BeginValidate();
+    try
+      LValidationResult := DataErrorValidationRule.Validate(TValue.From<TBinding>(Self));
+      if not LValidationResult.IsValid then
+      begin
+        FValidationErrors.Add(LValidationResult);
+        Result := False;
+      end;
+    finally
+      EndValidate();
     end;
   end;
 end;

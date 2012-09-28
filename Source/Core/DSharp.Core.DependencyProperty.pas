@@ -289,7 +289,7 @@ begin
         LStore.Remove(Target);
 
         DoPropertyChanged(Target, TDependencyPropertyChangedEventArgs.Create(
-          Self, LOldValue, Tvalue.Empty));
+          Self, LOldValue, TValue.Empty));
       end;
     end;
   finally

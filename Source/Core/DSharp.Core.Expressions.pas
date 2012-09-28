@@ -1988,15 +1988,57 @@ var
   LObjectName: string;
   LPropertyName: string;
   LPos: Integer;
+
+  function FindPropertyExtension: TRttiPropertyExtension;
+  begin
+    LPropertyName := APropertyName;
+    repeat
+      LPos := PosEx('[', LPropertyName, LastDelimiter('.', LPropertyName));
+      if LPos > 0 then
+      begin
+        FIndex := StrToIntDef(Copy(LPropertyName, Succ(LPos),
+          Pos(']', LPropertyName) - Succ(LPos)), -1);
+        LPropertyName := LeftStr(LPropertyName, Pred(LPos));
+      end;
+      Result := TRttiPropertyExtension.FindByName(LPropertyName);
+      if not Assigned(Result) then
+      begin
+        LPropertyName := Copy(LPropertyName, 1, LastDelimiter('.', LPropertyName) - 1);
+      end;
+    until Assigned(Result) or not ContainsText(LPropertyName, '.');
+
+    LPos := FindDelimiter('.', Name, Length(LPropertyName));
+    if LPos > 0 then
+    begin
+      LObjectName := LPropertyName;
+      if FIndex > -1 then
+      begin
+        LObjectName := LObjectName +  '[' + IntToStr(FIndex) + ']';
+      end;
+      LPropertyName := Copy(Name, Succ(LPos));
+    end;
+  end;
+
 begin
   FExpression := AExpression;
   FIndex := -1;
   FName := APropertyName;
-  FProperty := TRttiDependencyProperty.FindByName(APropertyName);
+
+  FProperty := FindPropertyExtension;
 
   if Assigned(FProperty) then
   begin
-    FPropertyName := FProperty.Name;
+    if LObjectName <> '' then
+    begin
+      FExpression := TPropertyExpression.Create(FExpression, LObjectName);
+      FProperty := nil;
+      FIndex := -1;
+      FPropertyName := LPropertyName;
+    end
+    else
+    begin
+      FPropertyName := FProperty.Name;
+    end;
   end
   else
   begin
@@ -2167,6 +2209,21 @@ var
   LProperty: TRttiProperty;
   LResult: TMethod;
   LType: TRttiType;
+
+  function TryReadInterfaceProperty: Boolean;
+  var
+    LObject: TObject;
+  begin
+    Result := LType.IsInterface;
+    if Result then
+    begin
+      LObject := LInstance.ToObject;
+      Result := Assigned(LObject)
+        and LObject.GetType.TryGetProperty(FPropertyName, LProperty)
+        and LProperty.IsReadable;
+    end;
+  end;
+
 begin
   Result := TValue.Empty;
   LInstance := GetInstance();
@@ -2180,6 +2237,10 @@ begin
       begin
         Result := LProperty.GetValue(LInstance.AsPointer);
       end;
+    end else
+    if TryReadInterfaceProperty then
+    begin
+      Result := LProperty.GetValue(LInstance.ToObject);
     end else
     if LType.TryGetField(FPropertyName, LField) then
     begin

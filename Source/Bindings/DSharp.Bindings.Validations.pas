@@ -61,6 +61,7 @@ implementation
 uses
   Classes,
   DSharp.Bindings,
+  DSharp.ComponentModel.DataAnnotations,
   DSharp.Core.Reflection,
   DSharp.Core.Utils;
 
@@ -81,6 +82,8 @@ var
   LInfo: IDataErrorInfo;
   LError: string;
   LName: string;
+  LMember: TRttiMember;
+  LAttribute: ValidationAttribute;
 begin
   Result := TValidationResult.ValidResult;
 
@@ -119,6 +122,16 @@ begin
           begin
             Result := TValidationResult.Create(False, LError);
           end;
+        end;
+      end
+      else
+      begin
+        LName := LBinding.SourcePropertyName;
+        if Assigned(LBinding.Source) and Assigned(LBinding.SourceProperty)
+          and LBinding.Source.TryGetMember(LName, LMember)
+          and LMember.TryGetAttributeOfType<ValidationAttribute>(LAttribute) then
+        begin
+          Result := LAttribute.IsValid(LBinding.SourceProperty.Value, LMember);
         end;
       end;
     end;

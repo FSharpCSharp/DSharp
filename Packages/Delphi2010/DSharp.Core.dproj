@@ -58,6 +58,7 @@
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Fibers.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Threading.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Yield.pas"/>
+			<DCCReference Include="..\..\Source\ComponentModel\DSharp.ComponentModel.DataAnnotations.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Cache.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Collections.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.CopyOperator.pas"/>

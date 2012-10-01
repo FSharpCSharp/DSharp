@@ -49,10 +49,14 @@ uses
 type
   TBindingMode = (bmOneWay, bmTwoWay, bmOneWayToSource, bmOneTime);
   TTriggerMode = (tmOneWay, tmTwoWay);
+  TUpdateTrigger = DSharp.Bindings.Notifications.TUpdateTrigger;
 
 const
   BindingModeDefault = bmTwoWay;
   TriggerModeDefault = tmOneWay;
+  utPropertyChanged = DSharp.Bindings.Notifications.utPropertyChanged;
+  utLostFocus = DSharp.Bindings.Notifications.utLostFocus;
+  utExplicit = DSharp.Bindings.Notifications.utExplicit;
 
 type
   BindingAttribute = class(TCustomAttribute)
@@ -1082,6 +1086,8 @@ begin
     try
       FUpdateSourceExpression();
       FValidationErrors.Clear();
+
+      ValidateCommitted();
     finally
       EndUpdateSource();
     end;

@@ -143,10 +143,11 @@
         </DelphiCompile>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="..\..\Source\Collections\DSharp.Collections.pas"/>
-	<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Extensions.pas"/>
+        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Extensions.pas"/>
         <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Fibers.pas"/>
         <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Threading.pas"/>
-	<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Yield.pas"/>
+        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Yield.pas"/>
+        <DCCReference Include="..\..\Source\ComponentModel\DSharp.ComponentModel.DataAnnotations.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Cache.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Collections.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.CopyOperator.pas"/>
@@ -167,7 +168,7 @@
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Generics.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Lazy.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.NotificationHandler.pas"/>
-		<DCCReference Include="..\..\Source\Core\DSharp.Core.Nullable.pas"/>
+        <DCCReference Include="..\..\Source\Core\DSharp.Core.Nullable.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Properties.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Threading.pas"/>

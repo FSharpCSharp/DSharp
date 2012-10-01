@@ -84,6 +84,7 @@ var
   LName: string;
   LMember: TRttiMember;
   LAttribute: ValidationAttribute;
+  LValidationContext: TValidationContext;
 begin
   Result := TValidationResult.ValidResult;
 
@@ -128,10 +129,16 @@ begin
       begin
         LName := LBinding.SourcePropertyName;
         if Assigned(LBinding.Source) and Assigned(LBinding.SourceProperty)
-          and LBinding.Source.TryGetMember(LName, LMember)
-          and LMember.TryGetAttributeOfType<ValidationAttribute>(LAttribute) then
+          and LBinding.Source.TryGetMember(LName, LMember) then
         begin
-          Result := LAttribute.IsValid(LBinding.SourceProperty.Value, LMember);
+          LValidationContext := TValidationContext.Create(LBinding.Source);
+          LValidationContext.MemberName := LMember.Name;
+          for LAttribute in LMember.GetAttributesOfType<ValidationAttribute> do
+          begin
+            Result := LAttribute.IsValid(LBinding.SourceProperty.Value, LValidationContext);
+            if not Result.IsValid then
+              Break;
+          end;
         end;
       end;
     end;

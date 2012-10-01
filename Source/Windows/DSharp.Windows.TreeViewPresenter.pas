@@ -532,19 +532,16 @@ procedure TTreeViewPresenter.DoCompareNodes(Sender: TBaseVirtualTree; Node1,
 var
   LItem1, LItem2: TObject;
 begin
-  if Column > -1 then
-  begin
-    LItem1 := GetNodeItem(Sender, Node1);
-    LItem2 := GetNodeItem(Sender, Node2);
+  LItem1 := GetNodeItem(Sender, Node1);
+  LItem2 := GetNodeItem(Sender, Node2);
 
-    if Assigned(FOnCompare) then
-    begin
-      FOnCompare(Self, LItem1, LItem2, Column, Result);
-    end
-    else
-    begin
-      Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
-    end;
+  if Assigned(FOnCompare) then
+  begin
+    FOnCompare(Self, LItem1, LItem2, Column, Result);
+  end
+  else
+  begin
+    Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
   end;
 end;
 

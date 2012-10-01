@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -202,10 +202,10 @@ begin
       Result := LColumnDefinition.OnGetText(
         FColumnDefinitions.Owner, LColumnDefinition, Item);
     end else
-    if Assigned(LColumnDefinition.TextPropertyExpression) then
+    if Assigned(LColumnDefinition.ValuePropertyExpression) then
     begin
-      LColumnDefinition.TextPropertyExpression.Instance := Item;
-      Result := LColumnDefinition.TextPropertyExpression.Value;
+      LColumnDefinition.ValuePropertyExpression.Instance := Item;
+      Result := LColumnDefinition.ValuePropertyExpression.Value;
     end else
     begin
       Result := '';
@@ -232,10 +232,10 @@ begin
       LColumnDefinition.OnSetText(
         FColumnDefinitions.Owner, LColumnDefinition, Item, Value.ToString);
     end else
-    if Assigned(LColumnDefinition.TextPropertyExpression) then
+    if Assigned(LColumnDefinition.ValuePropertyExpression) then
     begin
-      LColumnDefinition.TextPropertyExpression.Instance := Item;
-      LColumnDefinition.TextPropertyExpression.Value := Value;
+      LColumnDefinition.ValuePropertyExpression.Instance := Item;
+      LColumnDefinition.ValuePropertyExpression.Value := Value;
     end;
   end;
 end;

@@ -90,23 +90,25 @@ type
     FOnGetImageIndex: TGetImageIndexEvent;
     FOnGetText: TGetTextEvent;
     FOnSetText: TSetTextEvent;
-    FTextPropertyExpression: IMemberExpression;
-    FTextPropertyName: string;
     FToggleMode: TToggleMode;
+    FValuePropertyExpression: IMemberExpression;
+    FValuePropertyName: string;
     FVisible: Boolean;
     FWidth: Integer;
+    procedure ReadTextPropertyName(Reader: TReader);
     procedure SetCustomFilter(const Value: string);
     procedure SetHintPropertyName(const Value: string);
     procedure SetImageIndexPropertyName(const Value: string);
-    procedure SetTextPropertyName(const Value: string);
+    procedure SetValuePropertyName(const Value: string);
   protected
+    procedure DefineProperties(Filer: TFiler); override;
     function GetDisplayName: string; override;
   public
     constructor Create(Collection: TCollection); override;
     procedure Assign(Source: TPersistent); override;
     property HintPropertyExpression: IMemberExpression read FHintPropertyExpression;
     property ImageIndexPropertyExpression: IMemberExpression read FImageIndexPropertyExpression;
-    property TextPropertyExpression: IMemberExpression read FTextPropertyExpression;
+    property ValuePropertyExpression: IMemberExpression read FValuePropertyExpression;
   published
     property AllowEdit: Boolean read FAllowEdit write FAllowEdit default False;
     property Alignment: TAlignment read FAlignment write FAlignment default taLeftJustify;
@@ -123,8 +125,8 @@ type
     property OnGetImageIndex: TGetImageIndexEvent read FOnGetImageIndex write FOnGetImageIndex;
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
-    property TextPropertyName: string read FTextPropertyName write SetTextPropertyName;
     property ToggleMode: TToggleMode read FToggleMode write FToggleMode default tmNone;
+    property ValuePropertyName: string read FValuePropertyName write SetValuePropertyName;
     property Visible: Boolean read FVisible write FVisible default True;
     property Width: Integer read FWidth write FWidth default CDefaultWidth;
   end;
@@ -183,9 +185,20 @@ begin
   FWidth := CDefaultWidth;
 end;
 
+procedure TColumnDefinition.DefineProperties(Filer: TFiler);
+begin
+  inherited;
+  Filer.DefineProperty('TextPropertyName', ReadTextPropertyName, nil, False);
+end;
+
 function TColumnDefinition.GetDisplayName: string;
 begin
   Result := FCaption;
+end;
+
+procedure TColumnDefinition.ReadTextPropertyName(Reader: TReader);
+begin
+  ValuePropertyName := Reader.ReadString;
 end;
 
 procedure TColumnDefinition.Assign(Source: TPersistent);
@@ -201,7 +214,7 @@ begin
     ImageIndexPropertyName := LSource.ImageIndexPropertyName;
     OnCustomDraw := LSource.OnCustomDraw;
     OnGetText := LSource.OnGetText;
-    TextPropertyName := LSource.TextPropertyName;
+    ValuePropertyName := LSource.ValuePropertyName;
     Width := LSource.Width;
   end
   else
@@ -223,8 +236,8 @@ begin
       FFilter :=
         function(Item: TObject): Boolean
         begin
-          FTextPropertyExpression.Instance := Item;
-          Result := ContainsText(FTextPropertyExpression.Value.ToString, FCustomFilter);
+          FValuePropertyExpression.Instance := Item;
+          Result := ContainsText(FValuePropertyExpression.Value.ToString, FCustomFilter);
         end;
     end
     else
@@ -254,11 +267,11 @@ begin
     TParameterExpression.Create('Instance') as IExpression, FImageIndexPropertyName);
 end;
 
-procedure TColumnDefinition.SetTextPropertyName(const Value: string);
+procedure TColumnDefinition.SetValuePropertyName(const Value: string);
 begin
-  FTextPropertyName := Value;
-  FTextPropertyExpression := TPropertyExpression.Create(
-    TParameterExpression.Create('Instance') as IExpression, FTextPropertyName);
+  FValuePropertyName := Value;
+  FValuePropertyExpression := TPropertyExpression.Create(
+    TParameterExpression.Create('Instance') as IExpression, FValuePropertyName);
 end;
 
 { TColumnDefinitions }

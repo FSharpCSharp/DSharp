@@ -166,6 +166,8 @@ type
     procedure SetTargetPropertyName(const Value: string);
 
     function ValidateCommitted: Boolean;
+    function ValidateOnTargetUpdated: Boolean;
+    procedure SetValidatesOnDataErrors(const Value: Boolean);
   protected
     function GetDisplayName: string; override;
   public
@@ -224,7 +226,7 @@ type
     property TriggerMode: TTriggerMode read FTriggerMode
       write FTriggerMode default TriggerModeDefault;
     property ValidatesOnDataErrors: Boolean
-      read FValidatesOnDataErrors write FValidatesOnDataErrors default False;
+      read FValidatesOnDataErrors write SetValidatesOnDataErrors default False;
   end;
 
   IBindable = interface
@@ -265,7 +267,6 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-
     function AddBinding(ASource: TObject = nil; ASourcePropertyName: string = '';
       ATarget: TObject = nil; ATargetPropertyName: string = '';
       ABindingMode: TBindingMode = BindingModeDefault;
@@ -677,6 +678,8 @@ begin
       DoTargetUpdated(ASender, APropertyName, AUpdateTrigger);
 
       UpdateTarget(True);
+
+      ValidateOnTargetUpdated();
     finally
       EndUpdateTarget();
     end;
@@ -841,6 +844,8 @@ begin
     if FActive then
     begin
       UpdateTarget(True);
+
+      ValidateOnTargetUpdated();
     end;
   end;
 end;
@@ -1053,6 +1058,18 @@ begin
   end;
 end;
 
+procedure TBinding.SetValidatesOnDataErrors(const Value: Boolean);
+begin
+  if FValidatesOnDataErrors <> Value then
+  begin
+    FValidatesOnDataErrors := Value;
+    if FValidatesOnDataErrors then
+    begin
+      ValidateOnTargetUpdated;
+    end;
+  end;
+end;
+
 procedure TBinding.UpdateSource(IgnoreBindingMode: Boolean = True);
 begin
   if Assigned(Self) and FActive
@@ -1211,6 +1228,44 @@ begin
     finally
       EndValidate();
     end;
+  end;
+end;
+
+function TBinding.ValidateOnTargetUpdated: Boolean;
+var
+  LTargetValue: TValue;
+  LValidationRule: IValidationRule;
+  LValidationResult: IValidationResult;
+begin
+  Result := True;
+
+  BeginValidate();
+  try
+    if Assigned(FTarget) and Assigned(FTargetProperty)
+      and FTargetProperty.Member.IsReadable then
+    begin
+      LTargetValue := FTargetProperty.Value;
+
+      for LValidationRule in FValidationRules do
+      begin
+        if LValidationRule.ValidatesOnTargetUpdated then
+        begin
+          LValidationResult := LValidationRule.Validate(LTargetValue);
+          if Assigned(LValidationResult) then
+          begin
+            FOnValidation.Invoke(Self, LValidationRule, LValidationResult);
+            if not LValidationResult.IsValid then
+            begin
+              FValidationErrors.Add(LValidationResult);
+              Result := False;
+              Break;
+            end;
+          end;
+        end;
+      end;
+    end;
+  finally
+    EndValidate();
   end;
 end;
 

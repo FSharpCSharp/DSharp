@@ -66,9 +66,13 @@ type
   end;
 
   IValidationRule = interface
+    function GetValidatesOnTargetUpdated: Boolean;
     function GetValidationStep: TValidationStep;
+    procedure SetValidatesOnTargetUpdated(const Value: Boolean);
     procedure SetValidationStep(const Value: TValidationStep);
     function Validate(const Value: TValue): IValidationResult;
+    property ValidatesOnTargetUpdated: Boolean
+      read GetValidatesOnTargetUpdated write SetValidatesOnTargetUpdated;
     property ValidationStep: TValidationStep
       read GetValidationStep write SetValidationStep;
   end;
@@ -77,14 +81,16 @@ type
   private
     FValidatesOnTargetUpdated: Boolean;
     FValidationStep: TValidationStep;
+    function GetValidatesOnTargetUpdated: Boolean;
     function GetValidationStep: TValidationStep;
+    procedure SetValidatesOnTargetUpdated(const Value: Boolean);
     procedure SetValidationStep(const Value: TValidationStep);
   public
     constructor Create; virtual;
     function Validate(const Value: TValue): IValidationResult; virtual;
 
-    property ValidatesOnTargetUpdated: Boolean read FValidatesOnTargetUpdated
-      write FValidatesOnTargetUpdated;
+    property ValidatesOnTargetUpdated: Boolean
+      read GetValidatesOnTargetUpdated write SetValidatesOnTargetUpdated;
     property ValidationStep: TValidationStep
       read GetValidationStep write SetValidationStep;
   end;
@@ -141,9 +147,19 @@ begin
 
 end;
 
+function TValidationRule.GetValidatesOnTargetUpdated: Boolean;
+begin
+  Result := FValidatesOnTargetUpdated;
+end;
+
 function TValidationRule.GetValidationStep: TValidationStep;
 begin
   Result := FValidationStep;
+end;
+
+procedure TValidationRule.SetValidatesOnTargetUpdated(const Value: Boolean);
+begin
+  FValidatesOnTargetUpdated := Value;
 end;
 
 procedure TValidationRule.SetValidationStep(const Value: TValidationStep);

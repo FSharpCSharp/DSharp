@@ -540,7 +540,7 @@ type
     function ToVarRec: TVarRec;
 
     class function ToString(const Value: TValue): string; overload; static;
-    class function ToString(const Values: array of TValue): string; overload; static;
+    class function ToString(const Values: array of TValue; Index: Integer = 0): string; overload; static;
     class function ToVarRecs(const Values: array of TValue): TArray<TVarRec>; static;
     class function Equals(const Left, Right: TArray<TValue>): Boolean; overload; static;
     class function Equals<T>(const Left, Right: T): Boolean; overload; static;
@@ -1774,12 +1774,12 @@ begin
   begin
     if Length(Args) > 1 then
     begin
-      Result := Result + TValue.ToString(@Args[1]);
+      Result := Result + TValue.ToString(Args, 1);
     end;
   end
   else
   begin
-    Result := Result + TValue.ToString(@Args[0])
+    Result := Result + TValue.ToString(Args);
   end;
   Result := Result + ')';
 end;
@@ -2524,14 +2524,15 @@ begin
     Result := AsObject;
 end;
 
-class function TValueHelper.ToString(const Values: array of TValue): string;
+class function TValueHelper.ToString(
+  const Values: array of TValue; Index: Integer): string;
 var
   i: Integer;
 begin
   Result := '';
-  for i := Low(Values) to High(Values) do
+  for i := Index to High(Values) do
   begin
-    if i > Low(Values) then
+    if i > Index then
     begin
       Result := Result + ', ';
     end;

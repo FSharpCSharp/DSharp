@@ -99,7 +99,7 @@ function Mock<T>.GetMock: IMock<T>;
 begin
   if not Assigned(FMock) then
   begin
-    FMock := TMockWrapper<T>.Create();
+    FMock := TMock<T>.Create();
   end;
   Result := FMock;
 end;

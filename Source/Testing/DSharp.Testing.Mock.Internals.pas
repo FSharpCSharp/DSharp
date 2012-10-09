@@ -46,19 +46,20 @@ type
   TMockState = (msDefining, msExecuting);
   TMockType = (mtUndefined, mtObject, mtInterface);
 
-  TMockWrapper<T> = class(TInterfacedObject,
+  TMock<T> = class(TVirtualInterface,
     IMock<T>, IExpect<T>, IExpectInSequence<T>, IWhen<T>)
   private
     FCurrentExpectation: TExpectation;
     FCurrentSequence: ISequence;
     FExpectations: TObjectList<TExpectation>;
-    FInstance: T;
+    FInstance: Pointer;
     FInterceptor: TVirtualMethodInterceptor;
     FMode: TMockMode;
     FState: TMockState;
     FType: TMockType;
     procedure CreateInterfaceMock(AType: TRttiType);
     procedure CreateObjectMock(AType: TRttiType);
+    procedure DestroyInterfaceMock;
     procedure DestroyObjectMock;
     procedure DoBefore(Instance: TObject; Method: TRttiMethod;
       const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
@@ -98,15 +99,14 @@ type
     function WillExecute(const Action: TMockAction): IExpectInSequence<T>;
     function WillRaise(const E: TFunc<Exception>): IExpectInSequence<T>;
     function WillReturn(const Value: TValue): IExpectInSequence<T>;
+
+    property Instance: T read GetInstance;
   end;
 
 const
   CCreationError = 'unable to create mock for type: %s (contains no methods or typeinfo)';
   CUnmetExpectations = 'not all expected invocations were performed';
   CUnexpectedInvocation = 'unexpected invocation of: %s';
-
-type
-  Mock<T> = class(TVirtualInterface);
 
 implementation
 
@@ -115,9 +115,9 @@ uses
   RTLConsts,
   TypInfo;
 
-{ TMockWrapper<T> }
+{ TMock<T> }
 
-constructor TMockWrapper<T>.Create;
+constructor TMock<T>.Create;
 var
   LType: TRttiType;
 begin
@@ -138,39 +138,44 @@ begin
   end;
 end;
 
-destructor TMockWrapper<T>.Destroy;
+destructor TMock<T>.Destroy;
 begin
-  if FType = mtObject then
-  begin
-    DestroyObjectMock();
-  end;
   FExpectations.Free();
+  case FType of
+    mtObject: DestroyObjectMock();
+    mtInterface: DestroyInterfaceMock();
+  end;
 end;
 
-procedure TMockWrapper<T>.CreateInterfaceMock(AType: TRttiType);
+procedure TMock<T>.CreateInterfaceMock(AType: TRttiType);
 begin
-  Supports(Mock<T>.Create(AType.Handle, DoMethodCall),
-    TRttiInterfaceType(AType).GUID, FInstance);
+  inherited Create(AType.Handle, DoMethodCall);
+  Supports(Self, TRttiInterfaceType(AType).GUID, FInstance);
   FType := mtInterface;
 end;
 
-procedure TMockWrapper<T>.CreateObjectMock(AType: TRttiType);
+procedure TMock<T>.CreateObjectMock(AType: TRttiType);
 begin
   FInstance := AType.GetStandardConstructor().Invoke(
-    AType.AsInstance.MetaclassType, []).AsType<T>();
+    AType.AsInstance.MetaclassType, []).AsObject();
   FInterceptor := TVirtualMethodInterceptor.Create(AType.AsInstance.MetaclassType);
   FInterceptor.Proxify(PObject(@FInstance)^);
   FInterceptor.OnBefore := DoBefore;
   FType := mtObject;
 end;
 
-procedure TMockWrapper<T>.DestroyObjectMock;
+procedure TMock<T>.DestroyInterfaceMock;
+begin
+  inherited Destroy;
+end;
+
+procedure TMock<T>.DestroyObjectMock;
 begin
   PObject(@FInstance)^.Free();
   FInterceptor.Free();
 end;
 
-procedure TMockWrapper<T>.DoBefore(Instance: TObject; Method: TRttiMethod;
+procedure TMock<T>.DoBefore(Instance: TObject; Method: TRttiMethod;
   const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
 begin
   if Method.Parent.AsInstance.MetaclassType <> TObject then
@@ -181,7 +186,7 @@ begin
   end;
 end;
 
-procedure TMockWrapper<T>.DoMethodCall(Method: TRttiMethod;
+procedure TMock<T>.DoMethodCall(Method: TRttiMethod;
   const Args: TArray<TValue>; out Result: TValue);
 var
   LSequence: TList<TExpectation>;
@@ -215,61 +220,61 @@ begin
   end;
 end;
 
-function TMockWrapper<T>.Any: IWhen<T>;
+function TMock<T>.Any: IWhen<T>;
 begin
   SetExpectedTimes(Times.Any);
   Result := Self;
 end;
 
-function TMockWrapper<T>.AtLeast(const Count: Cardinal): IWhen<T>;
+function TMock<T>.AtLeast(const Count: Cardinal): IWhen<T>;
 begin
   SetExpectedTimes(Times.AtLeast(Count));
   Result := Self;
 end;
 
-function TMockWrapper<T>.AtLeastOnce: IWhen<T>;
+function TMock<T>.AtLeastOnce: IWhen<T>;
 begin
   SetExpectedTimes(Times.AtLeastOnce);
   Result := Self;
 end;
 
-function TMockWrapper<T>.AtMost(const Count: Cardinal): IWhen<T>;
+function TMock<T>.AtMost(const Count: Cardinal): IWhen<T>;
 begin
   SetExpectedTimes(Times.AtMost(Count));
   Result := Self;
 end;
 
-function TMockWrapper<T>.AtMostOnce: IWhen<T>;
+function TMock<T>.AtMostOnce: IWhen<T>;
 begin
   SetExpectedTimes(Times.AtMostOnce);
   Result := Self;
 end;
 
-function TMockWrapper<T>.Between(const LowValue, HighValue: Cardinal): IWhen<T>;
+function TMock<T>.Between(const LowValue, HighValue: Cardinal): IWhen<T>;
 begin
   SetExpectedTimes(Times.Between(LowValue, HighValue));
   Result := Self;
 end;
 
-function TMockWrapper<T>.Exactly(const Count: Cardinal): IWhen<T>;
+function TMock<T>.Exactly(const Count: Cardinal): IWhen<T>;
 begin
   SetExpectedTimes(Times.Exactly(Count));
   Result := Self;
 end;
 
-function TMockWrapper<T>.Never: IWhen<T>;
+function TMock<T>.Never: IWhen<T>;
 begin
   SetExpectedTimes(Times.Never);
   Result := Self;
 end;
 
-function TMockWrapper<T>.Once: IWhen<T>;
+function TMock<T>.Once: IWhen<T>;
 begin
   SetExpectedTimes(Times.Once);
   Result := Self;
 end;
 
-function TMockWrapper<T>.FindExpectation(Method: TRttiMethod;
+function TMock<T>.FindExpectation(Method: TRttiMethod;
   Arguments: TArray<TValue>): TExpectation;
 var
   LExpectation: TExpectation;
@@ -289,17 +294,17 @@ begin
   end;
 end;
 
-function TMockWrapper<T>.GetInstance: T;
+function TMock<T>.GetInstance: T;
 begin
-  Result := FInstance;
+  PPointer(@Result)^ := FInstance;
 end;
 
-function TMockWrapper<T>.GetMode: TMockMode;
+function TMock<T>.GetMode: TMockMode;
 begin
   Result := FMode;
 end;
 
-function TMockWrapper<T>.HasExpectation(Method: TRttiMethod): Boolean;
+function TMock<T>.HasExpectation(Method: TRttiMethod): Boolean;
 var
   LExpectation: TExpectation;
 begin
@@ -314,13 +319,13 @@ begin
   end;
 end;
 
-function TMockWrapper<T>.InSequence(Sequence: ISequence): IExpect<T>;
+function TMock<T>.InSequence(Sequence: ISequence): IExpect<T>;
 begin
   FCurrentSequence := Sequence;
   Result := Self;
 end;
 
-procedure TMockWrapper<T>.SetExpectedTimes(const Times: Times);
+procedure TMock<T>.SetExpectedTimes(const Times: Times);
 begin
   if Assigned(FCurrentSequence) then
   begin
@@ -333,12 +338,12 @@ begin
   end;
 end;
 
-procedure TMockWrapper<T>.SetMode(const Value: TMockMode);
+procedure TMock<T>.SetMode(const Value: TMockMode);
 begin
   FMode := Value;
 end;
 
-procedure TMockWrapper<T>.Verify;
+procedure TMock<T>.Verify;
 var
   LExpectation: TExpectation;
   LSequence: TList<TExpectation>;
@@ -352,18 +357,18 @@ begin
   end;
 end;
 
-function TMockWrapper<T>.WhenCalling: T;
+function TMock<T>.WhenCalling: T;
 begin
-  Result := FInstance;
+  Result := Instance;
 end;
 
-function TMockWrapper<T>.WhenCallingWithAnyArguments: T;
+function TMock<T>.WhenCallingWithAnyArguments: T;
 begin
   FCurrentExpectation.AnyArguments := True;
-  Result := FInstance;
+  Result := Instance;
 end;
 
-function TMockWrapper<T>.WillExecute(const Action: TMockAction): IExpectInSequence<T>;
+function TMock<T>.WillExecute(const Action: TMockAction): IExpectInSequence<T>;
 begin
   FCurrentExpectation := TExpectation.Create();
   FCurrentExpectation.Action := Action;
@@ -372,7 +377,7 @@ begin
   FExpectations.Add(FCurrentExpectation);
 end;
 
-function TMockWrapper<T>.WillRaise(const E: TFunc<Exception>): IExpectInSequence<T>;
+function TMock<T>.WillRaise(const E: TFunc<Exception>): IExpectInSequence<T>;
 begin
   FCurrentExpectation := TExpectation.Create();
   FCurrentExpectation.Exception := E;
@@ -381,7 +386,7 @@ begin
   FExpectations.Add(FCurrentExpectation);
 end;
 
-function TMockWrapper<T>.WillReturn(const Value: TValue): IExpectInSequence<T>;
+function TMock<T>.WillReturn(const Value: TValue): IExpectInSequence<T>;
 begin
   FCurrentExpectation := TExpectation.Create();
   FCurrentExpectation.Result := Value;

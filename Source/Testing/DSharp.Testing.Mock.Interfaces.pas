@@ -79,7 +79,7 @@ type
     property Mode: TMockMode read GetMode write SetMode;
   end;
 
-  EMockException = class(EAbort);
+  EMockException = class(Exception);
 
 implementation
 

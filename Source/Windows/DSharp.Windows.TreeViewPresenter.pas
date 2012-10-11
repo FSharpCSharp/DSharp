@@ -1727,6 +1727,11 @@ begin
         FTreeView.TreeOptions.MiscOptions - [toCheckSupport];
     end;
 
+    if Assigned(ImageList) then
+    begin
+      FTreeView.DefaultNodeHeight := ImageList.Height + 2;
+    end;
+
     if FListMode then
     begin
       FTreeView.TreeOptions.PaintOptions :=

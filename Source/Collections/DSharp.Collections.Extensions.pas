@@ -191,6 +191,8 @@ type
     function Where(predicate: TFunc<T, NativeInt, Boolean>): Enumerable<T>; overload;
 
     function GetEnumerator: IEnumerator<T>;
+    function ToArray: TArray<T>;
+    function ToList: IList<T>;
 
     class operator Implicit(const Value: Enumerable<T>): IEnumerable<T>;
     class operator Implicit(const Value: IEnumerable<T>): Enumerable<T>;
@@ -1024,6 +1026,16 @@ end;
 function Enumerable<T>.GetEnumerator: IEnumerator<T>;
 begin
   Result := Enumerable.GetEnumerator();
+end;
+
+function Enumerable<T>.ToArray: TArray<T>;
+begin
+  Result := Enumerable.ToArray();
+end;
+
+function Enumerable<T>.ToList: IList<T>;
+begin
+  Result := Enumerable.ToList();
 end;
 
 class operator Enumerable<T>.Implicit(const Value: Enumerable<T>): IEnumerable<T>;

@@ -103,6 +103,8 @@ type
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
     function Extract(const Value: TValue): TValue;
+    function ExtractRange(const Values: TArray<TValue>): TArray<TValue>; overload;
+    function ExtractRange(Values: IEnumerable): TArray<TValue>; overload;
     function First: TValue;
     function GetItem(const Index: NativeInt): TValue;
     function GetOnCollectionChanged: IEvent;
@@ -139,6 +141,8 @@ type
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
     function Extract(const Value: T): T;
+    function ExtractRange(const Values: TArray<T>): TArray<T>; overload;
+    function ExtractRange(Values: IEnumerable<T>): TArray<T>; overload;
     function First: T;
     function GetItem(const Index: NativeInt): T;
     function GetOnCollectionChanged: IEvent<TCollectionChangedEvent<T>>;
@@ -232,6 +236,7 @@ type
   private
     FComparer: IComparer<T>;
     FOnCollectionChanged: Event<TCollectionChangedEvent<T>>;
+    FVersion: Cardinal;
     function FirstBase: TValue;
     function GetItemBase(const Index: NativeInt): TValue;
     function GetOnCollectionChanged: IEvent<TCollectionChangedEvent<T>>;
@@ -249,6 +254,7 @@ type
     procedure SetItem(const Index: NativeInt; const Value: T); overload; virtual;
     procedure SetItem(const Index: NativeInt; const Value: TValue); overload;
     property Comparer: IComparer<T> read FComparer;
+    property Version: Cardinal read FVersion;
   public
     constructor Create; overload;
     constructor Create(Comparer: IComparer<T>); overload;
@@ -269,6 +275,10 @@ type
     procedure DeleteRange(const Index, Count: NativeInt);
     function Extract(const Value: T): T; overload; virtual;
     function Extract(const Value: TValue): TValue; overload;
+    function ExtractRange(const Values: TArray<T>): TArray<T>; overload;
+    function ExtractRange(const Values: TArray<TValue>): TArray<TValue>; overload;
+    function ExtractRange(Values: IEnumerable): TArray<TValue>; overload;
+    function ExtractRange(Values: IEnumerable<T>): TArray<T>; overload;
     function First: T; virtual;
     function IndexOf(const Value: T): NativeInt; overload; virtual;
     function IndexOf(const Value: TValue): NativeInt; overload;
@@ -303,6 +313,7 @@ type
       private
         FList: TListBase<T>;
         FIndex: Integer;
+        FVersion: Cardinal;
       protected
         function GetCurrent: T; override;
       public
@@ -371,6 +382,9 @@ type
 
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
   end;
+
+resourcestring
+  InvalidOperation_EnumFailedVersion = 'Collection was modified; enumeration operation may not execute.';
 
 implementation
 
@@ -639,6 +653,62 @@ end;
 function TListBase<T>.Extract(const Value: TValue): TValue;
 begin
   Result := TValue.From<T>(Extract(Value.AsType<T>));
+end;
+
+function TListBase<T>.ExtractRange(const Values: TArray<T>): TArray<T>;
+var
+  i: Integer;
+  LValue: T;
+begin
+  SetLength(Result, Length(Values));
+  i := 0;
+  for LValue in Values do
+  begin
+    Result[i] := Extract(LValue);
+    Inc(i);
+  end;
+end;
+
+function TListBase<T>.ExtractRange(const Values: TArray<TValue>): TArray<TValue>;
+var
+  i: Integer;
+  LValue: TValue;
+begin
+  SetLength(Result, Length(Values));
+  i := 0;
+  for LValue in Values do
+  begin
+    Result[i] := Extract(LValue);
+    Inc(i);
+  end;
+end;
+
+function TListBase<T>.ExtractRange(Values: IEnumerable): TArray<TValue>;
+var
+  i: Integer;
+  LValue: TValue;
+begin
+  SetLength(Result, Values.Count);
+  i := 0;
+  for LValue in Values do
+  begin
+    Result[i] := Extract(LValue);
+    Inc(i);
+  end;
+end;
+
+function TListBase<T>.ExtractRange(Values: IEnumerable<T>): TArray<T>;
+var
+  i: Integer;
+  LValue: T;
+begin
+  SetLength(Result, Values.Count);
+  i := 0;
+  for LValue in Values do
+  begin
+    Result[i] := Extract(LValue);
+    Inc(i);
+  end;
 end;
 
 function TListBase<T>.First: T;
@@ -925,6 +995,7 @@ begin
   inherited Create();
   FList := AList;
   FIndex := -1;
+  FVersion := FList.FVersion;
 end;
 
 function TListBase<T>.TEnumerator.GetCurrent: T;
@@ -934,13 +1005,18 @@ end;
 
 function TListBase<T>.TEnumerator.MoveNext: Boolean;
 begin
-  if FIndex < FList.Count then
+  if FVersion = FList.Version then
   begin
-    Inc(FIndex);
-    Result := FIndex < FList.Count;
+    if FIndex < FList.Count then
+    begin
+      Inc(FIndex);
+      Result := FIndex < FList.Count;
+    end
+    else
+      Result := False;
   end
   else
-    Result := False;
+    raise EInvalidOpException.CreateRes(@InvalidOperation_EnumFailedVersion);
 end;
 
 { TList<T> }
@@ -952,6 +1028,7 @@ begin
   while FCount > 0 do
     Delete(FCount - 1);
   SetLength(FItems, 0);
+  Inc(FVersion);
 end;
 
 procedure TList<T>.Delete(const Index: NativeInt);
@@ -1016,6 +1093,8 @@ begin
 
   FItems[Index] := Value;
   Inc(FCount);
+  Inc(FVersion);
+
   Notify(Value, caAdd);
 end;
 
@@ -1035,6 +1114,7 @@ begin
     System.Move(FItems[Index + 1], FItems[Index], (FCount - Index) * SizeOf(T));
     FillChar(FItems[FCount], SizeOf(T), 0);
   end;
+  Inc(FVersion);
 
   Notify(LItem, Action);
 end;
@@ -1055,6 +1135,7 @@ begin
 
   FillChar(FItems[NewIndex], SizeOf(T), 0);
   FItems[NewIndex] := LItem;
+  Inc(FVersion);
 
   Notify(LItem, caMove);
 end;
@@ -1075,6 +1156,7 @@ begin
 
   LItem := FItems[Index];
   FItems[Index] := Value;
+  Inc(FVersion);
 
   Notify(LItem, caRemove);
   Notify(Value, caAdd);

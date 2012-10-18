@@ -69,11 +69,9 @@ type
     procedure LogEntry(const ALogEntry: TLogEntry);
 
     procedure EnterMethod(const AName: string); overload;
-    procedure EnterMethod(AClass: TClass; const AName: string); overload;
-    procedure EnterMethod(AInstance: TObject; const AName: string); overload;
+    procedure EnterMethod(AValue: TValue; const AName: string); overload;
     procedure LeaveMethod(const AName: string); overload;
-    procedure LeaveMethod(AClass: TClass; const AName: string); overload;
-    procedure LeaveMethod(AInstance: TObject; const AName: string); overload;
+    procedure LeaveMethod(AValue: TValue; const AName: string); overload;
     procedure LogError(const ATitle: string); overload;
     procedure LogError(const ATitle: string; const AValues: array of TValue); overload;
     procedure LogException(AException: Exception = nil; const ATitle: string = '');
@@ -89,11 +87,9 @@ type
     procedure LogEntry(const ALogEntry: TLogEntry); virtual; abstract;
   public
     procedure EnterMethod(const AName: string); overload;
-    procedure EnterMethod(AClass: TClass; const AName: string); overload;
-    procedure EnterMethod(AInstance: TObject; const AName: string); overload;
+    procedure EnterMethod(AValue: TValue; const AName: string); overload;
     procedure LeaveMethod(const AName: string); overload;
-    procedure LeaveMethod(AClass: TClass; const AName: string); overload;
-    procedure LeaveMethod(AInstance: TObject; const AName: string); overload;
+    procedure LeaveMethod(AValue: TValue; const AName: string); overload;
     procedure LogError(const ATitle: string); overload;
     procedure LogError(const ATitle: string; const AValues: array of TValue); overload;
     procedure LogException(AException: Exception = nil; const ATitle: string = '');
@@ -193,14 +189,9 @@ begin
   LogEntry(TLogEntry.Create(AName, [], lkEnterMethod));
 end;
 
-procedure TLogBase.EnterMethod(AClass: TClass; const AName: string);
+procedure TLogBase.EnterMethod(AValue: TValue; const AName: string);
 begin
-  LogEntry(TLogEntry.Create(AName, [AClass], lkEnterMethod));
-end;
-
-procedure TLogBase.EnterMethod(AInstance: TObject; const AName: string);
-begin
-  LogEntry(TLogEntry.Create(AName, [AInstance], lkEnterMethod));
+  LogEntry(TLogEntry.Create(AName, [AValue], lkEnterMethod));
 end;
 
 procedure TLogBase.LeaveMethod(const AName: string);
@@ -208,14 +199,9 @@ begin
   LogEntry(TLogEntry.Create(AName, [], lkLeaveMethod));
 end;
 
-procedure TLogBase.LeaveMethod(AClass: TClass; const AName: string);
+procedure TLogBase.LeaveMethod(AValue: TValue; const AName: string);
 begin
-  LogEntry(TLogEntry.Create(AName, [AClass], lkLeaveMethod));
-end;
-
-procedure TLogBase.LeaveMethod(AInstance: TObject; const AName: string);
-begin
-  LogEntry(TLogEntry.Create(AName, [AInstance], lkLeaveMethod));
+  LogEntry(TLogEntry.Create(AName, [AValue], lkLeaveMethod));
 end;
 
 procedure TLogBase.LogError(const ATitle: string);
@@ -320,24 +306,14 @@ begin
     begin
       LMessage := REnterMethod;
       if not LValue.IsEmpty then
-      begin
-        if LValue.IsClass then
-          LMessage := LMessage + LValue.AsClass.ClassName + '.'
-        else if LValue.IsObject then
-          LMessage := LMessage + LValue.AsObject.ClassName + '.';
-      end;
+        LMessage := LMessage + UTF8ToString(LValue.TypeInfo.Name) + '.';
       LMessage := LMessage + ALogEntry.Text;
     end;
     lkLeaveMethod:
     begin
       LMessage := RLeaveMethod;
       if not LValue.IsEmpty then
-      begin
-        if LValue.IsClass then
-          LMessage := LMessage + LValue.AsClass.ClassName + '.'
-        else if LValue.IsObject then
-          LMessage := LMessage + LValue.AsObject.ClassName + '.';
-      end;
+        LMessage := LMessage + UTF8ToString(LValue.TypeInfo.Name) + '.';
       LMessage := LMessage + ALogEntry.Text;
     end;
     lkMessage:

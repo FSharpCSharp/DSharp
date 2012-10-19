@@ -1346,7 +1346,7 @@ begin
 
   for LField in LTarget.GetFields do
   begin
-    for LBindingAttribute in LField.GetAttributesOfType<BindingAttribute> do
+    for LBindingAttribute in LField.GetAttributes<BindingAttribute> do
     begin
       if LField.RttiType.IsInstance then
       begin

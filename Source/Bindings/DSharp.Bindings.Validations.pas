@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ begin
         begin
           LValidationContext := TValidationContext.Create(LBinding.Source);
           LValidationContext.MemberName := LMember.Name;
-          for LAttribute in LMember.GetAttributesOfType<ValidationAttribute> do
+          for LAttribute in LMember.GetAttributes<ValidationAttribute> do
           begin
             Result := LAttribute.IsValid(LBinding.SourceProperty.Value, LValidationContext);
             if not Result.IsValid then

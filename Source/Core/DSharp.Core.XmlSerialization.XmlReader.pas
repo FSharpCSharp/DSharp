@@ -208,7 +208,7 @@ var
     Result := False;
     for LProperty in AObject.GetProperties do
     begin
-      if LProperty.TryGetAttributeOfType<XmlElementAttribute>(LAttribute)
+      if LProperty.TryGetAttribute<XmlElementAttribute>(LAttribute)
         and SameText(LAttribute.ElementName, AElementName) then
       begin
         AProperty := LProperty;
@@ -227,7 +227,7 @@ var
     Result := False;
     for LField in AObject.GetFields do
     begin
-      if LField.TryGetAttributeOfType<XmlElementAttribute>(LAttribute)
+      if LField.TryGetAttribute<XmlElementAttribute>(LAttribute)
         and SameText(LAttribute.ElementName, AElementName) then
       begin
         AField := LField;

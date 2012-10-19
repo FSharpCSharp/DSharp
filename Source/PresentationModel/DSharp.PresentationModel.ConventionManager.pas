@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@ begin
   LProperty := AViewModel.GetProperty(APropertyName);
   if Assigned(LProperty) then
   begin
-    for LAttribute in LProperty.GetAttributesOfType<ValidationAttribute> do
+    for LAttribute in LProperty.GetAttributes<ValidationAttribute> do
     begin
       ABinding.ValidationRules.Add(LAttribute.ValidationRuleClass.Create);
     end;

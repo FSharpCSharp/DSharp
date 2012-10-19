@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -70,8 +70,8 @@ class procedure TSecurityAspect.DoBefore(Instance: TObject; Method: TRttiMethod;
 var
   LAttribute: SecurityAttribute;
 begin
-  if Method.TryGetAttributeOfType<SecurityAttribute>(LAttribute)
-    or Method.Parent.TryGetAttributeOfType<SecurityAttribute>(LAttribute) then
+  if Method.TryGetAttribute<SecurityAttribute>(LAttribute)
+    or Method.Parent.TryGetAttribute<SecurityAttribute>(LAttribute) then
   begin
     DoInvoke := Composition.Get<IWindowManager>.InputBox('Password', 'Enter password', '', True) =
       LAttribute.Password;

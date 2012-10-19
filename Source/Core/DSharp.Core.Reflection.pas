@@ -325,12 +325,20 @@ type
   {$ENDREGION}
   TRttiObjectHelper = class helper for TRttiObject
   public
-    function GetAttributeOfType<T: TCustomAttribute>: T;
-    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
+    function GetAttributeOfType<T: TCustomAttribute>: T; deprecated 'use GetAttribute<T> instead';
+    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>; deprecated 'use GetAttributes<T> instead';
 
-    function HasAttributeOfType<T: TCustomAttribute>: Boolean;
+    function HasAttributeOfType<T: TCustomAttribute>: Boolean; deprecated 'use HasAttribute<T> instead';
 
-    function TryGetAttributeOfType<T: TCustomAttribute>(out AAttribute: T): Boolean;
+    function TryGetAttributeOfType<T: TCustomAttribute>(out AAttribute: T): Boolean; deprecated 'use TryGetAttribute<T> instead';
+
+    function GetAttribute<T: TCustomAttribute>: T;
+    function GetAttributes: TArray<TCustomAttribute>; overload;
+    function GetAttributes<T: TCustomAttribute>: TArray<T>; overload;
+
+    function HasAttribute<T: TCustomAttribute>: Boolean;
+
+    function TryGetAttribute<T: TCustomAttribute>(out AAttribute: T): Boolean;
   end;
 
   {$REGION 'Documentation'}
@@ -1791,7 +1799,7 @@ end;
 
 { TRttiObjectHelper }
 
-function TRttiObjectHelper.GetAttributeOfType<T>: T;
+function TRttiObjectHelper.GetAttribute<T>: T;
 var
   LAttribute: TCustomAttribute;
 begin
@@ -1806,7 +1814,17 @@ begin
   end;
 end;
 
-function TRttiObjectHelper.GetAttributesOfType<T>: TArray<T>;
+function TRttiObjectHelper.GetAttributeOfType<T>: T;
+begin
+  Result := GetAttribute<T>;
+end;
+
+function TRttiObjectHelper.GetAttributes: TArray<TCustomAttribute>;
+begin
+  Result := inherited GetAttributes;
+end;
+
+function TRttiObjectHelper.GetAttributes<T>: TArray<T>;
 var
   LAttribute: TCustomAttribute;
 begin
@@ -1821,15 +1839,30 @@ begin
   end;
 end;
 
+function TRttiObjectHelper.GetAttributesOfType<T>: TArray<T>;
+begin
+  Result := GetAttributes<T>;
+end;
+
+function TRttiObjectHelper.HasAttribute<T>: Boolean;
+begin
+  Result := GetAttribute<T> <> nil;
+end;
+
 function TRttiObjectHelper.HasAttributeOfType<T>: Boolean;
 begin
-  Result := GetAttributeOfType<T> <> nil;
+  Result := HasAttribute<T>;
+end;
+
+function TRttiObjectHelper.TryGetAttribute<T>(out AAttribute: T): Boolean;
+begin
+  AAttribute := GetAttribute<T>;
+  Result := Assigned(AAttribute);
 end;
 
 function TRttiObjectHelper.TryGetAttributeOfType<T>(out AAttribute: T): Boolean;
 begin
-  AAttribute := GetAttributeOfType<T>;
-  Result := Assigned(AAttribute);
+  Result := TryGetAttribute<T>(AAttribute);
 end;
 
 { TRttiParameterHelper }

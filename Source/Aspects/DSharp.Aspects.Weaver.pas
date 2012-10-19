@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -137,14 +137,14 @@ begin
   begin
     if LType.IsInstance or LType.IsInterface then
     begin
-      for LAspectAttribute in LType.GetAttributesOfType<AspectAttribute> do
+      for LAspectAttribute in LType.GetAttributes<AspectAttribute> do
       begin
         AddAspect(LType, LAspectAttribute.AspectClass, '.*');
       end;
 
       for LMethod in LType.GetMethods do
       begin
-        for LAspectAttribute in LMethod.GetAttributesOfType<AspectAttribute> do
+        for LAspectAttribute in LMethod.GetAttributes<AspectAttribute> do
         begin
           AddAspect(LType, LAspectAttribute.AspectClass, LMethod.Name);
         end;

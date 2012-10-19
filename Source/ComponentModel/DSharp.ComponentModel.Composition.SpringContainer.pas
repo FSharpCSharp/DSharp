@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -184,7 +184,7 @@ var
   LInjection: IInjection;
   LValue: TValue;
 begin
-  if Member.TryGetAttributeOfType<ImportAttribute>(LImportAttribute) then
+  if Member.TryGetAttribute<ImportAttribute>(LImportAttribute) then
   begin
     if LImportAttribute is ImportLazyAttribute then
     begin
@@ -285,7 +285,7 @@ begin
   try
     for LType in GetRttiTypes do
     begin
-      if LType is TRttiInterfaceType and LType.HasAttributeOfType<InheritedExportAttribute> then
+      if LType is TRttiInterfaceType and LType.HasAttribute<InheritedExportAttribute> then
       begin
         if not IsEqualGUID(TRttiInterfaceType(LType).GUID, TGUID.Empty) then
         begin
@@ -296,9 +296,9 @@ begin
 
     for LType in GetRttiTypes do
     begin
-      if LType is TRttiInstanceType and not LType.HasAttributeOfType<AbstractAttribute> then
+      if LType is TRttiInstanceType and not LType.HasAttribute<AbstractAttribute> then
       begin
-        if LType.TryGetAttributeOfType<ExportAttribute>(LExportAttribute) then
+        if LType.TryGetAttribute<ExportAttribute>(LExportAttribute) then
         begin
           RegisterClass(LType);
         end;
@@ -324,7 +324,7 @@ begin
         for LProperty in LType.GetProperties do
         begin
           // register types that got exported properties as singleton
-          if LProperty.TryGetAttributeOfType<ExportAttribute>(LExportAttribute) then
+          if LProperty.TryGetAttribute<ExportAttribute>(LExportAttribute) then
           begin
             if not Assigned(LModel) then
             begin
@@ -350,7 +350,7 @@ var
   LPartCreationPolicyAttribute: PartCreationPolicyAttribute;
 begin
   Result := RegisterType(ClassType.Handle);
-  if ClassType.TryGetAttributeOfType<PartCreationPolicyAttribute>(LPartCreationPolicyAttribute)
+  if ClassType.TryGetAttribute<PartCreationPolicyAttribute>(LPartCreationPolicyAttribute)
     and (LPartCreationPolicyAttribute.Policy = cpShared) then
   begin
     Result.AsSingleton(TRefCounting.True);
@@ -380,7 +380,7 @@ begin
           begin
             LRegistration := RegisterClass(ClassType);
 
-            LInheritedExportAttribute := LInterfaceType.GetAttributeOfType<InheritedExportAttribute>;
+            LInheritedExportAttribute := LInterfaceType.GetAttribute<InheritedExportAttribute>;
             if LInheritedExportAttribute.Name = '' then
               LRegistration.Implements(LInterfaceType.Handle)
             else
@@ -402,13 +402,13 @@ begin
   LParentType := ClassType.BaseType;
   while Assigned(LParentType) do
   begin
-    if LParentType.HasAttributeOfType<InheritedExportAttribute> then
+    if LParentType.HasAttribute<InheritedExportAttribute> then
     begin
       if ComponentRegistry.FindOne(ClassType.Handle) = nil then
       begin
         LRegistration := RegisterType(ClassType.Handle);
 
-        LInheritedExportAttribute := LParentType.GetAttributeOfType<InheritedExportAttribute>;
+        LInheritedExportAttribute := LParentType.GetAttribute<InheritedExportAttribute>;
 
         if LInheritedExportAttribute.Name = '' then
           LRegistration.Implements(LParentType.Handle)

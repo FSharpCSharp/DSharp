@@ -258,6 +258,7 @@ type
   public
     constructor Create; overload;
     constructor Create(Comparer: IComparer<T>); overload;
+    constructor Create(Comparison: TComparison<T>); overload;
     constructor Create(Values: IEnumerable<T>); overload;
     constructor Create(const Values: array of T); overload;
 
@@ -551,7 +552,7 @@ end;
 
 constructor TListBase<T>.Create;
 begin
-  Create(TComparer<T>.Default);
+  Create(TComparer<T>.Default());
 end;
 
 constructor TListBase<T>.Create(Comparer: IComparer<T>);
@@ -562,6 +563,11 @@ begin
   begin
     FComparer := TComparer<T>.Default;
   end;
+end;
+
+constructor TListBase<T>.Create(Comparison: TComparison<T>);
+begin
+  Create(TComparer<T>.Construct(Comparison));
 end;
 
 constructor TListBase<T>.Create(Values: IEnumerable<T>);

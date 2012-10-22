@@ -133,7 +133,7 @@ begin
         begin
           LValidationContext := TValidationContext.Create(LBinding.Source);
           LValidationContext.MemberName := LMember.Name;
-          for LAttribute in LMember.GetAttributes<ValidationAttribute> do
+          for LAttribute in LMember.GetCustomAttributes<ValidationAttribute> do
           begin
             Result := LAttribute.IsValid(LBinding.SourceProperty.Value, LValidationContext);
             if not Result.IsValid then

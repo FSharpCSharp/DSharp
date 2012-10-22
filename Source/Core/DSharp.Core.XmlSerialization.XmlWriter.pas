@@ -173,7 +173,7 @@ begin
     begin
       if (LProperty.Visibility = mvPublished)
         and LProperty.TryGetValue(LObject, LValue)
-        and not LProperty.HasAttribute<XmlIgnoreAttribute> then
+        and not LProperty.IsDefined<XmlIgnoreAttribute> then
       begin
         if not (LProperty is TRttiInstanceProperty)
           or not LProperty.PropertyType.IsOrdinal
@@ -181,7 +181,7 @@ begin
           and (TRttiInstanceProperty(LProperty).Default <> LValue.AsOrdinal))
           or (LProperty.PropertyType.IsInstance and (LValue.AsObject <> nil)) then
         begin
-          if LProperty.TryGetAttribute<XmlElementAttribute>(LAttribute) then
+          if LProperty.TryGetCustomAttribute<XmlElementAttribute>(LAttribute) then
           begin
             WriteStartElement(LAttribute.ElementName);
             WriteValue(LValue);
@@ -201,11 +201,11 @@ begin
     begin
       if (LField.Visibility = mvPublished)
         and LField.TryGetValue(LObject, LValue)
-        and not LField.HasAttribute<XmlIgnoreAttribute> then
+        and not LField.IsDefined<XmlIgnoreAttribute> then
       begin
         if not LField.FieldType.IsInstance or (LValue.AsObject <> nil) then
         begin
-          if LField.TryGetAttribute<XmlElementAttribute>(LAttribute) then
+          if LField.TryGetCustomAttribute<XmlElementAttribute>(LAttribute) then
           begin
             WriteStartElement(LAttribute.ElementName);
             WriteValue(LValue);

@@ -109,7 +109,7 @@ begin
   LProperty := AViewModel.GetProperty(APropertyName);
   if Assigned(LProperty) then
   begin
-    for LAttribute in LProperty.GetAttributes<ValidationAttribute> do
+    for LAttribute in LProperty.GetCustomAttributes<ValidationAttribute> do
     begin
       ABinding.ValidationRules.Add(LAttribute.ValidationRuleClass.Create);
     end;

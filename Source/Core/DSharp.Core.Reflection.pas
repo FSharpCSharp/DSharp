@@ -235,6 +235,32 @@ type
 
   {$REGION 'Documentation'}
   ///	<summary>
+  ///	  Extends <see cref="Rtti.TRttiObject">TRttiObject</see> for easier RTTI
+  ///	  use.
+  ///	</summary>
+  {$ENDREGION}
+  TRttiObjectHelper = class helper for TRttiObject
+  public
+    function GetAttributeOfType<T: TCustomAttribute>: T; deprecated 'use GetCustomAttribute instead';
+    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>; deprecated 'use GetCustomAttributes instead';
+
+    function HasAttributeOfType<T: TCustomAttribute>: Boolean; deprecated 'use IsDefined instead';
+
+    function TryGetAttributeOfType<T: TCustomAttribute>(out AAttribute: T): Boolean; deprecated 'use TryGetCustomAttribute instead';
+
+    function GetCustomAttribute<T: TCustomAttribute>: T;
+    function GetCustomAttributes: TArray<TCustomAttribute>; overload;
+    function GetCustomAttributes(
+      attributeType: TClass): TArray<TCustomAttribute>; overload;
+    function GetCustomAttributes<T: TCustomAttribute>: TArray<T>; overload;
+
+    function IsDefined<T: TCustomAttribute>: Boolean; overload;
+
+    function TryGetCustomAttribute<T: TCustomAttribute>(out AAttribute: T): Boolean;
+  end;
+
+  {$REGION 'Documentation'}
+  ///	<summary>
   ///	  Extends <see cref="Rtti.TRttiField">TRttiField</see> for easier RTTI
   ///	  use.
   ///	</summary>
@@ -298,6 +324,16 @@ type
     function GetMemberIsWritable: Boolean;
     function GetMemberRttiType: TRttiType;
   public
+    function GetCustomAttribute<T: TCustomAttribute>(Inherit: Boolean = False): T;
+    function GetCustomAttributes(
+      Inherit: Boolean = False): TArray<TCustomAttribute>; overload;
+    function GetCustomAttributes(attributeType: TClass;
+      Inherit: Boolean = False): TArray<TCustomAttribute>; overload;
+    function GetCustomAttributes<T: TCustomAttribute>(
+      Inherit: Boolean = False): TArray<T>; overload;
+
+    function IsDefined<T: TCustomAttribute>(Inherit: Boolean = False): Boolean;
+
     property IsReadable: Boolean read GetMemberIsReadable;
     property IsWritable: Boolean read GetMemberIsWritable;
     property RttiType: TRttiType read GetMemberRttiType;
@@ -315,30 +351,6 @@ type
   public
     function Format(const Args: array of TValue; SkipSelf: Boolean = True): string;
     property ParameterCount: Integer read GetParameterCount;
-  end;
-
-  {$REGION 'Documentation'}
-  ///	<summary>
-  ///	  Extends <see cref="Rtti.TRttiObject">TRttiObject</see> for easier RTTI
-  ///	  use.
-  ///	</summary>
-  {$ENDREGION}
-  TRttiObjectHelper = class helper for TRttiObject
-  public
-    function GetAttributeOfType<T: TCustomAttribute>: T; deprecated 'use GetAttribute<T> instead';
-    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>; deprecated 'use GetAttributes<T> instead';
-
-    function HasAttributeOfType<T: TCustomAttribute>: Boolean; deprecated 'use HasAttribute<T> instead';
-
-    function TryGetAttributeOfType<T: TCustomAttribute>(out AAttribute: T): Boolean; deprecated 'use TryGetAttribute<T> instead';
-
-    function GetAttribute<T: TCustomAttribute>: T;
-    function GetAttributes: TArray<TCustomAttribute>; overload;
-    function GetAttributes<T: TCustomAttribute>: TArray<T>; overload;
-
-    function HasAttribute<T: TCustomAttribute>: Boolean;
-
-    function TryGetAttribute<T: TCustomAttribute>(out AAttribute: T): Boolean;
   end;
 
   {$REGION 'Documentation'}
@@ -1648,6 +1660,72 @@ begin
   end;
 end;
 
+{ TRttiObjectHelper }
+
+function TRttiObjectHelper.GetCustomAttribute<T>: T;
+begin
+  Result := Default(T);
+  for Result in GetCustomAttributes<T> do
+    Break;
+end;
+
+function TRttiObjectHelper.GetAttributeOfType<T>: T;
+begin
+  Result := GetCustomAttribute<T>;
+end;
+
+function TRttiObjectHelper.GetCustomAttributes: TArray<TCustomAttribute>;
+begin
+  Result := GetCustomAttributes<TCustomAttribute>;
+end;
+
+function TRttiObjectHelper.GetCustomAttributes(
+  attributeType: TClass): TArray<TCustomAttribute>;
+var
+  LAttribute: TCustomAttribute;
+begin
+  SetLength(Result, 0);
+  for LAttribute in GetAttributes do
+  begin
+    if LAttribute.InheritsFrom(attributeType) then
+    begin
+      SetLength(Result, Length(Result) + 1);
+      Result[High(Result)] := LAttribute;
+    end;
+  end;
+end;
+
+function TRttiObjectHelper.GetCustomAttributes<T>: TArray<T>;
+begin
+  Result := TArray<T>(GetCustomAttributes(TClass(T)));
+end;
+
+function TRttiObjectHelper.GetAttributesOfType<T>: TArray<T>;
+begin
+  Result := GetCustomAttributes<T>;
+end;
+
+function TRttiObjectHelper.IsDefined<T>: Boolean;
+begin
+  Result := GetCustomAttribute<T> <> nil;
+end;
+
+function TRttiObjectHelper.HasAttributeOfType<T>: Boolean;
+begin
+  Result := IsDefined<T>;
+end;
+
+function TRttiObjectHelper.TryGetCustomAttribute<T>(out AAttribute: T): Boolean;
+begin
+  AAttribute := GetCustomAttribute<T>;
+  Result := Assigned(AAttribute);
+end;
+
+function TRttiObjectHelper.TryGetAttributeOfType<T>(out AAttribute: T): Boolean;
+begin
+  Result := TryGetCustomAttribute<T>(AAttribute);
+end;
+
 { TRttiFieldHelper }
 
 function TRttiFieldHelper.TryGetValue(Instance: Pointer;
@@ -1725,6 +1803,51 @@ end;
 
 { TRttiMemberHelper }
 
+function TRttiMemberHelper.GetCustomAttribute<T>(Inherit: Boolean): T;
+begin
+  Result := Default(T);
+  for Result in GetCustomAttributes<T>(Inherit) do
+    Break;
+end;
+
+function TRttiMemberHelper.GetCustomAttributes(
+  Inherit: Boolean): TArray<TCustomAttribute>;
+begin
+  Result := GetCustomAttributes(TCustomAttribute, Inherit);
+end;
+
+function TRttiMemberHelper.GetCustomAttributes(attributeType: TClass;
+  Inherit: Boolean): TArray<TCustomAttribute>;
+var
+  LMethod: TRttiMethod;
+begin
+  Result := inherited GetCustomAttributes(attributeType);
+
+  if Inherit and Assigned(Parent.BaseType) then
+  begin
+    // only support methods for now
+    if Self is TRttiMethod then
+    begin
+      for LMethod in Parent.BaseType.GetMethods do
+      begin
+        if (LMethod <> Self) and (LMethod.Name = Self.Name)
+          and (LMethod.ReturnType = TRttiMethod(Self).ReturnType)
+          and TRttiParameter.Equals(LMethod.GetParameters,
+            TRttiMethod(Self).GetParameters) then
+        begin
+          Result := TArrayHelper.Concat<TCustomAttribute>([Result,
+            LMethod.GetCustomAttributes(attributeType, Inherit)]);
+        end;
+      end;
+    end
+  end;
+end;
+
+function TRttiMemberHelper.GetCustomAttributes<T>(Inherit: Boolean): TArray<T>;
+begin
+  Result := TArray<T>(GetCustomAttributes(TClass(T), Inherit));
+end;
+
 function TRttiMemberHelper.GetMemberIsReadable: Boolean;
 begin
   Result := True;
@@ -1772,6 +1895,11 @@ begin
   end;
 end;
 
+function TRttiMemberHelper.IsDefined<T>(Inherit: Boolean): Boolean;
+begin
+  Result := GetCustomAttribute<T>(Inherit) <> nil;
+end;
+
 { TRttiMethodHelper }
 
 function TRttiMethodHelper.Format(const Args: array of TValue;
@@ -1797,74 +1925,6 @@ begin
   Result := Length(GetParameters());
 end;
 
-{ TRttiObjectHelper }
-
-function TRttiObjectHelper.GetAttribute<T>: T;
-var
-  LAttribute: TCustomAttribute;
-begin
-  Result := Default(T);
-  for LAttribute in GetAttributes do
-  begin
-    if LAttribute.InheritsFrom(T) then
-    begin
-      Result := T(LAttribute);
-      Break;
-    end;
-  end;
-end;
-
-function TRttiObjectHelper.GetAttributeOfType<T>: T;
-begin
-  Result := GetAttribute<T>;
-end;
-
-function TRttiObjectHelper.GetAttributes: TArray<TCustomAttribute>;
-begin
-  Result := inherited GetAttributes;
-end;
-
-function TRttiObjectHelper.GetAttributes<T>: TArray<T>;
-var
-  LAttribute: TCustomAttribute;
-begin
-  SetLength(Result, 0);
-  for LAttribute in GetAttributes do
-  begin
-    if LAttribute.InheritsFrom(T) then
-    begin
-      SetLength(Result, Length(Result) + 1);
-      Result[High(Result)] := T(LAttribute);
-    end;
-  end;
-end;
-
-function TRttiObjectHelper.GetAttributesOfType<T>: TArray<T>;
-begin
-  Result := GetAttributes<T>;
-end;
-
-function TRttiObjectHelper.HasAttribute<T>: Boolean;
-begin
-  Result := GetAttribute<T> <> nil;
-end;
-
-function TRttiObjectHelper.HasAttributeOfType<T>: Boolean;
-begin
-  Result := HasAttribute<T>;
-end;
-
-function TRttiObjectHelper.TryGetAttribute<T>(out AAttribute: T): Boolean;
-begin
-  AAttribute := GetAttribute<T>;
-  Result := Assigned(AAttribute);
-end;
-
-function TRttiObjectHelper.TryGetAttributeOfType<T>(out AAttribute: T): Boolean;
-begin
-  Result := TryGetAttribute<T>(AAttribute);
-end;
-
 { TRttiParameterHelper }
 
 class function TRttiParameterHelper.Equals(const Left,
@@ -1877,7 +1937,8 @@ begin
   begin
     for i := Low(Left) to High(Left) do
     begin
-      if Left[i].ParamType <> Right[i].ParamType then
+      if (Left[i].ParamType <> Right[i].ParamType)
+        or (Left[i].Flags <> Right[i].Flags) then
       begin
         Result := False;
         Break;

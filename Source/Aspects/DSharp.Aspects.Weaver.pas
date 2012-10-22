@@ -137,14 +137,14 @@ begin
   begin
     if LType.IsInstance or LType.IsInterface then
     begin
-      for LAspectAttribute in LType.GetAttributes<AspectAttribute> do
+      for LAspectAttribute in LType.GetCustomAttributes<AspectAttribute> do
       begin
         AddAspect(LType, LAspectAttribute.AspectClass, '.*');
       end;
 
       for LMethod in LType.GetMethods do
       begin
-        for LAspectAttribute in LMethod.GetAttributes<AspectAttribute> do
+        for LAspectAttribute in LMethod.GetCustomAttributes<AspectAttribute> do
         begin
           AddAspect(LType, LAspectAttribute.AspectClass, LMethod.Name);
         end;

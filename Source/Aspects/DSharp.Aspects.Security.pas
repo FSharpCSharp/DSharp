@@ -70,8 +70,8 @@ class procedure TSecurityAspect.DoBefore(Instance: TObject; Method: TRttiMethod;
 var
   LAttribute: SecurityAttribute;
 begin
-  if Method.TryGetAttribute<SecurityAttribute>(LAttribute)
-    or Method.Parent.TryGetAttribute<SecurityAttribute>(LAttribute) then
+  if Method.TryGetCustomAttribute<SecurityAttribute>(LAttribute)
+    or Method.Parent.TryGetCustomAttribute<SecurityAttribute>(LAttribute) then
   begin
     DoInvoke := Composition.Get<IWindowManager>.InputBox('Password', 'Enter password', '', True) =
       LAttribute.Password;

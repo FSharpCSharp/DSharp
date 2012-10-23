@@ -38,6 +38,7 @@ interface
 {$ENDIF}
 
 uses
+  DSharp.Core.MethodIntercept,
   Generics.Collections,
   Rtti,
 {$IF CompilerVersion = 22}
@@ -46,34 +47,14 @@ uses
   TypInfo;
 
 type
-  TVirtualInterfaceInvokeEvent = reference to procedure(Method: TRttiMethod;
-    const Args: TArray<TValue>; out Result: TValue);
-
   TVirtualInterface = class(TInterfacedObject, IInterface)
-  private
-    type
-      TMethodIntercept = class
-      private
-        FImplementation: TMethodImplementation;
-        FMethod: TRttiMethod;
-        function GetCodeAddress: Pointer;
-        function GetVirtualIndex: SmallInt;
-      public
-        constructor Create(const Method: TRttiMethod;
-          const Callback: TMethodImplementationCallback);
-        destructor Destroy; override;
-        property CodeAddress: Pointer read GetCodeAddress;
-        property VirtualIndex: SmallInt read GetVirtualIndex;
-      end;
-    class var
-      FContext: TRttiContext;
   private
     FVirtualMethodTable: Pointer;
     FInstance: IInterface;
     FInterfaceID: TGUID;
-    FMethodIntercepts: TObjectList<TMethodIntercept>;
-    FOnInvoke: TVirtualInterfaceInvokeEvent;
-
+    FMethodIntercepts: TMethodIntercepts;
+    FOnInvoke: TMethodInvokeEvent;
+    class var FContext: TRttiContext;
     function Virtual_AddRef: Integer; stdcall;
     function Virtual_Release: Integer; stdcall;
     function VirtualQueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
@@ -88,11 +69,11 @@ type
   public
     constructor Create(TypeInfo: PTypeInfo); overload;
     constructor Create(TypeInfo: PTypeInfo;
-      InvokeEvent: TVirtualInterfaceInvokeEvent); overload;
+      InvokeEvent: TMethodInvokeEvent); overload;
     destructor Destroy; override;
     property Instance: IInterface read FInstance write FInstance;
     property InterfaceID: TGUID read FInterfaceID;
-    property OnInvoke: TVirtualInterfaceInvokeEvent read FOnInvoke write FOnInvoke;
+    property OnInvoke: TMethodInvokeEvent read FOnInvoke write FOnInvoke;
   end;
 
 implementation
@@ -130,7 +111,7 @@ begin
     FMethodIntercepts.Add(TMethodIntercept.Create(LMethod, DoInvoke));
   end;
 
-  FVirtualMethodTable := AllocMem(SizeOf(Pointer)* (LMaxVirtualIndex + 1));
+  FVirtualMethodTable := AllocMem(SizeOf(Pointer) * (LMaxVirtualIndex + 1));
 
   PVtable(FVirtualMethodTable)^[0] := @TVirtualInterface.VirtualQueryInterface;
   PVtable(FVirtualMethodTable)^[1] := @TVirtualInterface.Virtual_AddRef;
@@ -151,7 +132,7 @@ begin
 end;
 
 constructor TVirtualInterface.Create(TypeInfo: PTypeInfo;
-  InvokeEvent: TVirtualInterfaceInvokeEvent);
+  InvokeEvent: TMethodInvokeEvent);
 begin
   Create(TypeInfo);
   FOnInvoke := InvokeEvent;
@@ -172,7 +153,7 @@ procedure TVirtualInterface.DoInvoke(UserData: Pointer;
 begin
   if Assigned(FOnInvoke) then
   begin
-    FOnInvoke(TMethodIntercept(UserData).FMethod, Args, Result);
+    FOnInvoke(TMethodIntercept(UserData).Method, Args, Result);
   end;
 end;
 
@@ -228,31 +209,6 @@ end;
 function TVirtualInterface._Release: Integer;
 begin
   Result := inherited;
-end;
-
-{ TVirtualInterface.TMethodIntercept }
-
-constructor TVirtualInterface.TMethodIntercept.Create(
-  const Method: TRttiMethod; const Callback: TMethodImplementationCallback);
-begin
-  FImplementation := Method.CreateImplementation(Self, Callback);
-  FMethod := Method;
-end;
-
-destructor TVirtualInterface.TMethodIntercept.Destroy;
-begin
-  FImplementation.Free();
-  inherited;
-end;
-
-function TVirtualInterface.TMethodIntercept.GetCodeAddress: Pointer;
-begin
-  Result := FImplementation.CodeAddress;
-end;
-
-function TVirtualInterface.TMethodIntercept.GetVirtualIndex: SmallInt;
-begin
-  Result := FMethod.VirtualIndex;
 end;
 
 end.

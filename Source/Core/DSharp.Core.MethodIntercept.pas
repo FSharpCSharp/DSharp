@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -27,26 +27,60 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Core.Utils;
+unit DSharp.Core.MethodIntercept;
 
 interface
 
-function IfThen(AValue: Boolean; const ATrue: Boolean; const AFalse: Boolean = False): Boolean; overload; inline;
-function Supports(const Instance: TObject; const IID: TGUID; out Intf): Boolean;
+uses
+  Generics.Collections,
+  Rtti;
+
+type
+  TMethodInvokeEvent = reference to procedure(Method: TRttiMethod;
+    const Args: TArray<TValue>; out Result: TValue);
+
+  TMethodIntercept = class
+  private
+    FImplementation: TMethodImplementation;
+    FMethod: TRttiMethod;
+    function GetCodeAddress: Pointer;
+    function GetVirtualIndex: SmallInt;
+  public
+    constructor Create(const Method: TRttiMethod;
+      const Callback: TMethodImplementationCallback);
+    destructor Destroy; override;
+    property CodeAddress: Pointer read GetCodeAddress;
+    property Method: TRttiMethod read FMethod;
+    property VirtualIndex: SmallInt read GetVirtualIndex;
+  end;
+
+  TMethodIntercepts = TObjectList<TMethodIntercept>;
 
 implementation
 
-function IfThen(AValue: Boolean; const ATrue: Boolean; const AFalse: Boolean): Boolean;
+{ TMethodIntercept }
+
+constructor TMethodIntercept.Create(const Method: TRttiMethod;
+  const Callback: TMethodImplementationCallback);
 begin
-  if AValue then
-    Result := ATrue
-  else
-    Result := AFalse;
+  FImplementation := Method.CreateImplementation(Self, Callback);
+  FMethod := Method;
 end;
 
-function Supports(const Instance: TObject; const IID: TGUID; out Intf): Boolean;
+destructor TMethodIntercept.Destroy;
 begin
-  Result := Assigned(Instance) and Instance.GetInterface(IID, Intf);
+  FImplementation.Free;
+  inherited;
+end;
+
+function TMethodIntercept.GetCodeAddress: Pointer;
+begin
+  Result := FImplementation.CodeAddress;
+end;
+
+function TMethodIntercept.GetVirtualIndex: SmallInt;
+begin
+  Result := FMethod.VirtualIndex;
 end;
 
 end.

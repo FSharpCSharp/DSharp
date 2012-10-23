@@ -103,8 +103,10 @@ type
     procedure Delete(const Index: NativeInt);
     procedure DeleteRange(const Index, Count: NativeInt);
     function Extract(const Value: TValue): TValue;
+{$IF CompilerVersion > 21}
     function ExtractRange(const Values: TArray<TValue>): TArray<TValue>; overload;
     function ExtractRange(Values: IEnumerable): TArray<TValue>; overload;
+{$IFEND}
     function First: TValue;
     function GetItem(const Index: NativeInt): TValue;
     function GetOnCollectionChanged: IEvent;
@@ -277,8 +279,10 @@ type
     function Extract(const Value: T): T; overload; virtual;
     function Extract(const Value: TValue): TValue; overload;
     function ExtractRange(const Values: TArray<T>): TArray<T>; overload;
+{$IF CompilerVersion > 21}
     function ExtractRange(const Values: TArray<TValue>): TArray<TValue>; overload;
     function ExtractRange(Values: IEnumerable): TArray<TValue>; overload;
+{$IFEND}
     function ExtractRange(Values: IEnumerable<T>): TArray<T>; overload;
     function First: T; virtual;
     function IndexOf(const Value: T): NativeInt; overload; virtual;
@@ -383,6 +387,10 @@ type
 
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
   end;
+
+{$IF CompilerVersion < 22}
+  EInvalidOpException = class(Exception);
+{$IFEND}
 
 resourcestring
   InvalidOperation_EnumFailedVersion = 'Collection was modified; enumeration operation may not execute.';
@@ -675,6 +683,7 @@ begin
   end;
 end;
 
+{$IF CompilerVersion > 21}
 function TListBase<T>.ExtractRange(const Values: TArray<TValue>): TArray<TValue>;
 var
   i: Integer;
@@ -702,6 +711,7 @@ begin
     Inc(i);
   end;
 end;
+{$IFEND}
 
 function TListBase<T>.ExtractRange(Values: IEnumerable<T>): TArray<T>;
 var

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -31,43 +31,71 @@ unit DSharp.Core.DuckTyping;
 
 interface
 
-uses
-  Rtti,
-  SysUtils;
-
 type
   Duck<T: IInterface> = record
   private
     FInstance: T;
+    function GetInstance: TObject;
+    procedure SetInstance(const Value: TObject);
   public
     class operator Implicit(const Value: TObject): Duck<T>;
     class operator Implicit(const Value: Duck<T>): T;
+
+    property Instance: TObject read GetInstance write SetInstance;
   end;
 
 implementation
 
 uses
   DSharp.Core.Dynamics,
-  DSharp.Core.Reflection;
+  DSharp.Core.Reflection,
+  Rtti,
+  SysUtils;
 
 { Duck<T> }
 
 class operator Duck<T>.Implicit(const Value: TObject): Duck<T>;
-var
-  LType: TRttiType;
-  LVirtualInterface: IInterface;
 begin
-  LType := GetRttiType(TypeInfo(T));
-  if LType is TRttiInterfaceType then
+  Result.Instance := Value;
+end;
+
+function Duck<T>.GetInstance: TObject;
+begin
+  if Assigned(FInstance) then
   begin
-    LVirtualInterface := TVirtualObjectInterface.Create(LType.Handle, Value);
-    Supports(LVirtualInterface, TRttiInterfaceType(LType).GUID, Result.FInstance);
+    Result := (FInstance as TVirtualObjectInterface).Instance;
+  end
+  else
+  begin
+    Result := nil;
   end;
 end;
 
 class operator Duck<T>.Implicit(const Value: Duck<T>): T;
 begin
   Result := Value.FInstance;
+end;
+
+procedure Duck<T>.SetInstance(const Value: TObject);
+var
+  LType: TRttiType;
+  LVirtualInterface: TVirtualObjectInterface;
+begin
+  LVirtualInterface := (FInstance as TVirtualObjectInterface);
+  if Assigned(LVirtualInterface)
+    and (LVirtualInterface.Instance.ClassType = Value.ClassType) then
+  begin
+    LVirtualInterface.Instance := Value;
+  end
+  else
+  begin
+    LType := GetRttiType(TypeInfo(T));
+    if LType is TRttiInterfaceType then
+    begin
+      LVirtualInterface := TVirtualObjectInterface.Create(LType.Handle, Value);
+      Supports(LVirtualInterface, TRttiInterfaceType(LType).GUID, FInstance);
+    end;
+  end;
 end;
 
 end.

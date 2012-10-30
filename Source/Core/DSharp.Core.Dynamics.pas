@@ -52,6 +52,8 @@ type
   public
     constructor Create(TypeInfo: PTypeInfo; Instance: TObject);
     destructor Destroy; override;
+
+    property Instance: TObject read FInstance write FInstance;
   end;
 
   TVirtualInterfaceProxy<T: IInterface> = class(TVirtualInterface)

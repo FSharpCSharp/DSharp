@@ -1339,7 +1339,7 @@ begin
   end else
   if Left.IsString and Right.IsString then
   begin
-    Result := SysUtils.CompareStr(Left.AsString, Right.AsString);
+    Result := SysUtils.CompareText(Left.AsString, Right.AsString);
   end else
   begin
     Result := 0;

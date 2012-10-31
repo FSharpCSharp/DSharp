@@ -63,7 +63,8 @@ type
   private
     FDictionary: TDictionary<T, Integer>;
   public
-    constructor Create(const AComparer: IEqualityComparer<T>);
+    constructor Create; overload;
+    constructor Create(const AComparer: IEqualityComparer<T>); overload;
     destructor Destroy; override;
     function Add(const Value: T): Boolean;
     function Contains(const Value: T): Boolean;
@@ -1062,6 +1063,11 @@ begin
 end;
 
 { THashSet<T> }
+
+constructor THashSet<T>.Create;
+begin
+  Create(nil);
+end;
 
 constructor THashSet<T>.Create(const AComparer: IEqualityComparer<T>);
 begin

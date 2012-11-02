@@ -265,7 +265,7 @@ begin
 end;
 
 procedure PassArg(Par: TRttiParameter; Params: PParameters; var Dest: TValue;
-  CC: TCallConv; const Index: Integer; var Offset: Byte);
+  CC: TCallConv; var Index: Integer; var Offset: Byte);
 const
   PointerSize = SizeOf(Pointer);
 begin
@@ -282,28 +282,42 @@ begin
 {$ENDIF}
 
 {$IFDEF CPUX86}
-  if (CC = ccReg) and (Index < 2) then
-  begin
-    if Par.Flags * [pfVar, pfConst, pfOut] <> [] then
+  case Par.ParamType.Handle.Kind of
+    tkMethod:
     begin
-      Dest := TValue.From<Pointer>(Pointer(Params.Registers[Index + 1]));
-    end
-    else
-    begin
-      TValue.Make(NativeInt(Params.Registers[Index + 1]), Par.ParamType.Handle, Dest);
-    end
-  end
-  else
-  begin
-    Dec(Offset, PointerSize);
-    if Par.Flags * [pfVar, pfConst, pfOut] <> [] then
-    begin
-      Dest := TValue.From<Pointer>(PPointer(@Params.Stack[Offset])^);
-    end
-    else
-    begin
+      Dec(Offset, SizeOf(TMethod));
       TValue.Make(Pointer(@Params.Stack[Offset]), Par.ParamType.Handle, Dest);
     end;
+    tkInt64:
+    begin
+      Dec(Offset, SizeOf(Int64));
+      TValue.Make(Pointer(@Params.Stack[Offset]), Par.ParamType.Handle, Dest);
+    end;
+  else
+    if (CC = ccReg) and (Index < 2) then
+    begin
+      if Par.Flags * [pfVar, pfConst, pfOut] <> [] then
+      begin
+        Dest := TValue.From<Pointer>(Pointer(Params.Registers[Index + 1]));
+      end
+      else
+      begin
+        TValue.Make(NativeInt(Params.Registers[Index + 1]), Par.ParamType.Handle, Dest);
+      end;
+    end
+    else
+    begin
+      Dec(Offset, PointerSize);
+      if Par.Flags * [pfVar, pfConst, pfOut] <> [] then
+      begin
+        Dest := TValue.From<Pointer>(PPointer(@Params.Stack[Offset])^);
+      end
+      else
+      begin
+        TValue.Make(Pointer(@Params.Stack[Offset]), Par.ParamType.Handle, Dest);
+      end;
+    end;
+    Inc(Index);
   end;
 {$ENDIF}
 end;
@@ -470,6 +484,7 @@ end;
 {$ELSE}
   i: Integer;
   LArgs: TArray<TValue>;
+  LIndex: Integer;
   LOffset: Byte;
 begin
   if FEnabled and (FMethods.Count > 0) then
@@ -482,10 +497,11 @@ begin
 {$ENDIF}
     SetLength(LArgs, Length(FParameters) + 1);
 
+    LIndex := 0;
     for i := Low(FParameters) to High(FParameters) do
     begin
       PassArg(FParameters[i], Params, LArgs[i + 1],
-        FCallingConvention, i, LOffset);
+        FCallingConvention, LIndex, LOffset);
     end;
 
     for LMethod in FMethods do

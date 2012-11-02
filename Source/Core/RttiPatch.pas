@@ -81,12 +81,15 @@ type
   PVtable = ^TVtable;
   TVtable = array[0..MaxInt div 4 - 1] of Pointer;
 
-{$IF CompilerVersion = 21}
   TValueHelper = record helper for TValue
+{$IF CompilerVersion = 21}
     function Cast(ATypeInfo: PTypeInfo): TValue;
     function TryCastFix(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
+{$IFEND}
+    function TryAsOrdinalFix(out AResult: Int64): Boolean;
   end;
 
+{$IF CompilerVersion = 21}
 const
   GUID_NULL: TGUID = '{00000000-0000-0000-0000-000000000000}';
 
@@ -135,6 +138,41 @@ begin
     Result := TryCast(ATypeInfo, AResult);
 end;
 {$IFEND}
+
+function GetInlineSize(TypeInfo: PTypeInfo): Integer;
+begin
+  if TypeInfo = nil then
+    Exit(0);
+
+  case TypeInfo^.Kind of
+    tkInteger, tkEnumeration, tkChar, tkWChar:
+      case GetTypeData(TypeInfo)^.OrdType of
+        otSByte, otUByte: Exit(1);
+        otSWord, otUWord: Exit(2);
+        otSLong, otULong: Exit(4);
+      else
+        Exit(0);
+      end;
+    tkInt64: Exit(8);
+  else
+    Exit(0);
+  end;
+end;
+
+function TValueHelper.TryAsOrdinalFix(out AResult: Int64): Boolean;
+begin
+  Result := IsOrdinal;
+  if Result then
+  begin
+    case GetInlineSize(TypeInfo) of
+      1: AResult := Self.FData.FAsSByte;
+      2: AResult := Self.FData.FAsSWord;
+      4: AResult := Self.FData.FAsSLong;
+      else
+        AResult := Self.FData.FAsSInt64;
+    end;
+  end;
+end;
 
 procedure TInstanceMethodHelper.InstanceMethod;
 begin
@@ -521,6 +559,8 @@ begin
   end;
 end;
 
+{--------------------------------------------------------------------------------------------------}
+
 procedure PatchRtti;
 var
   Ctx: TRttiContext;
@@ -566,6 +606,9 @@ begin
   // Fix TRttiPackage.MakeTypeLookupTable
   RedirectFunction(TRttiPackage.GetMakeTypeLookupTableAddress, @TRttiPackage.MakeTypeLookupTableFix);
 {$IFEND}
+
+  // Fix TValue.TryAsOrdinal
+  RedirectFunction(@TValue.TryAsOrdinal, @TValue.TryAsOrdinalFix);
 
 {$IF CompilerVersion = 22}
   // Fix TRttiMethod.GetInvokeInfo

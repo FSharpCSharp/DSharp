@@ -208,7 +208,7 @@ begin
       Result := LColumnDefinition.ValuePropertyExpression.Value;
     end else
     begin
-      Result := '';
+      Result := TValue.Empty;
     end;
   end
   else

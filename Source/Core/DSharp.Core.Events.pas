@@ -270,7 +270,7 @@ const
   PointerSize = SizeOf(Pointer);
 begin
 {$IFDEF CPUX64}
-  if Par.Flags * [pfVar, pfConst, pfOut] <> [] then
+  if Par.Flags * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [] then
   begin
     Dest := TValue.From<Pointer>(PPointer(@Params.Stack[Offset])^);
   end
@@ -278,7 +278,10 @@ begin
   begin
     TValue.Make(Pointer(@Params.Stack[Offset]), Par.ParamType.Handle, Dest);
   end;
-  Inc(Offset, PointerSize);
+  if Par.ParamType.Handle.Kind = tkMethod then
+    Inc(Offset, SizeOf(TMethod))
+  else
+    Inc(Offset, PointerSize);
 {$ENDIF}
 
 {$IFDEF CPUX86}
@@ -296,7 +299,7 @@ begin
   else
     if (CC = ccReg) and (Index < 2) then
     begin
-      if Par.Flags * [pfVar, pfConst, pfOut] <> [] then
+      if Par.Flags * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [] then
       begin
         Dest := TValue.From<Pointer>(Pointer(Params.Registers[Index + 1]));
       end
@@ -308,7 +311,7 @@ begin
     else
     begin
       Dec(Offset, PointerSize);
-      if Par.Flags * [pfVar, pfConst, pfOut] <> [] then
+      if Par.Flags * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [] then
       begin
         Dest := TValue.From<Pointer>(PPointer(@Params.Stack[Offset])^);
       end

@@ -61,6 +61,8 @@ begin
           SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
           SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+        else
+          SiMain.EnterMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
       end
       else
         SiMain.EnterMethod(ALogEntry.Text);
@@ -73,6 +75,8 @@ begin
           SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
           SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+        else
+          SiMain.LeaveMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
       end
       else
         SiMain.LeaveMethod(ALogEntry.Text);

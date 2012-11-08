@@ -61,6 +61,8 @@ begin
           CodeSite.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
           CodeSite.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+        else
+          CodeSite.EnterMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
       end
       else
         CodeSite.EnterMethod(ALogEntry.Text);
@@ -73,6 +75,8 @@ begin
           CodeSite.ExitMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
         else if ALogEntry.Value.IsObject then
           CodeSite.ExitMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+        else
+          CodeSite.ExitMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
       end
       else
         CodeSite.ExitMethod(ALogEntry.Text);

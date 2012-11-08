@@ -123,7 +123,7 @@ var
 begin
   FExpectations := TObjectList<TExpectation>.Create(True);
   FState := msExecuting;
-  LType := GetRttiType(TypeInfo(T));
+  LType := GetRttiType(System.TypeInfo(T));
   if LType is TRttiInstanceType then
   begin
     CreateObjectMock(LType);

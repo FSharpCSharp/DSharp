@@ -54,6 +54,7 @@ type
     FInterfaceID: TGUID;
     FMethodIntercepts: TMethodIntercepts;
     FOnInvoke: TMethodInvokeEvent;
+    FTypeInfo: PTypeInfo;
     class var FContext: TRttiContext;
     function Virtual_AddRef: Integer; stdcall;
     function Virtual_Release: Integer; stdcall;
@@ -74,6 +75,7 @@ type
     property Instance: IInterface read FInstance write FInstance;
     property InterfaceID: TGUID read FInterfaceID;
     property OnInvoke: TMethodInvokeEvent read FOnInvoke write FOnInvoke;
+    property TypeInfo: PTypeInfo read FTypeInfo;
   end;
 
 implementation
@@ -95,6 +97,7 @@ type
   PVtable = ^TVtable;
   TVtable = array[0..MaxInt div SizeOf(Pointer) - 1] of Pointer;
 begin
+  FTypeInfo := TypeInfo;
   LType := FContext.GetType(TypeInfo);
   FInterfaceID := TRttiInterfaceType(LType).GUID;
   FMethodIntercepts := TObjectList<TMethodIntercept>.Create();

@@ -333,7 +333,7 @@ end;
 constructor TVirtualInterfaceProxy<T>.Create(Factory: TFunc<T>);
 begin
   FFactory := Factory;
-  inherited Create(TypeInfo(T), InternalInvoke);
+  inherited Create(System.TypeInfo(T), InternalInvoke);
 end;
 
 procedure TVirtualInterfaceProxy<T>.EnsureInitialized;

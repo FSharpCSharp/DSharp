@@ -65,10 +65,24 @@ end;
 
 function TLoggingCallHandler.Invoke(Input: IMethodInvocation;
   GetNext: TFunc<TInvokeHandlerDelegate>): IMethodReturn;
+var
+  params: TArray<TRttiParameter>;
+  i: Integer;
 begin
   Logging.EnterMethod(Input.Target, Input.Method.Name);
 
+  params := Input.Method.GetParameters;
+  for i := Low(params) to High(params) do
+  begin
+    Logging.LogValue(params[i].Name, Input.Arguments[i]);
+  end;
+
   Result := GetNext().Invoke(Input, GetNext);
+
+  if Assigned(Input.Method.ReturnType) then
+  begin
+    Logging.LogValue('Result', Result.ReturnValue);
+  end;
 
   Logging.LeaveMethod(Input.Target, Input.Method.Name);
 end;

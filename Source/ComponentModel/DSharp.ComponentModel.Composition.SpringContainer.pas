@@ -83,7 +83,7 @@ type
   private
     fDelegate: TFunc<TValue>;
   protected
-    procedure DoInject(instance: TObject; const arguments: array of TValue); override;
+    procedure DoInject(instance: TValue; const arguments: array of TValue); override;
   public
     constructor Create(model: TComponentModel; const targetName: string;
       delegate: TFunc<TValue>);
@@ -93,7 +93,7 @@ type
   private
     fDelegate: TFunc<TValue>;
   protected
-    procedure DoInject(instance: TObject; const arguments: array of TValue); override;
+    procedure DoInject(instance: TValue; const arguments: array of TValue); override;
   public
     constructor Create(model: TComponentModel; const targetName: string;
       delegate: TFunc<TValue>);
@@ -550,7 +550,7 @@ begin
   fDelegate := delegate;
 end;
 
-procedure TPropertyInjectionWithDelegate.DoInject(instance: TObject;
+procedure TPropertyInjectionWithDelegate.DoInject(instance: TValue;
   const arguments: array of TValue);
 begin
   inherited DoInject(instance, [fDelegate()]);
@@ -565,7 +565,7 @@ begin
   fDelegate := delegate;
 end;
 
-procedure TFieldInjectionWithDelegate.DoInject(instance: TObject;
+procedure TFieldInjectionWithDelegate.DoInject(instance: TValue;
   const arguments: array of TValue);
 begin
   inherited DoInject(instance, [fDelegate()]);

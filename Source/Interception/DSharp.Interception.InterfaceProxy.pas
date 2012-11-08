@@ -56,8 +56,10 @@ var
   i: Integer;
   LInput: IMethodInvocation;
   LReturn: IMethodReturn;
+  LTarget: TValue;
 begin
-  LInput := TMethodInvocation.Create(Method, TValue.From<IInterface>(Instance), Copy(Args, 1));
+  TValue.Make(@Instance, TypeInfo, LTarget);
+  LInput := TMethodInvocation.Create(Method, LTarget, Copy(Args, 1));
 
   LReturn := FInterceptionBehaviorPipeline.Invoke(LInput,
     function(Input: IMethodInvocation;

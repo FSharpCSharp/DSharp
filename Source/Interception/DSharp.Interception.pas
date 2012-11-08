@@ -121,10 +121,17 @@ type
     class function ThroughProxy(InterceptedType: PTypeInfo; Target: Pointer;
       Interceptor: IInstanceInterceptor;
       InterceptionBehaviors: array of IInterceptionBehavior): IInterceptingProxy; overload; static;
+
+    class function ThroughProxy(const Target: TValue; TypeInfo: PTypeInfo;
+      Interceptor: IInstanceInterceptor;
+      InterceptionBehaviors: array of IInterceptionBehavior): TValue; overload; static;
     class function ThroughProxy<T>(Target: T; Interceptor: IInstanceInterceptor;
       InterceptionBehaviors: array of IInterceptionBehavior): T; overload; static;
-    class function ThroughProxyByAttributes<T>(
-      Target: T; Interceptor: IInstanceInterceptor = nil): T; overload; static;
+
+    class function ThroughProxyByAttributes(const Target: TValue; TypeInfo: PTypeInfo;
+      Interceptor: IInstanceInterceptor = nil): TValue; overload; static;
+    class function ThroughProxyByAttributes<T>(Target: T;
+      Interceptor: IInstanceInterceptor = nil): T; overload; static;
   end;
 
 implementation
@@ -170,33 +177,50 @@ begin
   end;
 end;
 
+class function TIntercept.ThroughProxy(const Target: TValue; TypeInfo: PTypeInfo;
+  Interceptor: IInstanceInterceptor;
+  InterceptionBehaviors: array of IInterceptionBehavior): TValue;
+var
+  proxy: IInterceptingProxy;
+  instance: Pointer;
+begin
+  instance := PPointer(Target.GetReferenceToRawData)^;
+  proxy := ThroughProxy(TypeInfo, instance, Interceptor, InterceptionBehaviors);
+  case TypeInfo.Kind of
+    tkClass: instance := (proxy as TClassProxy).Instance;
+    tkInterface: proxy.QueryInterface(GetTypeData(TypeInfo).Guid, instance);
+  end;
+  TValue.Make(@instance, TypeInfo, Result);
+end;
+
 class function TIntercept.ThroughProxy<T>(Target: T;
   Interceptor: IInstanceInterceptor;
   InterceptionBehaviors: array of IInterceptionBehavior): T;
-var
-  proxy: IInterceptingProxy;
 begin
-  proxy := ThroughProxy(TypeInfo(T), PPointer(@Target)^, Interceptor, InterceptionBehaviors);
-  case PTypeInfo(TypeInfo(T)).Kind of
-    tkClass: PPointer(@Result)^ := (proxy as TClassProxy).Instance;
-    tkInterface: proxy.QueryInterface(GetTypeData(TypeInfo(T)).Guid, Result);
-  end;
+  Result := ThroughProxy(TValue.From<T>(Target), TypeInfo(T),
+    Interceptor, InterceptionBehaviors).AsType<T>;
 end;
 
-class function TIntercept.ThroughProxyByAttributes<T>(Target: T;
-  Interceptor: IInstanceInterceptor): T;
+class function TIntercept.ThroughProxyByAttributes(const Target: TValue;
+  TypeInfo: PTypeInfo; Interceptor: IInstanceInterceptor): TValue;
 begin
   if not Assigned(Interceptor) then
   begin
-    case PTypeInfo(TypeInfo(T)).Kind of
+    case TypeInfo.Kind of
       tkClass: Interceptor := TClassInterceptor.Create;
       tkInterface: Interceptor := TInterfaceInterceptor.Create;
     end;
   end;
 
-  Result := ThroughProxy<T>(Target, Interceptor, [
+  Result := ThroughProxy(Target, TypeInfo, Interceptor, [
     TPolicyInjectionBehavior.Create(TCurrentInterceptionRequest.Create(
-    Interceptor, TypeInfo(T), nil), [TAttributeDrivenPolicy.Create])]);
+    Interceptor, TypeInfo, nil), [TAttributeDrivenPolicy.Create])]);
+end;
+
+class function TIntercept.ThroughProxyByAttributes<T>(Target: T;
+  Interceptor: IInstanceInterceptor): T;
+begin
+  Result := ThroughProxyByAttributes(TValue.From<T>(Target), TypeInfo(T), Interceptor).AsType<T>;
 end;
 
 end.

@@ -190,7 +190,7 @@ begin
 
   Result := True;
 
-  for LAttribute in GetType.GetAttributesOfType<ValidationAttribute>() do
+  for LAttribute in GetType.GetCustomAttributes<ValidationAttribute>(True) do
   begin
     LValidation := LAttribute.ValidationRuleClass.Create();
     LValidationResult := LValidation.Validate(TValue.From<TObject>(Self));

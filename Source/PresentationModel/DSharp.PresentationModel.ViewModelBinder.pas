@@ -128,7 +128,7 @@ begin
   begin
     LBindingGroup := TBindingGroup.Create(AView);
   end;
-  for LAttribute in LType.GetAttributesOfType<ValidationAttribute> do
+  for LAttribute in LType.GetCustomAttributes<ValidationAttribute>(True) do
   begin
     LBindingGroup.ValidationRules.Add(LAttribute.ValidationRuleClass.Create);
   end;

@@ -324,6 +324,11 @@ type
     function GetMemberIsWritable: Boolean;
     function GetMemberRttiType: TRttiType;
   public
+    function GetAllAttributes(attributeType: TClass;
+      Inherit: Boolean = False): TArray<TCustomAttribute>; overload;
+    function GetAllAttributes<T: TCustomAttribute>(
+      Inherit: Boolean = False): TArray<T>; overload;
+
     function GetCustomAttribute<T: TCustomAttribute>(Inherit: Boolean = False): T;
     function GetCustomAttributes(
       Inherit: Boolean = False): TArray<TCustomAttribute>; overload;
@@ -412,7 +417,13 @@ type
     function GetMethodCount: Integer;
     function InheritsFrom(OtherType: PTypeInfo): Boolean;
   public
-    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>;
+    function GetAttributesOfType<T: TCustomAttribute>: TArray<T>; deprecated 'use GetCustomAttributes instead';
+
+    function GetCustomAttributes(attributeType: TClass;
+      Inherit: Boolean = False): TArray<TCustomAttribute>; overload;
+    function GetCustomAttributes<T: TCustomAttribute>(
+      Inherit: Boolean = False): TArray<T>; overload;
+
     function GetGenericArguments: TArray<TRttiType>;
     function GetGenericTypeDefinition(const AIncludeUnitName: Boolean = True): string;
 
@@ -1803,6 +1814,19 @@ end;
 
 { TRttiMemberHelper }
 
+function TRttiMemberHelper.GetAllAttributes(attributeType: TClass;
+  Inherit: Boolean): TArray<TCustomAttribute>;
+begin
+  Result := TArrayHelper.Concat<TCustomAttribute>([
+    Parent.GetCustomAttributes(attributeType, Inherit),
+    GetCustomAttributes(attributeType, Inherit)]);
+end;
+
+function TRttiMemberHelper.GetAllAttributes<T>(Inherit: Boolean): TArray<T>;
+begin
+  Result := TArray<T>(GetAllAttributes(TClass(T), Inherit));
+end;
+
 function TRttiMemberHelper.GetCustomAttribute<T>(Inherit: Boolean): T;
 begin
   Result := Default(T);
@@ -1988,32 +2012,35 @@ begin
 end;
 
 function TRttiTypeHelper.GetAttributesOfType<T>: TArray<T>;
+begin
+  Result := GetCustomAttributes<T>(True);
+end;
+
+function TRttiTypeHelper.GetCustomAttributes(attributeType: TClass;
+  Inherit: Boolean): TArray<TCustomAttribute>;
 var
   LAttribute: TCustomAttribute;
-  LAttributes: TArray<T>;
-  i: Integer;
 begin
   SetLength(Result, 0);
   for LAttribute in GetAttributes do
   begin
-    if LAttribute.InheritsFrom(T) then
+    if LAttribute.InheritsFrom(attributeType) then
     begin
       SetLength(Result, Length(Result) + 1);
-      Result[High(Result)] := T(LAttribute);
+      Result[High(result)] := LAttribute;
     end;
   end;
 
-  if Assigned(BaseType) then
+  if Assigned(BaseType) and Inherit then
   begin
-    for LAttribute in BaseType.GetAttributesOfType<T> do
-    begin
-      if LAttribute.InheritsFrom(T) then
-      begin
-        SetLength(Result, Length(Result) + 1);
-        Result[High(Result)] := T(LAttribute);
-      end;
-    end;
+    Result := TArrayHelper.Concat<TCustomAttribute>([
+      Result, BaseType.GetCustomAttributes(attributeType, Inherit)]);
   end;
+end;
+
+function TRttiTypeHelper.GetCustomAttributes<T>(Inherit: Boolean): TArray<T>;
+begin
+  Result := TArray<T>(GetCustomAttributes(TClass(T), Inherit));
 end;
 
 function TRttiTypeHelper.GetGenericArguments: TArray<TRttiType>;

@@ -44,6 +44,7 @@ contains
   DSharp.Interception.InterfaceInterceptor in '..\..\Source\Interception\DSharp.Interception.InterfaceInterceptor.pas',
   DSharp.Interception.InterfaceMapping in '..\..\Source\Interception\DSharp.Interception.InterfaceMapping.pas',
   DSharp.Interception.InterfaceProxy in '..\..\Source\Interception\DSharp.Interception.InterfaceProxy.pas',
+  DSharp.Interception.Logging in '..\..\Source\Interception\DSharp.Interception.Logging.pas',
   DSharp.Interception.MethodImplementationInfo in '..\..\Source\Interception\DSharp.Interception.MethodImplementationInfo.pas',
   DSharp.Interception.MethodInvocation in '..\..\Source\Interception\DSharp.Interception.MethodInvocation.pas',
   DSharp.Interception.MethodReturn in '..\..\Source\Interception\DSharp.Interception.MethodReturn.pas',

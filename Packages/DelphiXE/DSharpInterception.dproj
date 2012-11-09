@@ -64,6 +64,7 @@
 			<DCCReference Include="..\..\Source\Interception\DSharp.Interception.InterfaceInterceptor.pas"/>
 			<DCCReference Include="..\..\Source\Interception\DSharp.Interception.InterfaceMapping.pas"/>
 			<DCCReference Include="..\..\Source\Interception\DSharp.Interception.InterfaceProxy.pas"/>
+			<DCCReference Include="..\..\Source\Interception\DSharp.Interception.Logging.pas"/>
 			<DCCReference Include="..\..\Source\Interception\DSharp.Interception.MethodImplementationInfo.pas"/>
 			<DCCReference Include="..\..\Source\Interception\DSharp.Interception.MethodInvocation.pas"/>
 			<DCCReference Include="..\..\Source\Interception\DSharp.Interception.MethodReturn.pas"/>

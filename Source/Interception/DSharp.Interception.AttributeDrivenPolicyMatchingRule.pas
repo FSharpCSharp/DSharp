@@ -51,7 +51,7 @@ uses
 function TAttributeDrivenPolicyMatchingRule.Matches(
   Member: TRttiMethod): Boolean;
 begin
-  Result := Member.IsDefined<HandlerAttribute>(True);
+  Result := Length(Member.GetAllAttributes<HandlerAttribute>(True)) > 0;
 end;
 
 end.

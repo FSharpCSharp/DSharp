@@ -83,7 +83,7 @@ var
 begin
   if Assigned(Member.InterfaceMethodInfo) then
   begin
-    for attribute in Member.InterfaceMethodInfo.GetCustomAttributes<HandlerAttribute>(True) do
+    for attribute in Member.InterfaceMethodInfo.GetAllAttributes<HandlerAttribute>(True) do
     begin
       SetLength(Result, Length(Result) + 1);
       Result[High(Result)] := attribute.CreateHandler;
@@ -91,7 +91,7 @@ begin
   end;
   if Assigned(Member.ImplementationMethodInfo) then
   begin
-    for attribute in Member.ImplementationMethodInfo.GetCustomAttributes<HandlerAttribute>(True) do
+    for attribute in Member.ImplementationMethodInfo.GetAllAttributes<HandlerAttribute>(True) do
     begin
       SetLength(Result, Length(Result) + 1);
       Result[High(Result)] := attribute.CreateHandler;

@@ -285,7 +285,7 @@ end;
 function TDataTemplate.GetValue(const Item: TObject;
   const ColumnIndex: Integer): TValue;
 begin
-  Result := '(not available)';
+  Result := TValue.Empty;
 end;
 
 procedure TDataTemplate.RegisterDataTemplate(const DataTemplate: IDataTemplate);

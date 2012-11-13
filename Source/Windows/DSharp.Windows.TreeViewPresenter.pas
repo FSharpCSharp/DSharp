@@ -261,10 +261,12 @@ uses
   DSharp.Core.Reflection,
   DSharp.Windows.ColumnDefinitions.ControlTemplate,
   DSharp.Windows.ControlTemplates,
+  Graphics,
   Math,
   Rtti,
   Themes,
   TypInfo,
+  UxTheme,
   Windows;
 
 const
@@ -447,10 +449,31 @@ end;
 procedure TTreeViewPresenter.DoBeforeCellPaint(Sender: TBaseVirtualTree;
   TargetCanvas: TCanvas; Node: PVirtualNode; Column: TColumnIndex;
   CellPaintMode: TVTCellPaintMode; CellRect: TRect; var ContentRect: TRect);
+
+  procedure DrawFocusRect;
+  var
+    RowRect: TRect;
+    Theme: HTHEME;
+  begin
+    if (tsUseExplorerTheme in Sender.TreeStates) and (Sender.FocusedNode = Node)
+      and not Sender.Selected[Node] and Sender.Focused then
+    begin
+      RowRect := Rect(0, CellRect.Top, Sender.ClientWidth, CellRect.Bottom);
+      Theme := OpenThemeData(Sender.Handle, 'TREEVIEW');
+      DrawThemeBackground(Theme, TargetCanvas.Handle, TVP_TREEITEM, TREIS_SELECTED, RowRect, @CellRect);
+      InflateRect(RowRect, -1, -1);
+      TargetCanvas.Pen.Color := clWindow;
+      TargetCanvas.RoundRect(RowRect.Left, RowRect.Top, RowRect.Right, RowRect.Bottom, 1, 1);
+      CloseThemeData(Theme);
+    end;
+  end;
+
 var
   LItem: TObject;
   LItemTemplate: IControlTemplate;
 begin
+  DrawFocusRect;
+
   LItem := GetNodeItem(Sender, Node);
   if Supports(GetItemTemplate(LItem), IControlTemplate, LItemTemplate) then
   begin

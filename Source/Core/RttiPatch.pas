@@ -161,7 +161,7 @@ end;
 
 function TValueHelper.TryAsOrdinalFix(out AResult: Int64): Boolean;
 begin
-  Result := IsOrdinal;
+  Result := not Assigned(TypeInfo) or IsOrdinal;
   if Result then
   begin
     case GetInlineSize(TypeInfo) of

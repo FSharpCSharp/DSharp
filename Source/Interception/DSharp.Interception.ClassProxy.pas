@@ -150,14 +150,25 @@ begin
         except
           Result := Input.CreateExceptionMethodReturn(AcquireExceptionObject);
         end;
+      end
+      else
+      begin
+        Result := Input.CreateMethodReturn(TValue.Empty);
       end;
     end);
 
-  if Assigned(LReturn.Exception) then
+  if Assigned(LReturn) then
   begin
-    raise LReturn.Exception;
+    if Assigned(LReturn.Exception) then
+    begin
+      raise LReturn.Exception;
+    end;
+    Result := LReturn.ReturnValue;
+  end
+  else
+  begin
+    Result := TValue.Empty;
   end;
-  Result := LReturn.ReturnValue;
 
   for i := 1 to High(Args) do
   begin

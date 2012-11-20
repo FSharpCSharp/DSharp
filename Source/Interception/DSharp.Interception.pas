@@ -147,14 +147,27 @@ type
   end;
 
   TIntercept = record
+  private
+    class function CreateInterceptor(TypeInfo: PTypeInfo): IInstanceInterceptor; static;
+  public
     class function ThroughProxy(InterceptedType: PTypeInfo; Target: Pointer;
       Interceptor: IInstanceInterceptor;
       InterceptionBehaviors: array of IInterceptionBehavior): IInterceptingProxy; overload; static;
 
     class function ThroughProxy(const Target: TValue; TypeInfo: PTypeInfo;
+      Interceptor: IInstanceInterceptor = nil): TValue; overload; static;
+    class function ThroughProxy(const Target: TValue; TypeInfo: PTypeInfo;
+      InterceptionBehaviors: array of IInterceptionBehavior): TValue; overload; static;
+    class function ThroughProxy(const Target: TValue; TypeInfo: PTypeInfo;
       Interceptor: IInstanceInterceptor;
       InterceptionBehaviors: array of IInterceptionBehavior): TValue; overload; static;
-    class function ThroughProxy<T>(Target: T; Interceptor: IInstanceInterceptor;
+
+    class function ThroughProxy<T>(Target: T;
+      Interceptor: IInstanceInterceptor = nil): T; overload; static;
+    class function ThroughProxy<T>(Target: T;
+      InterceptionBehaviors: array of IInterceptionBehavior): T; overload; static;
+    class function ThroughProxy<T>(Target: T;
+      Interceptor: IInstanceInterceptor;
       InterceptionBehaviors: array of IInterceptionBehavior): T; overload; static;
 
     class function ThroughProxyByAttributes(const Target: TValue; TypeInfo: PTypeInfo;
@@ -187,12 +200,26 @@ end;
 
 { TIntercept }
 
+class function TIntercept.CreateInterceptor(
+  TypeInfo: PTypeInfo): IInstanceInterceptor;
+begin
+  case TypeInfo.Kind of
+    tkClass: Result := TClassInterceptor.Create;
+    tkInterface: Result := TInterfaceInterceptor.Create;
+  end;
+end;
+
 class function TIntercept.ThroughProxy(InterceptedType: PTypeInfo;
   Target: Pointer; Interceptor: IInstanceInterceptor;
   InterceptionBehaviors: array of IInterceptionBehavior): IInterceptingProxy;
 var
   i: Integer;
 begin
+  if not Assigned(Interceptor) then
+  begin
+    Interceptor := CreateInterceptor(InterceptedType);
+  end;
+
   if not Interceptor.CanIntercept(InterceptedType) then
     raise EArgumentException.CreateResFmt(@SInterceptionNotSupported, [InterceptedType.Name]);
 
@@ -206,6 +233,19 @@ begin
   end;
 end;
 
+class function TIntercept.ThroughProxy(const Target: TValue;
+  TypeInfo: PTypeInfo; Interceptor: IInstanceInterceptor): TValue;
+begin
+  Result := ThroughProxy(Target, TypeInfo, Interceptor, []);
+end;
+
+class function TIntercept.ThroughProxy(const Target: TValue;
+  TypeInfo: PTypeInfo;
+  InterceptionBehaviors: array of IInterceptionBehavior): TValue;
+begin
+  Result := ThroughProxy(Target, TypeInfo, nil, InterceptionBehaviors);
+end;
+
 class function TIntercept.ThroughProxy(const Target: TValue; TypeInfo: PTypeInfo;
   Interceptor: IInstanceInterceptor;
   InterceptionBehaviors: array of IInterceptionBehavior): TValue;
@@ -213,13 +253,36 @@ var
   proxy: IInterceptingProxy;
   instance: Pointer;
 begin
-  instance := PPointer(Target.GetReferenceToRawData)^;
+  if not Target.IsEmpty then
+  begin
+    instance := PPointer(Target.GetReferenceToRawData)^;
+  end
+  else
+  begin
+    instance := nil;
+  end;
   proxy := ThroughProxy(TypeInfo, instance, Interceptor, InterceptionBehaviors);
   case TypeInfo.Kind of
     tkClass: instance := (proxy as TClassProxy).Instance;
-    tkInterface: proxy.QueryInterface(GetTypeData(TypeInfo).Guid, instance);
+    tkInterface:
+    begin
+      proxy.QueryInterface(GetTypeData(TypeInfo).Guid, instance);
+      IInterface(instance)._Release;
+    end;
   end;
   TValue.Make(@instance, TypeInfo, Result);
+end;
+
+class function TIntercept.ThroughProxy<T>(Target: T;
+  Interceptor: IInstanceInterceptor): T;
+begin
+  Result := ThroughProxy<T>(Target, Interceptor, []);
+end;
+
+class function TIntercept.ThroughProxy<T>(Target: T;
+  InterceptionBehaviors: array of IInterceptionBehavior): T;
+begin
+  Result := ThroughProxy<T>(Target, nil, InterceptionBehaviors);
 end;
 
 class function TIntercept.ThroughProxy<T>(Target: T;
@@ -235,10 +298,7 @@ class function TIntercept.ThroughProxyByAttributes(const Target: TValue;
 begin
   if not Assigned(Interceptor) then
   begin
-    case TypeInfo.Kind of
-      tkClass: Interceptor := TClassInterceptor.Create;
-      tkInterface: Interceptor := TInterfaceInterceptor.Create;
-    end;
+    Interceptor := CreateInterceptor(TypeInfo);
   end;
 
   Result := ThroughProxy(Target, TypeInfo, Interceptor, [

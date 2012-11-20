@@ -33,9 +33,7 @@ interface
 
 uses
   DSharp.Core.Times,
-{$IF COMPILERVERSION < 23}
-  DSharp.Core.VirtualInterface,
-{$IFEND}
+  DSharp.Interception,
   DSharp.Testing.Mock.Expectation,
   DSharp.Testing.Mock.Interfaces,
   Generics.Collections,
@@ -46,36 +44,39 @@ type
   TMockState = (msDefining, msExecuting);
   TMockType = (mtUndefined, mtObject, mtInterface);
 
-  TMock<T> = class(TVirtualInterface,
-    IMock<T>, IExpect<T>, IExpectInSequence<T>, IWhen<T>)
+  TMock = class(TInterfacedObject)
   private
     FCurrentExpectation: TExpectation;
     FCurrentSequence: ISequence;
     FExpectations: TObjectList<TExpectation>;
-    FInstance: Pointer;
-    FInterceptor: TVirtualMethodInterceptor;
     FMode: TMockMode;
     FState: TMockState;
-    FType: TMockType;
-    procedure CreateInterfaceMock(AType: TRttiType);
-    procedure CreateObjectMock(AType: TRttiType);
-    procedure DestroyInterfaceMock;
-    procedure DestroyObjectMock;
-    procedure DoBefore(Instance: TObject; Method: TRttiMethod;
-      const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
-    procedure DoMethodCall(Method: TRttiMethod;
-      const Args: TArray<TValue>; out Result: TValue);
-    function FindExpectation(Method: TRttiMethod;
-      Arguments: TArray<TValue>): TExpectation;
-    function GetInstance: T;
+  protected
     function GetMode: TMockMode;
-    function HasExpectation(Method: TRttiMethod): Boolean;
-    procedure SetExpectedTimes(const Times: Times);
+    procedure SetExpectedTimes(const Value: Times);
     procedure SetMode(const Value: TMockMode);
   public
     constructor Create;
     destructor Destroy; override;
+
+    function HasExpectation(Method: TRttiMethod): Boolean;
+    function FindExpectation(Method: TRttiMethod;
+      Arguments: TArray<TValue>): TExpectation;
     procedure Verify;
+
+    property CurrentExpectation: TExpectation
+      read FCurrentExpectation write FCurrentExpectation;
+    property Mode: TMockMode read GetMode write SetMode;
+    property State: TMockState read FState write FState;
+  end;
+
+  TMock<T> = class(TMock, IMock<T>, IExpect<T>, IExpectInSequence<T>, IWhen<T>)
+  private
+    FProxy: T;
+    function GetInstance: T;
+  public
+    constructor Create;
+    destructor Destroy; override;
 
     // IExpect<T>
     function Any: IWhen<T>;
@@ -103,6 +104,16 @@ type
     property Instance: T read GetInstance;
   end;
 
+  TMockBehavior = class(TInterfacedObject, IInterceptionBehavior)
+  private
+    FMock: TMock;
+    function Invoke(Input: IMethodInvocation;
+      GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
+    function WillExecute: Boolean;
+  public
+    constructor Create(Mock: TMock);
+  end;
+
 const
   CCreationError = 'unable to create mock for type: %s (contains no methods or typeinfo)';
   CUnmetExpectations = 'not all expected invocations were performed';
@@ -115,109 +126,112 @@ uses
   RTLConsts,
   TypInfo;
 
+{ TMock }
+
+constructor TMock.Create;
+begin
+  FExpectations := TObjectList<TExpectation>.Create(True);
+  FState := msExecuting;
+end;
+
+destructor TMock.Destroy;
+begin
+  FExpectations.Free;
+  inherited;
+end;
+
+function TMock.FindExpectation(Method: TRttiMethod;
+  Arguments: TArray<TValue>): TExpectation;
+var
+  LExpectation: TExpectation;
+begin
+  Result := nil;
+  for LExpectation in FExpectations do
+  begin
+    // only get expectation if corrent method
+    if (LExpectation.Method = Method)
+      // and argument values match if they need to
+      and (LExpectation.AnyArguments or TValue.Equals(LExpectation.Arguments, Arguments))
+      and LExpectation.AllowsInvocation then
+    begin
+      Result := LExpectation;
+      Break;
+    end;
+  end;
+end;
+
+function TMock.GetMode: TMockMode;
+begin
+  Result := FMode;
+end;
+
+function TMock.HasExpectation(Method: TRttiMethod): Boolean;
+var
+  LExpectation: TExpectation;
+begin
+  Result := False;
+  for LExpectation in FExpectations do
+  begin
+    if LExpectation.Method = Method then
+    begin
+      Result := True;
+      Break;
+    end;
+  end;
+end;
+
+procedure TMock.SetExpectedTimes(const Value: Times);
+begin
+  if Assigned(FCurrentSequence) then
+  begin
+    FCurrentSequence.ExpectInvocation(FCurrentExpectation, Value);
+    FCurrentSequence := nil;
+  end
+  else
+  begin
+    FCurrentExpectation.ExpectedCount := Value;
+  end;
+end;
+
+procedure TMock.SetMode(const Value: TMockMode);
+begin
+  FMode := Value;
+end;
+
+procedure TMock.Verify;
+var
+  LExpectation: TExpectation;
+begin
+  for LExpectation in FExpectations do
+  begin
+    if not LExpectation.IsSatisfied then
+    begin
+      raise EMockException.Create(CUnmetExpectations);
+    end;
+  end;
+end;
+
 { TMock<T> }
 
 constructor TMock<T>.Create;
 var
-  LType: TRttiType;
+  i: Integer;
 begin
-  FExpectations := TObjectList<TExpectation>.Create(True);
-  FState := msExecuting;
-  LType := GetRttiType(System.TypeInfo(T));
-  if LType is TRttiInstanceType then
-  begin
-    CreateObjectMock(LType);
-  end else
-  if (LType is TRttiInterfaceType)
-    and (LType.MethodCount > 0) then
-  begin
-    CreateInterfaceMock(LType);
-  end else
-  begin
-    raise EMockException.CreateFmt(CCreationError, [LType.Name]);
+  inherited Create;
+
+  case PTypeInfo(TypeInfo(T)).Kind of
+    tkClass: PObject(@FProxy)^ := GetTypeData(TypeInfo(T)).ClassType.Create;
   end;
+  FProxy := TIntercept.ThroughProxy<T>(FProxy, nil, [TMockBehavior.Create(Self)]);
 end;
 
 destructor TMock<T>.Destroy;
 begin
-  FExpectations.Free();
-  case FType of
-    mtObject: DestroyObjectMock();
-    mtInterface: DestroyInterfaceMock();
+  case PTypeInfo(TypeInfo(T)).Kind of
+    tkClass: PObject(@FProxy)^.Free;
   end;
-end;
 
-procedure TMock<T>.CreateInterfaceMock(AType: TRttiType);
-begin
-  inherited Create(AType.Handle, DoMethodCall);
-  Supports(Self, TRttiInterfaceType(AType).GUID, FInstance);
-  FType := mtInterface;
-end;
-
-procedure TMock<T>.CreateObjectMock(AType: TRttiType);
-begin
-  FInstance := AType.GetStandardConstructor().Invoke(
-    AType.AsInstance.MetaclassType, []).AsObject();
-  FInterceptor := TVirtualMethodInterceptor.Create(AType.AsInstance.MetaclassType);
-  FInterceptor.Proxify(PObject(@FInstance)^);
-  FInterceptor.OnBefore := DoBefore;
-  FType := mtObject;
-end;
-
-procedure TMock<T>.DestroyInterfaceMock;
-begin
   inherited Destroy;
-end;
-
-procedure TMock<T>.DestroyObjectMock;
-begin
-  PObject(@FInstance)^.Free();
-  FInterceptor.Free();
-end;
-
-procedure TMock<T>.DoBefore(Instance: TObject; Method: TRttiMethod;
-  const Args: TArray<TValue>; out DoInvoke: Boolean; out Result: TValue);
-begin
-  if Method.Parent.AsInstance.MetaclassType <> TObject then
-  begin
-    DoInvoke := False;
-
-    DoMethodCall(Method, Args, Result);
-  end;
-end;
-
-procedure TMock<T>.DoMethodCall(Method: TRttiMethod;
-  const Args: TArray<TValue>; out Result: TValue);
-var
-  LSequence: TList<TExpectation>;
-begin
-  Result := TValue.Empty;
-
-  case FState of
-    msDefining:
-    begin
-      FCurrentExpectation.Method := Method;
-      FCurrentExpectation.Arguments := Args;
-      FState := msExecuting;
-    end;
-    msExecuting:
-    begin
-      // no expectation for this method defined and in stub mode
-      if (FMode = Stub) and not HasExpectation(Method) then
-        Exit;
-
-      FCurrentExpectation := FindExpectation(Method, Args);
-      if Assigned(FCurrentExpectation) then
-      begin
-        Result := FCurrentExpectation.Execute(Args, Method.ReturnType);
-      end
-      else
-      begin
-        raise EMockException.CreateFmt(CUnexpectedInvocation, [
-          Method.Format(Args, True)]);
-      end;
-    end;
-  end;
 end;
 
 function TMock<T>.Any: IWhen<T>;
@@ -274,87 +288,15 @@ begin
   Result := Self;
 end;
 
-function TMock<T>.FindExpectation(Method: TRttiMethod;
-  Arguments: TArray<TValue>): TExpectation;
-var
-  LExpectation: TExpectation;
-begin
-  Result := nil;
-  for LExpectation in FExpectations do
-  begin
-    // only get expectation if corrent method
-    if (LExpectation.Method = Method)
-      // and argument values match if they need to
-      and (LExpectation.AnyArguments or TValue.Equals(LExpectation.Arguments, Arguments))
-      and LExpectation.AllowsInvocation then
-    begin
-      Result := LExpectation;
-      Break;
-    end;
-  end;
-end;
-
 function TMock<T>.GetInstance: T;
 begin
-  PPointer(@Result)^ := FInstance;
-end;
-
-function TMock<T>.GetMode: TMockMode;
-begin
-  Result := FMode;
-end;
-
-function TMock<T>.HasExpectation(Method: TRttiMethod): Boolean;
-var
-  LExpectation: TExpectation;
-begin
-  Result := False;
-  for LExpectation in FExpectations do
-  begin
-    if LExpectation.Method = Method then
-    begin
-      Result := True;
-      Break;
-    end;
-  end;
+  Result := FProxy;
 end;
 
 function TMock<T>.InSequence(Sequence: ISequence): IExpect<T>;
 begin
   FCurrentSequence := Sequence;
   Result := Self;
-end;
-
-procedure TMock<T>.SetExpectedTimes(const Times: Times);
-begin
-  if Assigned(FCurrentSequence) then
-  begin
-    FCurrentSequence.ExpectInvocation(FCurrentExpectation, Times);
-    FCurrentSequence := nil;
-  end
-  else
-  begin
-    FCurrentExpectation.ExpectedCount := Times;
-  end;
-end;
-
-procedure TMock<T>.SetMode(const Value: TMockMode);
-begin
-  FMode := Value;
-end;
-
-procedure TMock<T>.Verify;
-var
-  LExpectation: TExpectation;
-  LSequence: TList<TExpectation>;
-begin
-  for LExpectation in FExpectations do
-  begin
-    if not LExpectation.IsSatisfied then
-    begin
-      raise EMockException.Create(CUnmetExpectations);
-    end;
-  end;
 end;
 
 function TMock<T>.WhenCalling: T;
@@ -393,6 +335,49 @@ begin
   Result := Self;
   FState := msDefining;
   FExpectations.Add(FCurrentExpectation);
+end;
+
+{ TMockBehavior }
+
+constructor TMockBehavior.Create(Mock: TMock);
+begin
+  FMock := Mock;
+end;
+
+function TMockBehavior.Invoke(Input: IMethodInvocation;
+  GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
+begin
+  case FMock.State of
+    msDefining:
+    begin
+      FMock.CurrentExpectation.Method := Input.Method;
+      FMock.CurrentExpectation.Arguments := Input.Arguments;
+      FMock.State := msExecuting;
+    end;
+    msExecuting:
+    begin
+      // no expectation for this method defined and in stub mode
+      if (FMock.Mode = Stub) and not FMock.HasExpectation(Input.Method) then
+        Exit;
+
+      FMock.CurrentExpectation := FMock.FindExpectation(Input.Method, Input.Arguments);
+      if Assigned(FMock.CurrentExpectation) then
+      begin
+        Result := Input.CreateMethodReturn(
+         FMock.CurrentExpectation.Execute(Input.Arguments, Input.Method.ReturnType));
+      end
+      else
+      begin
+        raise EMockException.CreateFmt(CUnexpectedInvocation, [
+          Input.Method.Format(Input.Arguments, True)]);
+      end;
+    end;
+  end;
+end;
+
+function TMockBehavior.WillExecute: Boolean;
+begin
+  Result := True;
 end;
 
 end.

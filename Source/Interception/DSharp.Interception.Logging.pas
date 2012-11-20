@@ -49,10 +49,41 @@ type
       GetNext: TFunc<TInvokeHandlerDelegate>): IMethodReturn; override;
   end;
 
+  TLoggingBehavior = class(TInterfacedObject, IInterceptionBehavior)
+  public
+    function Invoke(Input: IMethodInvocation;
+      GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
+    function WillExecute: Boolean;
+  end;
+
 implementation
 
 uses
   DSharp.Logging;
+
+procedure EnterMethod(Input: IMethodInvocation);
+var
+  params: TArray<TRttiParameter>;
+  i: Integer;
+begin
+  Logging.EnterMethod(Input.Target, Input.Method.Name);
+
+  params := Input.Method.GetParameters;
+  for i := Low(params) to High(params) do
+  begin
+    Logging.LogValue(params[i].Name, Input.Arguments[i]);
+  end;
+end;
+
+procedure LeaveMethod(Input: IMethodInvocation; Result: IMethodReturn);
+begin
+  if Assigned(Input.Method.ReturnType) then
+  begin
+    Logging.LogValue('Result', Result.ReturnValue);
+  end;
+
+  Logging.LeaveMethod(Input.Target, Input.Method.Name);
+end;
 
 { LoggingCallHandlerAttribute }
 
@@ -65,26 +96,29 @@ end;
 
 function TLoggingCallHandler.Invoke(Input: IMethodInvocation;
   GetNext: TFunc<TInvokeHandlerDelegate>): IMethodReturn;
-var
-  params: TArray<TRttiParameter>;
-  i: Integer;
 begin
-  Logging.EnterMethod(Input.Target, Input.Method.Name);
-
-  params := Input.Method.GetParameters;
-  for i := Low(params) to High(params) do
-  begin
-    Logging.LogValue(params[i].Name, Input.Arguments[i]);
-  end;
+  EnterMethod(Input);
 
   Result := GetNext().Invoke(Input, GetNext);
 
-  if Assigned(Input.Method.ReturnType) then
-  begin
-    Logging.LogValue('Result', Result.ReturnValue);
-  end;
+  LeaveMethod(Input, Result);
+end;
 
-  Logging.LeaveMethod(Input.Target, Input.Method.Name);
+{ TLoggingBehavior }
+
+function TLoggingBehavior.Invoke(Input: IMethodInvocation;
+  GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
+begin
+  EnterMethod(Input);
+
+  Result := GetNext().Invoke(Input, GetNext);
+
+  LeaveMethod(Input, Result);
+end;
+
+function TLoggingBehavior.WillExecute: Boolean;
+begin
+  Result := True;
 end;
 
 end.

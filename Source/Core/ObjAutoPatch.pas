@@ -6,7 +6,6 @@ implementation
 
 // Thanks to Andreas Hausladen
 
-{$IF CompilerVersion < 23}
 uses
   ObjAuto, PatchUtils, SysUtils, TypInfo, Windows;
 
@@ -16,6 +15,25 @@ var
 {--------------------------------------------------------------------------------------------------}
 
 const
+  PassByRefBytes: array[0..19] of Byte = (
+    $8B, $4D, $EC,                  // mov ecx,[ebp-$14]
+    $8B, $57, $08,                  // mov edx,[edi+$08]            
+    $89, $D8,                       // mov eax,ebx                  
+    $E8, 0, 0, 0, 0,                // call PassByRef               
+    $84, $C0,                       // test al,al                   
+    $74, $0A,                       // jz +10                
+    $90, $90, $90
+  );
+
+  ParamFlagsBytes: array[0..19] of SmallInt = (
+    // if TParamFlags(P[0]) * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [] then
+    $0F, $B6, $05, -1, -1, -1, -1,  // movzx eax,[$0050a368]        
+    $22, $03,                       // and al,[ebx]                 
+    $0F, $B6, $15, -1, -1, -1, -1,  // movzx edx,[$0050a36c]        
+    $3A, $D0,                       // cmp dl,al                    
+    $74, $07                        // jz +7                        
+  );
+
 {$IF CompilerVersion = 22}
   GetTypeSizeBytes: array[0..31] of SmallInt = (
     $0F, $B6, $10,                      // movzx edx,[eax]                //  0
@@ -107,6 +125,16 @@ begin
   end;
 end;
 
+type
+  PParameterInfos = ^TParameterInfos;
+  TParameterInfos = array[0..255] of ^PTypeInfo;
+
+function PassByRef(P: PByte; ParamInfos: PParameterInfos; I: Integer): Boolean;
+begin
+  Result := (TParamFlags(P[0]) * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [])
+    and not (ParamInfos^[I]^.Kind in [tkMethod, tkInt64]);
+end;
+
 procedure UseFunction(P: Pointer);
 begin
 end;
@@ -116,8 +144,10 @@ end;
 procedure PatchObjAuto;
 var
   P: PByte;
-  n: Cardinal;
+  n: UINT_PTR;
+  Offset: Integer;
 begin
+{$IF CompilerVersion < 23}
   // Replace ObjAuto.GetTypeSize
   UseFunction(@ObjAuto.ObjectInvoke); // The linker would remove GetTypeSize and the patch would fail
   P := FindMethodBytes(PByte(GetActualAddr(@ObjAuto.GetMethodInfo)) - 1100, GetTypeSizeBytes, 300);
@@ -136,6 +166,20 @@ begin
   end
   else
     raise Exception.Create('Patching TBaseMethodHandlerInstance.Create failed. Do you have set a breakpoint in the method?');
+{$IFEND}
+
+  // Replace if TParamFlags(P[0]) * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [] then with if PassByRef(P, ParamInfos, I) then
+  P := FindMethodBytes(PByte(GetActualAddr(@ObjAuto.GetInvokeInstance)), ParamFlagsBytes, 300);
+  if P <> nil then
+  begin
+    if not WriteProcessMemory(GetCurrentProcess, P, @PassByRefBytes, SizeOf(PassByRefBytes), n) then
+      RaiseLastOSError;
+    Offset := PByte(@PassByRef) - (PByte(P + 8) + 5);
+    if not WriteProcessMemory(GetCurrentProcess, P + 9, @Offset, SizeOf(Offset), n) then
+      RaiseLastOSError;
+  end
+  else
+    raise Exception.Create('Patching TBaseMethodHandlerInstance.Create failed. Do you have set a breakpoint in the method?');
 end;
 
 initialization
@@ -148,6 +192,6 @@ initialization
       if not (e is EAbort) then
         MessageBox(0, PChar(e.ClassName + ': ' + e.Message), PChar(ExtractFileName(ParamStr(0))), MB_OK or MB_ICONERROR);
   end;
-{$IFEND}
+
 
 end.

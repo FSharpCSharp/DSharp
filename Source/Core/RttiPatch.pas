@@ -568,7 +568,7 @@ var
 {$IF CompilerVersion = 22}
   P: PByte;
   Offset: Integer;
-  n: Cardinal;
+  n: UINT_PTR;
 {$IFEND}
 begin
   Ctx := TRttiContext.Create;

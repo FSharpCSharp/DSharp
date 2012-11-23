@@ -47,9 +47,9 @@
 			<DelphiCompile Include="Tests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<DCCReference Include="DSharp.Core.Events.Tests.pas"/>
 			<DCCReference Include="DSharp.Core.Reflection.Tests.pas"/>
 			<DCCReference Include="DSharp.Core.Times.Tests.pas"/>
-			<DCCReference Include="DSharp.Testing.Mock.Tests.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

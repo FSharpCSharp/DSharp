@@ -16,9 +16,9 @@ uses
   DateUtils,
   DSharp.Core.Nullable,
   DSharp.Core.Reflection,
-  Messages,
   Rtti,
   SysUtils,
+  TestClasses,
   TestFramework;
 
 type
@@ -204,6 +204,11 @@ type
     procedure LeftIsSingle_RightIsInteger_ValuesAreNotEqual_False;
     procedure LeftIsSingle_RightIsSingle_ValuesAreEqual_True;
     procedure LeftIsSingle_RightIsSingle_ValuesAreNotEqual_False;
+  end;
+
+  TRttiObjectHelperTestCase = class(TTestCase)
+  published
+    procedure Test;
   end;
 
 var
@@ -568,6 +573,7 @@ procedure TValueHelperTestCase.TearDown;
 begin
   inherited;
   FEventCallCount := 0;
+  FValue := TValue.Empty;
 end;
 
 procedure TValueHelperTestCase.TestEvent(Sender: TObject);
@@ -1006,10 +1012,28 @@ begin
   CheckFalse(SameValue(TValue.From<Single>(42), TValue.From<Single>(42.005)));
 end;
 
+{ TRttiObjectHelperTestCase }
+
+procedure TRttiObjectHelperTestCase.Test;
+var
+  base: TBase;
+begin
+  base := TInherited.Create;
+  base.MethodC;
+
+  CheckFalse(base.GetMethod('MethodA').IsDefined<TestAttribute>);
+  CheckFalse(base.GetMethod('MethodB').IsDefined<TestAttribute>);
+  CheckTrue(base.GetMethod('MethodC').IsDefined<TestAttribute>);
+
+  CheckTrue(base.GetMethod('MethodA').IsDefined<TestAttribute>(True));
+  CheckTrue(base.GetMethod('MethodB').IsDefined<TestAttribute>(True));
+end;
+
 initialization
   RegisterTest('DSharp.Core.Reflection', TRttiTypeHelperTestCase.Suite);
   RegisterTest('DSharp.Core.Reflection', TValueHelperTestCase.Suite);
   RegisterTest('DSharp.Core.Reflection', TSameValueTestCase.Suite);
+  RegisterTest('DSharp.Core.Reflection', TRttiObjectHelperTestCase.Suite);
 
 end.
 

@@ -72,6 +72,8 @@ contains
   DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas',
   DSharp.Core.VirtualClass in '..\..\Source\Core\DSharp.Core.VirtualClass.pas',
   DSharp.Core.VirtualInterface in '..\..\Source\Core\DSharp.Core.VirtualInterface.pas',
-  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas';
+  DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
+  ObjAutoPatch in '..\..\Source\Core\ObjAutoPatch.pas',
+  PatchUtils in '..\..\Source\Core\PatchUtils.pas';
 
 end.

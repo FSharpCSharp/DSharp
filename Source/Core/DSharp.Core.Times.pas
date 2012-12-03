@@ -167,19 +167,28 @@ begin
     if FMax = 0 then
       Result := 'never'
     else if FMax = High(Cardinal) then
-      Result := 'any'
+      Result := 'anytime'
     else
-      Result := Format('at most %u', [FMax]);
+      if FMax = 1 then
+        Result := 'at most once'
+      else
+        Result := Format('at most %u times', [FMax]);
   end
   else
   begin
     if FMax = High(Cardinal) then
-      Result := Format('at least %u', [FMin])
+      if FMin = 1 then
+        Result := 'at least once'
+      else
+        Result := Format('at least %u times', [FMin])
     else
       if FMin = FMax then
-        Result := Format('exactly %u', [FMin])
+        if FMin = 1 then
+          Result := 'once'
+        else
+          Result := Format('exactly %u times', [FMin])
       else
-        Result := Format('between %u and %u', [FMin, FMax]);
+        Result := Format('between %u and %u times', [FMin, FMax]);
   end;
 end;
 

@@ -54,9 +54,8 @@ type
 implementation
 
 resourcestring
-  RAlreadyCompleted = '"%s" is not invokable because it has already completed';
-  RExceededMaximumNumbers = '"%s" exceeded maximum number of invocations';
-  RNotCompleted = 'invocations for "%s" were not completed';
+  RAlreadyCompleted = 'invocations already completed: %s';
+  RNotCompleted = 'invocations were not completed: %s';
 
 type
   TSequence = class(TInterfacedObject, ISequence)

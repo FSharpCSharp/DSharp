@@ -72,6 +72,9 @@ implementation
 uses
   DSharp.Core.Reflection;
 
+resourcestring
+  CExpectation = '%s was expected to be called %s and has been called %s';
+
 { TExpectation }
 
 function TExpectation.AllowsInvocation: Boolean;
@@ -114,7 +117,8 @@ end;
 
 function TExpectation.ToString: string;
 begin
-  Result := FMethod.Format(FArguments, True);
+  Result := Format(CExpectation, [FMethod.Format(FArguments, True),
+    FExpectedCount.ToString, Times.Exactly(FActualCount).ToString]);
 end;
 
 end.

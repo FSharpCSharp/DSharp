@@ -114,17 +114,15 @@ type
     constructor Create(Mock: TMock);
   end;
 
-const
-  CCreationError = 'unable to create mock for type: %s (contains no methods or typeinfo)';
-  CUnmetExpectations = 'not all expected invocations were performed';
-  CUnexpectedInvocation = 'unexpected invocation of: %s';
-
 implementation
 
 uses
   DSharp.Core.Reflection,
-  RTLConsts,
   TypInfo;
+
+const
+  CUnexpectedInvocation = 'unexpected invocation: %s';
+  CUnperformedExpectation = 'unperformed expectation: %s';
 
 { TMock }
 
@@ -151,13 +149,20 @@ begin
     // only get expectation if corrent method
     if (LExpectation.Method = Method)
       // and argument values match if they need to
-      and (LExpectation.AnyArguments or TValue.Equals(LExpectation.Arguments, Arguments))
-      and LExpectation.AllowsInvocation then
+      and (LExpectation.AnyArguments or TValue.Equals(LExpectation.Arguments, Arguments)) then
     begin
       Result := LExpectation;
-      Break;
+      // if expectation can be invoked it can be used
+      if LExpectation.AllowsInvocation then
+        Break;
     end;
   end;
+
+  if not Assigned(Result) then
+    raise EMockException.CreateFmt(CUnexpectedInvocation, [Method.Format(Arguments, True)])
+  else
+    if not Result.AllowsInvocation then
+      raise EMockException.CreateFmt(CUnexpectedInvocation, [Result.ToString]);
 end;
 
 function TMock.GetMode: TMockMode;
@@ -206,7 +211,7 @@ begin
   begin
     if not LExpectation.IsSatisfied then
     begin
-      raise EMockException.Create(CUnmetExpectations);
+      raise EMockException.CreateFmt(CUnperformedExpectation, [LExpectation.ToString]);
     end;
   end;
 end;
@@ -361,16 +366,8 @@ begin
         Exit;
 
       FMock.CurrentExpectation := FMock.FindExpectation(Input.Method, Input.Arguments);
-      if Assigned(FMock.CurrentExpectation) then
-      begin
-        Result := Input.CreateMethodReturn(
-         FMock.CurrentExpectation.Execute(Input.Arguments, Input.Method.ReturnType));
-      end
-      else
-      begin
-        raise EMockException.CreateFmt(CUnexpectedInvocation, [
-          Input.Method.Format(Input.Arguments, True)]);
-      end;
+      Result := Input.CreateMethodReturn(
+        FMock.CurrentExpectation.Execute(Input.Arguments, Input.Method.ReturnType));
     end;
   end;
 end;

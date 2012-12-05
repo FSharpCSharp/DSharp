@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2012, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,7 @@ type
     constructor Create(Method: TRttiMethod; const Args: TArray<TValue>); reintroduce;
     function GetName: string; override;
     class function Suite: ITestSuite; override;
+    class procedure RegisterTest(const SuitePath: string = '');
   end;
 
   TTestSuite = class(TestFramework.TTestSuite)
@@ -168,6 +169,11 @@ begin
   end;
 end;
 
+class procedure TTestCase.RegisterTest(const SuitePath: string = '');
+begin
+  TestFramework.RegisterTest(SuitePath, Suite);
+end;
+
 class function TTestCase.Suite: ITestSuite;
 begin
   Result := TTestSuite.Create(Self);
@@ -179,32 +185,29 @@ procedure TTestSuite.AddTests(testClass: TTestCaseClass);
 var
   i: Integer;
   LArgs: TArray<TValue>;
-  LAttribute: TCustomAttribute;
+  LAttribute: TestCaseAttribute;
   LMethod: TRttiMethod;
   LParameters: TArray<TRttiParameter>;
   LTestSuite: ITestSuite;
 
   procedure InternalInvoke(Index: Integer);
   var
-    LAttribute: TCustomAttribute;
+    LAttribute: TTestingAttribute;
     LValue: TValue;
   begin
-    for LAttribute in LParameters[Index].GetAttributes do
+    for LAttribute in LParameters[Index].GetCustomAttributes<TTestingAttribute> do
     begin
-      if LAttribute is TTestingAttribute then
+      for LValue in LAttribute.Values do
       begin
-        for LValue in TTestingAttribute(LAttribute).Values do
-        begin
-          LValue.TryConvert(LParameters[Index].ParamType.Handle, LArgs[Index]);
+        LValue.TryConvert(LParameters[Index].ParamType.Handle, LArgs[Index]);
 
-          if Index = Pred(Length(LParameters)) then
-          begin
-            LTestSuite.AddTest(TTestCaseClassInherited(testClass).Create(LMethod, LArgs));
-          end
-          else
-          begin
-            InternalInvoke(Index + 1);
-          end;
+        if Index = Pred(Length(LParameters)) then
+        begin
+          LTestSuite.AddTest(TTestCaseClassInherited(testClass).Create(LMethod, LArgs));
+        end
+        else
+        begin
+          InternalInvoke(Index + 1);
         end;
       end;
     end;
@@ -223,18 +226,15 @@ begin
         LTestSuite := TTestSuite.Create(LMethod.Name);
         AddTest(LTestSuite);
 
-        for LAttribute in LMethod.GetAttributes do
+        for LAttribute in LMethod.GetCustomAttributes<TestCaseAttribute> do
         begin
-          if LAttribute is TestCaseAttribute then
+          for i := 0 to Pred(Length(LParameters)) do
           begin
-            for i := 0 to Pred(Length(LParameters)) do
-            begin
-              TestCaseAttribute(LAttribute).Values[i].TryConvert(
-                LParameters[i].ParamType.Handle, LArgs[i]);
-            end;
-
-            LTestSuite.AddTest(TTestCaseClassInherited(testClass).Create(LMethod, LArgs));
+            LAttribute.Values[i].TryConvert(
+              LParameters[i].ParamType.Handle, LArgs[i]);
           end;
+
+          LTestSuite.AddTest(TTestCaseClassInherited(testClass).Create(LMethod, LArgs));
         end;
 
         InternalInvoke(0);

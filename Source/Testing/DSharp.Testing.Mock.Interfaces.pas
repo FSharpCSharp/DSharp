@@ -64,7 +64,7 @@ type
   end;
 
   IExpectInSequence<T> = interface(IExpect<T>)
-    function InSequence(Sequence: ISequence): IExpect<T>; overload;
+    function InSequence(Sequence: ISequence): IExpect<T>;
   end;
 
   IMock<T> = interface

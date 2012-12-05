@@ -656,6 +656,7 @@ type
   TArrayHelper = class
   public
     class function Concat<T>(const Arrays: array of TArray<T>): TArray<T>; static;
+    class function Copy<T>(const Values: array of T): TArray<T>; static;
 {$IF CompilerVersion = 21}
     class function ToArray<T>(Enumerable: TEnumerable<T>; Count: Integer): TArray<T>; static;
 {$IFEND}
@@ -1486,6 +1487,17 @@ begin
       Result[LIndex] := Arrays[i][k];
       Inc(LIndex);
     end;
+  end;
+end;
+
+class function TArrayHelper.Copy<T>(const Values: array of T): TArray<T>;
+var
+  i: Integer;
+begin
+  SetLength(Result, Length(Values));
+  for i := Low(Values) to High(Values) do
+  begin
+    Result[i] := Values[i];
   end;
 end;
 

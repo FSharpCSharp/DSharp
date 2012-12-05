@@ -281,16 +281,10 @@ end;
 
 constructor TLogEntry.Create(const AText: string;
   const AValues: array of TValue; const ALogKind: TLogKind);
-var
-  i: Integer;
 begin
   FLogKind := ALogKind;
   FText := AText;
-  SetLength(FValues, Length(AValues));
-  for i := Low(AValues) to High(AValues) do
-  begin
-    FValues[i] := AValues[i];
-  end;
+  FValues := TArrayHelper.Copy<TValue>(AValues);
 end;
 
 { TTextLog }

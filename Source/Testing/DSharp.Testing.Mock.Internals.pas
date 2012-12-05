@@ -38,7 +38,8 @@ uses
   DSharp.Testing.Mock.Interfaces,
   Generics.Collections,
   Rtti,
-  SysUtils;
+  SysUtils,
+  TypInfo;
 
 type
   TMockState = (msDefining, msExecuting);
@@ -51,6 +52,7 @@ type
     FExpectations: TObjectList<TExpectation>;
     FMode: TMockMode;
     FState: TMockState;
+    FTypeInfo: PTypeInfo;
   protected
     function GetMode: TMockMode;
     procedure SetExpectedTimes(const Value: Times);
@@ -117,8 +119,7 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection,
-  TypInfo;
+  DSharp.Core.Reflection;
 
 const
   CUnexpectedInvocation = 'unexpected invocation: %s';
@@ -223,16 +224,17 @@ var
   i: Integer;
 begin
   inherited Create;
+  FTypeInfo := TypeInfo(T);
 
-  case PTypeInfo(TypeInfo(T)).Kind of
-    tkClass: PObject(@FProxy)^ := GetTypeData(TypeInfo(T)).ClassType.Create;
+  case FTypeInfo.Kind of
+    tkClass: PObject(@FProxy)^ := GetTypeData(FTypeInfo).ClassType.Create;
   end;
   FProxy := TIntercept.ThroughProxy<T>(FProxy, nil, [TMockBehavior.Create(Self)]);
 end;
 
 destructor TMock<T>.Destroy;
 begin
-  case PTypeInfo(TypeInfo(T)).Kind of
+  case FTypeInfo.Kind of
     tkClass: PObject(@FProxy)^.Free;
   end;
 

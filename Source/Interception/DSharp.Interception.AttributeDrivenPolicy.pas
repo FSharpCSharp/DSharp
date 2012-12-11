@@ -53,8 +53,7 @@ implementation
 uses
   DSharp.Core.Reflection,
   DSharp.Core.Utils,
-  DSharp.Interception.AttributeDrivenPolicyMatchingRule,
-  Math;
+  DSharp.Interception.AttributeDrivenPolicyMatchingRule;
 
 { TAttributeDrivenPolicy }
 

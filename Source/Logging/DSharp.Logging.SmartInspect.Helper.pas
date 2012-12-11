@@ -95,7 +95,7 @@ begin
     begin
       if AValue.IsInteger then
       begin
-        LogByte(ALevel, AName, AValue.AsInteger, AIncludeHex);
+        LogInteger(ALevel, AName, AValue.AsInteger, AIncludeHex);
       end
       else
       if AValue.IsCardinal then

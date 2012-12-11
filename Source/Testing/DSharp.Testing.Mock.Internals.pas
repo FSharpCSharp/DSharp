@@ -63,7 +63,7 @@ type
 
     function HasExpectation(Method: TRttiMethod): Boolean;
     function FindExpectation(Method: TRttiMethod;
-      Arguments: TArray<TValue>): TExpectation;
+      const Arguments: TArray<TValue>): TExpectation;
     procedure Verify;
 
     property CurrentExpectation: TExpectation
@@ -140,7 +140,7 @@ begin
 end;
 
 function TMock.FindExpectation(Method: TRttiMethod;
-  Arguments: TArray<TValue>): TExpectation;
+  const Arguments: TArray<TValue>): TExpectation;
 var
   LExpectation: TExpectation;
 begin
@@ -370,6 +370,7 @@ begin
       FMock.CurrentExpectation := FMock.FindExpectation(Input.Method, Input.Arguments);
       Result := Input.CreateMethodReturn(
         FMock.CurrentExpectation.Execute(Input.Arguments, Input.Method.ReturnType));
+      GetNext()(Input, GetNext);
     end;
   end;
 end;

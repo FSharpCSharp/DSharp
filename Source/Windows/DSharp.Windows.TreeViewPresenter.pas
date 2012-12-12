@@ -1806,6 +1806,8 @@ begin
     FTreeView.IncrementalSearch := isAll;
     FTreeView.ShowHint := True;
 
+    FTreeView.TreeOptions.AutoOptions :=
+      FTreeView.TreeOptions.AutoOptions + [toAutoHideButtons];
     FTreeView.TreeOptions.MiscOptions :=
       FTreeView.TreeOptions.MiscOptions - [toToggleOnDblClick];
     FTreeView.TreeOptions.PaintOptions :=

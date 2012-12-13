@@ -1811,7 +1811,7 @@ begin
     FTreeView.TreeOptions.MiscOptions :=
       FTreeView.TreeOptions.MiscOptions - [toToggleOnDblClick];
     FTreeView.TreeOptions.PaintOptions :=
-      FTreeView.TreeOptions.PaintOptions + [toUseExplorerTheme, toHotTrack];
+      FTreeView.TreeOptions.PaintOptions + [toHotTrack, toUseExplorerTheme, toHideTreeLinesIfThemed];
     FTreeView.TreeOptions.SelectionOptions :=
       FTreeView.TreeOptions.SelectionOptions + [toExtendedFocus, toFullRowSelect, toRightClickSelect];
   end;

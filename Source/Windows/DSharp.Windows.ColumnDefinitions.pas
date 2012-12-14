@@ -55,6 +55,7 @@ type
   TDrawMode = DSharp.Windows.ControlTemplates.TDrawMode;
 
   TColumnDefinition = class;
+  TColumnDefinitions = class;
 
   TCustomDrawEvent = function(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject; TargetCanvas: TCanvas; CellRect: TRect;
@@ -69,12 +70,14 @@ type
     Item: TObject; const Value: string) of object;
 
   TColumnType = (ctText, ctCheckBox, ctProgressBar, ctImage);
+  TSortingDirection = (sdNone, sdAscending, sdDescending);
   TToggleMode = (tmNone, tmClick, tmDoubleClick);
 
   TColumnDefinition = class(TCollectionItem)
   private
     FAllowEdit: Boolean;
     FAlignment: TAlignment;
+    FAutoSize: Boolean;
     FCaption: string;
     FColumnType: TColumnType;
     FCustomFilter: string;
@@ -90,19 +93,25 @@ type
     FOnGetImageIndex: TGetImageIndexEvent;
     FOnGetText: TGetTextEvent;
     FOnSetText: TSetTextEvent;
+    FSortingDirection: TSortingDirection;
     FToggleMode: TToggleMode;
     FValuePropertyExpression: IMemberExpression;
     FValuePropertyName: string;
     FVisible: Boolean;
     FWidth: Integer;
+    function GetCollection: TColumnDefinitions;
     procedure ReadTextPropertyName(Reader: TReader);
+    procedure SetAutoSize(const Value: Boolean);
+    procedure SetCollection(const Value: TColumnDefinitions); reintroduce;
     procedure SetCustomFilter(const Value: string);
     procedure SetHintPropertyName(const Value: string);
     procedure SetImageIndexPropertyName(const Value: string);
+    procedure SetSortingDirection(const Value: TSortingDirection);
     procedure SetValuePropertyName(const Value: string);
   protected
     procedure DefineProperties(Filer: TFiler); override;
     function GetDisplayName: string; override;
+    property Collection: TColumnDefinitions read GetCollection write SetCollection;
   public
     constructor Create(Collection: TCollection); override;
     procedure Assign(Source: TPersistent); override;
@@ -112,6 +121,7 @@ type
   published
     property AllowEdit: Boolean read FAllowEdit write FAllowEdit default False;
     property Alignment: TAlignment read FAlignment write FAlignment default taLeftJustify;
+    property AutoSize: Boolean read FAutoSize write SetAutoSize default False;
     property Caption: string read FCaption write FCaption;
     property ColumnType: TColumnType read FColumnType write FColumnType default ctText;
     property CustomFilter: string read FCustomFilter write SetCustomFilter;
@@ -125,6 +135,7 @@ type
     property OnGetImageIndex: TGetImageIndexEvent read FOnGetImageIndex write FOnGetImageIndex;
     property OnGetText: TGetTextEvent read FOnGetText write FOnGetText;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
+    property SortingDirection: TSortingDirection read FSortingDirection write SetSortingDirection default sdNone;
     property ToggleMode: TToggleMode read FToggleMode write FToggleMode default tmNone;
     property ValuePropertyName: string read FValuePropertyName write SetValuePropertyName;
     property Visible: Boolean read FVisible write FVisible default True;
@@ -136,24 +147,30 @@ type
     function Add(const Caption: string; Width: Integer = CDefaultWidth;
       Alignment: TAlignment = taLeftJustify;
       MinWidth: Integer = CDefaultMinWidth): TColumnDefinition;
+    function GetAutoSizeIndex: Integer;
     function GetCount: Integer;
     function GetItem(Index: Integer): TColumnDefinition;
     function GetMainColumnIndex: Integer;
     function GetOnNotify: IEvent<TCollectionNotifyEvent<TColumnDefinition>>;
     function GetOwner: TPersistent;
+    function GetSortColumnIndex: Integer;
     procedure SetItem(Index: Integer; Value: TColumnDefinition);
+    property AutoSizeIndex: Integer read GetAutoSizeIndex;
     property Count: Integer read GetCount;
     property Items[Index: Integer]: TColumnDefinition read GetItem write SetItem; default;
     property MainColumnIndex: Integer read GetMainColumnIndex;
     property OnNotify: IEvent<TCollectionNotifyEvent<TColumnDefinition>> read GetOnNotify;
     property Owner: TPersistent read GetOwner;
+    property SortColumnIndex: Integer read GetSortColumnIndex;
   end;
 
   TColumnDefinitions = class(TOwnedCollection<TColumnDefinition>, IColumnDefinitions)
   private
     FRefCount: Integer;
 
+    function GetAutoSizeIndex: Integer;
     function GetMainColumnIndex: Integer;
+    function GetSortColumnIndex: Integer;
   protected
     FMainColumnIndex: Integer;
     procedure Initialize; virtual;
@@ -191,6 +208,11 @@ begin
   Filer.DefineProperty('TextPropertyName', ReadTextPropertyName, nil, False);
 end;
 
+function TColumnDefinition.GetCollection: TColumnDefinitions;
+begin
+  Result := TColumnDefinitions(inherited Collection);
+end;
+
 function TColumnDefinition.GetDisplayName: string;
 begin
   Result := FCaption;
@@ -221,6 +243,29 @@ begin
   begin
     inherited;
   end;
+end;
+
+procedure TColumnDefinition.SetAutoSize(const Value: Boolean);
+var
+  i: Integer;
+begin
+  FAutoSize := Value;
+
+  if FAutoSize then
+  begin
+    for i := 0 to Collection.Count - 1 do
+    begin
+      if Collection[i].AutoSize and (Collection[i] <> Self) then
+      begin
+        Collection[i].AutoSize := False;
+      end;
+    end;
+  end;
+end;
+
+procedure TColumnDefinition.SetCollection(const Value: TColumnDefinitions);
+begin
+  inherited Collection := Value;
 end;
 
 procedure TColumnDefinition.SetCustomFilter(const Value: string);
@@ -267,6 +312,24 @@ begin
     TParameterExpression.Create('Instance') as IExpression, FImageIndexPropertyName);
 end;
 
+procedure TColumnDefinition.SetSortingDirection(const Value: TSortingDirection);
+var
+  i: Integer;
+begin
+  FSortingDirection := Value;
+
+  if FSortingDirection <> sdNone then
+  begin
+    for i := 0 to Collection.Count - 1 do
+    begin
+      if (Collection[i].SortingDirection <> sdNone) and (Collection[i] <> Self) then
+      begin
+        Collection[i].SortingDirection := sdNone;
+      end;
+    end;
+  end;
+end;
+
 procedure TColumnDefinition.SetValuePropertyName(const Value: string);
 begin
   FValuePropertyName := Value;
@@ -283,9 +346,27 @@ begin
   Initialize();
 end;
 
+function TColumnDefinitions.GetAutoSizeIndex: Integer;
+begin
+  for Result := 0 to Count - 1 do
+    if Items[Result].AutoSize then
+      Exit;
+
+  Result := -1;
+end;
+
 function TColumnDefinitions.GetMainColumnIndex: Integer;
 begin
   Result := FMainColumnIndex;
+end;
+
+function TColumnDefinitions.GetSortColumnIndex: Integer;
+begin
+  for Result := 0 to Count - 1 do
+    if Items[Result].SortingDirection <> sdNone then
+      Exit;
+
+  Result := -1;
 end;
 
 procedure TColumnDefinitions.Initialize;

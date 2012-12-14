@@ -1616,18 +1616,10 @@ var
 begin
   if Assigned(FTreeView) and UseColumnDefinitions then
   begin
+    FTreeView.Header.Options := FTreeView.Header.Options - [hoAutoResize];
     FTreeView.Header.Columns.Clear;
     if Assigned(ColumnDefinitions) then
     begin
-      FTreeView.Header.AutoSizeIndex := ColumnDefinitions.MainColumnIndex;
-      if FTreeView.Header.AutoSizeIndex = -1 then
-      begin
-        FTreeView.Header.Options := FTreeView.Header.Options - [hoAutoResize];
-      end
-      else
-      begin
-        FTreeView.Header.Options := FTreeView.Header.Options + [hoAutoResize];
-      end;
       for i := 0 to Pred(ColumnDefinitions.Count) do
       begin
         with FTreeView.Header.Columns.Add do
@@ -1643,9 +1635,27 @@ begin
           end;
         end;
       end;
+      FTreeView.Header.AutoSizeIndex := ColumnDefinitions.AutoSizeIndex;
+      if FTreeView.Header.AutoSizeIndex = -1 then
+      begin
+        FTreeView.Header.Options := FTreeView.Header.Options - [hoAutoResize];
+      end
+      else
+      begin
+        FTreeView.Header.Options := FTreeView.Header.Options + [hoAutoResize];
+      end;
       if FSorting then
       begin
-        FTreeView.Header.SortColumn := ColumnDefinitions.MainColumnIndex;
+        FTreeView.Header.SortColumn := ColumnDefinitions.SortColumnIndex;
+        if FTreeView.Header.SortColumn > -1 then
+        begin
+          FTreeView.Header.SortDirection := TSortDirection(
+            Ord(ColumnDefinitions[FTreeView.Header.SortColumn].SortingDirection) - 1);
+        end
+        else
+        begin
+          FTreeView.Header.SortColumn := ColumnDefinitions.MainColumnIndex;
+        end;
       end
       else
       begin

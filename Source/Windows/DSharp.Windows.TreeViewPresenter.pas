@@ -261,6 +261,7 @@ uses
   DSharp.Core.Reflection,
   DSharp.Windows.ColumnDefinitions.ControlTemplate,
   DSharp.Windows.ControlTemplates,
+  Forms,
   Graphics,
   Math,
   Rtti,
@@ -534,16 +535,19 @@ procedure TTreeViewPresenter.DoCompareNodes(Sender: TBaseVirtualTree; Node1,
 var
   LItem1, LItem2: TObject;
 begin
-  LItem1 := GetNodeItem(Sender, Node1);
-  LItem2 := GetNodeItem(Sender, Node2);
+  if not Assigned(ColumnDefinitions) or (Column > -1) then
+  begin
+    LItem1 := GetNodeItem(Sender, Node1);
+    LItem2 := GetNodeItem(Sender, Node2);
 
-  if Assigned(FOnCompare) then
-  begin
-    FOnCompare(Self, LItem1, LItem2, Column, Result);
-  end
-  else
-  begin
-    Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
+    if Assigned(FOnCompare) then
+    begin
+      FOnCompare(Self, LItem1, LItem2, Column, Result);
+    end
+    else
+    begin
+      Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
+    end;
   end;
 end;
 
@@ -866,9 +870,14 @@ end;
 
 procedure TTreeViewPresenter.DoHeaderClick(Sender: TVTHeader;
   HitInfo: TVTHeaderHitInfo);
+var
+  LCursor: TCursor;
 begin
   if FSorting then
-  begin
+  try
+    LCursor := Screen.Cursor;
+    Screen.Cursor := crHourGlass;
+
     if Sender.SortColumn <> HitInfo.Column then
     begin
       Sender.SortColumn := HitInfo.Column;
@@ -889,6 +898,8 @@ begin
     begin
       Refresh();
     end;
+  finally
+    Screen.Cursor := LCursor;
   end;
 end;
 
@@ -1300,7 +1311,10 @@ begin
           if not Assigned(LSelectedNode) then
             LSelectedNode := LNode.Parent;
           if Assigned(LSelectedNode) then
+          begin
             FTreeView.Selected[LSelectedNode] := True;
+            FTreeView.FocusedNode := LSelectedNode;
+          end;
         end;
 
         FTreeView.DeleteNode(LNode);
@@ -2018,7 +2032,7 @@ var
 begin
   if Assigned(Value) then
   begin
-    LNode := FTreeView.GetFirst();
+    LNode := FTreeView.GetFirstInitialized();
     while Assigned(LNode) do
     begin
       LItem := GetNodeItem(FTreeView, LNode);
@@ -2030,7 +2044,7 @@ begin
       begin
         FTreeView.CheckState[LNode] := csUncheckedNormal;
       end;
-      LNode := FTreeView.GetNext(LNode);
+      LNode := FTreeView.GetNextInitialized(LNode);
     end;
   end;
 end;

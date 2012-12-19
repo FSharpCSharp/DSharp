@@ -713,6 +713,7 @@ uses
 
 var
   Context: TRttiContext;
+  Covariances: TDictionary<TPair<PTypeInfo, PTypeInfo>, Boolean>;
   Enumerations: TDictionary<PTypeInfo, TStrings>;
 
 {$REGION 'Conversion functions'}
@@ -815,7 +816,7 @@ end;
 
 function ConvIntf2Intf(const ASource: TValue; ATarget: PTypeInfo; out AResult: TValue): Boolean;
 var
-  LType: TRttiType;
+  LSourceType, LTargetType: TRttiType;
   LMethod: TRttiMethod;
   LInterface: IInterface;
 begin
@@ -827,12 +828,22 @@ begin
       AResult := TValue.From(ASource.GetReferenceToRawData, ATarget);
       Result := True;
     end else
-    if TryGetRttiType(ASource.TypeInfo, LType) and (ATarget.Name = 'IList')
-      and LType.IsGenericTypeOf('IList') and LType.TryGetMethod('AsList', LMethod) then
+    if TryGetRttiType(ASource.TypeInfo, LSourceType) and LSourceType.IsGenericTypeOf('IList') then
     begin
-      LInterface := LMethod.Invoke(ASource, []).AsInterface;
-      AResult := TValue.From(@LInterface, ATarget);
-      Result := True;
+      if (ATarget.Name = 'IList') and LSourceType.TryGetMethod('AsList', LMethod) then
+      begin
+        LInterface := LMethod.Invoke(ASource, []).AsInterface;
+        AResult := TValue.From(@LInterface, ATarget);
+        Result := True;
+      end else
+      // assume that the two lists are contravariant
+      // TODO: check type parameters for compatibility
+      if TryGetRttiType(ATarget, LTargetType) and LTargetType.IsGenericTypeOf('IList') then
+      begin
+        LInterface := ASource.AsInterface;
+        AResult := TValue.From(@LInterface, ATarget);
+        Result := True;
+      end;
     end;
   end;
 end;
@@ -2192,10 +2203,15 @@ end;
 
 function TRttiTypeHelper.IsCovariantTo(OtherType: PTypeInfo): Boolean;
 var
+  key: TPair<PTypeInfo, PTypeInfo>;
   t: TRttiType;
   args, otherArgs: TArray<TRttiType>;
   i: Integer;
 begin
+  key := TPair<PTypeInfo, PTypeInfo>.Create(Handle, OtherType);
+  if Covariances.TryGetValue(key, Result) then
+    Exit;
+
   Result := False;
   t := Context.GetType(OtherType);
   if Assigned(t) and IsGenericTypeDefinition then
@@ -2236,6 +2252,8 @@ begin
   begin
     Result := InheritsFrom(OtherType);
   end;
+
+  Covariances.Add(key, Result);
 end;
 
 function TRttiTypeHelper.IsCovariantTo(OtherClass: TClass): Boolean;
@@ -3079,9 +3097,11 @@ begin
 end;
 
 initialization
+  Covariances := TDictionary<TPair<PTypeInfo, PTypeInfo>, Boolean>.Create;
   Enumerations := TObjectDictionary<PTypeInfo, TStrings>.Create([doOwnsValues]);
 
 finalization
+  Covariances.Free;
   Enumerations.Free;
 
 end.

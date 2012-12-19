@@ -32,50 +32,25 @@ unit DSharp.Interception.SpringExtension;
 interface
 
 uses
-  DSharp.Interception,
   Rtti,
-  Spring.Container.Core;
+  Spring.Container.Extensions;
 
 type
-  TInterceptionExtension = class(TInterfacedObject, IContainerExtension)
-  private
-    fContainerContext: IContainerContext;
-    function GetContainerContext: IContainerContext;
-    procedure SetContainerContext(const value: IContainerContext);
-
-    procedure DoResolve(Sender: TObject; var instance: TValue);
+  TInterceptionExtension = class(TContainerExtension)
+  protected
+    procedure DoResolve(Sender: TObject; var instance: TValue); override;
   end;
 
 implementation
+
+uses
+  DSharp.Interception;
 
 { TInterceptionExtension }
 
 procedure TInterceptionExtension.DoResolve(Sender: TObject; var instance: TValue);
 begin
   instance := TIntercept.ThroughProxyByAttributes(instance, instance.TypeInfo);
-end;
-
-function TInterceptionExtension.GetContainerContext: IContainerContext;
-begin
-  Result := fContainerContext;
-end;
-
-procedure TInterceptionExtension.SetContainerContext(
-  const value: IContainerContext);
-begin
-  if Assigned(fContainerContext) then
-  begin
-    fContainerContext.DependencyResolver.OnResolve.Remove(DoResolve);
-    fContainerContext.ServiceResolver.OnResolve.Remove(DoResolve);
-  end;
-
-  fContainerContext := value;
-
-  if Assigned(fContainerContext) then
-  begin
-    fContainerContext.DependencyResolver.OnResolve.Add(DoResolve);
-    fContainerContext.ServiceResolver.OnResolve.Add(DoResolve);
-  end;
 end;
 
 end.

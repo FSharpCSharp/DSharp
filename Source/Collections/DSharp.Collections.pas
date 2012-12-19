@@ -327,6 +327,7 @@ type
         property Current: T read GetCurrent;
       end;
 
+    property Capacity: NativeInt read GetCapacity write SetCapacity;
     property Items[const Index: NativeInt]: T read GetItem write SetItem; default;
     property OnCollectionChanged: IEvent<TCollectionChangedEvent<T>>
       read GetOnCollectionChanged;

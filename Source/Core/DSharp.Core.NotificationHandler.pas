@@ -31,6 +31,8 @@ unit DSharp.Core.NotificationHandler;
 
 interface
 
+{$I DSharp.inc}
+
 uses
   Classes;
 

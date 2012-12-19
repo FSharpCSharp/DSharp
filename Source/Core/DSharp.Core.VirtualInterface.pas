@@ -31,6 +31,8 @@ unit DSharp.Core.VirtualInterface;
 
 interface
 
+{$I DSharp.inc}
+
 {$IFDEF CPUX64}
   {$MESSAGE WARN 'Not supported on 64-bit because of several bugs in Delphi'}
   // http://qc.embarcadero.com/wc/qcmain.aspx?d=102627

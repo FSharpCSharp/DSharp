@@ -2,6 +2,8 @@ unit RttiPatch;
 
 interface
 
+{$I DSharp.inc}
+
 // Thanks to Andreas Hausladen
 
 implementation

@@ -31,9 +31,7 @@ unit DSharp.Core.Events;
 
 interface
 
-{$IF CompilerVersion < 23}
-  {$DEFINE CPUX86}
-{$IFEND}
+{$I DSharp.inc}
 
 uses
   Classes,
@@ -384,6 +382,7 @@ end;
 
 destructor TEventBase.Destroy;
 begin
+  FMethods.OnNotify := nil;
   FMethods.Free;
 end;
 

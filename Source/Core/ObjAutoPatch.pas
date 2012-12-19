@@ -2,6 +2,8 @@ unit ObjAutoPatch;
 
 interface
 
+{$I DSharp.inc}
+
 implementation
 
 // Thanks to Andreas Hausladen

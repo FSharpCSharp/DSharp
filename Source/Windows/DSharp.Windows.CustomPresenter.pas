@@ -136,6 +136,11 @@ type
     procedure MoveCurrentToPrevious; override;
   end;
 
+  TPresenterColumnDefinitions = class(TColumnDefinitions)
+  protected
+    procedure Initialize; override;
+  end;
+
 implementation
 
 uses
@@ -149,7 +154,7 @@ begin
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
   FView := TCollectionViewPresenterAdapter.Create(Self);
 
-  FColumnDefinitions := TColumnDefinitions.Create(Self);
+  FColumnDefinitions := TPresenterColumnDefinitions.Create(Self);
   FColumnDefinitions.OnNotify.Add(DoColumnDefinitionsChanged);
   FUseColumnDefinitions := True;
   FView.ItemTemplate := TColumnDefinitionsControlTemplate.Create(FColumnDefinitions);
@@ -521,6 +526,13 @@ begin
 
     NotifyPropertyChanged(FPresenter, Self, 'View');
   end;
+end;
+
+{ TPresenterColumnDefinitions }
+
+procedure TPresenterColumnDefinitions.Initialize;
+begin
+  FMainColumnIndex := -1;
 end;
 
 end.

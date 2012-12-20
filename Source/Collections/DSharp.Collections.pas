@@ -46,6 +46,7 @@ type
     caRemove,
     caReplace,
     caMove,
+    caReset,
     caExtract //internal use only
   );
   TCollectionChangedEvent<T> = procedure(Sender: TObject; const Item: T;

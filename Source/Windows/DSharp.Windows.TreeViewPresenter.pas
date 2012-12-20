@@ -873,33 +873,34 @@ procedure TTreeViewPresenter.DoHeaderClick(Sender: TVTHeader;
 var
   LCursor: TCursor;
 begin
-  if FSorting then
-  try
+  if FSorting and (HitInfo.Button = mbLeft) then
+  begin
     LCursor := Screen.Cursor;
     Screen.Cursor := crHourGlass;
-
-    if Sender.SortColumn <> HitInfo.Column then
-    begin
-      Sender.SortColumn := HitInfo.Column;
-    end
-    else
-    begin
-      if Sender.SortDirection = sdAscending then
+    try
+      if Sender.SortColumn <> HitInfo.Column then
       begin
-        Sender.SortDirection := sdDescending;
+        Sender.SortColumn := HitInfo.Column;
       end
       else
       begin
-        Sender.SortDirection := sdAscending;
+        if Sender.SortDirection = sdAscending then
+        begin
+          Sender.SortDirection := sdDescending;
+        end
+        else
+        begin
+          Sender.SortDirection := sdAscending;
+        end;
       end;
-    end;
 
-    if Sender.SortColumn = -1 then
-    begin
-      Refresh();
+      if Sender.SortColumn = -1 then
+      begin
+        Refresh();
+      end;
+    finally
+      Screen.Cursor := LCursor;
     end;
-  finally
-    Screen.Cursor := LCursor;
   end;
 end;
 
@@ -1642,7 +1643,7 @@ begin
           MinWidth := ColumnDefinitions[i].MinWidth;
           Text := ColumnDefinitions[i].Caption;
           Width := ColumnDefinitions[i].Width;
-          Options := Options + [coUseCaptionAlignment];
+          Options := Options + [coUseCaptionAlignment, coSmartResize];
           if not ColumnDefinitions[i].Visible then
           begin
             Options := Options - [coVisible];
@@ -1825,6 +1826,8 @@ begin
       FTreeView.TreeOptions.AutoOptions :=
         FTreeView.TreeOptions.AutoOptions - [toAutoDeleteMovedNodes] - [toAutoSort];
     end;
+
+    FTreeView.Header.Options := FTreeView.Header.Options + [hoDblClickResize{, hoHeaderClickAutoSort}];
 
     FTreeView.HintMode := hmHintAndDefault;
     FTreeView.IncrementalSearch := isAll;
@@ -2196,12 +2199,26 @@ end;
 
 procedure TTreeViewPresenter.SetTreeView(const Value: TVirtualStringTree);
 begin
-  FTreeView := Value;
-  if not (csDesigning in ComponentState) then
+  if FTreeView <> Value then
   begin
-    FProgressBar.Parent := FTreeView;
+    if Assigned(FTreeView) then
+    begin
+      FTreeView.RemoveFreeNotification(Self);
+    end;
+
+    FTreeView := Value;
+
+    if Assigned(FTreeView) then
+    begin
+      FTreeView.FreeNotification(Self);
+    end;
+
+    if not (csDesigning in ComponentState) then
+    begin
+      FProgressBar.Parent := FTreeView;
+    end;
+    InitControl();
   end;
-  InitControl();
 end;
 
 procedure TTreeViewPresenter.ToggleIcon(Node: PVirtualNode;

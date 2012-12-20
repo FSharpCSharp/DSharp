@@ -1326,6 +1326,11 @@ begin
         LNode := FTreeView.IterateSubtree(nil, GetItemsNode, Pointer(Sender));
         FTreeView.Sort(LNode, FTreeView.Header.SortColumn, FTreeView.Header.SortDirection);
       end;
+
+      caReset:
+      begin
+        ResetRootNodeCount;
+      end;
     end;
   end;
 end;

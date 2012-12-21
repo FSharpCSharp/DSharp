@@ -73,6 +73,7 @@ contains
   DSharp.Core.VirtualInterface in '..\..\Source\Core\DSharp.Core.VirtualInterface.pas',
   DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
   ObjAutoPatch in '..\..\Source\Core\ObjAutoPatch.pas',
-  PatchUtils in '..\..\Source\Core\PatchUtils.pas';
+  PatchUtils in '..\..\Source\Core\PatchUtils.pas',
+  RttiPatch in '..\..\Source\Core\RttiPatch.pas';
 
 end.

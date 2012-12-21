@@ -6,7 +6,7 @@ interface
 
 function FindMethodBytes(StartAddress: Pointer; const Bytes: array of SmallInt; MaxCount: Integer): PByte;
 function GetActualAddr(Proc: Pointer): Pointer;
-function GetVirtualMethod(Instance: TObject; VMTOffset: Integer): Pointer;
+function GetVirtualMethod(AClass: TClass; const Index: Integer): Pointer;
 procedure RedirectFunction(OrgProc, NewProc: Pointer);
 
 implementation
@@ -60,10 +60,9 @@ begin
     Result := PAbsoluteIndirectJmp(Proc).Addr^;
 end;
 
-function GetVirtualMethod(Instance: TObject; VMTOffset: Integer): Pointer;
-asm
-  mov ecx, [eax]
-  mov eax, [ecx + edx]
+function GetVirtualMethod(AClass: TClass; const Index: Integer): Pointer;
+begin
+  Result := PPointer(UINT_PTR(AClass) + UINT_PTR(Index * SizeOf(Pointer)))^;
 end;
 
 procedure RedirectFunction(OrgProc, NewProc: Pointer);

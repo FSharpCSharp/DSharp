@@ -8,7 +8,6 @@ interface
 
 implementation
 
-{$IF CompilerVersion < 23}
 {$IF CompilerVersion > 20}
 uses
   Generics.Collections,
@@ -81,7 +80,7 @@ type
 
   PPVtable = ^PVtable;
   PVtable = ^TVtable;
-  TVtable = array[0..MaxInt div 4 - 1] of Pointer;
+  TVtable = array[0..MaxInt div SizeOf(Pointer) - 1] of Pointer;
 
   TValueHelper = record helper for TValue
 {$IF CompilerVersion = 21}
@@ -116,6 +115,11 @@ end;
 
 function TValueHelper.TryCastFix(ATypeInfo: PTypeInfo; out AResult: TValue): Boolean;
 begin
+  if Self.FData.FTypeInfo = ATypeInfo then
+  begin
+    AResult := Self;
+    Exit(True);
+  end;
   if (Self.FData.FTypeInfo^.Kind = tkClass) and (ATypeInfo^.Kind = tkInterface) then
   begin
     if IsEmpty then
@@ -126,11 +130,6 @@ begin
       if Result then
         AResult.FData.FTypeInfo := ATypeInfo;
       Exit;
-    end;
-    if Self.FData.FTypeInfo = ATypeInfo then
-    begin
-      AResult := Self;
-      Exit(True);
     end;
     if ATypeInfo = nil then
       Exit(False);
@@ -191,15 +190,24 @@ begin
   if TypeInfo = nil then
     Exit(False);
   case TypeInfo^.Kind of
-    tkVariant:
-      Result := IsConst or not (CC in [TCallConv.ccCdecl, TCallConv.ccStdCall, TCallConv.ccSafeCall]);
+{$IF Defined(CPUX86)}
+    tkVariant: 
+      Result := IsConst or not (CC in [ccCdecl, ccStdCall, ccSafeCall]);
     tkRecord:
-      if (CC in [TCallConv.ccCdecl, TCallConv.ccStdCall, TCallConv.ccSafeCall]) and not IsConst then
+      if (CC in [ccCdecl, ccStdCall, ccSafeCall]) and not IsConst then
         Result := False
       else
         Result := GetTypeData(TypeInfo)^.RecSize > SizeOf(Pointer);
+{$ELSEIF Defined(CPUX64)}
+    tkVariant:
+      Result := True;
+    tkRecord:
+      Result := not (GetTypeData(TypeInfo)^.RecSize in [1,2,4,8]);
+    tkMethod:
+      Result := True;
+{$IFEND}
     tkArray:
-        Result := GetTypeData(TypeInfo)^.ArrayData.Size > SizeOf(Pointer);
+      Result := GetTypeData(TypeInfo)^.ArrayData.Size > SizeOf(Pointer);
     tkString:
       Result := GetTypeData(TypeInfo)^.MaxLength > SizeOf(Pointer);
   else
@@ -387,15 +395,16 @@ begin
   end;
 
   if ReturnType <> nil then
-    Result := Rtti.Invoke(Code, ArgList, CallingConvention, ReturnType.Handle{, IsStatic})
+    Result := Rtti.Invoke(Code, ArgList, CallingConvention, ReturnType.Handle{$IF CompilerVersion > 22}, IsStatic{$IFEND})
   else if IsConstructor then
-    Result := Rtti.Invoke(Code, ArgList, CallingConvention, Cls.ClassInfo{, IsStatic})
+    Result := Rtti.Invoke(Code, ArgList, CallingConvention, Cls.ClassInfo{$IF CompilerVersion > 22}, IsStatic, True{$IFEND})
   else
     Result := Rtti.Invoke(Code, ArgList, CallingConvention, nil);
 end;
 
 {--------------------------------------------------------------------------------------------------}
 
+{$IF CompilerVersion = 22}
 const
   TRttiMethod_CreateImplementationBytesCmp: array[0..11] of Byte = (
     $53,                // push ebx                        //  0
@@ -438,6 +447,7 @@ asm
   push edi // TMethodRtti is kept in EDI
   call FixInvokeInfoAddParameter
 end;
+{$IFEND}
 
 {--------------------------------------------------------------------------------------------------}
 
@@ -563,18 +573,42 @@ end;
 
 {--------------------------------------------------------------------------------------------------}
 
+const
+  PassByRefBytes: array[0..47] of SmallInt = (
+    // begin
+    $48, $83, $EC, $28,
+    // if TypeInfo = nil then
+    $48, $85, $C9,
+    $75, $05,
+    // Exit(False);
+    $48, $33, $C0,
+    $EB, $79,
+    // case TypeInfo^.Kind of
+    $48, $0F, $B6, $01,
+    $80, $E8, $05,
+    $84, $C0,
+    $74, $5A,
+    $80, $E8, $07,
+    $84, $C0,
+    $74, $4F,
+    $80, $E8, $01,
+    $84, $C0,
+    $74, $09,
+    $80, $E8, $01,
+    $84, $C0,
+    $75, $56,
+    $EB, $0D
+  );
+
 procedure PatchRtti;
+{$HINTS OFF}
 var
   Ctx: TRttiContext;
   Meth: TRttiMethod;
-{$IF CompilerVersion = 22}
   P: PByte;
   Offset: Integer;
   n: UINT_PTR;
-{$IFEND}
 begin
-  Ctx := TRttiContext.Create;
-
 {$IF CompilerVersion = 22}
   // Get the code pointer of the TMethodImplementation.TInvokeInfo.GetParamLocs method for which
   // extended RTTI is available to find the private type private method SaveArguments.
@@ -596,21 +630,34 @@ begin
   RedirectFunction(@Rtti.IsManaged, @IsManaged);
 {$IFEND}
 
+{$IF CompilerVersion < 23}
   // Fix TRttiIntfMethod.DispatchInvoke
   Meth := ctx.GetType(TypeInfo(IIntfMethodHelper)).GetMethod('IntfMethod');
-  RedirectFunction(GetVirtualMethod(Meth, $34), @TRttiMethodFix.IntfDispatchInvoke);
+  RedirectFunction(GetVirtualMethod(Meth.ClassType, 13), @TRttiMethodFix.IntfDispatchInvoke);
 
   // Fix TRttiInstanceMethodEx.DispatchInvoke
   Meth := ctx.GetType(TInstanceMethodHelper).GetMethod('InstanceMethod');
-  RedirectFunction(GetVirtualMethod(Meth, $34), @TRttiMethodFix.InstanceDispatchInvoke);
+  RedirectFunction(GetVirtualMethod(Meth.ClassType, 13), @TRttiMethodFix.InstanceDispatchInvoke);
+{$IFEND}
+
+{$IF Defined(CPUX64)}
+  // Fix PassByRef
+  P := FindMethodBytes(@Rtti.IsManaged, PassByRefBytes, 1000);
+  if P <> nil then
+    RedirectFunction(P, @PassByRef)
+  else
+    raise Exception.Create('Patching PassByRef failed. Do you have set a breakpoint in the method?');
+{$IFEND}
 
 {$IF CompilerVersion = 21}
   // Fix TRttiPackage.MakeTypeLookupTable
   RedirectFunction(TRttiPackage.GetMakeTypeLookupTableAddress, @TRttiPackage.MakeTypeLookupTableFix);
 {$IFEND}
 
+{$IF CompilerVersion < 23}
   // Fix TValue.TryAsOrdinal
   RedirectFunction(@TValue.TryAsOrdinal, @TValue.TryAsOrdinalFix);
+{$IFEND}
 
 {$IF CompilerVersion = 22}
   // Fix TRttiMethod.GetInvokeInfo
@@ -633,8 +680,6 @@ begin
   else
     raise Exception.Create('TRttiMethod.CreateImplementation does not match the search pattern. Do you have set a breakpoint in the method?');
 {$IFEND}
-
-  Ctx.Free;
 end;
 
 initialization
@@ -647,7 +692,6 @@ initialization
       if not (e is EAbort) then
         MessageBox(0, PChar(e.ClassName + ': ' + e.Message), PChar(ExtractFileName(ParamStr(0))), MB_OK or MB_ICONERROR);
   end;
-{$IFEND}
 {$IFEND}
 
 end.

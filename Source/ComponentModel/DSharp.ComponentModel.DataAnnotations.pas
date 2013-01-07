@@ -157,7 +157,7 @@ end;
 
 constructor RequiredAttribute.Create;
 begin
-  FErrorMessage := SRequiredAttribute_ValidationError;
+  inherited Create(SRequiredAttribute_ValidationError);
 end;
 
 function RequiredAttribute.IsValid(const Value: TValue;

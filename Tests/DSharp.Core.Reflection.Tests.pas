@@ -8,6 +8,7 @@ uses
 
 type
   TInvokableList = TList<IInvokable>;
+  TPersistentList = class(TList<TObject>);
 
 implementation
 
@@ -64,6 +65,8 @@ type
     procedure IsCovariantTo_TObjectListOfTPersistent_TListOfTObject_True;
     procedure IsCovariantTo_TObjectListOfTPersistent_TListOfTPersistent_True;
     procedure IsCovariantTo_TObjectListOfTPersistent_TObjectListOfTObject_True;
+
+    procedure IsCovariantTo_TPersistentList_TListOfObject_True;
 
     procedure IsGenericTypeOf_TListOfTObject_TList_True;
     procedure IsGenericTypeOf_TListOfTObject_TObjectList_False;
@@ -255,7 +258,7 @@ end;
 
 procedure TRttiTypeHelperTestCase.GetGenericTypeDefinition_TListOfTObject;
 begin
-  CheckEquals('TList<T>', Context.GetType(TList<TObject>).GetGenericTypeDefinition);
+  CheckEquals('TList<T>', Context.GetType(TList<TObject>).GetGenericTypeDefinition(False));
 end;
 
 procedure TRttiTypeHelperTestCase.GetGenericTypeDefinition_TObjectListOfTObject;
@@ -376,6 +379,11 @@ end;
 procedure TRttiTypeHelperTestCase.IsCovariantTo_TObject_TPersistent_False;
 begin
   CheckFalse(Context.GetType(TObject).IsCovariantTo(TPersistent));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariantTo_TPersistentList_TListOfObject_True;
+begin
+  CheckTrue(Context.GetType(TPersistentList).IsCovariantTo(TList<TObject>));
 end;
 
 procedure TRttiTypeHelperTestCase.IsCovariantTo_TPersistent_TObject_True;
@@ -1027,6 +1035,8 @@ begin
 
   CheckTrue(base.GetMethod('MethodA').IsDefined<TestAttribute>(True));
   CheckTrue(base.GetMethod('MethodB').IsDefined<TestAttribute>(True));
+
+  base.Free;
 end;
 
 initialization

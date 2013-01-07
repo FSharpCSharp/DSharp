@@ -397,7 +397,7 @@ begin
   if ReturnType <> nil then
     Result := Rtti.Invoke(Code, ArgList, CallingConvention, ReturnType.Handle{$IF CompilerVersion > 22}, IsStatic{$IFEND})
   else if IsConstructor then
-    Result := Rtti.Invoke(Code, ArgList, CallingConvention, Cls.ClassInfo{$IF CompilerVersion > 22}, IsStatic, True{$IFEND})
+    Result := Rtti.Invoke(Code, ArgList, CallingConvention, Cls.ClassInfo{$IF CompilerVersion > 22}, True{$IFEND})
   else
     Result := Rtti.Invoke(Code, ArgList, CallingConvention, nil);
 end;

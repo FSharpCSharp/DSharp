@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -132,7 +132,8 @@ type
       end;
   end;
 
-function Logging(ATypeInfo: PTypeInfo = nil): ILog;
+function Logging: ILog; overload;
+function Logging(ATypeInfo: PTypeInfo): ILog; overload;
 procedure RegisterLogging(ALog: ILog);
 procedure UnregisterLogging(ALog: ILog);
 
@@ -165,7 +166,12 @@ begin
   Result := SysUtils.Format(Format, TValue.ToVarRecs(Args));
 end;
 
-function Logging(ATypeInfo: PTypeInfo = nil): ILog;
+function Logging: ILog;
+begin
+  Result := Logging(nil);
+end;
+
+function Logging(ATypeInfo: PTypeInfo): ILog;
 begin
   if not Assigned(GLog) then
     GLog := TLogProxy.Create;

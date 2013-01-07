@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2013, Stefan Glienke
+  Copyright (c) 2012-2013, DSharp team
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 *)
 
-unit DSharp.Logging.Console;
+unit DSharp.Logging.Debug;
 
 interface
 
@@ -35,7 +35,7 @@ uses
   DSharp.Logging;
 
 type
-  TConsoleLog = class(TTextLog)
+  TDebugLog = class(TTextLog)
   protected
     procedure WriteLine(const Text: string); override;
   end;
@@ -45,15 +45,14 @@ implementation
 uses
   Windows;
 
-{ TConsoleLog }
+{ TDebugLog }
 
-procedure TConsoleLog.WriteLine(const Text: string);
+procedure TDebugLog.WriteLine(const Text: string);
 begin
-  Writeln(Text);
+  OutputDebugString(PWideChar(Text));
 end;
 
 initialization
-  AllocConsole;
-  RegisterLogging(TConsoleLog.Create);
+  RegisterLogging(TDebugLog.Create);
 
 end.

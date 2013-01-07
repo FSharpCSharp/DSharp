@@ -11,5 +11,6 @@ uses
 
 begin
   Application.Initialize;
+  ReportMemoryLeaksOnShutdown := True;
   RunRegisteredTests;
 end.

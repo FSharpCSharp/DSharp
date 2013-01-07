@@ -382,7 +382,6 @@ end;
 
 destructor TEventBase.Destroy;
 begin
-  FMethods.OnNotify := nil;
   FMethods.Free;
 end;
 
@@ -625,7 +624,8 @@ end;
 procedure TEvent.Notify(Sender: TObject; const Item: TMethod;
   Action: TCollectionNotification);
 begin
-  if Assigned(Item.Data) and not IsValid(Item.Data) then
+  if (TypeInfo.Kind = tkInterface)
+    and Assigned(Item.Data) and not IsValid(Item.Data) then
   begin
     case Action of
       cnAdded: IInterface(Item.Data)._AddRef();

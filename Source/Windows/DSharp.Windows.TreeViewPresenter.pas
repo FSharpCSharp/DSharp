@@ -873,7 +873,7 @@ procedure TTreeViewPresenter.DoHeaderClick(Sender: TVTHeader;
 var
   LCursor: TCursor;
 begin
-  if FSorting and (HitInfo.Button = mbLeft) then
+  if FSorting and (HitInfo.Button = mbLeft) and (HitInfo.Column > -1) then
   begin
     LCursor := Screen.Cursor;
     Screen.Cursor := crHourGlass;

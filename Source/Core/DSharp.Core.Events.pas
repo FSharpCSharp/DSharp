@@ -623,9 +623,23 @@ end;
 
 procedure TEvent.Notify(Sender: TObject; const Item: TMethod;
   Action: TCollectionNotification);
+
+  function IsValidInterface(P: Pointer): Boolean;
+  begin
+    try
+      // if pointer is not a valid object
+      Result := Assigned(P) and not IsValid(P)
+        // treat it as interface, cast it to an object and check if that is valid
+        and IsValid(IInterface(P) as TObject);
+    except
+      // this may raise an AV if the pointer is not an object nor an interface
+      Result := False;
+    end;
+  end;
+
 begin
-  if (TypeInfo.Kind = tkInterface)
-    and Assigned(Item.Data) and not IsValid(Item.Data) then
+  // manage the delegate lifetime
+  if IsValidInterface(Item.Data) then
   begin
     case Action of
       cnAdded: IInterface(Item.Data)._AddRef();

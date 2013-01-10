@@ -370,7 +370,6 @@ begin
       FMock.CurrentExpectation := FMock.FindExpectation(Input.Method, Input.Arguments);
       Result := Input.CreateMethodReturn(
         FMock.CurrentExpectation.Execute(Input.Arguments, Input.Method.ReturnType));
-      GetNext()(Input, GetNext);
     end;
   end;
 end;

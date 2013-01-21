@@ -159,7 +159,6 @@ begin
     raise Exception.Create('Patching ObjAuto.GetTypeSize failed. Do you have set a breakpoint in the method?');
 
   // Replace SetLength(ParamOffsets, TypeData^.PropCount) with SetLength(ParamOffsets, TypeData^.ParamCount);
-  UseFunction(@ObjAuto.CreateMethodPointer);
   P := FindMethodBytes(PByte(GetActualAddr(@ObjAuto.GetInvokeInstance)), SetLengthBytes, 300);
   if P <> nil then
   begin
@@ -170,6 +169,7 @@ begin
     raise Exception.Create('Patching TBaseMethodHandlerInstance.Create failed. Do you have set a breakpoint in the method?');
 {$IFEND}
 
+  UseFunction(@ObjAuto.CreateMethodPointer);
   // Replace if TParamFlags(P[0]) * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [] then with if PassByRef(P, ParamInfos, I) then
   P := FindMethodBytes(PByte(GetActualAddr(@ObjAuto.GetInvokeInstance)), ParamFlagsBytes, 300);
   if P <> nil then

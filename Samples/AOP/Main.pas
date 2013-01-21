@@ -108,7 +108,7 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  RegisterLogging(TStringsLogging.Create(Memo1.Lines));
+  RegisterLogging(TStringsLog.Create(Memo1.Lines));
 end;
 
 initialization

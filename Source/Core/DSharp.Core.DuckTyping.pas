@@ -63,7 +63,7 @@ function Duck<T>.GetInstance: TObject;
 begin
   if Assigned(FInstance) then
   begin
-    Result := (FInstance as TVirtualObjectInterface).Instance;
+    Result := (IInterface(FInstance) as TVirtualObjectInterface).Instance;
   end
   else
   begin
@@ -81,7 +81,7 @@ var
   LType: TRttiType;
   LVirtualInterface: TVirtualObjectInterface;
 begin
-  LVirtualInterface := (FInstance as TVirtualObjectInterface);
+  LVirtualInterface := (IInterface(FInstance) as TVirtualObjectInterface);
   if Assigned(LVirtualInterface)
     and (LVirtualInterface.Instance.ClassType = Value.ClassType) then
   begin

@@ -522,8 +522,10 @@ type
     function ToString: string; override;
   end;
 
+  IValueExpressionList = IList<IValueExpression>;
+
 function AsBoolean(const Value: Boolean): TBooleanExpression;
-function ExpressionParams: IList<IValueExpression>;
+function ExpressionParams: IValueExpressionList;
 function ExpressionStack: IStack<IExpression>;
 procedure ForceStack;
 
@@ -568,7 +570,7 @@ begin
   Result := Value;
 end;
 
-function ExpressionParams: IList<IValueExpression>;
+function ExpressionParams: IValueExpressionList;
 begin
   Result := ExpressionManager.Params;
 end;
@@ -2432,7 +2434,7 @@ begin
         end
         else
         begin
-          Result := LMethod.Invoke(LInstance.AsPointer, LArguments);
+          Result := LMethod.Invoke(LInstance, LArguments);
         end;
       end;
     end;

@@ -69,6 +69,8 @@ type
   TSetTextEvent = procedure(Sender: TObject; ColumnDefinition: TColumnDefinition;
     Item: TObject; const Value: string) of object;
 
+  TColumnOption = (coResizable, coSortable, coDraggable);
+  TColumnOptions = set of TColumnOption;
   TColumnType = (ctText, ctCheckBox, ctProgressBar, ctImage);
   TSortingDirection = (sdNone, sdAscending, sdDescending);
   TToggleMode = (tmNone, tmClick, tmDoubleClick);
@@ -79,6 +81,7 @@ type
     FAlignment: TAlignment;
     FAutoSize: Boolean;
     FCaption: string;
+    FColumnOptions: TColumnOptions;
     FColumnType: TColumnType;
     FCustomFilter: string;
     FFilter: TPredicate<TObject>;
@@ -123,6 +126,7 @@ type
     property Alignment: TAlignment read FAlignment write FAlignment default taLeftJustify;
     property AutoSize: Boolean read FAutoSize write SetAutoSize default False;
     property Caption: string read FCaption write FCaption;
+    property ColumnOptions: TColumnOptions read FColumnOptions write FColumnOptions default [coResizable, coSortable, coDraggable];
     property ColumnType: TColumnType read FColumnType write FColumnType default ctText;
     property CustomFilter: string read FCustomFilter write SetCustomFilter;
     property Filter: TPredicate<TObject> read FFilter;
@@ -197,6 +201,7 @@ uses
 constructor TColumnDefinition.Create(Collection: TCollection);
 begin
   inherited;
+  FColumnOptions := [coResizable, coSortable, coDraggable];
   FMinWidth := CDefaultMinWidth;
   FVisible := True;
   FWidth := CDefaultWidth;
@@ -230,13 +235,22 @@ begin
   if Source is TColumnDefinition then
   begin
     LSource := TColumnDefinition(Source);
+    AutoSize := LSource.AutoSize;
+    Alignment := LSource.Alignment;
     Caption := LSource.Caption;
+    ColumnOptions := LSource.ColumnOptions;
+    ColumnType := LSource.ColumnType;
     CustomFilter := LSource.CustomFilter;
-    MinWidth := LSource.MinWidth;
+    HintPropertyName := LSource.HintPropertyName;
+    ImageIndexOffset := LSource.ImageIndexOffset;
     ImageIndexPropertyName := LSource.ImageIndexPropertyName;
+    MinWidth := LSource.MinWidth;
     OnCustomDraw := LSource.OnCustomDraw;
     OnGetText := LSource.OnGetText;
+    SortingDirection := LSource.SortingDirection;
+    ToggleMode := LSource.ToggleMode;
     ValuePropertyName := LSource.ValuePropertyName;
+    Visible := LSource.Visible;
     Width := LSource.Width;
   end
   else

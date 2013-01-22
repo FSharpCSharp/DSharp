@@ -873,7 +873,9 @@ procedure TTreeViewPresenter.DoHeaderClick(Sender: TVTHeader;
 var
   LCursor: TCursor;
 begin
-  if FSorting and (HitInfo.Button = mbLeft) and (HitInfo.Column > -1) then
+  if FSorting and (HitInfo.Button = mbLeft) and (HitInfo.Column > -1)
+    and (HitInfo.Column < ColumnDefinitions.Count)
+    and (coSortable in ColumnDefinitions[HitInfo.Column].ColumnOptions) then
   begin
     LCursor := Screen.Cursor;
     Screen.Cursor := crHourGlass;
@@ -1653,6 +1655,14 @@ begin
           begin
             Options := Options - [coVisible];
           end;
+          if not (TColumnOption.coResizable in ColumnDefinitions[i].ColumnOptions) then
+          begin
+            Options := Options - [coResizable];
+          end;
+          if not (TColumnOption.coDraggable in ColumnDefinitions[i].ColumnOptions) then
+          begin
+            Options := Options - [coDraggable];
+          end;
         end;
       end;
       FTreeView.Header.AutoSizeIndex := ColumnDefinitions.AutoSizeIndex;
@@ -2264,12 +2274,15 @@ begin
   end
   else
   begin
-    LColumnDefinition.ImageIndexPropertyExpression.Instance := LItem;
-    LValue := LColumnDefinition.ImageIndexPropertyExpression.Value;
-    if LValue.IsOrdinal then
+    if Assigned(LColumnDefinition.ImageIndexPropertyExpression) then
     begin
-      ToggleValue;
-      LColumnDefinition.ImageIndexPropertyExpression.Value := LValue;
+      LColumnDefinition.ImageIndexPropertyExpression.Instance := LItem;
+      LValue := LColumnDefinition.ImageIndexPropertyExpression.Value;
+      if LValue.IsOrdinal then
+      begin
+        ToggleValue;
+        LColumnDefinition.ImageIndexPropertyExpression.Value := LValue;
+      end;
     end;
   end;
 end;

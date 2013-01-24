@@ -48,7 +48,8 @@ uses
   Grids,
   Messages,
   StdCtrls,
-  SysUtils;
+  SysUtils,
+  Types;
 
 type
   TButton = class(StdCtrls.TButton)
@@ -127,12 +128,28 @@ type
     constructor Create(AOwner: TComponent); override;
   end;
 
+  TFlowPanel = class(ExtCtrls.TFlowPanel, INotifyPropertyChanged, ICollectionView)
+  private
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    FView: TCollectionView;
+  protected
+    procedure AlignControls(AControl: TControl; var Rect: TRect); override;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    property View: TCollectionView read FView implements ICollectionView;
+  end;
+
   TForm = class(Forms.TForm, INotifyPropertyChanged)
   private
     FNotifyPropertyChanged: INotifyPropertyChanged;
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
+    function DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean; override;
+    function DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean; override;
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
   public
@@ -613,12 +630,83 @@ begin
   end;
 end;
 
+{ TFlowPanel }
+
+procedure TFlowPanel.AlignControls(AControl: TControl; var Rect: TRect);
+begin
+  inherited;
+  if Parent is Forms.TScrollBox then
+  begin
+    AutoSize := not AutoSize;
+    AutoSize := not AutoSize;
+  end;
+end;
+
+constructor TFlowPanel.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+  FView := TCollectionViewAdapter.Create(Self);
+end;
+
+destructor TFlowPanel.Destroy;
+begin
+  FView.Free;
+  inherited;
+end;
+
 { TForm }
 
 constructor TForm.Create(AOwner: TComponent);
 begin
   inherited;
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+end;
+
+function FindControl(AControl: TWinControl; APos: TPoint; AClass: TClass): TControl;
+begin
+  APos := AControl.ScreenToClient(APos);
+  Result := AControl.ControlAtPos(APos, False, True, True);
+
+  while Assigned(Result) do
+  begin
+    if Result is AClass then
+      Break
+    else
+      Result := Result.Parent;
+  end;
+end;
+
+function TForm.DoMouseWheelDown(Shift: TShiftState; MousePos: TPoint): Boolean;
+var
+  LControl: TControl;
+begin
+  Result := inherited;
+  if not Result then
+  begin
+    LControl := FindControl(Self, MousePos, Forms.TScrollBox);
+    if Assigned(LControl) then
+    begin
+      LControl.Perform(WM_VSCROLL, 1, 0);
+      Result := True;
+    end;
+  end;
+end;
+
+function TForm.DoMouseWheelUp(Shift: TShiftState; MousePos: TPoint): Boolean;
+var
+  LControl: TControl;
+begin
+  Result := inherited;
+  if not Result then
+  begin
+    LControl := FindControl(Self, MousePos, Forms.TScrollBox);
+    if Assigned(LControl) then
+    begin
+      LControl.Perform(WM_VSCROLL, 0, 0);
+      Result := True;
+    end;
+  end;
 end;
 
 procedure TForm.DoPropertyChanged(const APropertyName: string;

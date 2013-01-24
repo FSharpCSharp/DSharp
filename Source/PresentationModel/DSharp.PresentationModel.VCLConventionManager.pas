@@ -57,6 +57,8 @@ uses
 type
   TConventionManager = class
   private
+    procedure FlowPanelCollectionChanged(Sender: TObject; const Item: TObject;
+      Action: TCollectionChangedAction);
     procedure PageControlCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction);
     procedure ScrollBoxCollectionChanged(Sender: TObject; const Item: TObject;
@@ -71,6 +73,47 @@ var
   Manager: TConventionManager = nil;
 
 { TConventionManager }
+
+procedure TConventionManager.FlowPanelCollectionChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
+var
+  i: Integer;
+  LFlowPanel: TFlowPanel;
+  LItemIndex: Integer;
+  LView: TControl;
+begin
+  LFlowPanel := TFlowPanel(Sender);
+  case Action of
+    caAdd:
+    begin
+      LView := ViewLocator.GetOrCreateViewType(Item.ClassType) as TControl;
+
+      LView.Parent := LFlowPanel;
+      LView.Tag := NativeInt(Item);
+
+      LItemIndex := LFlowPanel.View.ItemsSource.IndexOf(Item);
+      LFlowPanel.SetControlIndex(LView, LItemIndex);
+
+      ViewModelBinder.Bind(Item, LView);
+    end;
+    caRemove:
+    begin
+      LView := nil;
+      for i := 0 to Pred(LFlowPanel.ControlCount) do
+      begin
+        if LFlowPanel.Controls[i].Tag = NativeInt(Item) then
+        begin
+          LView := LFlowPanel.Controls[i];
+        end;
+      end;
+      if Assigned(LView) then
+      begin
+        LView.Parent := nil;
+        LView.Free;
+      end;
+    end;
+  end;
+end;
 
 procedure TConventionManager.PageControlCollectionChanged(Sender: TObject;
   const Item: TObject; Action: TCollectionChangedAction);
@@ -189,6 +232,29 @@ begin
         ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
       end;
   AddElementConvention<TEdit>('Text', 'OnChange');
+  AddElementConvention<TFlowPanel>('View.ItemsSource', 'OnCurrentChanged')
+    .ApplyBinding :=
+      procedure(AViewModel: TObject; APropertyName: string;
+        AViewElement: TComponent; ABindingType: TBindingType;
+        AConvention: TElementConvention)
+      var
+        LCollectionChanged: IEvent<TCollectionChangedEvent>;
+        LItems: IList;
+        LItem: TValue;
+      begin
+        SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
+        ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
+        LItems := TFlowPanel(AViewElement).View.ItemsSource;
+        if Assigned(LItems) then
+        begin
+          for LItem in LItems do
+          begin
+            Manager.FlowPanelCollectionChanged(AViewElement, LItem.ToObject, caAdd);
+          end;
+        end;
+        LCollectionChanged := TFlowPanel(AViewElement).View.OnCollectionChanged;
+        LCollectionChanged.Add(Manager.FlowPanelCollectionChanged);
+      end;
   AddElementConvention<TLabel>('Caption', 'OnClick');
   AddElementConvention<TLabeledEdit>('Text', 'OnChange');
   AddElementConvention<TListBox>('View.ItemsSource', 'OnClick')

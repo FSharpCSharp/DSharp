@@ -84,7 +84,8 @@ implementation
 uses
   DSharp.Core.DataTemplates,
   DSharp.Core.Reflection,
-  Rtti;
+  Rtti,
+  TypInfo;
 
 { TCollectionViewAdapter }
 
@@ -138,21 +139,27 @@ procedure TCollectionViewAdapter.DoSourceCollectionChanged(Sender: TObject;
   const Item: TObject; Action: TCollectionChangedAction);
 var
   LIndex: NativeInt;
+  LItem: TObject;
 begin
-  inherited;
+  LItem := Item;
+
+  if FItemsSource.ItemType.Kind = tkInterface then
+    LItem := IInterface(Pointer(Item)) as TObject;
+
+  inherited DoSourceCollectionChanged(Sender, LItem, Action);
 
   case Action of
     caAdd:
     begin
-      if not IsFiltered(Item) then
+      if not IsFiltered(LItem) then
       begin
         LIndex := AddDisplayItem();
-        UpdateDisplayItem(LIndex, Item);
+        UpdateDisplayItem(LIndex, LItem);
       end;
     end;
     caRemove:
     begin
-      LIndex := FindDisplayItem(Item);
+      LIndex := FindDisplayItem(LItem);
       if LIndex > -1 then
       begin
         RemoveDisplayItem(LIndex);
@@ -161,7 +168,7 @@ begin
   end;
 
   NotifyPropertyChanged(FOwner, Self, 'View');
-  FOnCollectionChanged.Invoke(FOwner, Item, Action);
+  FOnCollectionChanged.Invoke(FOwner, LItem, Action);
 end;
 
 function TCollectionViewAdapter.FindDisplayItem(AItem: TObject): NativeInt;

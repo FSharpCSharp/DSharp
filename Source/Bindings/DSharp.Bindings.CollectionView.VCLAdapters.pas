@@ -322,7 +322,10 @@ end;
 procedure TCollectionViewPageControlAdapter.RemoveDisplayItem(
   AIndex: NativeInt);
 begin
-  FPageControl.Pages[AIndex].Free;
+  if not (csDestroying in FPageControl.Pages[AIndex].ComponentState) then
+  begin
+    FPageControl.Pages[AIndex].Free;
+  end;
 end;
 
 procedure TCollectionViewPageControlAdapter.SetItemIndex(

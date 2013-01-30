@@ -118,21 +118,27 @@ end;
 procedure TConventionManager.PageControlCollectionChanged(Sender: TObject;
   const Item: TObject; Action: TCollectionChangedAction);
 var
-  LView: TControl;
+  LItemIndex: Integer;
+  LPageControl: TPageControl;
   LTabSheet: TTabSheet;
+  LView: TControl;
 begin
-  if Action = caAdd then
-  begin
-    LView := ViewLocator.GetOrCreateViewType(Item.ClassType) as TControl;
-    LTabSheet := TPageControl(Sender).Pages[TPageControl(Sender).View.ItemsSource.IndexOf(Item)];
-    LView.Parent := LTabSheet;
-    TTabSheetConductor.Create(Item, LTabSheet);
-    ViewModelBinder.Bind(Item, LView);
-
-    if Supports(Item, IHaveDisplayName) then
+  LPageControl := TPageControl(Sender);
+  case Action of
+    caAdd:
     begin
-      FindBindingGroup(LView).AddBinding(
-        Item, 'DisplayName', LTabSheet, 'Caption', bmOneWay)
+      LView := ViewLocator.GetOrCreateViewType(Item.ClassType) as TControl;
+      LItemIndex := LPageControl.View.ItemsSource.IndexOf(Item);
+      LTabSheet := LPageControl.Pages[LItemIndex];
+      LView.Parent := LTabSheet;
+      TTabSheetConductor.Create(Item, LTabSheet);
+      ViewModelBinder.Bind(Item, LView);
+
+      if Supports(Item, IHaveDisplayName) then
+      begin
+        FindBindingGroup(LView).AddBinding(
+          Item, 'DisplayName', LTabSheet, 'Caption', bmOneWay)
+      end;
     end;
   end;
 end;

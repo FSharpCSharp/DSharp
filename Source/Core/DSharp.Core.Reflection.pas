@@ -2953,7 +2953,7 @@ begin
   LName := Copy(FullPropertyName, LastDelimiter('.', FullPropertyName) + 1);
   for LProp in FRegister.Values do
   begin
-    if SameText(LProp.Name, LName)
+    if SameText(LProp.Name, LName) and LProp.Parent.IsInstance
       and EndsText(LScope, LProp.Parent.AsInstance.MetaclassType.QualifiedClassName) then
     begin
       Result := LProp;

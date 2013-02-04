@@ -4,8 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Sample7.Customer, Collections.Base, Collections.Lists, StdCtrls;
-  // You need http://code.google.com/p/delphi-coll/ for this sample to compile
+  Dialogs, StdCtrls, Sample7.Customer, DSharp.Collections,
+  DSharp.Collections.Extensions;
 
 type
   TMainForm = class(TForm)
@@ -14,12 +14,11 @@ type
     Button2: TButton;
     Edit1: TEdit;
     procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
   private
     { Private declarations }
-    customers: TObjectList<TCustomer>;
+    customers: IList<TCustomer>;
     filter1: TPredicate<TCustomer>;
     filter2: TPredicate<TCustomer>;
   public
@@ -81,7 +80,7 @@ var
   cust: TCustomer;
 begin
   Memo1.Lines.Add(Lambda.GetExpression(filter1).ToString);
-  for cust in customers.Where(filter1) do
+  for cust in Enumerable<TCustomer>(customers).Where(filter1) do
   begin
     Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));
   end;
@@ -92,7 +91,7 @@ var
   cust: TCustomer;
 begin
   Memo1.Lines.Add(Lambda.GetExpression(filter2).ToString);
-  for cust in customers.Where(filter2) do
+  for cust in Enumerable<TCustomer>(customers).Where(filter2) do
   begin
     Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));
   end;
@@ -105,19 +104,13 @@ begin
       or Bool(Arg1.CompanyName = 'Around the Horn'));
   filter2 := Lambda.Predicate<TCustomer>(StartsText(Arg(Edit1).Text, Arg1.CompanyName));
 
-  customers := TObjectList<TCustomer>.Create();
-  customers.OwnsObjects := True;
+  customers := TObjectList<TCustomer>.Create(True);
   customers.Add(TCustomer.Create('ALFKI', 'Alfreds Futterkiste'));
   customers.Add(TCustomer.Create('ANATR', 'Ana Trujillo Emparedados y helados'));
   customers.Add(TCustomer.Create('ANTON', 'Antonio Moreno Taquería'));
   customers.Add(TCustomer.Create('AROUT', 'Around the Horn'));
   customers.Add(TCustomer.Create('BERGS', 'Berglunds snabbköp'));
   customers.Add(TCustomer.Create('BLAUS', 'Blauer See Delikatessen'));
-end;
-
-procedure TMainForm.FormDestroy(Sender: TObject);
-begin
-  customers.Free();
 end;
 
 initialization

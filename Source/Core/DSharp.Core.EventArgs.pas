@@ -40,7 +40,7 @@ type
 
   {$M+}
   TEventHandler<T: IEventArgs> =
-    procedure(Sender: TObject; EventArgs: T) of object;
+    reference to procedure(Sender: TObject; EventArgs: T);
 
 implementation
 

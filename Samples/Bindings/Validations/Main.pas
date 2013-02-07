@@ -196,7 +196,7 @@ begin
   // Show logging so you can see when the value is actually updated
   // DateTimePicker however has a kinda weird behaviour when you look at it first
   // when you open the calendar it will trigger twice (when you select a date and when you close it)
-  Logging.LogValue<TDate>('Date', Value);
+  Logging.LogValue('Date', TValue.From<TDate>(Value));
 end;
 
 { TFutureDateRule }

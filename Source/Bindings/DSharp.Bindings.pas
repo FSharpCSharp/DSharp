@@ -915,7 +915,10 @@ begin
       if Supports(FSource, INotifyPropertyChanged, LNotifyPropertyChanged) then
       begin
         LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-        LPropertyChanged.Remove(DoSourcePropertyChanged);
+        if Assigned(LPropertyChanged) then
+        begin
+          LPropertyChanged.Remove(DoSourcePropertyChanged);
+        end;
       end;
 
       if Assigned(FSourceCollectionChanged) then

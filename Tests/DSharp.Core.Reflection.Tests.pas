@@ -10,6 +10,10 @@ type
   TInvokableList = TList<IInvokable>;
   TPersistentList = class(TList<TObject>);
 
+{$IFDEF VER210}
+  {$MESSAGE HINT 'If you get F2084 Internal Error: L817 just compile again (not build)'}
+{$ENDIF}
+
 implementation
 
 uses

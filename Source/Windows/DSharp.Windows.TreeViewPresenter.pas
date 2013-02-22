@@ -62,6 +62,7 @@ type
     var Handled: Boolean) of object;
 
   TCheckSupport = (csNone, csSimple, csTriState, csRadio);
+  TFilterDirection = (fdTopToBottom, fdBottomToTop);
   TSelectionMode = (smSingle, smLevel, smMulti, smNone);
 
   TTreeViewPresenter = class(TCustomPresenter)
@@ -72,6 +73,7 @@ type
     FCheckSupport: TCheckSupport;
     FCollectionChanging: Integer;
     FCurrentNode: PVirtualNode;
+    FFilterDirection: TFilterDirection;
     FExpandedItems: IList<TObject>;
     FHitInfo: THitInfo;
     FListMode: Boolean;
@@ -240,6 +242,7 @@ type
       read FAllowClearSelection write FAllowClearSelection default True;
     property AllowMove: Boolean read FAllowMove write FAllowMove default True;
     property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
+    property FilterDirection: TFilterDirection read FFilterDirection write FFilterDirection default fdTopToBottom;
     property ListMode: Boolean read FListMode write SetListMode default False;
     property OnCompare: TCompareEvent read FOnCompare write FOnCompare;
     property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
@@ -358,11 +361,25 @@ procedure TTreeViewPresenter.ApplyFilter;
 var
   LNode: PVirtualNode;
 begin
-  LNode := FTreeView.GetFirst();
-  while Assigned(LNode) do
-  begin
-    DoFilterNode(FTreeView, LNode);
-    LNode := FTreeView.GetNext(LNode);
+  case FFilterDirection of
+    fdTopToBottom:
+    begin
+      LNode := FTreeView.GetFirst();
+      while Assigned(LNode) do
+      begin
+        DoFilterNode(FTreeView, LNode);
+        LNode := FTreeView.GetNext(LNode);
+      end;
+    end;
+    fdBottomToTop:
+    begin
+      LNode := FTreeView.GetLast();
+      while Assigned(LNode) do
+      begin
+        DoFilterNode(FTreeView, LNode);
+        LNode := FTreeView.GetPrevious(LNode);
+      end;
+    end;
   end;
 end;
 
@@ -758,9 +775,33 @@ var
   i: Integer;
   LItem: TObject;
   LAccepted: Boolean;
+
+  function IsLeaf(Node: PVirtualNode): Boolean;
+  begin
+    Result := Node.ChildCount = 0;
+  end;
+
+  function IsNodeWithNonFilteredChildren(Node: PVirtualNode): Boolean;
+  begin
+    Result := False;
+    Node := Sender.GetFirstChild(Node);
+    while Assigned(Node) do
+    begin
+      if not (vsFiltered in Node.States) then
+      begin
+        Result := True;
+        Break;
+      end;
+      Node := Sender.GetNextSibling(Node);
+    end;
+  end;
+
 begin
   LItem := GetNodeItem(Sender, Node);
-  LAccepted := True;
+  case FFilterDirection of
+    fdTopToBottom: LAccepted := True;
+    fdBottomToTop: LAccepted := IsLeaf(Node) or IsNodeWithNonFilteredChildren(Node);
+  end;
 
   View.Filter.Invoke(LItem, LAccepted);
   Sender.IsFiltered[Node] := not LAccepted;
@@ -991,7 +1032,11 @@ begin
     Sender.ChildCount[Node] := 0;
   end;
 
-  DoFilterNode(Sender, Node);
+  while Assigned(Node) do
+  begin
+    DoFilterNode(Sender, Node);
+    Node := Sender.NodeParent[Node];
+  end;
 end;
 
 procedure TTreeViewPresenter.DoKeyDown(Sender: TObject; var Key: Word;

@@ -361,23 +361,26 @@ procedure TTreeViewPresenter.ApplyFilter;
 var
   LNode: PVirtualNode;
 begin
-  case FFilterDirection of
-    fdTopToBottom:
-    begin
-      LNode := FTreeView.GetFirst();
-      while Assigned(LNode) do
+  if Assigned(FTreeView) and not (csDestroying in ComponentState) then
+  begin
+    case FFilterDirection of
+      fdTopToBottom:
       begin
-        DoFilterNode(FTreeView, LNode);
-        LNode := FTreeView.GetNext(LNode);
+        LNode := FTreeView.GetFirst();
+        while Assigned(LNode) do
+        begin
+          DoFilterNode(FTreeView, LNode);
+          LNode := FTreeView.GetNext(LNode);
+        end;
       end;
-    end;
-    fdBottomToTop:
-    begin
-      LNode := FTreeView.GetLast();
-      while Assigned(LNode) do
+      fdBottomToTop:
       begin
-        DoFilterNode(FTreeView, LNode);
-        LNode := FTreeView.GetPrevious(LNode);
+        LNode := FTreeView.GetLast();
+        while Assigned(LNode) do
+        begin
+          DoFilterNode(FTreeView, LNode);
+          LNode := FTreeView.GetPrevious(LNode);
+        end;
       end;
     end;
   end;

@@ -577,7 +577,7 @@ var
   LHitInfo: THitInfo;
 begin
   LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
-  FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
+  FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, True, LHitInfo);
 
   if not IsMouseInToggleIcon(LHitInfo) then
   begin
@@ -1132,7 +1132,7 @@ var
 begin
   if not (ssDouble in Shift) then
   begin
-    FTreeView.GetHitTestInfoAt(X, Y, False, LHitInfo);
+    FTreeView.GetHitTestInfoAt(X, Y, True, LHitInfo);
     if not Assigned(LHitInfo.HitNode) then
     begin
       if FAllowClearSelection then
@@ -1193,7 +1193,7 @@ var
 begin
   if Assigned(FHitInfo.HitNode) then
   begin
-    FTreeView.GetHitTestInfoAt(X, Y, False, LHitInfo);
+    FTreeView.GetHitTestInfoAt(X, Y, True, LHitInfo);
     if (FHitInfo.HitNode = LHitInfo.HitNode)
       and (FHitInfo.HitColumn = LHitInfo.HitColumn)
       and Assigned(ColumnDefinitions) and (LHitInfo.HitColumn > -1)
@@ -1919,7 +1919,7 @@ begin
     and (ColumnDefinitions[Column].ColumnType = TColumnType.ctCheckBox) then
   begin
     LCursorPos := FTreeView.ScreenToClient(Mouse.CursorPos);
-    FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, False, LHitInfo);
+    FTreeView.GetHitTestInfoAt(LCursorPos.X, LCursorPos.Y, True, LHitInfo);
     LRect := FTreeView.GetDisplayRect(Node, Column, False);
     LRect := CalcCheckBoxRect(LRect);
     Result := PtInRect(LRect, LCursorPos);

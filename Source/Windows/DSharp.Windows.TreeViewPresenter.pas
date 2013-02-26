@@ -62,7 +62,7 @@ type
     var Handled: Boolean) of object;
 
   TCheckSupport = (csNone, csSimple, csTriState, csRadio);
-  TFilterDirection = (fdTopToBottom, fdBottomToTop);
+  TFilterDirection = (fdRootToLeafs, fdLeafsToRoot);
   TSelectionMode = (smSingle, smLevel, smMulti, smNone);
 
   TTreeViewPresenter = class(TCustomPresenter)
@@ -242,7 +242,7 @@ type
       read FAllowClearSelection write FAllowClearSelection default True;
     property AllowMove: Boolean read FAllowMove write FAllowMove default True;
     property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
-    property FilterDirection: TFilterDirection read FFilterDirection write FFilterDirection default fdTopToBottom;
+    property FilterDirection: TFilterDirection read FFilterDirection write FFilterDirection default fdRootToLeafs;
     property ListMode: Boolean read FListMode write SetListMode default False;
     property OnCompare: TCompareEvent read FOnCompare write FOnCompare;
     property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
@@ -366,7 +366,7 @@ begin
     FTreeView.BeginUpdate;
     try
       case FFilterDirection of
-        fdTopToBottom:
+        fdRootToLeafs:
         begin
           LNode := FTreeView.GetFirst();
           while Assigned(LNode) do
@@ -375,7 +375,7 @@ begin
             LNode := FTreeView.GetNext(LNode);
           end;
         end;
-        fdBottomToTop:
+        fdLeafsToRoot:
         begin
           LNode := FTreeView.GetLast();
           while Assigned(LNode) do
@@ -807,8 +807,8 @@ var
 begin
   LItem := GetNodeItem(Sender, Node);
   case FFilterDirection of
-    fdTopToBottom: LAccepted := True;
-    fdBottomToTop: LAccepted := IsLeaf(Node) or IsNodeWithNonFilteredChildren(Node);
+    fdRootToLeafs: LAccepted := True;
+    fdLeafsToRoot: LAccepted := IsLeaf(Node) or IsNodeWithNonFilteredChildren(Node);
   end;
 
   View.Filter.Invoke(LItem, LAccepted);

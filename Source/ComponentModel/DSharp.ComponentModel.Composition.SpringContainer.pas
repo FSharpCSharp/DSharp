@@ -445,6 +445,7 @@ end;
 
 function TSpringContainer.ResolveAllLazy(LazyType: TRttiType): TArray<TValue>;
 var
+  Model: TComponentModel;
   Models: IEnumerable<TComponentModel>;
   Index: Integer;
   TempResult: TArray<TValue>;
@@ -452,28 +453,27 @@ begin
   Models := GetComponentRegistry.FindAll(LazyType.Handle);
   SetLength(TempResult, Models.Count);
   Index := 0;
-  Models.ForEach(
-    procedure(const Model: TComponentModel)
+  for Model in Models do
+  begin
+    if LazyType is TRttiInterfaceType then
     begin
-      if LazyType is TRttiInterfaceType then
-      begin
-        TempResult[Index] := TValue.From<ILazy<IInterface>>(ILazy<IInterface>(
-          function: IInterface
-          begin
-            Result := Resolve(Model.GetServiceName(LazyType.Handle)).AsInterface;
-          end));
-      end;
-      if LazyType is TRttiInstanceType then
-      begin
-        TempResult[Index] := TValue.From<ILazy<TObject>>(ILazy<TObject>(
-          function: TObject
-          begin
-            Result := Resolve(Model.GetServiceName(LazyType.Handle)).AsObject;
-          end));
-      end;
-      TValueData(TempResult[Index]).FTypeInfo := LazyType.Handle;
-      Inc(Index);
-    end);
+      TempResult[Index] := TValue.From<ILazy<IInterface>>(ILazy<IInterface>(
+        function: IInterface
+        begin
+          Result := Resolve(Model.GetServiceName(LazyType.Handle)).AsInterface;
+        end));
+    end;
+    if LazyType is TRttiInstanceType then
+    begin
+      TempResult[Index] := TValue.From<ILazy<TObject>>(ILazy<TObject>(
+        function: TObject
+        begin
+          Result := Resolve(Model.GetServiceName(LazyType.Handle)).AsObject;
+        end));
+    end;
+    TValueData(TempResult[Index]).FTypeInfo := LazyType.Handle;
+    Inc(Index);
+  end;
   Result := TempResult;
   SetLength(TempResult, 0);
 end;

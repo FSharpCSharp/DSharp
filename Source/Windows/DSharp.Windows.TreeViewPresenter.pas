@@ -1400,18 +1400,33 @@ var
 begin
   LCheckBoxRect := CalcCheckBoxRect(CellRect);
 
-  if Value then
+  if (Column > -1) and (Column < ColumnDefinitions.Count)
+    and ColumnDefinitions[Column].AllowEdit then
   begin
-    LThemedButton := tbCheckBoxCheckedNormal;
+    if Value then
+    begin
+      LThemedButton := tbCheckBoxCheckedNormal;
+    end
+    else
+    begin
+       LThemedButton := tbCheckBoxUncheckedNormal;
+    end;
+
+    if IsMouseInCheckBox(Node, Column) then
+    begin
+      Inc(LThemedButton);
+    end;
   end
   else
   begin
-    LThemedButton := tbCheckBoxUncheckedNormal;
-  end;
-
-  if IsMouseInCheckBox(Node, Column) then
-  begin
-    Inc(LThemedButton);
+    if Value then
+    begin
+      LThemedButton := tbCheckBoxCheckedDisabled;
+    end
+    else
+    begin
+      LThemedButton := tbCheckBoxUncheckedDisabled;
+    end;
   end;
 
   if (FHitInfo.HitNode = Node) and (FHitInfo.HitColumn = Column)
@@ -1438,9 +1453,14 @@ begin
   else
   begin
     LState := DFCS_BUTTONCHECK;
-    if LThemedButton in [tbCheckBoxCheckedNormal, tbCheckBoxCheckedHot] then
+    if LThemedButton in [tbCheckBoxCheckedNormal..tbCheckBoxCheckedDisabled] then
     begin
       LState := LState or DFCS_CHECKED;
+    end;
+
+    if LThemedButton in [tbCheckBoxUncheckedDisabled, tbCheckBoxCheckedDisabled] then
+    begin
+      LState := LState or DFCS_INACTIVE;
     end;
 
     DrawFrameControl(TargetCanvas.Handle, LCheckBoxRect, DFC_BUTTON, LState);

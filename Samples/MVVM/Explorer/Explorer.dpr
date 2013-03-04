@@ -1,5 +1,7 @@
 program Explorer;
 
+{$MESSAGE ERROR 'This project is currently broken'}
+
 uses
   DSharp.PresentationModel.VCLApplication,
   Forms,

@@ -54,7 +54,8 @@ type
 
   TCompareEvent = procedure(Sender: TObject; Item1, Item2: TObject;
     ColumnIndex: Integer; var Result: Integer) of object;
-  TDragBeginEvent = procedure(Sender: TObject; var AllowDrag: Boolean) of object;
+  TDragBeginEvent = procedure(Sender: TObject; Item: TObject;
+    var AllowDrag: Boolean) of object;
   TDragOverEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
     var AllowDrop: Boolean) of object;
   TDragDropEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
@@ -616,12 +617,15 @@ end;
 
 procedure TTreeViewPresenter.DoDragAllowed(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Column: TColumnIndex; var Allowed: Boolean);
+var
+  LItem: TObject;
 begin
   Allowed := FAllowMove;
+  LItem := GetNodeItem(Sender, Node);
 
   if Assigned(FOnDragBegin) then
   begin
-    FOnDragBegin(Self, Allowed);
+    FOnDragBegin(Self, LItem, Allowed);
   end;
 end;
 
@@ -1924,7 +1928,7 @@ begin
     FTreeView.TreeOptions.AutoOptions :=
       FTreeView.TreeOptions.AutoOptions + [toAutoHideButtons];
     FTreeView.TreeOptions.MiscOptions :=
-      FTreeView.TreeOptions.MiscOptions - [toToggleOnDblClick];
+      FTreeView.TreeOptions.MiscOptions - [toToggleOnDblClick] + [toFullRowDrag];
     FTreeView.TreeOptions.PaintOptions :=
       FTreeView.TreeOptions.PaintOptions + [toHotTrack, toUseExplorerTheme, toHideTreeLinesIfThemed];
     FTreeView.TreeOptions.SelectionOptions :=

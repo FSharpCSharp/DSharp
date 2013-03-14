@@ -44,11 +44,6 @@ type
     function GetHashCode(const Value: T): Integer; override;
   end;
 
-  IHashSet<T> = interface
-    function Add(const Value: T): Boolean;
-    function Contains(const Value: T): Boolean;
-  end;
-
   IGrouping<TKey, T> = interface(IEnumerable<T>)
     function GetKey: TKey;
     property Key: TKey read GetKey;
@@ -57,17 +52,6 @@ type
   ILookup<TKey, T> = interface(IEnumerable<IGrouping<TKey, T>>)
     function GetItem(const Key: TKey): IEnumerable<T>;
     property Item[const Key: TKey]: IEnumerable<T> read GetItem;
-  end;
-
-  THashSet<T> = class(TInterfacedObject, IHashSet<T>)
-  private
-    FDictionary: TDictionary<T, Integer>;
-  public
-    constructor Create; overload;
-    constructor Create(const AComparer: IEqualityComparer<T>); overload;
-    destructor Destroy; override;
-    function Add(const Value: T): Boolean;
-    function Contains(const Value: T): Boolean;
   end;
 
   TGrouping<TKey, T> = class(TEnumerable<T>, IGrouping<TKey, T>)
@@ -1060,37 +1044,6 @@ end;
 function TEqualityComparer<T>.GetHashCode(const Value: T): Integer;
 begin
   Result := 0;
-end;
-
-{ THashSet<T> }
-
-constructor THashSet<T>.Create;
-begin
-  Create(nil);
-end;
-
-constructor THashSet<T>.Create(const AComparer: IEqualityComparer<T>);
-begin
-  inherited Create();
-  FDictionary := TDictionary<T, Integer>.Create(AComparer);
-end;
-
-destructor THashSet<T>.Destroy;
-begin
-  FDictionary.Free();
-  inherited;
-end;
-
-function THashSet<T>.Add(const Value: T): Boolean;
-begin
-  Result := not FDictionary.ContainsKey(Value);
-  if Result then
-    FDictionary.Add(Value, 0);
-end;
-
-function THashSet<T>.Contains(const Value: T): Boolean;
-begin
-  Result := FDictionary.ContainsKey(Value);
 end;
 
 { TGrouping<TKey, T> }

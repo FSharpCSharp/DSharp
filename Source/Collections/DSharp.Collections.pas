@@ -34,6 +34,7 @@ interface
 uses
   Classes,
   DSharp.Core.Events,
+  Generics.Collections,
   Generics.Defaults,
   RTLConsts,
   Rtti,
@@ -186,6 +187,12 @@ type
 
     property Capacity: NativeInt read GetCapacity write SetCapacity;
     property Count: NativeInt read GetCount;
+  end;
+
+  IHashSet<T> = interface
+    function Add(const Value: T): Boolean;
+    function Contains(const Value: T): Boolean;
+    function Remove(const Value: T): Boolean;
   end;
 
   TEnumerator = class(TInterfacedObject, IEnumerator)
@@ -376,6 +383,19 @@ type
     property Capacity: NativeInt read GetCapacity write SetCapacity;
   end;
 
+  THashSet<T> = class(TInterfacedObject, IHashSet<T>)
+  private
+    FDictionary: TDictionary<T, Integer>;
+  public
+    constructor Create; overload;
+    constructor Create(const AComparer: IEqualityComparer<T>); overload;
+    destructor Destroy; override;
+
+    function Add(const Value: T): Boolean;
+    function Contains(const Value: T): Boolean;
+    function Remove(const Value: T): Boolean;
+  end;
+
   TObjectList<T: class> = class(TList<T>)
   private
     FOwnsObjects: Boolean;
@@ -398,9 +418,6 @@ resourcestring
   InvalidOperation_EnumFailedVersion = 'Collection was modified; enumeration operation may not execute.';
 
 implementation
-
-uses
-  Generics.Collections;
 
 { TArray }
 
@@ -1290,6 +1307,44 @@ begin
   begin
     Result[i] := FItems[i];
   end;
+end;
+
+{ THashSet<T> }
+
+constructor THashSet<T>.Create;
+begin
+  Create(nil);
+end;
+
+constructor THashSet<T>.Create(const AComparer: IEqualityComparer<T>);
+begin
+  inherited Create();
+  FDictionary := TDictionary<T, Integer>.Create(AComparer);
+end;
+
+destructor THashSet<T>.Destroy;
+begin
+  FDictionary.Free();
+  inherited;
+end;
+
+function THashSet<T>.Add(const Value: T): Boolean;
+begin
+  Result := not FDictionary.ContainsKey(Value);
+  if Result then
+    FDictionary.Add(Value, 0);
+end;
+
+function THashSet<T>.Contains(const Value: T): Boolean;
+begin
+  Result := FDictionary.ContainsKey(Value);
+end;
+
+function THashSet<T>.Remove(const Value: T): Boolean;
+begin
+  Result := FDictionary.ContainsKey(Value);
+  if Result then
+    FDictionary.Remove(Value);
 end;
 
 end.

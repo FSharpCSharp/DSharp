@@ -227,7 +227,7 @@ begin
   FTypeInfo := TypeInfo(T);
 
   case FTypeInfo.Kind of
-    tkClass: PObject(@FProxy)^ := GetTypeData(FTypeInfo).ClassType.Create;
+    tkClass: PObject(@FProxy)^ := GetTypeData(FTypeInfo).ClassType.NewInstance;
   end;
   FProxy := TIntercept.ThroughProxy<T>(FProxy, nil, [TMockBehavior.Create(Self)]);
 end;
@@ -235,7 +235,7 @@ end;
 destructor TMock<T>.Destroy;
 begin
   case FTypeInfo.Kind of
-    tkClass: PObject(@FProxy)^.Free;
+    tkClass: PObject(@FProxy)^.FreeInstance;
   end;
 
   inherited Destroy;

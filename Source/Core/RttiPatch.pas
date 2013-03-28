@@ -689,7 +689,7 @@ initialization
     IsPatched := True;
   except
     on e: Exception do
-      if not (e is EAbort) then
+      if not (e is EAbort) and IsDebuggerPresent then
         MessageBox(0, PChar(e.ClassName + ': ' + e.Message), PChar(ExtractFileName(ParamStr(0))), MB_OK or MB_ICONERROR);
   end;
 {$IFEND}

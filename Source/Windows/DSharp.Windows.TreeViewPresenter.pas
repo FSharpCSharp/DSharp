@@ -1139,7 +1139,8 @@ procedure TTreeViewPresenter.DoMouseDown(Sender: TObject; Button: TMouseButton;
 var
   LHitInfo: THitInfo;
 begin
-  if not (ssDouble in Shift) then
+  if not (ssDouble in Shift)
+    and not (tsVCLDragPending in FTreeView.TreeStates) then
   begin
     FTreeView.GetHitTestInfoAt(X, Y, True, LHitInfo);
     if not Assigned(LHitInfo.HitNode) then
@@ -1200,7 +1201,8 @@ var
   LItemTemplate: IDataTemplate;
   LColumnDefinition: TColumnDefinition;
 begin
-  if Assigned(FHitInfo.HitNode) then
+  if Assigned(FHitInfo.HitNode)
+    and not (tsVCLDragPending in FTreeView.TreeStates) then
   begin
     FTreeView.GetHitTestInfoAt(X, Y, True, LHitInfo);
     if (FHitInfo.HitNode = LHitInfo.HitNode)

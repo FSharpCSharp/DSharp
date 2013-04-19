@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -67,14 +67,18 @@ type
     function InSequence(Sequence: ISequence): IExpect<T>;
   end;
 
+  ISetup<T> = interface
+    function WillExecute(const Action: TMockAction): IExpectInSequence<T>;
+    function WillRaise(const Exception: TFunc<Exception>): IExpectInSequence<T>;
+    function WillReturn(const Value: TValue): IExpectInSequence<T>;
+  end;
+
   IMock<T> = interface
     function GetInstance: T;
     function GetMode: TMockMode;
     procedure SetMode(const Value: TMockMode);
+    function Setup: ISetup<T>;
     procedure Verify;
-    function WillExecute(const Action: TMockAction): IExpectInSequence<T>;
-    function WillRaise(const Exception: TFunc<Exception>): IExpectInSequence<T>;
-    function WillReturn(const Value: TValue): IExpectInSequence<T>;
     property Instance: T read GetInstance;
     property Mode: TMockMode read GetMode write SetMode;
   end;

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -72,10 +72,12 @@ type
     property State: TMockState read FState write FState;
   end;
 
-  TMock<T> = class(TMock, IMock<T>, IExpect<T>, IExpectInSequence<T>, IWhen<T>)
+  TMock<T> = class(TMock, IMock<T>, ISetup<T>,
+    IExpect<T>, IExpectInSequence<T>, IWhen<T>)
   private
     FProxy: T;
     function GetInstance: T;
+    function Setup: ISetup<T>;
   public
     constructor Create;
     destructor Destroy; override;
@@ -98,7 +100,7 @@ type
     function WhenCalling: T;
     function WhenCallingWithAnyArguments: T;
 
-    // IMock<T>
+    // ISetup<T>
     function WillExecute(const Action: TMockAction): IExpectInSequence<T>;
     function WillRaise(const E: TFunc<Exception>): IExpectInSequence<T>;
     function WillReturn(const Value: TValue): IExpectInSequence<T>;
@@ -292,6 +294,11 @@ end;
 function TMock<T>.Once: IWhen<T>;
 begin
   SetExpectedTimes(Times.Once);
+  Result := Self;
+end;
+
+function TMock<T>.Setup: ISetup<T>;
+begin
   Result := Self;
 end;
 

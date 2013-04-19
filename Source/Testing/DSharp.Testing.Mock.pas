@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ interface
 
 uses
   DSharp.Testing.Mock.Interfaces,
+  DSharp.Testing.Mock.Setup,
   Rtti,
   SysUtils;
 
@@ -54,17 +55,14 @@ type
   public
     class function Create: Mock<T>; static;
     procedure Free;
+
     class operator Implicit(var Value: Mock<T>): IMock<T>;
     class operator Implicit(var Value: Mock<T>): T;
     class operator Implicit(Value: T): Mock<T>;
+
+    function Setup: Setup<T>;
     procedure Verify;
-    function WillExecute: IExpectInSequence<T>; overload;
-    function WillExecute(const Action: TMockAction): IExpectInSequence<T>; overload;
-    function WillRaise(const ExceptionClass: ExceptClass;
-      const Msg: string = ''): IExpectInSequence<T>; overload;
-    function WillRaise(const ExceptionClass: ExceptClass; const Msg: string;
-      const Args: array of const): IExpectInSequence<T>; overload;
-    function WillReturn<TResult>(const Value: TResult): IExpectInSequence<T>;
+
     property Instance: T read GetInstance;
     property Mode: TMockMode read GetMode write SetMode;
   end;
@@ -129,47 +127,14 @@ begin
   Mock.Mode := Value;
 end;
 
+function Mock<T>.Setup: Setup<T>;
+begin
+  Result := Mock.Setup;
+end;
+
 procedure Mock<T>.Verify;
 begin
   Mock.Verify;
-end;
-
-function Mock<T>.WillExecute: IExpectInSequence<T>;
-begin
-  Result := Mock.WillExecute(nil);
-end;
-
-function Mock<T>.WillExecute(const Action: TMockAction): IExpectInSequence<T>;
-begin
-  Result := Mock.WillExecute(Action);
-end;
-
-function Mock<T>.WillRaise(const ExceptionClass: ExceptClass;
-  const Msg: string): IExpectInSequence<T>;
-begin
-  Result := Mock.WillRaise(
-    function: Exception
-    begin
-      Result := ExceptionClass.Create(Msg);
-    end);
-end;
-
-function Mock<T>.WillRaise(const ExceptionClass: ExceptClass;
-  const Msg: string; const Args: array of const): IExpectInSequence<T>;
-var
-  LMsg: string;
-begin
-  LMsg := Format(Msg, Args);
-  Result := Mock.WillRaise(
-    function: Exception
-    begin
-      Result := ExceptClass.Create(LMsg);
-    end);
-end;
-
-function Mock<T>.WillReturn<TResult>(const Value: TResult): IExpectInSequence<T>;
-begin
-  Result := Mock.WillReturn(TValue.From<TResult>(Value));
 end;
 
 end.

@@ -25,8 +25,10 @@ implementation
 uses
   Account,
   AccountService,
-  DSharp.Aspects.Logging,
-  DSharp.Aspects.Weaver,
+
+  DSharp.Interception,
+  DSharp.Interception.Logging,
+
   // uncomment one or add your own logging to see the AOP do its work (XE and higher only)
 //  DSharp.Logging.CodeSite,
 //  DSharp.Logging.SmartInspect,
@@ -36,8 +38,7 @@ procedure TCurrencyServiceTest.SetUp;
 begin
   FMockCurrencyService := Mock<ICurrencyService>.Create;
   FAccountService := TAccountService.Create(
-    AspectWeaver.Proxify(FMockCurrencyService.Instance));
-  AspectWeaver.AddAspect(ICurrencyService, TLoggingAspect, '.*');
+    TIntercept.ThroughProxy<ICurrencyService>(FMockCurrencyService, [TLoggingBehavior.Create]));
 end;
 
 procedure TCurrencyServiceTest.TearDown;
@@ -55,7 +56,7 @@ begin
   LGermanAccount := TAccount.Create('54321', 'EUR');
   LGermanAccount.Deposit(100);
 
-  FMockCurrencyService.WillReturn<Double>(1.38).Once.WhenCalling.GetConversionRate('EUR', 'USD');
+  FMockCurrencyService.Setup.WillReturn<Double>(1.38).Once.WhenCalling.GetConversionRate('EUR', 'USD');
   try
     FAccountService.TransferFunds(LGermanAccount, LAmericanAccount, 100);
 

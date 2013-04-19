@@ -6,7 +6,7 @@ uses
   TestFramework, Server, DSharp.Testing.Mock;
 
 type
-  TestTProtocolServer = class(TTestCase)
+  TProtocolServerTest = class(TTestCase)
   private
     // remember to put the {$M+} on your interface or you will get the "unable to create mock" error later
     FMockServer: Mock<IServer<string, Boolean>>;
@@ -24,31 +24,34 @@ implementation
 uses
   DSharp.Testing.Mock.Sequences;
 
-procedure TestTProtocolServer.SetUp;
+procedure TProtocolServerTest.SetUp;
 begin
   FProtocolServer := TProtocolServer.Create(FMockServer);
 end;
 
-procedure TestTProtocolServer.TearDown;
+procedure TProtocolServerTest.TearDown;
 begin
   FProtocolServer.Free;
   FProtocolServer := nil;
   FMockServer.Free; // important to clear up the mock here!
 end;
 
-procedure TestTProtocolServer.TestCommunicate;
+procedure TProtocolServerTest.TestCommunicate;
 var
   ReturnValue: Boolean;
   seq: Sequence;
 begin
   // define expectations
-  FMockServer.WillReturn(True)
-    .InSequence(seq).Once
-    .WhenCallingWithAnyArguments.SendMessage('');
+  with FMockServer.Setup do
+  begin
+    WillReturn(True)
+      .InSequence(seq).Once
+      .WhenCallingWithAnyArguments.SendMessage('');
 
-  FMockServer.WillReturn('This is the message from the server!')
-    .InSequence(seq).Once
-    .WhenCalling.ReceiveMessage();
+    WillReturn('This is the message from the server!')
+      .InSequence(seq).Once
+      .WhenCalling.ReceiveMessage();
+  end;
 
   ReturnValue := FProtocolServer.Communicate;
 
@@ -57,13 +60,16 @@ begin
   seq.Verify;
 end;
 
-procedure TestTProtocolServer.TestCommunicate_NotCallingReceiveMessage_When_SendMessageReturnsFalse;
+procedure TProtocolServerTest.TestCommunicate_NotCallingReceiveMessage_When_SendMessageReturnsFalse;
 var
   ReturnValue: Boolean;
 begin
   // define expectations
-  FMockServer.WillReturn(False).Once.WhenCallingWithAnyArguments.SendMessage('');
-  FMockServer.WillExecute.Never.WhenCalling.ReceiveMessage();
+  with FMockServer.Setup do
+  begin
+    WillReturn(False).Once.WhenCallingWithAnyArguments.SendMessage('');
+    WillExecute.Never.WhenCalling.ReceiveMessage();
+  end;
 
   ReturnValue := FProtocolServer.Communicate;
   CheckFalse(ReturnValue, 'Communication with the Server Failed');
@@ -71,6 +77,6 @@ begin
 end;
 
 initialization
-  RegisterTest(TestTProtocolServer.Suite);
+  RegisterTest(TProtocolServerTest.Suite);
 
 end.

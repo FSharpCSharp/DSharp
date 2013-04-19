@@ -31,9 +31,6 @@ type
 
 implementation
 
-uses
-  TestFramework;
-
 { UserPasswordTestCaseAttribute }
 
 constructor UserPasswordTestCaseAttribute.Create(const AUserName, APassword: string;
@@ -71,6 +68,6 @@ begin
 end;
 
 initialization
-  RegisterTest(TLoginTestCase.Suite);
+  TLoginTestCase.RegisterTest;
 
 end.

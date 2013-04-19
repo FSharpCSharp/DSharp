@@ -136,10 +136,7 @@ type
     procedure MoveCurrentToPrevious; override;
   end;
 
-  TPresenterColumnDefinitions = class(TColumnDefinitions)
-  protected
-    procedure Initialize; override;
-  end;
+  TPresenterColumnDefinitions = class(TColumnDefinitions);
 
 implementation
 
@@ -526,13 +523,6 @@ begin
 
     NotifyPropertyChanged(FPresenter, Self, 'View');
   end;
-end;
-
-{ TPresenterColumnDefinitions }
-
-procedure TPresenterColumnDefinitions.Initialize;
-begin
-  FMainColumnIndex := -1;
 end;
 
 end.

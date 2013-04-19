@@ -1217,6 +1217,7 @@ begin
       if Assigned(LItemTemplate) then
       begin
         if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn)
+
           and LColumnDefinition.AllowEdit then
         begin
           LItemTemplate.SetValue(LItem, LHitInfo.HitColumn,
@@ -1760,10 +1761,6 @@ begin
         begin
           FTreeView.Header.SortDirection := TSortDirection(
             Ord(ColumnDefinitions[FTreeView.Header.SortColumn].SortingDirection) - 1);
-        end
-        else
-        begin
-          FTreeView.Header.SortColumn := ColumnDefinitions.MainColumnIndex;
         end;
       end
       else

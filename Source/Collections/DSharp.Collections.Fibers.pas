@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -41,37 +41,47 @@ type
   private
     FCanceled: Boolean;
     FProc: TProc;
-    FResult: TValue;
   protected
     procedure Execute; override;
-    function GetResult: TValue; virtual;
-    procedure SetResult(const Value: TValue); virtual;
+    function GetCurrentNonGeneric: TValue; virtual; abstract;
+    procedure SetCurrent(const AValue); virtual; abstract;
+
     property Canceled: Boolean read FCanceled;
   public
     constructor Create(const AProc: TProc);
     destructor Destroy; override;
-    procedure Yield(const AValue: TValue); overload;
-    property Result: TValue read GetResult;
+    function MoveNext: Boolean;
+    procedure Yield(const AValue); overload;
+    procedure Yield(const AValue: TValue); overload; virtual; abstract;
+    property Current: TValue read GetCurrentNonGeneric;
   end;
 
   TEnumeratorFiber<T> = class(TEnumeratorFiber)
   private
-    FResult: T;
+    FCurrent: T;
   protected
-    function GetResult: TValue; override;
-    procedure SetResult(const Value: TValue); override;
+    function GetCurrentNonGeneric: TValue; override;
+    function GetCurrent: T;
+    procedure SetCurrent(const AValue); override;
   public
-    procedure Yield(const AValue: T); overload;
-    property Result: T read FResult;
+    procedure Yield(const AValue: TValue); override;
+    property Current: T read GetCurrent;
   end;
 
+procedure Yield(const AValue);
+
 implementation
+
+procedure Yield(const AValue);
+begin
+  TEnumeratorFiber(TFiber.CurrentFiber).Yield(AValue);
+end;
 
 { TEnumeratorFiber }
 
 constructor TEnumeratorFiber.Create(const AProc: TProc);
 begin
-  inherited Create();
+  inherited Create;
   FProc := AProc;
 end;
 
@@ -80,59 +90,56 @@ begin
   if not Finished then
   begin
     FCanceled := True;
-    Continue();
+    Invoke;
   end;
   inherited;
 end;
 
 procedure TEnumeratorFiber.Execute;
 begin
-  FProc();
+  FProc;
 end;
 
-function TEnumeratorFiber.GetResult: TValue;
+function TEnumeratorFiber.MoveNext: Boolean;
 begin
-  Result := FResult;
+  Invoke;
+  Result := not Finished;
 end;
 
-procedure TEnumeratorFiber.SetResult(const Value: TValue);
+procedure TEnumeratorFiber.Yield(const AValue);
 begin
-  FResult := Value;
-end;
-
-procedure TEnumeratorFiber.Yield(const AValue: TValue);
-begin
-  SetResult(AValue);
-  inherited Yield();
-  if Canceled then
+  if Assigned(Self) then
   begin
-    Abort;
+    SetCurrent(AValue);
+    inherited Yield;
+    if FCanceled then
+      Abort;
   end;
 end;
 
 { TEnumeratorFiber<T> }
 
-function TEnumeratorFiber<T>.GetResult: TValue;
+function TEnumeratorFiber<T>.GetCurrentNonGeneric: TValue;
 begin
-  Result := TValue.From<T>(FResult);
+  Result := TValue.From<T>(FCurrent);
 end;
 
-procedure TEnumeratorFiber<T>.SetResult(const Value: TValue);
+function TEnumeratorFiber<T>.GetCurrent: T;
 begin
-  FResult := Value.AsType<T>;
+  Result := FCurrent;
 end;
 
-procedure TEnumeratorFiber<T>.Yield(const AValue: T);
+procedure TEnumeratorFiber<T>.SetCurrent(const AValue);
 begin
-  if Self <> nil then
-  begin
-    FResult := AValue;
-    inherited Yield();
-    if Canceled then
-    begin
-      Abort;
-    end;
-  end;
+  FCurrent := T(AValue);
+end;
+
+procedure TEnumeratorFiber<T>.Yield(const AValue: TValue);
+var
+  LValue: T;
+begin
+  LValue := AValue.AsType<T>;
+  inherited Yield(LValue);
 end;
 
 end.

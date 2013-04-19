@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,10 @@
 
 unit DSharp.Core.Threading;
 
-{$IFNDEF MSWINDOWS}
-{$MESSAGE WARN 'Unit only supports Windows'}
-{$ENDIF}
-
 interface
 
 uses
   Classes,
-  SyncObjs,
   SysUtils;
 
 type
@@ -55,13 +50,8 @@ type
   end;
 
   TAbstractTaskThread = class(TThread)
-  strict private
-    FFinishedOrYielded: THandleObjectArray;
-    FTerminatedOrResumed: THandleObjectArray;
-    FFinished: TEvent;
-    FResumed: TEvent;
-    FTerminated: TEvent;
-    FYielded: TEvent;
+  private
+    FYielding: Boolean;
   protected
     procedure DoTerminate; override;
   public
@@ -73,7 +63,7 @@ type
   end;
 
   TAbstractTask = class(TInterfacedObject, ITask)
-  strict protected
+  protected
     FCanceled: Boolean;
     FWorker: TAbstractTaskThread;
   public
@@ -88,7 +78,7 @@ type
   end;
 
   TTaskThread = class(TAbstractTaskThread)
-  strict private
+  private
     FAction: TProc;
   public
     constructor Create(const AAction: TProc);
@@ -101,7 +91,7 @@ type
   end;
 
   TTaskThread<T> = class(TAbstractTaskThread)
-  strict private
+  private
     FAction: TFunc<T>;
     FResult: T;
   public
@@ -145,16 +135,6 @@ end;
 constructor TAbstractTaskThread.Create;
 begin
   inherited Create(True);
-  FFinished := TEvent.Create(nil, False, False, '');
-  FResumed := TEvent.Create(nil, False, False, '');
-  FTerminated := TEvent.Create(nil, False, False, '');
-  FYielded := TEvent.Create(nil, False, False, '');
-  SetLength(FFinishedOrYielded, 2);
-  SetLength(FTerminatedOrResumed, 2);
-  FFinishedOrYielded[0] := FFinished;
-  FFinishedOrYielded[1] := FYielded;
-  FTerminatedOrResumed[0] := FTerminated;
-  FTerminatedOrResumed[1] := FResumed;
 end;
 
 destructor TAbstractTaskThread.Destroy;
@@ -162,44 +142,34 @@ begin
   if not Suspended and not Finished and not Terminated then
   begin
     Terminate;
-    FTerminated.SetEvent;
-    WaitFor;
+    TMonitor.PulseAll(Self);
   end;
-
-  FFinished.Free;
-  FResumed.Free;
-  FTerminated.Free;
-  FYielded.Free;
-
   inherited;
 end;
 
 procedure TAbstractTaskThread.Continue;
-{$IFDEF MSWINDOWS}
-var
-  LSignaledObject: THandleObject;
-{$ENDIF}
 begin
-  if not Finished and not Terminated then
-  begin
+  TMonitor.Enter(Self);
+  try
     if Suspended then
     begin
       Start;
-    end
-    else
-    begin
-      FResumed.SetEvent;
     end;
-{$IFDEF MSWINDOWS}
-    THandleObject.WaitForMultiple(FFinishedOrYielded, INFINITE, False, LSignaledObject);
-{$ENDIF}
+    while not FYielding do
+    begin
+      TMonitor.Wait(Self, INFINITE);
+    end;
+    FYielding := False;
+    TMonitor.PulseAll(Self);
+  finally
+    TMonitor.Exit(Self);
   end;
 end;
 
 procedure TAbstractTaskThread.DoTerminate;
 begin
   inherited;
-  FFinished.SetEvent;
+  Yield;
 end;
 
 procedure TAbstractTaskThread.RaiseException;
@@ -214,17 +184,16 @@ begin
 end;
 
 procedure TAbstractTaskThread.Yield;
-{$IFDEF MSWINDOWS}
-var
-  LSignaledObject: THandleObject;
-{$ENDIF}
 begin
-  FYielded.SetEvent;
-{$IFDEF MSWINDOWS}
-  THandleObject.WaitForMultiple(FTerminatedOrResumed, INFINITE, False, LSignaledObject);
-{$ENDIF}
-  if Terminated then
-    Abort;
+  TMonitor.Enter(Self);
+  try
+    while FYielding and not Terminated do
+      TMonitor.Wait(Self, INFINITE);
+    FYielding := True;
+    TMonitor.PulseAll(Self);
+  finally
+    TMonitor.Exit(Self);
+  end;
 end;
 
 { TAbstractTask }

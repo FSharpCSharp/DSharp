@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -38,24 +38,35 @@ uses
   SysUtils;
 
 type
-  TEnumeratorThread = class(TAbstractTaskThread)
-  strict private
+  TEnumeratorThread = class(TAbstractTaskThread, IInterface)
+  private
     FProc: TProc;
-  strict protected
-    FResult: TValue;
+    FRefCount: Integer;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+  protected
+    function GetCurrentNonGeneric: TValue; virtual; abstract;
+    procedure Execute; override;
+    procedure SetCurrent(const AValue); virtual; abstract;
   public
     constructor Create(const AProc: TProc);
-    procedure Execute; override;
-    procedure Yield(const AItem: TValue); overload;
-    property Result: TValue read FResult;
+    function MoveNext: Boolean;
+    procedure Yield(const AValue); overload;
+    procedure Yield(const AValue: TValue); overload; virtual; abstract;
+    property Current: TValue read GetCurrentNonGeneric;
   end;
 
   TEnumeratorThread<T> = class(TEnumeratorThread)
   private
-    function GetResult: T;
+    FCurrent: T;
+    function GetCurrent: T;
+  protected
+    function GetCurrentNonGeneric: TValue; override;
+    procedure SetCurrent(const AValue); override;
   public
-    procedure Yield(const AValue: T); overload;
-    property Result: T read GetResult;
+    procedure Yield(const AValue: TValue); override;
+    property Current: T read GetCurrent;
   end;
 
 implementation
@@ -68,29 +79,70 @@ begin
   FProc := AProc;
 end;
 
+function TEnumeratorThread.QueryInterface(const IID: TGUID;
+  out Obj): HResult;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TEnumeratorThread._AddRef: Integer;
+begin
+  Inc(FRefCount);
+  Result := FRefCount;
+end;
+
+function TEnumeratorThread._Release: Integer;
+begin
+  Dec(FRefCount);
+  Result := FRefCount;
+  if Result = 0 then
+    Destroy;
+end;
+
 procedure TEnumeratorThread.Execute;
 begin
   inherited;
-  FProc();
+  FProc;
 end;
 
-procedure TEnumeratorThread.Yield(const AItem: TValue);
+function TEnumeratorThread.MoveNext: Boolean;
 begin
-  FResult := AItem;
-  inherited Yield();
+  Continue;
+  Result := not Finished;
+end;
+
+procedure TEnumeratorThread.Yield(const AValue);
+begin
+  SetCurrent(AValue);
+  inherited Yield;
 end;
 
 { TEnumeratorThread<T> }
 
-function TEnumeratorThread<T>.GetResult: T;
+function TEnumeratorThread<T>.GetCurrentNonGeneric: TValue;
 begin
-  Result := FResult.AsType<T>;
+  Result := TValue.From<T>(FCurrent);
 end;
 
-procedure TEnumeratorThread<T>.Yield(const AValue: T);
+function TEnumeratorThread<T>.GetCurrent: T;
 begin
-  FResult := TValue.From<T>(AValue);
-  inherited Yield();
+  Result := FCurrent;
+end;
+
+procedure TEnumeratorThread<T>.SetCurrent(const AValue);
+begin
+  FCurrent := T(AValue);
+end;
+
+procedure TEnumeratorThread<T>.Yield(const AValue: TValue);
+var
+  LValue: T;
+begin
+  LValue := AValue.AsType<T>;
+  inherited Yield(LValue);
 end;
 
 end.

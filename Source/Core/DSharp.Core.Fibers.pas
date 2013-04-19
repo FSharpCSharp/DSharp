@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,8 @@ uses
   SysUtils;
 
 type
+  TLoopKind = (lkNone, lkImmediate, lkInvoke);
+
   TFiber = class(TInterfacedObject)
   strict private
     FBaseHandle: Pointer;
@@ -47,21 +49,22 @@ type
     FFinished: Boolean;
     FFreeOnTerminate: Boolean;
     FHandle: Pointer;
+    FLoopKind: TLoopKind;
     FThread: TThread;
   private
     procedure Run;
   strict protected
     procedure Execute; virtual; abstract;
   public
-    constructor Create;
+    constructor Create(ALoopKind: TLoopKind = lkNone);
     destructor Destroy; override;
 
-    class function CurrentFiber: TFiber;
-    class procedure Initialize;
+    class function CurrentFiber: TFiber; static;
+    class procedure Initialize; static;
 
     procedure HandleException;
 
-    procedure Continue;
+    procedure Invoke;
     procedure Yield;
 
     procedure Synchronize(AThreadProc: TThreadProcedure);
@@ -103,19 +106,20 @@ procedure SwitchToFiber(lpFiber: Pointer); stdcall; external kernel32;
 function GetCurrentFiber: Pointer;
 asm
 {$IFDEF CPUX64}
-//  MOV RAX, GS[$20] // BASM64 generates wrong code => $20 becomes image00000000_00400000+0x25af9
-  DB $65, $48, $8B, $04, $25, $20, $00, $00, $00
+  mov rax,gs:[abs $20]
 {$ELSE}
-  MOV EAX, FS:[$10]
+  mov eax,fs:[$10]
 {$ENDIF}
 end;
 
-function GetFiberData: Pointer; inline;
-begin
-{$IFDEF MSWINDOWS}
-  Result := PPointer(GetCurrentFiber()^);
+function GetFiberData: Pointer;
+asm
+{$IFDEF CPUX64}
+  mov rax,gs:[abs $20]
+  mov rax,[rax]
 {$ELSE}
-  Result := nil;
+  mov eax,fs:[$10]
+  mov eax,[eax]
 {$ENDIF}
 end;
 
@@ -147,10 +151,11 @@ var
 
 { TFiber }
 
-constructor TFiber.Create;
+constructor TFiber.Create(ALoopKind: TLoopKind = lkNone);
 begin
   Initialize;
   FHandle := nil;
+  FLoopKind := ALoopKind;
 {$IFDEF MSWINDOWS}
   FHandle := CreateFiber(0, @GlobalStartFiber, Self);
 {$ENDIF}
@@ -174,7 +179,7 @@ begin
   inherited;
 end;
 
-procedure TFiber.Continue;
+procedure TFiber.Invoke;
 begin
   if not FFinished then
   begin
@@ -226,7 +231,11 @@ end;
 procedure TFiber.Run;
 begin
   try
-    Execute;
+    repeat
+      Execute;
+      if FLoopKind = lkInvoke then
+        Yield;
+    until FLoopKind = lkNone;
   except
     on EAbort do;
     on Exception do
@@ -290,9 +299,9 @@ begin
   TFiber.Initialize;
   while not Terminated do
   begin
-    FFiber.Continue;
+    FFiber.Invoke;
   end;
-  TThread.Synchronize(nil, FFiber.Continue);
+  TThread.Synchronize(nil, FFiber.Invoke);
 end;
 
 { TActionFiber }
@@ -303,7 +312,7 @@ begin
   begin
     SwitchToWorkerThread;
   end;
-  FAction();
+  FAction;
   if FThreaded then
   begin
     SwitchToMainThread;
@@ -312,7 +321,7 @@ end;
 
 constructor TActionFiber.Create(const AAction: TProc; const AThreaded: Boolean);
 begin
-  inherited Create();
+  inherited Create;
   Action := AAction;
   Threaded := AThreaded;
   FreeOnTerminate := True;

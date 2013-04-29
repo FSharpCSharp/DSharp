@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -211,23 +211,26 @@ end;
 
 function TDataTemplate.GetItem(const Item: TObject;
   const Index: Integer): TObject;
+var
+  list: IList;
 begin
   Result := nil;
 
-  if IsClassCovariantTo(Item.ClassType, TList<TObject>)
-    and (TList<TObject>(Item).Count > Index) then
+  if Supports(Item, IList, list) and (list.Count > 0) then
   begin
-    Result := TList<TObject>(Item).Items[Index];
+    Result := list[Index].AsObject;
   end;
 end;
 
 function TDataTemplate.GetItemCount(const Item: TObject): Integer;
+var
+  list: IList;
 begin
   Result := 0;
 
-  if Assigned(Item) and IsClassCovariantTo(Item.ClassType, TList<TObject>) then
+  if Supports(Item, IList, list) then
   begin
-    Result := TList<TObject>(Item).Count;
+    Result := list.Count;
   end;
 end;
 

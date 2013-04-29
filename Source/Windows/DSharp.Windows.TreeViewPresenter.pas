@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -1217,7 +1217,6 @@ begin
       if Assigned(LItemTemplate) then
       begin
         if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn)
-
           and LColumnDefinition.AllowEdit then
         begin
           LItemTemplate.SetValue(LItem, LHitInfo.HitColumn,
@@ -1520,24 +1519,33 @@ end;
 
 procedure TTreeViewPresenter.ExpandNode(Node: PVirtualNode);
 begin
-  while Assigned(Node) do
+  if Assigned(FTreeView) then
   begin
-    if [vsChecking..vsExpanded] * Node.States = [] then
+    while Assigned(Node) do
     begin
-      FTreeView.Expanded[Node] := True;
+      if [vsChecking..vsExpanded] * Node.States = [] then
+      begin
+        FTreeView.Expanded[Node] := True;
+      end;
+      Node := FTreeView.NodeParent[Node];
     end;
-    Node := Node.Parent;
   end;
 end;
 
 procedure TTreeViewPresenter.FullCollapse;
 begin
-  FTreeView.FullCollapse();
+  if Assigned(FTreeView) then
+  begin
+    FTreeView.FullCollapse();
+  end;
 end;
 
 procedure TTreeViewPresenter.FullExpand;
 begin
-  FTreeView.FullExpand();
+  if Assigned(FTreeView) then
+  begin
+    FTreeView.FullExpand();
+  end;
 end;
 
 function TTreeViewPresenter.GetCanMoveCurrentToNext: Boolean;
@@ -2159,18 +2167,21 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
 begin
-  FTreeView.FullCollapse();
-  if Assigned(Value) and (Value.Count > 0) then
+  if Assigned(FTreeView) then
   begin
-    LNode := FTreeView.GetFirst();
-    while Assigned(LNode) do
+    FTreeView.FullCollapse();
+    if Assigned(Value) and (Value.Count > 0) then
     begin
-      LItem := GetNodeItem(FTreeView, LNode);
-      if Assigned(LItem) and Value.Contains(LItem) then
+      LNode := FTreeView.GetFirst();
+      while Assigned(LNode) do
       begin
-        ExpandNode(LNode);
+        LItem := GetNodeItem(FTreeView, LNode);
+        if Assigned(LItem) and Value.Contains(LItem) then
+        begin
+          ExpandNode(LNode);
+        end;
+        LNode := FTreeView.GetNext(LNode);
       end;
-      LNode := FTreeView.GetNext(LNode);
     end;
   end;
 end;

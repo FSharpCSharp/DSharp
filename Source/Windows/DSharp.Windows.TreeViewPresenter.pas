@@ -1355,7 +1355,10 @@ begin
       caAdd:
       begin
         LNode := FTreeView.IterateSubtree(nil, GetItemsNode, Pointer(Sender));
-        FTreeView.AddChild(LNode);
+        if Assigned(LNode) then
+          FTreeView.ReinitNode(LNode, False)
+        else
+          Refresh;
       end;
 
       caRemove:
@@ -1386,6 +1389,18 @@ begin
       begin
         LNode := FTreeView.IterateSubtree(nil, GetItemsNode, Pointer(Sender));
         FTreeView.Sort(LNode, FTreeView.Header.SortColumn, FTreeView.Header.SortDirection);
+      end;
+
+      caMove:
+      begin
+        LNode := FTreeView.IterateSubtree(nil, GetItemsNode, Pointer(Sender));
+        if Assigned(LNode) then
+        begin
+          FTreeView.ReinitChildren(LNode, False);
+          FTreeView.InvalidateChildren(LNode, True);
+        end
+        else
+          Refresh;
       end;
 
       caReset:

@@ -2072,10 +2072,20 @@ var
   args: TStringDynArray;
 begin
   args := SplitString(ExtractGenericArguments(Handle), ',');
-  SetLength(Result, Length(args));
-  for i := 0 to Pred(Length(args)) do
+  if Length(args) > 0 then
   begin
-    FindType(args[i], Result[i]);
+    SetLength(Result, Length(args));
+    for i := 0 to Pred(Length(args)) do
+    begin
+      FindType(args[i], Result[i]);
+    end;
+  end
+  else
+  begin
+    if Assigned(BaseType) then
+    begin
+      Result := BaseType.GetGenericArguments;
+    end;
   end;
 end;
 

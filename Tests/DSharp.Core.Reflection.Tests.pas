@@ -10,6 +10,12 @@ type
   TInvokableList = TList<IInvokable>;
   TPersistentList = class(TList<TObject>);
 
+  TBaseComparer<T: class> = class(TObject);
+  TFolder = class(TObject);
+  TFile = class(TObject);
+  TFolderComparer = class(TBaseComparer<TFolder>);
+  TFileComparer = class(TBaseComparer<TFile>);
+
 {$IFDEF VER210}
   {$MESSAGE HINT 'If you get F2084 Internal Error: L817 just compile again (not build)'}
 {$ENDIF}
@@ -74,6 +80,8 @@ type
 
     procedure IsGenericTypeOf_TListOfTObject_TList_True;
     procedure IsGenericTypeOf_TListOfTObject_TObjectList_False;
+
+    procedure IsCovariant_GenericTypes;
   end;
 
   TValueHelperTestCase = class(TTestCase)
@@ -393,6 +401,13 @@ end;
 procedure TRttiTypeHelperTestCase.IsCovariantTo_TPersistent_TObject_True;
 begin
   CheckTrue(Context.GetType(TPersistent).IsCovariantTo(TObject));
+end;
+
+procedure TRttiTypeHelperTestCase.IsCovariant_GenericTypes;
+begin
+  CheckFalse(IsClassCovariantTo(TFile, TFolder));
+  CheckFalse(IsClassCovariantTo(TFileComparer, TFolderComparer));
+  CheckFalse(IsClassCovariantTo(TFolderComparer, TFileComparer));
 end;
 
 procedure TRttiTypeHelperTestCase.IsGenericTypeOf_TListOfTObject_TList_True;

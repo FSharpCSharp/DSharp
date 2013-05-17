@@ -61,6 +61,8 @@ type
   TDragDropEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
     DragOperation: TDragOperation; var DropMode: TDropMode;
     var Handled: Boolean) of object;
+  TSelectionChangingEvent = procedure(Sender: TObject; TargetItem: TObject;
+    var AllowChange: Boolean) of object;
 
   TCheckSupport = (csNone, csSimple, csTriState, csRadio);
   TFilterDirection = (fdRootToLeafs, fdLeafsToRoot);
@@ -71,6 +73,7 @@ type
     FAllowClearSelection: Boolean;
     FAllowMove: Boolean;
     FCheckedItems: IList<TObject>;
+    FChecking: Boolean;
     FCheckSupport: TCheckSupport;
     FCollectionChanging: Integer;
     FCurrentNode: PVirtualNode;
@@ -84,6 +87,7 @@ type
     FOnDragOver: TDragOverEvent;
     FOnKeyAction: TKeyEvent;
     FOnSelectionChanged: TNotifyEvent;
+    FOnSelectionChanging: TSelectionChangingEvent;
     FProgressBar: TProgressBar;
     FSelectedItems: IList<TObject>;
     FShowHeader: Boolean;
@@ -119,6 +123,9 @@ type
     procedure DoFilterNode(Sender: TBaseVirtualTree; Node: PVirtualNode);
     procedure DoFocusChanged(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex);
+    procedure DoFocusChanging(Sender: TBaseVirtualTree;
+      OldNode, NewNode: PVirtualNode; OldColumn, NewColumn: TColumnIndex;
+      var Allowed: Boolean);
     procedure DoGetHint(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; var LineBreakStyle: TVTTooltipLineBreakStyle;
       var HintText: string);
@@ -129,6 +136,7 @@ type
       Column: TColumnIndex; TextType: TVSTTextType;
       var CellText: string);
     procedure DoHeaderClick(Sender: TVTHeader; HitInfo: TVTHeaderHitInfo);
+    procedure DoHeaderDblClick(Sender: TVTHeader; HitInfo: TVTHeaderHitInfo);
     procedure DoIncrementalSearch(Sender: TBaseVirtualTree;
       Node: PVirtualNode; const SearchText: string; var Result: Integer);
     procedure DoInitNode(Sender: TBaseVirtualTree; ParentNode,
@@ -171,6 +179,7 @@ type
     function CalcImageRect(const Rect: TRect): TRect;
     function IsMouseInCheckBox(Node: PVirtualNode; Column: TColumnIndex): Boolean;
     function IsMouseInToggleIcon(HitInfo: THitInfo): Boolean;
+    function ToggleCheckBox(Node: PVirtualNode; Column: TColumnIndex): Boolean;
     procedure ToggleIcon(Node: PVirtualNode; Column: TColumnIndex);
 
     procedure ReadMultiSelect(Reader: TReader);
@@ -252,6 +261,8 @@ type
     property OnKeyAction: TKeyEvent read FOnKeyAction write FOnKeyAction;
     property OnSelectionChanged: TNotifyEvent
       read FOnSelectionChanged write FOnSelectionChanged;
+    property OnSelectionChanging: TSelectionChangingEvent
+      read FOnSelectionChanging write FOnSelectionChanging;
     property SelectionMode: TSelectionMode read FSelectionMode write SetSelectionMode default smSingle;
     property ShowHeader: Boolean read FShowHeader write SetShowHeader default True;
     property Sorting: Boolean read FSorting write SetSorting default True;
@@ -461,14 +472,17 @@ begin
     and (Column < ColumnDefinitions.Count) then
   begin
     LValue := LDataTemplate.GetValue(LItem, Column);
-    case ColumnDefinitions[Column].ColumnType of
-      TColumnType.ctCheckBox:
-        DrawCheckBox(TargetCanvas, Node, Column, CellRect, LValue.AsBoolean);
-      TColumnType.ctProgressBar:
-        DrawProgressBar(TargetCanvas, Node, Column, CellRect, LValue.AsOrdinal);
-      TColumnType.ctImage:
-        DrawImage(TargetCanvas, Node, Column, CellRect, LValue.AsOrdinal +
-          ColumnDefinitions[Column].ImageIndexOffset);
+    if not LValue.IsEmpty then
+    begin
+      case ColumnDefinitions[Column].ColumnType of
+        TColumnType.ctCheckBox:
+          DrawCheckBox(TargetCanvas, Node, Column, CellRect, LValue.AsBoolean);
+        TColumnType.ctProgressBar:
+          DrawProgressBar(TargetCanvas, Node, Column, CellRect, LValue.AsOrdinal);
+        TColumnType.ctImage:
+          DrawImage(TargetCanvas, Node, Column, CellRect, LValue.AsOrdinal +
+            ColumnDefinitions[Column].ImageIndexOffset);
+      end;
     end;
   end;
 end;
@@ -600,7 +614,10 @@ begin
         and Assigned(LHitInfo.HitNode)
         and not IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
       begin
-        inherited;
+        if FTreeView.FocusedNode = LHitInfo.HitNode then
+        begin
+          inherited;
+        end;
       end;
     end;
   end
@@ -848,6 +865,26 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.DoFocusChanging(Sender: TBaseVirtualTree; OldNode,
+  NewNode: PVirtualNode; OldColumn, NewColumn: TColumnIndex;
+  var Allowed: Boolean);
+var
+  LItem: TObject;
+begin
+  if OldNode <> NewNode then
+  begin
+    LItem := GetNodeItem(Sender, NewNode);
+    if Assigned(FOnSelectionChanging) then
+    begin
+      FOnSelectionChanging(Sender, LItem, Allowed);
+      if not Allowed and Assigned(OldNode) then
+      begin
+        FTreeView.Selected[OldNode] := True;
+      end;
+    end;
+  end;
+end;
+
 procedure TTreeViewPresenter.DoFreeNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 begin
@@ -959,6 +996,29 @@ begin
   end;
 end;
 
+procedure TTreeViewPresenter.DoHeaderDblClick(Sender: TVTHeader;
+  HitInfo: TVTHeaderHitInfo);
+var
+  LCursor: TCursor;
+begin
+  if FSorting and (HitInfo.Button = mbLeft) and (HitInfo.Column > -1)
+    and (HitInfo.Column < ColumnDefinitions.Count)
+    and (coSortable in ColumnDefinitions[HitInfo.Column].ColumnOptions) then
+  begin
+    LCursor := Screen.Cursor;
+    Screen.Cursor := crHourGlass;
+    try
+      if Sender.SortColumn = HitInfo.Column then
+      begin
+        Sender.SortColumn := -1;
+        Refresh();
+      end;
+    finally
+      Screen.Cursor := LCursor;
+    end;
+  end;
+end;
+
 procedure TTreeViewPresenter.DoIncrementalSearch(Sender: TBaseVirtualTree;
   Node: PVirtualNode; const SearchText: string; var Result: Integer);
 var
@@ -1058,13 +1118,20 @@ var
   LAllowed: Boolean;
   LNodes: TNodeArray;
 begin
-  if Key = VK_RETURN then
+  if Shift = [] then
   begin
-    if Assigned(Action) then
-    begin
-      if FTreeView.SelectedCount > 0 then
+    case Key of
+      VK_RETURN:
       begin
-        Action.Execute();
+        if Assigned(Action) and (FTreeView.SelectedCount > 0) then
+        begin
+          Action.Execute();
+        end;
+      end;
+      VK_SPACE:
+      begin
+        if ToggleCheckBox(FTreeView.FocusedNode, FTreeView.FocusedColumn) then
+          Key := 0;
       end;
     end;
   end;
@@ -1139,6 +1206,7 @@ procedure TTreeViewPresenter.DoMouseDown(Sender: TObject; Button: TMouseButton;
 var
   LHitInfo: THitInfo;
 begin
+  FChecking := False;
   if not (ssDouble in Shift)
     and not (tsVCLDragPending in FTreeView.TreeStates) then
   begin
@@ -1147,7 +1215,11 @@ begin
     begin
       if FAllowClearSelection then
       begin
-        FTreeView.ClearSelection();
+        FTreeView.FocusedNode := nil;
+        if FTreeView.FocusedNode = nil then
+          FTreeView.ClearSelection()
+        else
+          Abort;
       end
       else
       begin
@@ -1158,7 +1230,10 @@ begin
     begin
       if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn) then
       begin
+        FChecking := True;
+        FTreeView.FocusedColumn := LHitInfo.HitColumn;
         FTreeView.RepaintNode(LHitInfo.HitNode);
+        Abort;
       end;
     end;
   end;
@@ -1217,7 +1292,7 @@ begin
       if Assigned(LItemTemplate) then
       begin
         if IsMouseInCheckBox(LHitInfo.HitNode, LHitInfo.HitColumn)
-          and LColumnDefinition.AllowEdit then
+          and FChecking and LColumnDefinition.AllowEdit then
         begin
           LItemTemplate.SetValue(LItem, LHitInfo.HitColumn,
             not LItemTemplate.GetValue(LItem, LHitInfo.HitColumn).AsBoolean);
@@ -1827,11 +1902,13 @@ begin
     FTreeView.OnEditing := DoEditing;
     FTreeView.OnExpanded := DoExpanded;
     FTreeView.OnFocusChanged := DoFocusChanged;
+    FTreeView.OnFocusChanging := DoFocusChanging;
     FTreeView.OnFreeNode := DoFreeNode;
     FTreeView.OnGetHint := DoGetHint;
     FTreeView.OnGetImageIndex := DoGetImageIndex;
     FTreeView.OnGetText := DoGetText;
     FTreeView.OnHeaderClick := DoHeaderClick;
+    FTreeView.OnHeaderDblClick := DoHeaderDblClick;
     FTreeView.OnIncrementalSearch := DoIncrementalSearch;
     FTreeView.OnInitNode := DoInitNode;
     FTreeView.OnKeyDown := DoKeyDown;
@@ -1954,7 +2031,7 @@ begin
     FTreeView.TreeOptions.PaintOptions :=
       FTreeView.TreeOptions.PaintOptions + [toHotTrack, toUseExplorerTheme, toHideTreeLinesIfThemed];
     FTreeView.TreeOptions.SelectionOptions :=
-      FTreeView.TreeOptions.SelectionOptions + [toExtendedFocus, toFullRowSelect, toRightClickSelect];
+      FTreeView.TreeOptions.SelectionOptions + [toExtendedFocus, toFullRowSelect, toRightClickSelect, toSimpleDrawSelection];
   end;
 end;
 
@@ -2335,6 +2412,31 @@ begin
       FProgressBar.Parent := FTreeView;
     end;
     InitControl();
+  end;
+end;
+
+function TTreeViewPresenter.ToggleCheckBox(Node: PVirtualNode;
+  Column: TColumnIndex): Boolean;
+var
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
+  LColumnDefinition: TColumnDefinition;
+begin
+  Result := False;
+  if Assigned(ColumnDefinitions) and (FTreeView.FocusedColumn > -1)
+    and (FTreeView.FocusedColumn < ColumnDefinitions.Count) then
+  begin
+    LItem := GetNodeItem(FTreeView, FTreeView.FocusedNode);
+    LItemTemplate := GetItemTemplate(LItem);
+    LColumnDefinition := ColumnDefinitions[FTreeView.FocusedColumn];
+
+    if Assigned(LItemTemplate) and LColumnDefinition.AllowEdit
+      and (LColumnDefinition.ColumnType = TColumnType.ctCheckBox) then
+    begin
+      LItemTemplate.SetValue(LItem, FTreeView.FocusedColumn,
+        not LItemTemplate.GetValue(LItem, FTreeView.FocusedColumn).AsBoolean);
+      Result := True;
+    end;
   end;
 end;
 

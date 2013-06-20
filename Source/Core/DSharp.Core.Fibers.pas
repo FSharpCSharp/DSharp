@@ -159,7 +159,7 @@ begin
 {$IFDEF MSWINDOWS}
   FHandle := CreateFiber(0, @GlobalStartFiber, Self);
 {$ENDIF}
-  FBaseHandle := GetCurrentFiber;
+  FBaseHandle := ThreadFiber;
 end;
 
 destructor TFiber.Destroy;
@@ -183,6 +183,7 @@ procedure TFiber.Invoke;
 begin
   if not FFinished then
   begin
+    FBaseHandle := GetCurrentFiber;
 {$IFDEF MSWINDOWS}
     SwitchToFiber(FHandle);
 {$ENDIF}

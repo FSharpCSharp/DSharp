@@ -218,7 +218,7 @@ begin
 
   if Supports(Item, IList, list) and (list.Count > 0) then
   begin
-    Result := list[Index].AsObject;
+    Result := list[Index].ToObject;
   end;
 end;
 

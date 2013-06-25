@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ type
   private
     fDelegate: TFunc<TValue>;
   protected
-    procedure DoInject(instance: TValue; const arguments: array of TValue); override;
+    procedure DoInject(const instance: TValue; const arguments: array of TValue); override;
   public
     constructor Create(model: TComponentModel; const targetName: string;
       delegate: TFunc<TValue>);
@@ -93,7 +93,7 @@ type
   private
     fDelegate: TFunc<TValue>;
   protected
-    procedure DoInject(instance: TValue; const arguments: array of TValue); override;
+    procedure DoInject(const instance: TValue; const arguments: array of TValue); override;
   public
     constructor Create(model: TComponentModel; const targetName: string;
       delegate: TFunc<TValue>);
@@ -550,7 +550,7 @@ begin
   fDelegate := delegate;
 end;
 
-procedure TPropertyInjectionWithDelegate.DoInject(instance: TValue;
+procedure TPropertyInjectionWithDelegate.DoInject(const instance: TValue;
   const arguments: array of TValue);
 begin
   inherited DoInject(instance, [fDelegate()]);
@@ -565,7 +565,7 @@ begin
   fDelegate := delegate;
 end;
 
-procedure TFieldInjectionWithDelegate.DoInject(instance: TValue;
+procedure TFieldInjectionWithDelegate.DoInject(const instance: TValue;
   const arguments: array of TValue);
 begin
   inherited DoInject(instance, [fDelegate()]);

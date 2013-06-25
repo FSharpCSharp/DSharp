@@ -533,7 +533,8 @@ implementation
 
 uses
   DSharp.Core.Reflection,
-  StrUtils;
+  StrUtils,
+  TypInfo;
 
 type
   EBreak = class(EAbort);
@@ -2250,29 +2251,42 @@ begin
     end else
     if LType.TryGetMethod(FPropertyName, LMethod) then
     begin
-      if LMethod.IsClassMethod then
+      if Assigned(LMethod.ReturnType) and (LMethod.ParameterCount = 0) then
       begin
-        LResult.Code := LMethod.CodeAddress;
-        LResult.Data := LInstance.AsObject.ClassType;
-        Result := TValue.From(LResult);
-      end
-      else
-      begin
-        if LMethod.IsStatic then
+        if LMethod.IsClassMethod then
         begin
-          LResult.Code := LMethod.CodeAddress;
+          Result := LMethod.Invoke(LInstance.AsObject.ClassType, []);
         end
         else
         begin
-          case LMethod.DispatchKind of
-            dkVtable: LResult.Code := PVtable(LInstance.AsObject.ClassType)^[LMethod.VirtualIndex];
-            dkDynamic: LResult.Code := GetDynaMethod(LInstance.AsObject.ClassType, LMethod.VirtualIndex);
-          else
-            LResult.Code := LMethod.CodeAddress;
-          end;
+          Result := LMethod.Invoke(LInstance.AsObject, []);
         end;
-        LResult.Data := LInstance.AsPointer;
-        Result := TValue.From(LResult);
+      end else
+      begin
+        if LMethod.IsClassMethod then
+        begin
+          LResult.Code := LMethod.CodeAddress;
+          LResult.Data := LInstance.AsObject.ClassType;
+          Result := TValue.From(LResult);
+        end
+        else
+        begin
+          if LMethod.IsStatic then
+          begin
+            LResult.Code := LMethod.CodeAddress;
+          end
+          else
+          begin
+            case LMethod.DispatchKind of
+              dkVtable: LResult.Code := PVtable(LInstance.AsObject.ClassType)^[LMethod.VirtualIndex];
+              dkDynamic: LResult.Code := GetDynaMethod(LInstance.AsObject.ClassType, LMethod.VirtualIndex);
+            else
+              LResult.Code := LMethod.CodeAddress;
+            end;
+          end;
+          LResult.Data := LInstance.AsPointer;
+          Result := TValue.From(LResult);
+        end;
       end;
     end;
 

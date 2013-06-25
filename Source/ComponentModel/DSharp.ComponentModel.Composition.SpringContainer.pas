@@ -84,6 +84,7 @@ type
     fDelegate: TFunc<TValue>;
   protected
     procedure DoInject(const instance: TValue; const arguments: array of TValue); override;
+    procedure InitializeDependencies(out dependencies: TArray<TRttiType>); override;
   public
     constructor Create(model: TComponentModel; const targetName: string;
       delegate: TFunc<TValue>);
@@ -94,6 +95,7 @@ type
     fDelegate: TFunc<TValue>;
   protected
     procedure DoInject(const instance: TValue; const arguments: array of TValue); override;
+    procedure InitializeDependencies(out dependencies: TArray<TRttiType>); override;
   public
     constructor Create(model: TComponentModel; const targetName: string;
       delegate: TFunc<TValue>);
@@ -556,6 +558,12 @@ begin
   inherited DoInject(instance, [fDelegate()]);
 end;
 
+procedure TPropertyInjectionWithDelegate.InitializeDependencies(
+  out dependencies: TArray<TRttiType>);
+begin
+  // no dependencies to initialize
+end;
+
 { TFieldInjectionWithDelegate }
 
 constructor TFieldInjectionWithDelegate.Create(model: TComponentModel;
@@ -569,6 +577,12 @@ procedure TFieldInjectionWithDelegate.DoInject(const instance: TValue;
   const arguments: array of TValue);
 begin
   inherited DoInject(instance, [fDelegate()]);
+end;
+
+procedure TFieldInjectionWithDelegate.InitializeDependencies(
+  out dependencies: TArray<TRttiType>);
+begin
+  // no dependencies to initialize
 end;
 
 end.

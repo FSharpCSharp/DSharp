@@ -174,31 +174,19 @@ begin
 end;
 
 procedure TTestCase.Invoke(AMethod: TTestMethod);
-var
-  LExpectedException: ExpectedExceptionAttribute;
 begin
-  LExpectedException := FExpectedException;
-  try
-    if Assigned(FMethod) then
-    begin
-      FMethod.Invoke(Self, FArgs);
-    end
-    else
-    begin
-      inherited;
-    end;
-  except
-    on E: Exception do
-    begin
-      if not Assigned(LExpectedException) then
-        raise;
-      CheckInherits(LExpectedException.ExceptionType, E.ClassType);
-      LExpectedException := nil;
-    end;
+  if Assigned(FExpectedException) then
+    StartExpectingException(FExpectedException.ExceptionType);
+  if Assigned(FMethod) then
+  begin
+    FMethod.Invoke(Self, FArgs);
+  end
+  else
+  begin
+    inherited;
   end;
-  if Assigned(LExpectedException) then
-    Fail(Format(sExpectedException, [LExpectedException.ExceptionType.ClassName,
-      LExpectedException.NoExceptionMessage]));
+  if Assigned(FExpectedException) then
+    StopExpectingException(FExpectedException.NoExceptionMessage);
 end;
 
 class procedure TTestCase.RegisterTest(const SuitePath: string = '');

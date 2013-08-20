@@ -1,0 +1,120 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{B6ED280A-C128-46B4-A946-8BF650CEF3B7}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DSharp.Core.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DataBindings.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDataBindings.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DataBindingsVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDataBindingsVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="TreeViewPresenter.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclTreeViewPresenter.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DSharpInterception.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DSharp_Core">
+        <MSBuild Projects="DSharp.Core.dproj"/>
+    </Target>
+    <Target Name="DSharp_Core:Clean">
+        <MSBuild Projects="DSharp.Core.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_Core:Make">
+        <MSBuild Projects="DSharp.Core.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DataBindings">
+        <MSBuild Projects="DataBindings.dproj"/>
+    </Target>
+    <Target Name="DataBindings:Clean">
+        <MSBuild Projects="DataBindings.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DataBindings:Make">
+        <MSBuild Projects="DataBindings.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDataBindings">
+        <MSBuild Projects="dclDataBindings.dproj"/>
+    </Target>
+    <Target Name="dclDataBindings:Clean">
+        <MSBuild Projects="dclDataBindings.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDataBindings:Make">
+        <MSBuild Projects="dclDataBindings.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DataBindingsVCL">
+        <MSBuild Projects="DataBindingsVCL.dproj"/>
+    </Target>
+    <Target Name="DataBindingsVCL:Clean">
+        <MSBuild Projects="DataBindingsVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DataBindingsVCL:Make">
+        <MSBuild Projects="DataBindingsVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDataBindingsVCL">
+        <MSBuild Projects="dclDataBindingsVCL.dproj"/>
+    </Target>
+    <Target Name="dclDataBindingsVCL:Clean">
+        <MSBuild Projects="dclDataBindingsVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDataBindingsVCL:Make">
+        <MSBuild Projects="dclDataBindingsVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TreeViewPresenter">
+        <MSBuild Projects="TreeViewPresenter.dproj"/>
+    </Target>
+    <Target Name="TreeViewPresenter:Clean">
+        <MSBuild Projects="TreeViewPresenter.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TreeViewPresenter:Make">
+        <MSBuild Projects="TreeViewPresenter.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclTreeViewPresenter">
+        <MSBuild Projects="dclTreeViewPresenter.dproj"/>
+    </Target>
+    <Target Name="dclTreeViewPresenter:Clean">
+        <MSBuild Projects="dclTreeViewPresenter.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclTreeViewPresenter:Make">
+        <MSBuild Projects="dclTreeViewPresenter.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharpInterception">
+        <MSBuild Projects="DSharpInterception.dproj"/>
+    </Target>
+    <Target Name="DSharpInterception:Clean">
+        <MSBuild Projects="DSharpInterception.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharpInterception:Make">
+        <MSBuild Projects="DSharpInterception.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DSharp_Core;DataBindings;dclDataBindings;DataBindingsVCL;dclDataBindingsVCL;TreeViewPresenter;dclTreeViewPresenter;DSharpInterception"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DSharp_Core:Clean;DataBindings:Clean;dclDataBindings:Clean;DataBindingsVCL:Clean;dclDataBindingsVCL:Clean;TreeViewPresenter:Clean;dclTreeViewPresenter:Clean;DSharpInterception:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DSharp_Core:Make;DataBindings:Make;dclDataBindings:Make;DataBindingsVCL:Make;dclDataBindingsVCL:Make;TreeViewPresenter:Make;dclTreeViewPresenter:Make;DSharpInterception:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

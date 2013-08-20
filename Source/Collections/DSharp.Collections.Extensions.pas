@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -121,12 +121,14 @@ type
     function FirstOrDefault: T; overload;
     function FirstOrDefault(predicate: TPredicate<T>): T; overload;
 
+{$IF CompilerVersion < 24}
     function GroupBy<TKey>(keySelector: TFunc<T, TKey>): Enumerable<IGrouping<TKey, T>>; overload;
     function GroupBy<TKey>(keySelector: TFunc<T, TKey>; comparer: IEqualityComparer<TKey>): Enumerable<IGrouping<TKey, T>>; overload;
     function GroupBy<TKey>(keySelector: TFunc<T, TKey>; comparison: TEqualityComparison<TKey>): Enumerable<IGrouping<TKey, T>>; overload;
     function GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>): Enumerable<IGrouping<TKey, TElement>>; overload;
     function GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>; comparer: IEqualityComparer<TKey>): Enumerable<IGrouping<TKey, TElement>>; overload;
     function GroupBy<TKey, TElement>(keySelector: TFunc<T, TKey>; elementSelector: TFunc<T, TElement>; comparison: TEqualityComparison<TKey>): Enumerable<IGrouping<TKey, TElement>>; overload;
+{$IFEND}
 
     function Intersect(second: IEnumerable<T>): Enumerable<T>; overload;
     function Intersect(second: IEnumerable<T>; comparer: IEqualityComparer<T>): Enumerable<T>; overload;
@@ -189,7 +191,7 @@ type
 implementation
 
 uses
-  DSharp.Collections.Yield,
+  DSharp.Collections.Iterators,
   Rtti;
 
 { Enumerable<T> }
@@ -228,7 +230,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<TResult>.Create(
+  Result := TIteratorBlock<TResult>.Create(
     procedure
     var
       item: T;
@@ -248,7 +250,7 @@ var
   first: IEnumerable<T>;
 begin
   first := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       return: Yield<T>;
@@ -304,7 +306,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       isEmpty: Boolean;
@@ -329,7 +331,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       hashSet: IHashSet;
@@ -380,7 +382,7 @@ var
   first: IEnumerable<T>;
 begin
   first := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       hashSet: IHashSet;
@@ -432,6 +434,7 @@ begin
   Result := Default(T);
 end;
 
+{$IF CompilerVersion < 24}
 function Enumerable<T>.GroupBy<TKey>(
   keySelector: TFunc<T, TKey>): Enumerable<IGrouping<TKey, T>>;
 begin
@@ -477,7 +480,7 @@ var
 begin
   this := Self;
   Result :=
-    TYieldEnumerable<IGrouping<TKey, TElement>>.Create(
+    TIteratorBlock<IGrouping<TKey, TElement>>.Create(
     procedure
     var
       result: Yield<IGrouping<TKey, TElement>>;
@@ -495,6 +498,7 @@ begin
   Result := GroupBy<TKey, TElement>(keySelector,
     elementSelector, TEqualityComparer<TKey>.Create(comparison));
 end;
+{$IFEND}
 
 function Enumerable<T>.Intersect(second: IEnumerable<T>): Enumerable<T>;
 begin
@@ -507,7 +511,7 @@ var
   first: IEnumerable<T>;
 begin
   first := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       hashSet: IHashSet;
@@ -628,7 +632,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       items: TArray<T>;
@@ -662,7 +666,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<TResult>.Create(
+  Result := TIteratorBlock<TResult>.Create(
     procedure
     var
       item: T;
@@ -731,7 +735,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       item: T;
@@ -750,7 +754,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       skipped: Boolean;
@@ -778,7 +782,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       index: NativeInt;
@@ -810,7 +814,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       item: T;
@@ -831,7 +835,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       item: T;
@@ -852,7 +856,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       index: NativeInt;
@@ -945,7 +949,7 @@ var
   first: IEnumerable<T>;
 begin
   first := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       hashSet: IHashSet;
@@ -973,7 +977,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       item: T;
@@ -991,7 +995,7 @@ var
   this: IEnumerable<T>;
 begin
   this := Self;
-  Result := TYieldEnumerable<T>.Create(
+  Result := TIteratorBlock<T>.Create(
     procedure
     var
       index: NativeInt;

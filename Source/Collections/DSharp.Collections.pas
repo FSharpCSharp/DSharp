@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2013, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -242,6 +242,30 @@ type
     function ToList: IList<T>; virtual;
   end;
 
+  TIteratorBase<T> = class(TEnumerable<T>, IEnumerator)
+  protected
+    function GetCurrentNonGeneric: TValue; virtual; abstract;
+    function IEnumerator.GetCurrent = GetCurrentNonGeneric;
+  public
+    function MoveNext: Boolean; virtual;
+    procedure Reset; virtual;
+  end;
+
+  TIterator<T> = class(TIteratorBase<T>, IEnumerator<T>)
+  private
+    fThreadId: Cardinal;
+  protected
+    fState: Integer;
+    fCurrent: T;
+  protected
+    function GetCurrent: T;
+    function GetCurrentNonGeneric: TValue; override;
+  public
+    constructor Create;
+    function Clone: TIterator<T>; virtual; abstract;
+    function GetEnumerator: IEnumerator<T>; override;
+  end;
+
   TListBase<T> = class(TEnumerable<T>, IList<T>, IList)
   private
     FComparer: IComparer<T>;
@@ -412,6 +436,7 @@ type
 
 {$IF CompilerVersion < 22}
   EInvalidOpException = class(Exception);
+  ENotImplemented = class(Exception);
 {$IFEND}
 
 resourcestring
@@ -573,6 +598,53 @@ end;
 function TEnumerable<T>.ToListBase: IList;
 begin
   Result := ToList().AsList;
+end;
+
+{ TIteratorBase<T> }
+
+function TIteratorBase<T>.MoveNext: Boolean;
+begin
+  Result := False;
+end;
+
+procedure TIteratorBase<T>.Reset;
+begin
+  raise ENotImplemented.Create('');
+end;
+
+{ TIterator<T> }
+
+constructor TIterator<T>.Create;
+begin
+  inherited Create;
+  fThreadId := TThread.CurrentThread.ThreadID;
+end;
+
+function TIterator<T>.GetCurrent: T;
+begin
+  Result := fCurrent;
+end;
+
+function TIterator<T>.GetCurrentNonGeneric: TValue;
+begin
+  Result := TValue.From<T>(GetCurrent);
+end;
+
+function TIterator<T>.GetEnumerator: IEnumerator<T>;
+var
+  iterator: TIterator<T>;
+begin
+  if (fThreadId = TThread.CurrentThread.ThreadID) and (fState = 0) then
+  begin
+    fState := 1;
+    Result := Self;
+  end
+  else
+  begin
+    iterator := Clone;
+    iterator.fState := 1;
+    Result := iterator;
+  end;
 end;
 
 { TListBase<T> }

@@ -33,116 +33,168 @@ interface
 
 uses
   Classes,
-  DSharp.Core.Threading,
+  DSharp.Collections,
   Rtti,
+  SyncObjs,
   SysUtils;
 
 type
-  TEnumeratorThread = class(TAbstractTaskThread, IInterface)
+  TWorkerThread = class(TThread)
   private
-    FProc: TProc;
-    FRefCount: Integer;
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    fProc: TProc;
   protected
-    function GetCurrentNonGeneric: TValue; virtual; abstract;
     procedure Execute; override;
-    procedure SetCurrent(const AValue); virtual; abstract;
   public
-    constructor Create(const AProc: TProc);
-    function MoveNext: Boolean;
-    procedure Yield(const AValue); overload;
-    procedure Yield(const AValue: TValue); overload; virtual; abstract;
-    property Current: TValue read GetCurrentNonGeneric;
+    constructor Create(const proc: TProc);
   end;
 
-  TEnumeratorThread<T> = class(TEnumeratorThread)
+  TIteratorThread = class(TInterfacedObject, IEnumerator)
   private
-    FCurrent: T;
-    function GetCurrent: T;
+  private
+    fProc: TProc;
+    fThread: TWorkerThread;
+    fYield: TEvent;
+    fMoveNext: TEvent;
+    class threadvar fCurrentThread: TIteratorThread;
+    class function GetCurrentThread: TIteratorThread; static;
+  protected
+    procedure Execute;
+    function GetCurrentNonGeneric: TValue; virtual; abstract;
+    function IEnumerator.GetCurrent = GetCurrentNonGeneric;
+    procedure SetCurrent(const value); virtual; abstract;
+    procedure Yield(const value: TValue); overload; virtual; abstract;
+  public
+    constructor Create(const proc: TProc);
+    destructor Destroy; override;
+
+    function MoveNext: Boolean;
+    procedure Reset;
+
+    class procedure Yield(const value); overload;
+
+    property Current: TValue read GetCurrentNonGeneric;
+    class property CurrentThread: TIteratorThread read GetCurrentThread;
+  end;
+
+  TIteratorThread<T> = class(TIteratorThread, IEnumerator<T>)
+  private
+    fCurrent: T;
   protected
     function GetCurrentNonGeneric: TValue; override;
-    procedure SetCurrent(const AValue); override;
+    function GetCurrent: T;
+    procedure SetCurrent(const value); override;
+    procedure Yield(const value: TValue); override;
   public
-    procedure Yield(const AValue: TValue); override;
     property Current: T read GetCurrent;
   end;
 
 implementation
 
-{ TEnumeratorThread }
+{ TWorkerThread }
 
-constructor TEnumeratorThread.Create(const AProc: TProc);
+constructor TWorkerThread.Create(const proc: TProc);
+begin
+  inherited Create(True);
+  FreeOnTerminate := False;
+  fProc := proc;
+end;
+
+procedure TWorkerThread.Execute;
+begin
+  fProc();
+end;
+
+{ TIteratorThread }
+
+constructor TIteratorThread.Create(const proc: TProc);
 begin
   inherited Create;
-  FProc := AProc;
+
+  fProc := proc;
+  fThread := TWorkerThread.Create(Execute);
+  fYield := TEvent.Create(nil, False, False, '');
+  fMoveNext := TEvent.Create(nil, False, False, '');
 end;
 
-function TEnumeratorThread.QueryInterface(const IID: TGUID;
-  out Obj): HResult;
+destructor TIteratorThread.Destroy;
 begin
-  if GetInterface(IID, Obj) then
-    Result := 0
-  else
-    Result := E_NOINTERFACE;
-end;
+  fThread.Terminate;
+  fMoveNext.SetEvent;
 
-function TEnumeratorThread._AddRef: Integer;
-begin
-  Inc(FRefCount);
-  Result := FRefCount;
-end;
+  fThread.Free;
+  fMoveNext.Free;
+  fYield.Free;
 
-function TEnumeratorThread._Release: Integer;
-begin
-  Dec(FRefCount);
-  Result := FRefCount;
-  if Result = 0 then
-    Destroy;
-end;
-
-procedure TEnumeratorThread.Execute;
-begin
   inherited;
-  FProc;
 end;
 
-function TEnumeratorThread.MoveNext: Boolean;
+procedure TIteratorThread.Execute;
 begin
-  Continue;
-  Result := not Finished;
+  try
+    fCurrentThread := Self;
+    fProc;
+  finally
+    fThread.Terminate;
+    fYield.SetEvent;
+  end;
 end;
 
-procedure TEnumeratorThread.Yield(const AValue);
+class function TIteratorThread.GetCurrentThread: TIteratorThread;
 begin
-  SetCurrent(AValue);
-  inherited Yield;
+  Result := fCurrentThread;
 end;
 
-{ TEnumeratorThread<T> }
-
-function TEnumeratorThread<T>.GetCurrentNonGeneric: TValue;
+function TIteratorThread.MoveNext: Boolean;
 begin
-  Result := TValue.From<T>(FCurrent);
+  if fThread.Suspended then
+    fThread.Start
+  else
+    fMoveNext.SetEvent;
+
+  fYield.WaitFor(INFINITE);
+  Result := not fThread.Terminated;
 end;
 
-function TEnumeratorThread<T>.GetCurrent: T;
+procedure TIteratorThread.Reset;
 begin
-  Result := FCurrent;
+  raise EInvalidOpException.Create('Reset');
 end;
 
-procedure TEnumeratorThread<T>.SetCurrent(const AValue);
+class procedure TIteratorThread.Yield(const value);
 begin
-  FCurrent := T(AValue);
+  with fCurrentThread do
+  begin
+    SetCurrent(value);
+    fYield.SetEvent;
+    fMoveNext.WaitFor(INFINITE);
+    if fThread.Terminated then
+      Abort;
+  end;
 end;
 
-procedure TEnumeratorThread<T>.Yield(const AValue: TValue);
+{ TIteratorThread<T> }
+
+function TIteratorThread<T>.GetCurrent: T;
+begin
+  Result := fCurrent;
+end;
+
+function TIteratorThread<T>.GetCurrentNonGeneric: TValue;
+begin
+  Result := TValue.From<T>(fCurrent);
+end;
+
+procedure TIteratorThread<T>.SetCurrent(const value);
+begin
+  fCurrent := T(value);
+end;
+
+procedure TIteratorThread<T>.Yield(const value: TValue);
 var
-  LValue: T;
+  lValue: T;
 begin
-  LValue := AValue.AsType<T>;
-  inherited Yield(LValue);
+  lValue := value.AsType<T>;
+  inherited Yield(lValue);
 end;
 
 end.

@@ -29,6 +29,7 @@
 
 unit DSharp.Core.Fibers;
 
+{$I DSharp.inc}
 {$IFNDEF MSWINDOWS}
 {$MESSAGE WARN 'Unit only supports Windows'}
 {$ENDIF}
@@ -329,3 +330,4 @@ begin
 end;
 
 end.
+

@@ -608,7 +608,9 @@ type
     FPropInfo: TPropInfo;
     FGetter: TFunc<Pointer, TValue>;
     FSetter: TProc<Pointer, TValue>;
-    class var FRegister: TDictionary<TPair<PTypeInfo, string>, TRttiPropertyExtension>;
+    class var
+      FRegister: TDictionary<TPair<PTypeInfo, string>, TRttiPropertyExtension>;
+      FPatchedClasses: TDictionary<TClass, TClass>;
     function GetIsReadableStub: Boolean; //override;
     function GetIsWritableStub: Boolean; //override;
     function DoGetValueStub(Instance: Pointer): TValue; //override;
@@ -704,7 +706,6 @@ implementation
 
 uses
   Classes,
-  DSharp.Core.Detour,
   DSharp.Core.Framework,
   Generics.Defaults,
   Math,
@@ -2888,13 +2889,24 @@ end;
 
 class constructor TRttiPropertyExtension.Create;
 begin
-  TRttiPropertyExtension.InitVirtualMethodTable;
-
   FRegister := TObjectDictionary<TPair<PTypeInfo, string>, TRttiPropertyExtension>.Create([doOwnsValues]);
+  FPatchedClasses := TDictionary<TClass, TClass>.Create;
+
+  TRttiPropertyExtension.InitVirtualMethodTable;
 end;
 
 class destructor TRttiPropertyExtension.Destroy;
+var
+  LClass: TClass;
+  LPointer: Pointer;
 begin
+  for LClass in FPatchedClasses.Values do
+  begin
+    LPointer := PByte(LClass) + vmtSelfPtr;
+    FreeMem(LPointer);
+  end;
+
+  FPatchedClasses.Free;
   FRegister.Free;
 end;
 
@@ -2906,6 +2918,8 @@ begin
   Init(GetRttiType(Parent), @FPropInfo);
 
   FRegister.Add(TPair<PTypeInfo, string>.Create(Parent, Name), Self);
+
+  PPointer(Self)^ := FPatchedClasses[Self.ClassType];
 end;
 
 function TRttiPropertyExtension.DoGetValue(Instance: Pointer): TValue;
@@ -3003,12 +3017,28 @@ begin
 end;
 
 class procedure TRttiPropertyExtension.InitVirtualMethodTable;
+const
+  MaxIndex = 17;  // TRttiInstanceProperty.GetPropInfo
+{$POINTERMATH ON}
+type
+  PVtable = ^Pointer;
+{$POINTERMATH OFF}
+var
+  LSize: Integer;
+  LData: Pointer;
+  LPatchedClass: TClass;
 begin
-  OverrideVirtualMethod(Self, 5, @TRttiPropertyExtension.GetIsReadableStub);
-  OverrideVirtualMethod(Self, 6, @TRttiPropertyExtension.GetIsWritableStub);
-  OverrideVirtualMethod(Self, 7, @TRttiPropertyExtension.DoGetValueStub);
-  OverrideVirtualMethod(Self, 8, @TRttiPropertyExtension.DoSetValueStub);
-  OverrideVirtualMethod(Self, 12, @TRttiPropertyExtension.GetPropInfoStub);
+  LSize := SizeOf(Pointer) * (1 + MaxIndex - (vmtSelfPtr div SizeOf(Pointer)));
+  LData := AllocMem(LSize);
+  LPatchedClass := TClass(PByte(LData) - vmtSelfPtr);
+  FPatchedClasses.Add(Self, LPatchedClass);
+  Move((PByte(Self) + vmtSelfPtr)^, LData^, LSize);
+
+  PVtable(LPatchedClass)[5] := @TRttiPropertyExtension.GetIsReadableStub;
+  PVtable(LPatchedClass)[6] := @TRttiPropertyExtension.GetIsWritableStub;
+  PVtable(LPatchedClass)[7] := @TRttiPropertyExtension.DoGetValueStub;
+  PVtable(LPatchedClass)[8] := @TRttiPropertyExtension.DoSetValueStub;
+  PVtable(LPatchedClass)[12] := @TRttiPropertyExtension.GetPropInfoStub;
 end;
 
 { TRttiDependencyProperty }

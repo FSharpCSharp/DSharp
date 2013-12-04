@@ -6,7 +6,7 @@ uses
   Classes,
   FMX.Forms,
   DSharp.Logging,
-  DSharp.PresentationModel.INPC,
+  DSharp.PresentationModel.Execute,
   DSharp.PresentationModel.Bootstrapper,
   DSharp.PresentationModel.FMXFramework,
   DSharp.PresentationModel.FMXView,

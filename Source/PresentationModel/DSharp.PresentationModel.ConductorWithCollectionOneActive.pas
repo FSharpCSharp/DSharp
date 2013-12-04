@@ -3,12 +3,12 @@ unit DSharp.PresentationModel.ConductorWithCollectionOneActive;
 interface
 
 uses
+  SysUtils,
   DSharp.Collections,
   DSharp.PresentationModel,
   DSharp.PresentationModel.ConductorBaseWithActiveItem,
   DSharp.PresentationModel.ScreenExtensions,
-  SysUtils,
-  DSharp.PresentationModel.INPC;
+  DSharp.PresentationModel.ObservableCollectionIntf;
 
 type
   ///	<summary>
@@ -113,7 +113,8 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection;
+  DSharp.Core.Reflection,
+  DSharp.PresentationModel.BindableCollection;
 
 { TConductorCollectionOneActive<T> }
 

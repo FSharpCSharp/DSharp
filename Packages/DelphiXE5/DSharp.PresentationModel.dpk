@@ -53,7 +53,6 @@ contains
   DSharp.PresentationModel.ElementConvention in '..\..\Source\PresentationModel\DSharp.PresentationModel.ElementConvention.pas',
   DSharp.PresentationModel.EventAggregator in '..\..\Source\PresentationModel\DSharp.PresentationModel.EventAggregator.pas',
   DSharp.PresentationModel.InitializeComponent in '..\..\Source\PresentationModel\DSharp.PresentationModel.InitializeComponent.pas',
-  DSharp.PresentationModel.INPC in '..\..\Source\PresentationModel\DSharp.PresentationModel.INPC.pas',
   DSharp.PresentationModel.IoC in '..\..\Source\PresentationModel\DSharp.PresentationModel.IoC.pas',
   DSharp.PresentationModel.NameTransformer in '..\..\Source\PresentationModel\DSharp.PresentationModel.NameTransformer.pas',
   DSharp.PresentationModel in '..\..\Source\PresentationModel\DSharp.PresentationModel.pas',
@@ -112,6 +111,11 @@ contains
   DSharp.Aspects.Logging in '..\..\Source\Aspects\DSharp.Aspects.Logging.pas',
   DSharp.Aspects in '..\..\Source\Aspects\DSharp.Aspects.pas',
   DSharp.Aspects.Security in '..\..\Source\Aspects\DSharp.Aspects.Security.pas',
-  DSharp.Aspects.Weaver in '..\..\Source\Aspects\DSharp.Aspects.Weaver.pas';
+  DSharp.Aspects.Weaver in '..\..\Source\Aspects\DSharp.Aspects.Weaver.pas',
+  DSharp.PresentationModel.ObservableCollectionIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ObservableCollectionIntf.pas',
+  DSharp.PresentationModel.BindableCollection in '..\..\Source\PresentationModel\DSharp.PresentationModel.BindableCollection.pas',
+  DSharp.PresentationModel.NotifyPropertyChangedExIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.NotifyPropertyChangedExIntf.pas',
+  DSharp.PresentationModel.PropertyChangedBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.PropertyChangedBase.pas',
+  DSharp.PresentationModel.Execute in '..\..\Source\PresentationModel\DSharp.PresentationModel.Execute.pas';
 
 end.

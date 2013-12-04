@@ -6,7 +6,7 @@ uses
   Classes,
   Forms,
   DSharp.Logging,
-  DSharp.PresentationModel.INPC,
+  DSharp.PresentationModel.Execute,
   DSharp.PresentationModel.Bootstrapper,
   DSharp.PresentationModel.VCLFramework,
   DSharp.PresentationModel.VCLView,

@@ -460,7 +460,7 @@ uses
   DSharp.Validation.DataAnnotationValidationRule,
   DSharp.Validation.ValidationResultExtensions,
   DSharp.Validation.RuleResult,
-  DSharp.PresentationModel.INPC,
+  DSharp.PresentationModel.Execute,
   System.SyncObjs;
 
 constructor TValidationHelper.Create(Owner: TObject);

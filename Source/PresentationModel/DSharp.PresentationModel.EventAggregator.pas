@@ -45,12 +45,10 @@ type
   private
     FHandlers: TList<THandler>;
   public
-
-
-    ///	<summary>
-    ///	  Processing of handler results on publication thread.
-    ///	</summary>
-    class var HandlerResultProcessing: TProc<TObject, TValue>;
+      ///	<summary>
+      ///	  Processing of handler results on publication thread.
+      ///	</summary>
+          class var HandlerResultProcessing: TProc<TObject, TValue>;
 
     ///	<summary>
     ///	  Initializes a new instance of the <see cref="EventAggregator" />class.
@@ -142,7 +140,7 @@ uses
   Classes,
   Spring,
   Spring.Reflection,
-  DSharp.PresentationModel.INPC;
+  DSharp.PresentationModel.Execute;
 
 constructor TEventAggregator.Create;
 begin

@@ -154,7 +154,6 @@
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ElementConvention.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.EventAggregator.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.InitializeComponent.pas"/>
-        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.INPC.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.IoC.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.NameTransformer.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.pas"/>
@@ -214,6 +213,11 @@
         <DCCReference Include="..\..\Source\Aspects\DSharp.Aspects.pas"/>
         <DCCReference Include="..\..\Source\Aspects\DSharp.Aspects.Security.pas"/>
         <DCCReference Include="..\..\Source\Aspects\DSharp.Aspects.Weaver.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ObservableCollectionIntf.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.BindableCollection.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.NotifyPropertyChangedExIntf.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.PropertyChangedBase.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.Execute.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

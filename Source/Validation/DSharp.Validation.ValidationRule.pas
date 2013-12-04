@@ -30,7 +30,7 @@ type
 implementation
 
 uses
-  DSharp.PresentationModel.INPC;
+  DSharp.PresentationModel.Execute;
 
 constructor TValidationRule.Create(Target: IValidationTarget;
   ValidateDelegate: TFunc<TRuleResult>;

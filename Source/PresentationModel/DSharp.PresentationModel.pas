@@ -34,10 +34,10 @@ uses
   DSharp.PresentationModel.DeactivationEventArgs,
   DSharp.PresentationModel.DeactivationEventArgsIntf,
   DSharp.PresentationModel.EventAggregatorIntf,
+  DSharp.PresentationModel.Execute,
   DSharp.PresentationModel.GuardCloseIntf,
   DSharp.PresentationModel.IHaveDisplayNameIntf,
   DSharp.PresentationModel.IHaveSubjectIntf,
-  DSharp.PresentationModel.INPC,
   DSharp.PresentationModel.IoC,
   DSharp.PresentationModel.Result,
   DSharp.PresentationModel.Screen,
@@ -298,6 +298,9 @@ type
   IEventAggregator = DSharp.PresentationModel.EventAggregatorIntf.
     IEventAggregator;
   {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.Execute'}
+  Execute = DSharp.PresentationModel.Execute.Execute;
+  {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.GuardCloseIntf'}
   IGuardClose = DSharp.PresentationModel.GuardCloseIntf.IGuardClose;
   {$ENDREGION}
@@ -307,9 +310,6 @@ type
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.IHaveSubjectIntf'}
   IHaveSubject = DSharp.PresentationModel.IHaveSubjectIntf.IHaveSubject;
-  {$ENDREGION}
-  {$REGION 'Redefined types from DSharp.PresentationModel.INPC'}
-  Execute = DSharp.PresentationModel.INPC.Execute;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.IoC'}
   IoC = DSharp.PresentationModel.IoC.IoC;

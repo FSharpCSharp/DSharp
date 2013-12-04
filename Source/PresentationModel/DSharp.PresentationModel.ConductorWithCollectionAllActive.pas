@@ -11,7 +11,7 @@ uses
   Spring.Reflection,
   DSharp.Collections,
   DSharp.PresentationModel.ScreenExtensions,
-  DSharp.PresentationModel.INPC;
+  DSharp.PresentationModel.ObservableCollectionIntf;
 
 type
   ///	<summary>
@@ -117,8 +117,9 @@ type
 implementation
 
 uses
+  Rtti,
   DSharp.Core.Reflection,
-  Rtti;
+  DSharp.PresentationModel.BindableCollection;
 
 { TConductorCollectionAllActive<T> }
 

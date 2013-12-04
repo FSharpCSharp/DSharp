@@ -161,7 +161,7 @@ uses
   DSharp.Core.Reflection,
   DSharp.PresentationModel.ActivationEventArgs,
   DSharp.PresentationModel.DeactivationEventArgs,
-  DSharp.PresentationModel.INPC;
+  DSharp.PresentationModel.Execute;
 
 { TScreen }
 

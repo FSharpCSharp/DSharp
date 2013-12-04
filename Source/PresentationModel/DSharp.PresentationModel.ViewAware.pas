@@ -9,7 +9,7 @@ uses
   Generics.Defaults,
   Generics.Collections,
   DSharp.Core.DependencyProperty,
-  DSharp.PresentationModel.INPC,
+  DSharp.PresentationModel.PropertyChangedBase,
   DSharp.PresentationModel.ViewAttachedEventArgsIntf,
   DSharp.PresentationModel.ViewAwareIntf,
   DSharp.Core.Events;

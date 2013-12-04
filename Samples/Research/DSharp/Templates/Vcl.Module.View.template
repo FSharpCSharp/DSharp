@@ -1,0 +1,38 @@
+﻿unit <%UnitName%>;
+
+interface
+
+uses
+  Windows, 
+  Messages, 
+  SysUtils, 
+  Variants, 
+  Classes, 
+  Graphics,
+  Controls, 
+  Forms,
+  Dialogs, 
+  StdCtrls,
+  Vcl.ExtCtrls,
+  DSharp.PresentationModel,
+  DSharp.Bindings.VCLControls;
+
+type
+  /// <summary>
+  /// View for <%TypeName%>
+  /// </summary>
+  T<%TypeName%> = class(T<%BaseClass%>)
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+implementation
+
+{$R *.dfm}
+
+initialization
+  T<%TypeName%>.ClassName;
+
+end.

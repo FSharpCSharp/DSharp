@@ -1,0 +1,14 @@
+﻿program <%ApplicationName%>;
+
+uses
+  Forms,
+  DSharp.PresentationModel.VCLApplication;
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.Start<IShellViewModel>;
+  ReportMemoryLeaksOnShutdown := True;
+  
+end.

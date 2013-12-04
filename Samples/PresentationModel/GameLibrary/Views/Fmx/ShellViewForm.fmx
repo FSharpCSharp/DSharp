@@ -1,0 +1,100 @@
+object ShellView: TShellView
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 446
+  ClientWidth = 600
+  Position = poDesigned
+  Quality = ccHighQuality
+  WindowState = wsMaximized
+  FormFactor.Width = 1920
+  FormFactor.Height = 1080
+  FormFactor.Devices = [dkDesktop]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Layout1: TLayout
+    Align = alClient
+    Height = 446.000000000000000000
+    Width = 600.000000000000000000
+    object BusyIndicator: TLayout
+      Align = alContents
+      Height = 400.000000000000000000
+      Visible = False
+      Width = 600.000000000000000000
+      object BusyOverlay: TRectangle
+        Align = alContents
+        Fill.Color = claGray
+        Height = 400.000000000000000000
+        Opacity = 0.500000000000000000
+        Stroke.Kind = bkNone
+        Width = 600.000000000000000000
+      end
+      object BusyContent: TLayout
+        Align = alTop
+        Height = 100.000000000000000000
+        Width = 600.000000000000000000
+        object BusyMessage: TText
+          Align = alRight
+          AutoSize = True
+          Color = claWhite
+          Font.Family = 'Trebuchet MS'
+          Font.Size = 20.000000000000000000
+          Height = 27.000000000000000000
+          HitTest = False
+          Position.X = 477.000000000000000000
+          Text = 'Loading'
+          Width = 73.000000000000000000
+        end
+        object BusyAnimation: TAniIndicator
+          Align = alMostRight
+          Enabled = True
+          Height = 100.000000000000000000
+          HitTest = False
+          Position.X = 550.000000000000000000
+          Width = 50.000000000000000000
+        end
+      end
+    end
+    object Header: TLayout
+      Align = alTop
+      Height = 100.000000000000000000
+      Width = 600.000000000000000000
+      object Back: TButton
+        Font.Family = 'Trebuchet MS'
+        Font.Size = 20.000000000000000000
+        Height = 40.000000000000000000
+        Position.X = 16.000000000000000000
+        Position.Y = 32.000000000000000000
+        TabOrder = 0
+        Text = '<'
+        Width = 40.000000000000000000
+      end
+      object Label1: TLabel
+        AutoSize = True
+        AutoTranslate = False
+        Font.Family = 'Trebuchet MS'
+        Font.Size = 36.000000000000000000
+        StyledSettings = [ssStyle, ssFontColor]
+        Height = 19.000000000000000000
+        Position.X = 81.000000000000000000
+        Position.Y = 8.000000000000000000
+        Text = 'My Games'
+        Width = 55.000000000000000000
+        WordWrap = False
+      end
+    end
+    object ActiveItem: TLayout
+      Align = alClient
+      Height = 266.000000000000000000
+      Margins.Left = 80.000000000000000000
+      Margins.Top = 40.000000000000000000
+      Margins.Right = 80.000000000000000000
+      Margins.Bottom = 40.000000000000000000
+      Width = 440.000000000000000000
+    end
+  end
+end

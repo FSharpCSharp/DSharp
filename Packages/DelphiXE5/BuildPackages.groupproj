@@ -27,6 +27,15 @@
         <Projects Include="DSharpInterception.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="DSharp.PresentationModel.dproj">
+            <Dependencies>DSharp.Core.dproj;DataBindings.dproj</Dependencies>
+        </Projects>
+        <Projects Include="DSharp.PresentationModelVCL.dproj">
+            <Dependencies>DSharp.PresentationModel.dproj</Dependencies>
+        </Projects>
+        <Projects Include="DSharp.PresentationModelFMX.dproj">
+            <Dependencies>DSharp.PresentationModel.dproj</Dependencies>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -107,14 +116,41 @@
     <Target Name="DSharpInterception:Make">
         <MSBuild Projects="DSharpInterception.dproj" Targets="Make"/>
     </Target>
+    <Target Name="DSharp_PresentationModel" DependsOnTargets="DSharp.Core;DataBindings">
+        <MSBuild Projects="DSharp.PresentationModel.dproj"/>
+    </Target>
+    <Target Name="DSharp_PresentationModel:Clean" DependsOnTargets="DSharp.Core:Clean;DataBindings:Clean">
+        <MSBuild Projects="DSharp.PresentationModel.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_PresentationModel:Make" DependsOnTargets="DSharp.Core:Make;DataBindings:Make">
+        <MSBuild Projects="DSharp.PresentationModel.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelVCL" DependsOnTargets="DSharp.PresentationModel">
+        <MSBuild Projects="DSharp.PresentationModelVCL.dproj"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelVCL:Clean" DependsOnTargets="DSharp.PresentationModel:Clean">
+        <MSBuild Projects="DSharp.PresentationModelVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelVCL:Make" DependsOnTargets="DSharp.PresentationModel:Make">
+        <MSBuild Projects="DSharp.PresentationModelVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelFMX" DependsOnTargets="DSharp.PresentationModel">
+        <MSBuild Projects="DSharp.PresentationModelFMX.dproj"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelFMX:Clean" DependsOnTargets="DSharp.PresentationModel:Clean">
+        <MSBuild Projects="DSharp.PresentationModelFMX.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelFMX:Make" DependsOnTargets="DSharp.PresentationModel:Make">
+        <MSBuild Projects="DSharp.PresentationModelFMX.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="DSharp_Core;DataBindings;dclDataBindings;DataBindingsVCL;dclDataBindingsVCL;TreeViewPresenter;dclTreeViewPresenter;DSharpInterception"/>
+        <CallTarget Targets="DSharp_Core;DataBindings;dclDataBindings;DataBindingsVCL;dclDataBindingsVCL;TreeViewPresenter;dclTreeViewPresenter;DSharpInterception;DSharp_PresentationModel;DSharp_PresentationModelVCL;DSharp_PresentationModelFMX"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="DSharp_Core:Clean;DataBindings:Clean;dclDataBindings:Clean;DataBindingsVCL:Clean;dclDataBindingsVCL:Clean;TreeViewPresenter:Clean;dclTreeViewPresenter:Clean;DSharpInterception:Clean"/>
+        <CallTarget Targets="DSharp_Core:Clean;DataBindings:Clean;dclDataBindings:Clean;DataBindingsVCL:Clean;dclDataBindingsVCL:Clean;TreeViewPresenter:Clean;dclTreeViewPresenter:Clean;DSharpInterception:Clean;DSharp_PresentationModel:Clean;DSharp_PresentationModelVCL:Clean;DSharp_PresentationModelFMX:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="DSharp_Core:Make;DataBindings:Make;dclDataBindings:Make;DataBindingsVCL:Make;dclDataBindingsVCL:Make;TreeViewPresenter:Make;dclTreeViewPresenter:Make;DSharpInterception:Make"/>
+        <CallTarget Targets="DSharp_Core:Make;DataBindings:Make;dclDataBindings:Make;DataBindingsVCL:Make;dclDataBindingsVCL:Make;TreeViewPresenter:Make;dclTreeViewPresenter:Make;DSharpInterception:Make;DSharp_PresentationModel:Make;DSharp_PresentationModelVCL:Make;DSharp_PresentationModelFMX:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

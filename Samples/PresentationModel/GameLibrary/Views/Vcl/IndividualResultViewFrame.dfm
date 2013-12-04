@@ -1,0 +1,52 @@
+object IndividualResultView: TIndividualResultView
+  Left = 0
+  Top = 0
+  Width = 451
+  Height = 50
+  Align = alTop
+  TabOrder = 0
+  object Number: TLabel
+    AlignWithMargins = True
+    Left = 10
+    Top = 0
+    Width = 37
+    Height = 13
+    Margins.Left = 10
+    Margins.Top = 0
+    Margins.Right = 0
+    Align = alLeft
+    Caption = 'Number'
+    Layout = tlCenter
+  end
+  object Title: TLabel
+    AlignWithMargins = True
+    Left = 57
+    Top = 0
+    Width = 20
+    Height = 13
+    Margins.Left = 10
+    Margins.Top = 0
+    Margins.Right = 0
+    Align = alLeft
+    Caption = 'Title'
+    Layout = tlCenter
+  end
+  object Open: TButton
+    AlignWithMargins = True
+    Left = 82
+    Top = 5
+    Width = 74
+    Height = 40
+    Cursor = crHandPoint
+    Margins.Left = 5
+    Margins.Top = 5
+    Margins.Right = 5
+    Margins.Bottom = 5
+    Align = alLeft
+    Caption = 'Open'
+    TabOrder = 0
+    ExplicitLeft = 87
+    ExplicitTop = 0
+    ExplicitHeight = 50
+  end
+end

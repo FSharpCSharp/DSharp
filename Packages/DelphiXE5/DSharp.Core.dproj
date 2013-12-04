@@ -182,7 +182,6 @@
         <DCCReference Include="..\..\Source\Core\DSharp.Core.EventArgs.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Extensions.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Fibers.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Framework.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Generics.pas"/>
@@ -203,6 +202,9 @@
         <DCCReference Include="..\..\Source\Core\ObjAutoPatch.pas"/>
         <DCCReference Include="..\..\Source\Core\PatchUtils.pas"/>
         <DCCReference Include="..\..\Source\Core\RttiPatch.pas"/>
+        <DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyPath.pas"/>
+        <DCCReference Include="..\..\Source\Core\DSharp.Core.RegularExpressions.pas"/>
+        <DCCReference Include="..\..\Source\Logging\DSharp.Logging.Debug.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

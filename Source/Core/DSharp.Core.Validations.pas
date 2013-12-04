@@ -110,9 +110,9 @@ type
   IDataErrorInfo = interface
     ['{E8216DF2-CFF7-4C61-9A82-20AAB177D204}']
     function GetError: string;
-    function GetItem(const Name: string): string;
+    function GetItem(const AName: string): string;
     property Error: string read GetError;
-    property Item[const Name: string]: string read GetItem; default;
+    property Errors[const AName: string]: string read GetItem; default; // Used to be Item (like in .NET), but Delphi > XE2 does not allow you to have 2 Item properties
   end;
 
 implementation

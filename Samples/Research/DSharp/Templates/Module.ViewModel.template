@@ -1,0 +1,30 @@
+﻿unit <%UnitName%>;
+
+interface
+
+uses
+  Classes,
+  SysUtils,
+  Interfaces,
+  DSharp.Collections,
+  DSharp.PresentationModel,
+  DSharp.PresentationModel.EventAggregator,
+  DSharp.PresentationModel.ConductorWithCollectionOneActive;
+  
+type
+  /// <summary>
+  /// Implementation of <see cref = "I<%TypeName%>" />
+  /// </summary>
+  T<%TypeName%> = class(<%BaseClass%>, I<%TypeName%>)
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+implementation
+
+initialization
+  T<%TypeName%>.ClassName;
+
+end.

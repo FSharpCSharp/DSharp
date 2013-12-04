@@ -1,0 +1,29 @@
+object ShellView: TShellView
+  Left = 0
+  Top = 0
+  ClientHeight = 562
+  ClientWidth = 784
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = True
+  Position = poDefault
+  WindowState = wsMaximized
+  PixelsPerInch = 96
+  TextHeight = 13
+  object ActiveItem: TPanel
+    Left = 0
+    Top = 0
+    Width = 784
+    Height = 562
+    Align = alClient
+    BevelOuter = bvNone
+    Caption = 'ActiveItem'
+    FullRepaint = False
+    ShowCaption = False
+    TabOrder = 0
+  end
+end

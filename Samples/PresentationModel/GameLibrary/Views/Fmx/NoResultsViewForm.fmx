@@ -1,0 +1,55 @@
+object NoResultsView: TNoResultsView
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 370
+  ClientWidth = 542
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Layout1: TLayout
+    Align = alClient
+    Height = 370.000000000000000000
+    Width = 542.000000000000000000
+    object Label1: TLabel
+      AutoSize = True
+      Font.Family = 'Trebuchet MS'
+      Font.Size = 20.000000000000000000
+      StyledSettings = [ssStyle, ssFontColor]
+      Height = 19.000000000000000000
+      Position.X = 48.000000000000000000
+      Position.Y = 40.000000000000000000
+      Text = 'No results were found for that search text.'
+      Width = 208.000000000000000000
+      WordWrap = False
+    end
+    object Label2: TLabel
+      AutoSize = True
+      Font.Family = 'Trebuchet MS'
+      Font.Size = 20.000000000000000000
+      StyledSettings = [ssStyle, ssFontColor]
+      Height = 19.000000000000000000
+      Position.X = 48.000000000000000000
+      Position.Y = 80.000000000000000000
+      Text = 'Would you like to '
+      Width = 93.000000000000000000
+      WordWrap = False
+    end
+    object AddGame: TButton
+      Font.Family = 'Trebuchet MS'
+      Font.Size = 20.000000000000000000
+      Height = 45.000000000000000000
+      Position.X = 48.000000000000000000
+      Position.Y = 120.000000000000000000
+      TabOrder = 2
+      Text = 'Create a New Game'
+      Width = 249.000000000000000000
+    end
+  end
+end

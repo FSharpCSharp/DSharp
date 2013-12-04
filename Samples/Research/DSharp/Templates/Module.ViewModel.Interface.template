@@ -1,0 +1,8 @@
+﻿  /// <summary>
+  /// Interface I<%TypeName%>
+  /// </summary>
+  [InheritedExport]
+  I<%TypeName%> = interface(IScreen)
+    ['<%InterfaceGuid%>']  
+  end;
+

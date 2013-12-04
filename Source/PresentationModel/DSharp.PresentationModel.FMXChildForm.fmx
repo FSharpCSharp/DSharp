@@ -1,0 +1,16 @@
+object ChildForm: TChildForm
+  Left = 0
+  Top = 0
+  Caption = 'ChildForm'
+  ClientHeight = 400
+  ClientWidth = 600
+  FormFactor.Width = 2560
+  FormFactor.Height = 1600
+  FormFactor.Devices = [dkDesktop]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+end

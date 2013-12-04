@@ -1,0 +1,93 @@
+object ExploreGameView: TExploreGameView
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 543
+  ClientWidth = 789
+  FormFactor.Width = 1920
+  FormFactor.Height = 1080
+  FormFactor.Devices = [dkDesktop]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Layout1: TLayout
+    Align = alClient
+    Height = 543.000000000000000000
+    Width = 789.000000000000000000
+    object Game: TLayout
+      Align = alTop
+      Height = 320.000000000000000000
+      Width = 789.000000000000000000
+    end
+    object Rectangle1: TRectangle
+      Align = alTop
+      Fill.Kind = bkNone
+      Height = 80.000000000000000000
+      Position.Y = 320.000000000000000000
+      Stroke.Kind = bkNone
+      Width = 789.000000000000000000
+      object BorrowedMessage: TLabel
+        Align = alTop
+        Font.Family = 'Trebuchet MS'
+        Font.Size = 20.000000000000000000
+        Height = 27.222652435302730000
+        Text = 'BorrowedMessage'
+        Width = 789.000000000000000000
+        WordWrap = False
+      end
+      object CheckIn: TButton
+        Align = alRight
+        Font.Family = 'Trebuchet MS'
+        Font.Size = 20.000000000000000000
+        Height = 52.777347564697270000
+        Position.X = 629.000000000000000000
+        Position.Y = 27.222652435302730000
+        TabOrder = 1
+        Text = 'Check In'
+        Width = 160.000000000000000000
+      end
+    end
+    object Rectangle2: TRectangle
+      Align = alTop
+      Fill.Kind = bkNone
+      Height = 115.000000000000000000
+      Position.Y = 400.000000000000000000
+      Stroke.Kind = bkNone
+      Width = 789.000000000000000000
+      object Label1: TLabel
+        Align = alTop
+        Font.Family = 'Trebuchet MS'
+        Font.Size = 20.000000000000000000
+        Height = 27.222652435302730000
+        Text = 'Borrower:'
+        Width = 789.000000000000000000
+        WordWrap = False
+      end
+      object Borrower: TEdit
+        Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+        Align = alTop
+        TabOrder = 1
+        Font.Family = 'Trebuchet MS'
+        Font.Size = 20.000000000000000000
+        Position.Y = 27.222652435302730000
+        Width = 789.000000000000000000
+        Height = 40.000003814697270000
+        KillFocusByReturn = False
+      end
+      object CheckOut: TButton
+        Align = alRight
+        Font.Family = 'Trebuchet MS'
+        Font.Size = 20.000000000000000000
+        Height = 47.777343750000000000
+        Position.X = 629.000000000000000000
+        Position.Y = 67.222656250000000000
+        TabOrder = 2
+        Text = 'Check Out'
+        Width = 160.000000000000000000
+      end
+    end
+  end
+end

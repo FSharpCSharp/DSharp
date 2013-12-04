@@ -1,0 +1,7 @@
+VclApplicationTemplate RCDATA "Templates\\Vcl.Application.template"
+VclModuleViewDsgnTemplate RCDATA "Templates\\Vcl.Module.View.Dsgn.template"
+VclModuleViewTemplate RCDATA "Templates\\Vcl.Module.View.template"
+ModuleViewModelTemplate RCDATA "Templates\\Module.ViewModel.template"
+ModuleViewModelInterfaceTemplate RCDATA "Templates\\Module.ViewModel.Interface.template"
+InterfacesTemplate RCDATA "Templates\\Interfaces.template"
+ModelTemplate RCDATA "Templates\\Model.template"

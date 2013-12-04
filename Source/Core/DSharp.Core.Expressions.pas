@@ -2393,6 +2393,7 @@ begin
       begin
         SetIndexedValue(LProperty.GetValue(LInstance.AsPointer), LValue);
       end;
+      {TODO -o##jwp -cEnhance : add conditional logging}
     end else
     if LType.TryGetField(FPropertyName, LField) then
     begin
@@ -2820,3 +2821,4 @@ begin
 end;
 
 end.
+

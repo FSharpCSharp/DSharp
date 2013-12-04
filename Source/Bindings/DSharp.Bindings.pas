@@ -42,7 +42,8 @@ uses
   DSharp.Core.Events,
   DSharp.Core.Expressions,
   DSharp.Core.NotificationHandler,
-  DSharp.Core.Validations,
+  DSharp.Core.Validations, 
+  DSharp.Logging,
   Rtti,
   SysUtils;
 
@@ -163,7 +164,7 @@ type
     procedure SetConverter(const Value: IValueConverter);
     procedure SetEnabled(const Value: Boolean);
     procedure SetSource(const Value: TObject);
-    procedure SetSourceProperty;
+    procedure SetSourceProperty();
     procedure SetSourcePropertyName(const Value: string);
     procedure SetTarget(const Value: TObject);
     procedure SetTargetProperty;
@@ -251,12 +252,15 @@ type
     FOnPropertyChanged: Event<TPropertyChangedEvent>;
     FValidationErrors: IList<IValidationResult>;
     FValidationRules: IList<IValidationRule>;
+    class var FLog: ILog;
     function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
     procedure SetBindings(const Value: TBindingCollection);
     procedure SetEditing(const Value: Boolean);
     function GetItems: IList<TObject>;
+    class function GetLog(): ILog; static;
     function GetValidationErrors: IList<IValidationResult>;
     function GetValidationRules: IList<IValidationRule>;
+    class property Log: ILog read GetLog;
   protected
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
@@ -315,6 +319,7 @@ uses
   DSharp.Core.Reflection,
   DSharp.Core.Utils,
   StrUtils,
+  Types, // to prevent H2443 Inline function 'TList.Remove' has not been expanded because unit 'System.Types' is not specified in USES list
   TypInfo;
 
 var
@@ -957,7 +962,7 @@ begin
   end;
 end;
 
-procedure TBinding.SetSourceProperty;
+procedure TBinding.SetSourceProperty();
 var
   LSourceCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
@@ -991,7 +996,7 @@ begin
     FSourcePropertyName := Value;
     if Assigned(FSource) then
     begin
-      SetSourceProperty;
+      SetSourceProperty();
 
       UpdateTarget(True);
     end;
@@ -1301,6 +1306,11 @@ end;
 function TBindingGroup.AddBinding(ASource: TObject; ASourcePropertyName: string;
   ATarget: TObject; ATargetPropertyName: string; ABindingMode: TBindingMode;
   AConverter: IValueConverter): TBinding;
+var
+  LBindingModeDescription: string;
+  LConverter: TObject;
+  LTargetPropertyDescription: string;
+  LSourcePropertyDescription: string;
 begin
   Result := Bindings.Add();
   Result.Source := ASource;
@@ -1309,6 +1319,21 @@ begin
   Result.TargetPropertyName := ATargetPropertyName;
   Result.BindingMode := ABindingMode;
   Result.Converter := AConverter;
+  LBindingModeDescription := GetEnumName(TypeInfo(TBindingMode), Ord(ABindingMode));
+  if Assigned(AConverter) then
+    LConverter := AConverter as TObject
+  else
+    LConverter := nil;
+  LSourcePropertyDescription := ASource.Describe(ASourcePropertyName);
+  LTargetPropertyDescription := ATarget.Describe(ATargetPropertyName);
+  Log.LogMessage('AddBinding(SourceProperty=%s, TargetProperty=%s, BindingMode=%s, Converter=%s, Source=%s, Target=%s', [
+    LSourcePropertyDescription,
+    LTargetPropertyDescription,
+    LBindingModeDescription,
+    LConverter.Describe(),
+    ASource.Describe(),
+    ATarget.Describe()
+  ]);
 end;
 
 procedure TBindingGroup.BeginEdit;
@@ -1541,6 +1566,15 @@ procedure TBindingGroup.DefineProperties(Filer: TFiler);
 begin
   inherited;
   Filer.DefineProperty('Bindings', ReadBindings, WriteBindings, True);
+end;
+
+class function TBindingGroup.GetLog(): ILog;
+begin
+  if not Assigned(FLog) then
+  begin
+    FLog := LogManager.GetLog(TypeInfo(TBindingGroup));
+  end;
+  Result := FLog;
 end;
 
 procedure TBindingGroup.ReadBindings(AReader: TReader);

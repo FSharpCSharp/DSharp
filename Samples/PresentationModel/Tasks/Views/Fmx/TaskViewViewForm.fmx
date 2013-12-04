@@ -1,0 +1,47 @@
+object TaskViewView: TTaskViewView
+  Left = 0
+  Top = 0
+  ClientHeight = 50
+  ClientWidth = 451
+  FormFactor.Width = 2560
+  FormFactor.Height = 1600
+  FormFactor.Devices = [dkDesktop]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  object Container: TLayout
+    Align = alClient
+    Height = 50.000000000000000000
+    Width = 451.000000000000000000
+    object Spacer: TLayout
+      Align = alBottom
+      Height = 10.000000000000000000
+      Position.Y = 40.000000000000000000
+      Width = 451.000000000000000000
+    end
+    object Description: TLabel
+      Align = alClient
+      AutoSize = True
+      Height = 40.000000000000000000
+      Text = 'Description'
+      Width = 326.000000000000000000
+      WordWrap = False
+    end
+    object IsCompleted: TCheckBox
+      Align = alLeft
+      Height = 40.000000000000000000
+      TabOrder = 2
+      Width = 50.000000000000000000
+    end
+    object Remove: TButton
+      Align = alRight
+      Height = 40.000000000000000000
+      Position.X = 376.000000000000000000
+      TabOrder = 3
+      Text = 'Remove'
+      Width = 75.000000000000000000
+    end
+  end
+end

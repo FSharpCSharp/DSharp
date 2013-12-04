@@ -52,54 +52,58 @@ uses
 
 procedure TCodeSiteLog.LogEntry(const ALogEntry: TLogEntry);
 begin
+  if not Assigned(CodeSite) then
+    Exit;
+
+  CodeSite.Category := GetTypeInfoName();
   case ALogEntry.LogKind of
     lkEnterMethod:
     begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          CodeSite.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
+          CodeSite.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.FormatText)
         else if ALogEntry.Value.IsObject then
-          CodeSite.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+          CodeSite.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.FormatText)
         else
-          CodeSite.EnterMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
+          CodeSite.EnterMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.FormatText);
       end
       else
-        CodeSite.EnterMethod(ALogEntry.Text);
+        CodeSite.EnterMethod(ALogEntry.FormatText);
     end;
     lkLeaveMethod:
     begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          CodeSite.ExitMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
+          CodeSite.ExitMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.FormatText)
         else if ALogEntry.Value.IsObject then
-          CodeSite.ExitMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+          CodeSite.ExitMethod(ALogEntry.Value.AsObject, ALogEntry.FormatText)
         else
-          CodeSite.ExitMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
+          CodeSite.ExitMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.FormatText);
       end
       else
-        CodeSite.ExitMethod(ALogEntry.Text);
+        CodeSite.ExitMethod(ALogEntry.FormatText);
     end;
     lkMessage:
     begin
-      CodeSite.SendFmtMsg(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
+      CodeSite.SendFmtMsg(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values));
     end;
     lkWarning:
     begin
-      CodeSite.SendWarning(Format(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values)));
+      CodeSite.SendWarning(Format(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values)));
     end;
     lkError:
     begin
-      CodeSite.SendError(Format(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values)));
+      CodeSite.SendError(Format(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values)));
     end;
     lkException:
     begin
-      CodeSite.SendException(ALogEntry.Text, ALogEntry.Value.AsType<Exception>);
+      CodeSite.SendException(ALogEntry.FormatText, ALogEntry.Value.AsType<Exception>);
     end;
     lkValue:
     begin
-      CodeSite.Send(ALogEntry.Text, ALogEntry.Value);
+      CodeSite.Send(ALogEntry.FormatText, ALogEntry.Value);
     end;
   end;
 end;

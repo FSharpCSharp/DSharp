@@ -51,15 +51,14 @@ type
   TLogEntry = record
   private
     FLogKind: TLogKind;
-    FText: string;
+    FFormatText: string;
     FValues: TArray<TValue>;
     function GetValue: TValue;
   public
-    constructor Create(const AText: string; const AValues: array of TValue;
-      const ALogKind: TLogKind);
+    constructor Create(const AFormatText: string; const AValues: array of TValue; const ALogKind: TLogKind);
 
     property LogKind: TLogKind read FLogKind;
-    property Text: string read FText;
+    property FormatText: string read FFormatText;
     property Values: TArray<TValue> read FValues;
     property Value: TValue read GetValue;
   end;
@@ -73,32 +72,40 @@ type
     procedure LeaveMethod(const AName: string); overload;
     procedure LeaveMethod(AValue: TValue; const AName: string); overload;
     procedure LogError(const ATitle: string); overload;
-    procedure LogError(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogError(const AFormatText: string; const AValues: array of TValue); overload;
     procedure LogException(AException: Exception = nil; const ATitle: string = '');
     procedure LogMessage(const ATitle: string); overload;
-    procedure LogMessage(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogMessage(const AFormatText: string; const AValues: array of TValue); overload;
     procedure LogValue(const AName: string; const AValue: TValue);
     procedure LogWarning(const ATitle: string); overload;
-    procedure LogWarning(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogWarning(const AFormatText: string; const AValues: array of TValue); overload;
   end;
 
+  TLogBaseClass = class of TLogBase;
   TLogBase = class abstract(TInterfacedObject, ILog)
-  protected
+  strict private
+    FTypeInfo: PTypeInfo;
+  strict protected
     procedure LogEntry(const ALogEntry: TLogEntry); virtual; abstract;
+    function GetTypeInfoName: string; virtual;
+    function GetTypeInfo: PTypeInfo; virtual;
   public
+    constructor Create(); overload; virtual;
+    constructor Create(const ATypeInfo: PTypeInfo); overload; virtual;
+    destructor Destroy(); override;
     procedure EnterMethod(const AName: string); overload;
     procedure EnterMethod(AValue: TValue; const AName: string); overload;
     procedure LeaveMethod(const AName: string); overload;
     procedure LeaveMethod(AValue: TValue; const AName: string); overload;
     procedure LogError(const ATitle: string); overload;
-    procedure LogError(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogError(const AFormatText: string; const AValues: array of TValue); overload;
     procedure LogException(AException: Exception = nil; const ATitle: string = '');
     procedure LogMessage(const ATitle: string); overload;
-    procedure LogMessage(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogMessage(const AFormatText: string; const AValues: array of TValue); overload;
     procedure LogValue(const AName: string; const AValue: TValue); overload;
     procedure LogValue<T>(const AName: string; const AValue: T); overload;
     procedure LogWarning(const ATitle: string); overload;
-    procedure LogWarning(const ATitle: string; const AValues: array of TValue); overload;
+    procedure LogWarning(const AFormatText: string; const AValues: array of TValue); overload;
   end;
 
   TTextLog = class abstract(TLogBase)
@@ -150,7 +157,7 @@ type
     procedure LogEntry(const ALogEntry: TLogEntry); override;
     property Logs: TList<ILog> read FLogs;
   public
-    constructor Create;
+    constructor Create; override;
     destructor Destroy; override;
   end;
 
@@ -195,9 +202,32 @@ begin
   LogEntry(TLogEntry.Create(AName, [], lkEnterMethod));
 end;
 
+constructor TLogBase.Create(const ATypeInfo: PTypeInfo);
+begin
+  inherited Create();
+  FTypeInfo := ATypeInfo;
+//  LogMessage('%s.Create(Category=%s)', [QualifiedClassName, GetTypeInfoName()]); // ##jwp for tracking down a memory leak
+end;
+
+constructor TLogBase.Create();
+begin
+  Create(nil);
+end;
+
+destructor TLogBase.Destroy();
+begin
+//  LogMessage('%s.Destroy(Category=%s)', [QualifiedClassName, GetTypeInfoName()]); // ##jwp for tracking down a memory leak
+  inherited;
+end;
+
 procedure TLogBase.EnterMethod(AValue: TValue; const AName: string);
 begin
   LogEntry(TLogEntry.Create(AName, [AValue], lkEnterMethod));
+end;
+
+function TLogBase.GetTypeInfo: PTypeInfo;
+begin
+  Result := FTypeInfo;
 end;
 
 procedure TLogBase.LeaveMethod(const AName: string);
@@ -215,10 +245,9 @@ begin
   LogError(ATitle, []);
 end;
 
-procedure TLogBase.LogError(const ATitle: string;
-  const AValues: array of TValue);
+procedure TLogBase.LogError(const AFormatText: string; const AValues: array of TValue);
 begin
-  LogEntry(TLogEntry.Create(ATitle, AValues, lkError));
+  LogEntry(TLogEntry.Create(AFormatText, AValues, lkError));
 end;
 
 procedure TLogBase.LogException(AException: Exception; const ATitle: string);
@@ -235,10 +264,9 @@ begin
   LogMessage(ATitle, []);
 end;
 
-procedure TLogBase.LogMessage(const ATitle: string;
-  const AValues: array of TValue);
+procedure TLogBase.LogMessage(const AFormatText: string; const AValues: array of TValue);
 begin
-  LogEntry(TLogEntry.Create(ATitle, AValues, lkMessage));
+  LogEntry(TLogEntry.Create(AFormatText, AValues, lkMessage));
 end;
 
 procedure TLogBase.LogValue(const AName: string; const AValue: TValue);
@@ -256,10 +284,20 @@ begin
   LogWarning(ATitle, []);
 end;
 
-procedure TLogBase.LogWarning(const ATitle: string;
-  const AValues: array of TValue);
+procedure TLogBase.LogWarning(const AFormatText: string; const AValues: array of TValue);
 begin
-  LogEntry(TLogEntry.Create(ATitle, AValues, lkWarning));
+  LogEntry(TLogEntry.Create(AFormatText, AValues, lkWarning));
+end;
+
+function TLogBase.GetTypeInfoName: string;
+var
+  LTypeInfo: PTypeInfo;
+begin
+  LTypeInfo := GetTypeInfo();
+  if Assigned(LTypeInfo) then
+    Result := LTypeInfo.NameFld.ToString() {TODO -o##jwp -cCompatibility : XE2 and higher; before that, use the Name property}
+  else
+    Result := '';
 end;
 
 { TLogProxy }
@@ -272,6 +310,7 @@ end;
 destructor TLogProxy.Destroy;
 begin
   FLogs.Free();
+  FLogs := nil;
   inherited;
 end;
 
@@ -279,17 +318,17 @@ procedure TLogProxy.LogEntry(const ALogEntry: TLogEntry);
 var
   LLog: ILog;
 begin
-  for LLog in FLogs do
-    LLog.LogEntry(ALogEntry);
+  if Assigned(FLogs) then
+    for LLog in FLogs do
+      LLog.LogEntry(ALogEntry);
 end;
 
 { TLogEntry }
 
-constructor TLogEntry.Create(const AText: string;
-  const AValues: array of TValue; const ALogKind: TLogKind);
+constructor TLogEntry.Create(const AFormatText: string; const AValues: array of TValue; const ALogKind: TLogKind);
 begin
   FLogKind := ALogKind;
-  FText := AText;
+  FFormatText := AFormatText;
   FValues := TArrayHelper.Copy<TValue>(AValues);
 end;
 
@@ -300,6 +339,7 @@ var
   LMessage: string;
   LValue: TValue;
 begin
+  {TODO -o##jwp -cEnhance : Find a smart way to insert a kind of Category here from GetTypeInfoName() }
   LValue := ALogEntry.Value;
   case ALogEntry.LogKind of
     lkEnterMethod:
@@ -307,37 +347,37 @@ begin
       LMessage := REnterMethod;
       if not LValue.IsEmpty then
         LMessage := LMessage + UTF8ToString(LValue.TypeInfo.Name) + '.';
-      LMessage := LMessage + ALogEntry.Text;
+      LMessage := LMessage + ALogEntry.FormatText;
     end;
     lkLeaveMethod:
     begin
       LMessage := RLeaveMethod;
       if not LValue.IsEmpty then
         LMessage := LMessage + UTF8ToString(LValue.TypeInfo.Name) + '.';
-      LMessage := LMessage + ALogEntry.Text;
+      LMessage := LMessage + ALogEntry.FormatText;
     end;
     lkMessage:
     begin
-      LMessage := Format('INFO: ' + ALogEntry.Text, ALogEntry.Values);
+      LMessage := Format('INFO: ' + ALogEntry.FormatText, ALogEntry.Values);
     end;
     lkWarning:
     begin
-      LMessage := Format('WARN: ' + ALogEntry.Text, ALogEntry.Values);
+      LMessage := Format('WARN: ' + ALogEntry.FormatText, ALogEntry.Values);
     end;
     lkError:
     begin
-      LMessage := Format('ERROR: ' + ALogEntry.Text, ALogEntry.Values);
+      LMessage := Format('ERROR: ' + ALogEntry.FormatText, ALogEntry.Values);
     end;
     lkException:
     begin
-      if ALogEntry.Text <> '' then
-        LMessage := ALogEntry.Text + ': ';
+      if ALogEntry.FormatText <> '' then
+        LMessage := ALogEntry.FormatText + ': ';
       LMessage := LMessage + LValue.AsType<Exception>.ToString;
     end;
     lkValue:
     begin
-      if ALogEntry.Text <> '' then
-        LMessage := ALogEntry.Text + ': ';
+      if ALogEntry.FormatText <> '' then
+        LMessage := ALogEntry.FormatText + ': ';
       LMessage := LMessage + TValue.ToString(LValue);
     end;
   end;
@@ -367,7 +407,7 @@ end;
 
 class constructor LogManager.Create;
 begin
-  FNullLog := TNullLog.Create;
+  FNullLog := TNullLog.Create();
   FGetLog :=
     function(TypeInfo: PTypeInfo): ILog
     begin

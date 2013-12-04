@@ -1,143 +1,264 @@
-(*
-  Copyright (c) 2011, Stefan Glienke
-  All rights reserved.
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-  - Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-  - Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-  - Neither the name of this library nor the names of its contributors may be
-    used to endorse or promote products derived from this software without
-    specific prior written permission.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE.
-*)
-
 unit DSharp.PresentationModel.VCLWindowManager;
 
 interface
 
 uses
-  Classes,
-  Controls,
-  Dialogs,
-  DSharp.ComponentModel.Composition,
-  DSharp.PresentationModel.WindowManager,
+  {$IF CompilerVersion > 22}
+  UITypes,
+  {$IFEND}
   Forms,
-  Messages;
+  Controls,
+  DSharp.PresentationModel.VCLConventionManager,
+  Generics.Collections,
+  DSharp.ComponentModel.Composition,
+  DSharp.PresentationModel;
 
 type
+  ///	<summary>
+  ///	  A service that manages windows.
+  ///	</summary>
+
   [PartCreationPolicy(cpShared)]
   TWindowManager = class(TInterfacedObject, IWindowManager)
-  private
-    FRunning: Boolean;
-    function WindowHook(var Message: TMessage): Boolean;
   protected
-    function CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
-    function EnsureWindow(Model: TObject; View: TControl): TForm;
-  public
-    constructor Create;
-    destructor Destroy; override;
+    FRunning: Boolean;
+    procedure ApplySettings(Target: TObject; Settings: IViewSettings);
+    function CreateWindow(ARootModel: TObject; AIsDialog: Boolean;
+      AContext: TValue; Settings: IViewSettings): TForm;
 
+    ///	<summary>
+    ///	  Makes sure the view is a window is is wrapped by one.
+    ///	</summary>
+    ///	<param name="AModel">
+    ///	  The view model.
+    ///	</param>
+    ///	<param name="AView">
+    ///	  The view.
+    ///	</param>
+    ///	<param name="AIsDialog">
+    ///	  Whether or not the window is being shown as a dialog.
+    ///	</param>
+    ///	<returns>
+    ///	  The window.
+    ///	</returns>
+    function EnsureWindow(AModel: TObject; AView: TComponent;
+      AIsDialog: Boolean): TForm;
+    function InferOwnerOf(AWindow: TForm): TComponent;
+  public
     function InputBox(const ACaption, APrompt, ADefault: string;
-      AShowPasswordChar: Boolean = False): string;
+      AShowPasswordChar: Boolean): string;
     function MessageDlg(const Msg: string; DlgType: TMsgDlgType;
       Buttons: TMsgDlgButtons; HelpCtx: LongInt = 0): Integer;
+    procedure ShowMessage(const Msg: string);
 
-    function ShowDialog(Model: IInterface): Integer; overload;
-    function ShowDialog(Model: TObject): Integer; overload;
-    procedure ShowWindow(Model: IInterface); overload;
-    procedure ShowWindow(Model: TObject); overload;
+    ///	<summary>
+    ///	  Shows a modal dialog for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    ///	<returns>
+    ///	  The dialog result.
+    ///	</returns>
+    function ShowDialog(RootModel: IInterface): TModalResult; overload;
+
+    ///	<summary>
+    ///	  Shows a modal dialog for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    ///	<param name="Context">
+    ///	  The context.
+    ///	</param>
+    ///	<param name="Settings">
+    ///	  The optional window settings.
+    ///	</param>
+    ///	<returns>
+    ///	  The dialog result.
+    ///	</returns>
+    function ShowDialog(RootModel: IInterface; Context: TValue;
+      Settings: IViewSettings = nil): TModalResult; overload;
+
+    ///	<summary>
+    ///	  Shows a modal dialog for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    ///	<returns>
+    ///	  The dialog result.
+    ///	</returns>
+    function ShowDialog(RootModel: TObject): TModalResult; overload;
+
+    ///	<summary>
+    ///	  Shows a modal dialog for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    ///	<param name="Context">
+    ///	  The context.
+    ///	</param>
+    ///	<param name="Settings">
+    ///	  The optional window settings.
+    ///	</param>
+    ///	<returns>
+    ///	  The dialog result.
+    ///	</returns>
+    function ShowDialog(RootModel: TObject; Context: TValue;
+      Settings: IViewSettings = nil): TModalResult; overload;
+
+    ///	<summary>
+    ///	  Shows a window for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    procedure ShowWindow(RootModel: IInterface); overload;
+
+    ///	<summary>
+    ///	  Shows a window for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    ///	<param name="Context">
+    ///	  The context.
+    ///	</param>
+    ///	<param name="Settings">
+    ///	  The optional window settings.
+    ///	</param>
+    procedure ShowWindow(RootModel: IInterface; Context: TValue;
+      Settings: IViewSettings = nil); overload;
+
+    ///	<summary>
+    ///	  Shows a window for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    procedure ShowWindow(RootModel: TObject); overload;
+
+    ///	<summary>
+    ///	  Shows a window for the specified model.
+    ///	</summary>
+    ///	<param name="RootModel">
+    ///	  The root model.
+    ///	</param>
+    ///	<param name="Context">
+    ///	  The context.
+    ///	</param>
+    ///	<param name="Settings">
+    ///	  The optional window settings.
+    ///	</param>
+    procedure ShowWindow(RootModel: TObject; Context: TValue;
+      Settings: IViewSettings = nil); overload;
   end;
 
 implementation
 
 uses
+  Classes,
+  Dialogs,
   DSharp.Bindings,
-  DSharp.PresentationModel.ChildForm,
-  DSharp.PresentationModel.Screen,
-  DSharp.PresentationModel.VCLConventionManager,
+  DSharp.Core.Reflection,
+  DSharp.PresentationModel.Bootstrapper,
   DSharp.PresentationModel.ViewLocator,
   DSharp.PresentationModel.ViewModelBinder,
-  DSharp.PresentationModel.WindowConductor,
+  DSharp.PresentationModel.View,
+  DSharp.PresentationModel.VCLChildForm,
+  DSharp.PresentationModel.VCLWindowConductor,
+  Rtti,
   SysUtils,
+  Messages,
   Windows;
 
-{ TWindowManager }
-
-constructor TWindowManager.Create;
+procedure TWindowManager.ApplySettings(Target: TObject;
+  Settings: IViewSettings);
+var
+  LPropertyInfo: TRttiProperty;
+  LType: TRttiType;
+  LPair: TPair<string, TValue>;
 begin
-  // Following line should be here -
-  // but if this line is missing in project file the runtime themes cannot be set
-//  Application.Initialize;
-  Application.MainFormOnTaskbar := True;
-  Application.HookMainWindow(WindowHook);
+  if Assigned(Settings) then
+  begin
+    for LPair in Settings.Items do
+    begin
+      LType := GetRttiType(Target.ClassType);
+      LPropertyInfo := LType.GetProperty(LPair.Key);
+      if Assigned(LPropertyInfo) then
+        LPropertyInfo.SetValue(Target, LPair.Value);
+    end;
+  end;
 end;
 
-function TWindowManager.CreateWindow(Model: TObject; IsDialog: Boolean): TForm;
+function TWindowManager.CreateWindow(ARootModel: TObject; AIsDialog: Boolean;
+  AContext: TValue; Settings: IViewSettings): TForm;
 var
-  LView: TControl;
-  LViewClass: TClass;
+  LBindingGroup: TBindingGroup;
+  LHaveDisplayName: IHaveDisplayName;
+  LView: TComponent;
+  LViewType: TClass;
   LWindow: TForm;
 begin
-  LViewClass := ViewLocator.FindViewType(Model.ClassType);
+  // Get view type for root model
+  LViewType := ViewLocator.LocateTypeForModelType(ARootModel.ClassType, nil,
+    AContext);
 
-  if not FRunning and LViewClass.InheritsFrom(TForm) then
+  if not FRunning and Assigned(LViewType) and LViewType.InheritsFrom(TForm) then
   begin
-    Application.CreateForm(TComponentClass(LViewClass), LWindow);
+    // Use Application.CreateForm to create the first form of the application (IoC for the rest)
+    Application.CreateForm(TComponentClass(LViewType), LWindow);
+    LWindow.Caption := Application.Title;
     LView := LWindow;
   end
   else
   begin
-    LView := ViewLocator.GetOrCreateViewType(Model.ClassType) as TControl;
-    LWindow := EnsureWindow(Model, LView);
+    LView := ViewLocator.LocateForModel(ARootModel, nil, AContext)
+      as TComponent;
   end;
 
-  TWindowConductor.Create(Model, LWindow);
-  ViewModelBinder.Bind(Model, LView);
+  LWindow := EnsureWindow(ARootModel, LView, AIsDialog);
 
-  if Supports(Model, IHaveDisplayName) then
+  // Exit when view type was not found
+  if not Assigned(LViewType) then
+    Exit(LWindow);
+
+  ViewModelBinder.Bind(ARootModel, LWindow, AContext);
+
+  if Supports(ARootModel, IHaveDisplayName, LHaveDisplayName) then
   begin
-    FindBindingGroup(LView).AddBinding(
-      Model, 'DisplayName', LWindow, 'Caption', bmOneWay);
+    LBindingGroup := FindBindingGroup(View.GetFirstNonGeneratedView(LWindow)
+      as TComponent);
+    LBindingGroup.AddBinding(ARootModel, 'DisplayName', LWindow, 'Caption',
+      bmOneWay);
+    { TODO -o##jwp -cEnhance : Add logging of binding }
   end;
+
+  ApplySettings(LWindow, Settings);
+
+  TWindowConductor.Create(ARootModel, LWindow);
 
   Result := LWindow;
 end;
 
-destructor TWindowManager.Destroy;
-begin
-  Application.UnhookMainWindow(WindowHook);
-end;
-
-function TWindowManager.EnsureWindow(Model: TObject; View: TControl): TForm;
+function TWindowManager.EnsureWindow(AModel: TObject; AView: TComponent;
+  AIsDialog: Boolean): TForm;
 var
+  LOwner: TComponent;
+  LView: TControl;
   LForm: TChildForm;
 begin
-  if View is TForm then
-  begin
-    Result := View as TForm;
-  end
+  if AView is TForm then
+    Result := AView as TForm
   else
   begin
     if not FRunning then
     begin
+      // Use Application.CreateForm to create the first form of the application (IoC for the rest)
       Application.CreateForm(TChildForm, LForm);
-      LForm.BorderIcons := [biSystemMenu..biMaximize];
+      LForm.BorderIcons := [biSystemMenu .. biMaximize];
     end
     else
     begin
@@ -146,9 +267,47 @@ begin
       LForm.Position := poOwnerFormCenter;
     end;
 
-    LForm.Content := View;
+    View.IsGeneratedProperty.SetValue(LForm, True);
+
+    LForm.Content := AView as TControl;
+
+    LView := AView as TControl;
+    LForm.ClientWidth := LView.Width;
+    LForm.ClientHeight := LView.Height;
+    LForm.Constraints := LView.Constraints;
+    if LView.Align = TAlign.alCustom then
+      LView.Align := TAlign.alClient;
+
+    LOwner := InferOwnerOf(LForm);
+    if Assigned(LOwner) then
+    begin
+      LForm.Position := poOwnerFormCenter;
+      // LForm.Owner := LOwner;
+    end
+    else
+    begin
+      LForm.Position := poScreenCenter;
+    end;
     Result := LForm;
   end;
+end;
+
+function TWindowManager.InferOwnerOf(AWindow: TForm): TComponent;
+var
+  LActiveWindow: TComponent;
+begin
+  if not Assigned(Application.MainForm) then
+    Exit(nil);
+
+  LActiveWindow := Screen.ActiveForm;
+
+  if not Assigned(LActiveWindow) then
+    LActiveWindow := Application.MainForm;
+
+  if LActiveWindow = AWindow then
+    Result := nil
+  else
+    Result := LActiveWindow;
 end;
 
 function TWindowManager.InputBox(const ACaption, APrompt, ADefault: string;
@@ -160,82 +319,87 @@ begin
 end;
 
 function TWindowManager.MessageDlg(const Msg: string; DlgType: TMsgDlgType;
-  Buttons: TMsgDlgButtons; HelpCtx: Integer): Integer;
+  Buttons: TMsgDlgButtons; HelpCtx: LongInt = 0): Integer;
 begin
-{$IF COMPILERVERSION < 23}
+  {$IF COMPILERVERSION < 23}
   Result := Dialogs.MessageDlg(Msg, Dialogs.TMsgDlgType(DlgType),
     Dialogs.TMsgDlgButtons(Buttons), HelpCtx);
-{$ELSE}
+  {$ELSE}
   Result := Dialogs.MessageDlg(Msg, DlgType, Buttons, HelpCtx);
-{$IFEND}
+  {$IFEND}
 end;
 
-function TWindowManager.ShowDialog(Model: IInterface): Integer;
+function TWindowManager.ShowDialog(RootModel: IInterface): TModalResult;
 begin
-  Result := ShowDialog(Model as TObject);
+  Result := ShowDialog(RootModel as TObject, nil, nil);
 end;
 
-function TWindowManager.ShowDialog(Model: TObject): Integer;
+function TWindowManager.ShowDialog(RootModel: IInterface; Context: TValue;
+  Settings: IViewSettings): TModalResult;
+begin
+  Result := ShowDialog(RootModel as TObject, Context, Settings);
+end;
+
+function TWindowManager.ShowDialog(RootModel: TObject): TModalResult;
+begin
+  Result := ShowDialog(RootModel, nil, nil);
+end;
+
+function TWindowManager.ShowDialog(RootModel: TObject; Context: TValue;
+  Settings: IViewSettings): TModalResult;
 var
+  LKeepAlive: IInterface;
+begin
+  // Keep model alive in scope
+  Supports(RootModel, IInterface, LKeepAlive);
+  Result := CreateWindow(RootModel, True, Context, Settings).ShowModal;
+end;
+
+procedure TWindowManager.ShowMessage(const Msg: string);
+begin
+  ShowMessage(Msg);
+end;
+
+procedure TWindowManager.ShowWindow(RootModel: IInterface);
+begin
+  ShowWindow(RootModel as TObject, nil, nil);
+end;
+
+procedure TWindowManager.ShowWindow(RootModel: IInterface; Context: TValue;
+  Settings: IViewSettings);
+begin
+  ShowWindow(RootModel, Context, Settings);
+end;
+
+procedure TWindowManager.ShowWindow(RootModel: TObject);
+begin
+  ShowWindow(RootModel, nil, nil);
+end;
+
+procedure TWindowManager.ShowWindow(RootModel: TObject; Context: TValue;
+  Settings: IViewSettings);
+var
+  LKeepAlive: IInterface;
   LWindow: TForm;
 begin
-  LWindow := CreateWindow(Model, True);
+  // Keep model alive in scope
+  Supports(RootModel, IInterface, LKeepAlive);
 
-  try
-    Result := LWindow.ShowModal();
-  finally
-    LWindow.Free();
-  end;
-end;
-
-procedure TWindowManager.ShowWindow(Model: IInterface);
-begin
-  ShowWindow(Model as TObject);
-end;
-
-procedure TWindowManager.ShowWindow(Model: TObject);
-var
-  LWindow: TForm;
-begin
-  LWindow := CreateWindow(Model, False);
+  LWindow := CreateWindow(RootModel, False, Context, Settings);
 
   if not FRunning then
   begin
-    LWindow.Caption := Application.Title;
-    LWindow.Position := poScreenCenter;
     FRunning := True;
-    Application.Run();
+    Application.Run;
   end
   else
   begin
-    LWindow.BorderIcons := [biSystemMenu];
-    LWindow.Position := poOwnerFormCenter;
-
-    LWindow.Show();
-  end;
-end;
-
-function TWindowManager.WindowHook(var Message: TMessage): Boolean;
-var
-  LInputForm, LEdit: HWND;
-begin
-  case Message.Msg of
-    WM_USER + EM_SETPASSWORDCHAR:
-    begin
-      LInputForm := Screen.Forms[0].Handle;
-      if LInputForm <> 0 then
-      begin
-        LEdit := FindWindowEx(LInputForm, 0, 'TEdit', nil);
-        SendMessage(LEdit, EM_SETPASSWORDCHAR, Ord('*'), 0);
-      end;
-      Result := True;
-    end
-  else
-    Result := False;
+    LWindow.Show;
   end;
 end;
 
 initialization
-  TWindowManager.ClassName;
+
+TWindowManager.ClassName;
 
 end.

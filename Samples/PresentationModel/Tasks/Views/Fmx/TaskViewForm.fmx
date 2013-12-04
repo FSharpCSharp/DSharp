@@ -1,0 +1,19 @@
+object TaskView: TTaskView
+  Left = 0
+  Top = 0
+  ClientHeight = 50
+  ClientWidth = 451
+  FormFactor.Width = 2560
+  FormFactor.Height = 1600
+  FormFactor.Devices = [dkDesktop]
+  object Container: TLayout
+    Align = alTop
+    Height = 50.000000000000000000
+    Width = 451.000000000000000000
+    object Mode: TLayout
+      Align = alClient
+      Height = 50.000000000000000000
+      Width = 451.000000000000000000
+    end
+  end
+end

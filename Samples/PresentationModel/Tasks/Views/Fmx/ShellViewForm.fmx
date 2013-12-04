@@ -1,0 +1,41 @@
+object ShellView: TShellView
+  Left = 0
+  Top = 0
+  ClientHeight = 682
+  ClientWidth = 699
+  Position = poScreenCenter
+  WindowState = wsMaximized
+  FormFactor.Width = 2560
+  FormFactor.Height = 1600
+  FormFactor.Devices = [dkDesktop]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Container: TLayout
+    Align = alClient
+    Height = 682.000000000000000000
+    Width = 699.000000000000000000
+    object Tasks: TLayout
+      Align = alCenter
+      Anchors = [akTop, akBottom]
+      Height = 545.000000000000000000
+      Width = 389.000000000000000000
+    end
+    object Todo: TLabel
+      Align = alHorizontal
+      AutoSize = True
+      Font.Size = 30.000000000000000000
+      Font.Style = [fsBold]
+      StyledSettings = [ssFamily, ssFontColor]
+      Height = 44.000000000000000000
+      Position.Y = 8.000000000000000000
+      Text = 'Todos'
+      TextAlign = taCenter
+      Width = 699.000000000000000000
+      WordWrap = False
+    end
+  end
+end

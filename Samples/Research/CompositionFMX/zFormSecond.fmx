@@ -1,0 +1,48 @@
+object FormSecond: TFormSecond
+  Left = 0
+  Top = 0
+  Caption = 'FormSecond'
+  ClientHeight = 250
+  ClientWidth = 300
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  object SecondContainer: TLayout
+    Height = 250.000000000000000000
+    Width = 300.000000000000000000
+    object SecondHeader: TPanel
+      Align = alTop
+      Height = 50.000000000000000000
+      Width = 300.000000000000000000
+      TabOrder = 0
+      object Label1: TLabel
+        Align = alCenter
+        AutoSize = True
+        Height = 19.000000000000000000
+        Text = 'SecondHeader'
+        Width = 75.000000000000000000
+        WordWrap = False
+      end
+    end
+    object SecondFooter: TPanel
+      Align = alBottom
+      Height = 50.000000000000000000
+      Position.Y = 200.000000000000000000
+      Width = 300.000000000000000000
+      TabOrder = 1
+      object Label3: TLabel
+        Align = alCenter
+        AutoSize = True
+        Height = 19.000000000000000000
+        Text = 'SecondFooter'
+        Width = 71.000000000000000000
+        WordWrap = False
+      end
+    end
+  end
+end

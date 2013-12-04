@@ -1,0 +1,49 @@
+package DSharp.PresentationModelFMX;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'DSharp presentation model runtime package for FMX'}
+{$LIBSUFFIX '190'}
+{$RUNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  fmx,
+  DSharp.PresentationModel;
+
+contains
+  DSharp.PresentationModel.FMXApplication in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXApplication.pas',
+  DSharp.PresentationModel.FMXChildForm in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXChildForm.pas' {ChildForm},
+  DSharp.PresentationModel.FMXConventionManager in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXConventionManager.pas',
+  DSharp.PresentationModel.FMXFramework in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXFramework.pas',
+  DSharp.PresentationModel.FMXView in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXView.pas',
+  DSharp.PresentationModel.FMXViewLocator in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXViewLocator.pas',
+  DSharp.PresentationModel.FMXWindowConductor in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXWindowConductor.pas',
+  DSharp.PresentationModel.FMXWindowManager in '..\..\Source\PresentationModel\DSharp.PresentationModel.FMXWindowManager.pas',
+  DSharp.Bindings.FMXControls in '..\..\Source\Bindings\DSharp.Bindings.FMXControls.pas';
+
+end.

@@ -5,7 +5,8 @@ uses
   GUITestRunner,
   DSharp.Core.Events.Tests in 'DSharp.Core.Events.Tests.pas',
   DSharp.Core.Reflection.Tests in 'DSharp.Core.Reflection.Tests.pas',
-  DSharp.Core.Times.Tests in 'DSharp.Core.Times.Tests.pas';
+  DSharp.Core.Times.Tests in 'DSharp.Core.Times.Tests.pas',
+  DSharp.PresentationModel.ConductorWithCollectionOneActive.Tests in 'DSharp.PresentationModel.ConductorWithCollectionOneActive.Tests.pas';
 
 {$R *.RES}
 

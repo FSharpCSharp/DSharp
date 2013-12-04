@@ -34,6 +34,7 @@ interface
 uses
   DSharp.Core.DependencyProperty,
   Generics.Collections,
+  Classes,
   Rtti,
   SysUtils,
   Types,
@@ -47,6 +48,33 @@ type
   {$ENDREGION}
   TObjectHelper = class helper for TObject
   public
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Describes the instance for logging purposes.
+    ///   For TComponent descendents it returns more details (like Name if available).
+    ///   In DEBUG it returns more details than in RELEASE.
+    ///	</summary>
+    {$ENDREGION}
+    function Describe(): string; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Describes the instance for logging purposes with Name if available and
+    ///   the ownership hierarchy.
+    ///   In DEBUG it returns more details than in RELEASE.
+    ///	</summary>
+    {$ENDREGION}
+    function Describe(const AComponent: TComponent): string; overload;
+
+    {$REGION 'Documentation'}
+    ///	<summary>
+    ///	  Describes the member of the instance for logging purposes with Name if available and
+    ///   the ownership hierarchy.
+    ///   In DEBUG it returns more details than in RELEASE.
+    ///	</summary>
+    {$ENDREGION}
+    function Describe(const AMemberNamePath: string): string; overload;
+
     {$REGION 'Documentation'}
     ///	<summary>
     ///	  Returns a list of all fields of the object.
@@ -354,6 +382,7 @@ type
   private
     function GetParameterCount: Integer;
   public
+    function Describe(): string;
     function Format(const Args: array of TValue; SkipSelf: Boolean = True): string;
     property ParameterCount: Integer read GetParameterCount;
   end;
@@ -705,12 +734,12 @@ const
 implementation
 
 uses
-  Classes,
   DSharp.Core.Framework,
   Generics.Defaults,
   Math,
   StrUtils,
-  SysConst;
+  SysConst,
+  DSharp.Core.PropertyPath;
 
 var
   Context: TRttiContext;
@@ -1531,6 +1560,120 @@ end;
 
 { TObjectHelper }
 
+function TObjectHelper.Describe(): string;
+var
+  LComponent: TComponent;
+begin
+  if Assigned(Self) then
+  begin
+    if Self is TComponent then
+    begin
+      LComponent := TComponent(Self);
+      Result := Describe(LComponent);
+    end
+    else
+    begin
+      Result := Format('@$%p', [Pointer(Self)]);
+{$ifdef DEBUG}
+      Result := Format('%s(%s)', [Result, Self.QualifiedClassName]);
+{$endif DEBUG}
+    end;
+  end
+  else
+    Result := '<nil>';
+end;
+
+function TObjectHelper.Describe(const AComponent: TComponent): string;
+{$ifdef DEBUG}
+var
+  LOwner: TComponent;
+  LOwnerName: string;
+{$endif DEBUG}
+begin
+  if Assigned(AComponent) then
+  begin
+    Result := AComponent.Name;
+    if '' = Result then
+      Result := Format('@$%p', [Pointer(AComponent)]);
+{$ifdef DEBUG}
+    Result := Format('%s(%s)', [Result, AComponent.QualifiedClassName]);
+    if Assigned(AComponent) then
+    begin
+      LOwner := AComponent.Owner;
+      if Assigned(LOwner) then
+      begin
+        LOwnerName := Describe(LOwner);
+        if '' <> LOwnerName then
+          Result := Format('%s%s  of %s', [Result, #13#10, LOwnerName]);
+      end;
+    end;
+{$endif DEBUG}
+  end
+  else
+    Result := '<nil>';
+end;
+
+function TObjectHelper.Describe(const AMemberNamePath: string): string;
+var
+  LPropertyPath: IPropertyPath;
+  LRttiType: TRttiType;
+{$ifdef DEBUG}
+  LDelimitedText: string;
+  LRttiProperty: TRttiProperty;
+  LMemberNames: TStrings;
+  LMemberName: string;
+  LParent: TObject;
+  LResult: TStrings;
+  LRttiMember: TRttiMember;
+{$endif DEBUG}
+begin
+  if Assigned(Self) then
+  begin
+    LPropertyPath := TPropertyPath.Create(Self, AMemberNamePath);
+    LRttiType := LPropertyPath.PropertyType;
+    if Assigned(LRttiType) then
+    begin
+      Result := Format('%s:%s', [AMemberNamePath, LRttiType.ToString()]);
+  {$ifdef DEBUG}
+      LResult := TStringList.Create();
+      try
+        LMemberNames := TStringList.Create();
+        try
+          LMemberNames.Delimiter := '.';
+          LMemberNames.DelimitedText := AMemberNamePath;
+          LParent := Self;
+          for LMemberName in LMemberNames do
+          begin
+            LRttiMember := LParent.GetMember(LMemberName);
+            if Assigned(LRttiMember) then
+            begin
+              LResult.Add(LRttiMember.ToString());
+              if LParent.TryGetProperty(LMemberName, LRttiProperty) then
+                if LRttiProperty.PropertyType.TypeKind in [tkClass, tkInterface] then
+                begin
+                  if LRttiProperty.PropertyType.IsInstance then
+                    LParent := LRttiProperty.GetValue(LParent).AsObject
+                  else
+                    LParent := LRttiProperty.GetValue(LParent).AsInterface as TObject;
+                end;
+            end;
+          end;
+        finally
+          LMemberNames.Free();
+        end;
+        LResult.Delimiter := ';';
+        LDelimitedText := StringReplace(LResult.DelimitedText, LResult.QuoteChar, '', [rfReplaceAll]);
+        Result := Format('%s (%s)', [Result, LDelimitedText]);
+      finally
+        LResult.Free;
+      end;
+{$endif DEBUG}
+    end;
+  end
+  else
+    Result := '<nil>';
+end;
+
 function TObjectHelper.GetField(const AName: string): TRttiField;
 var
   LType: TRttiType;
@@ -1949,6 +2092,37 @@ begin
 end;
 
 { TRttiMethodHelper }
+
+function TRttiMethodHelper.Describe(): string;
+{$ifdef DEBUG}
+var
+  LFullName: string;
+  LMethodString: string;
+  LParentName: string;
+  LParentRttiType: TRttiType;
+{$endif DEBUG}
+begin
+  if nil = Self then
+    Result := '<nil>'
+  else
+  begin
+    Result := Self.Name;
+{$ifdef DEBUG}
+    if Self.HasExtendedInfo then
+    begin
+      LParentRttiType := Self.Parent;
+      if LParentRttiType.IsPublicType then
+        LParentName := LParentRttiType.QualifiedName
+      else
+        LParentName := LParentRttiType.Name;
+
+      LFullName := SysUtils.Format(' %s.%s', [LParentName, Self.Name]);
+      LMethodString := Self.ToString();
+      Result := StringReplace(LMethodString, ' '+Self.Name, LFullName, []);
+    end;
+{$endif DEBUG}
+  end;
+end;
 
 function TRttiMethodHelper.Format(const Args: array of TValue;
   SkipSelf: Boolean): string;

@@ -106,6 +106,23 @@ resourcestring
   CInterfaceMissingRTTI = 'interface %s does not contain RTTI';
   CMethodNotImplemented = 'method not implemented: %0:s.%1:s(%2:s)';
 
+const
+  IInterfaceMethodCount = 3;
+  IInterfaceVirtualIndexOfQueryInterface = 0;
+  IInterfaceVirtualIndexOf_AddRef = 1;
+  IInterfaceVirtualIndexOf_Release = 2;
+  ///	<summary>
+  ///	  <para>
+  ///	    <c>IInterface</c> is the mother of all interfaces.
+  ///	  </para>
+  ///	  <para>
+  ///	    Any <c>VirtualIndex</c> beyond
+  ///	    <see cref="IInterfaceLastVirtualIndex" /> is a method by an "actual"
+  ///	    interface.
+  ///	  </para>
+  ///	</summary>
+  IInterfaceLastVirtualIndex = IInterfaceVirtualIndexOf_Release;
+
 type
   TVirtualLibraryInterface = class(TVirtualInterface)
   private
@@ -158,7 +175,7 @@ begin
   LMethods := LType.GetMethods;
   for LMethod in LMethods do
   begin
-    if LMethod.VirtualIndex > 2 then
+    if LMethod.VirtualIndex > IInterfaceLastVirtualIndex then
     begin
       LMethodPointer := GetProcAddress(FLibrayHandle, PChar(LMethod.Name));
       if Assigned(LMethodPointer) then
@@ -248,7 +265,7 @@ begin
 
   for LMethod in LMethods do
   begin
-    if LMethod.VirtualIndex > 2 then
+    if LMethod.VirtualIndex > IInterfaceLastVirtualIndex then
     begin
       for LInstanceMethod in LInstanceType.GetMethods() do
       begin

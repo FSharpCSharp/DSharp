@@ -1,0 +1,32 @@
+object AccountViewDetails: TAccountViewDetails
+  Left = 0
+  Top = 0
+  Width = 451
+  Height = 304
+  Align = alClient
+  Color = clMoneyGreen
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Arial'
+  Font.Style = []
+  ParentBackground = False
+  ParentColor = False
+  ParentFont = False
+  TabOrder = 0
+  ExplicitWidth = 1238
+  ExplicitHeight = 879
+  object Label1: TLabel
+    Left = 40
+    Top = 40
+    Width = 24
+    Height = 32
+    Caption = '...'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -27
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
+  end
+end

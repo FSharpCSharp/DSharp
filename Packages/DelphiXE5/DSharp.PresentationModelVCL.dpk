@@ -1,0 +1,52 @@
+package DSharp.PresentationModelVCL;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'DSharp presentation model runtime package for VCL'}
+{$LIBSUFFIX '190'}
+{$RUNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  vcl,
+  DataBindingsVCL,
+  TreeViewPresenter,
+  DSharp.Core,
+  DSharp.PresentationModel;
+
+contains
+  DSharp.PresentationModel.VCLApplication in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLApplication.pas',
+  DSharp.PresentationModel.VCLChildForm in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLChildForm.pas' {ChildForm},
+  DSharp.PresentationModel.VCLConventionManager in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLConventionManager.pas',
+  DSharp.PresentationModel.VCLFramework in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLFramework.pas',
+  DSharp.PresentationModel.VCLView in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLView.pas',
+  DSharp.PresentationModel.VCLViewLocator in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLViewLocator.pas',
+  DSharp.PresentationModel.VCLViewModelBinder in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLViewModelBinder.pas',
+  DSharp.PresentationModel.VCLWindowConductor in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLWindowConductor.pas',
+  DSharp.PresentationModel.VCLWindowManager in '..\..\Source\PresentationModel\DSharp.PresentationModel.VCLWindowManager.pas';
+
+end.

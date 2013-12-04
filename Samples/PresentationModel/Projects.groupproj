@@ -1,0 +1,276 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{6238C3B8-CD0D-4210-995E-90D959F8D3AF}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Calculator\Calculator.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Color\Color.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="ContactManager\ContactManager.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="CoroutinesSample\CoroutinesSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DragDrop\DragDropSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="EventAggregatorSample\EventAggregatorSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="GameLibrary\GameLibrary.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="GameLibrary\GameLibraryFMX.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Hello\Hello.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="HowToOpenDialog\HowToOpenDialog.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="HowToSetFocus\HowToSetFocus.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView\MindScape_AppViewVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView\MindScape_AppViewTests.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MinimalMVVM\MinimalMVVM.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Photography500px\Photography500px.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="PresentationSample\PresentationSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="PresentationSampleFMX\PresentationSampleFMX.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="SimpleDependencyProperty\SimpleDependencyProperty.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="SimpleNavigation\SimpleNavigation.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Tasks\TasksVcl.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Validation\Validation.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Calculator">
+        <MSBuild Projects="Calculator\Calculator.dproj"/>
+    </Target>
+    <Target Name="Calculator:Clean">
+        <MSBuild Projects="Calculator\Calculator.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Calculator:Make">
+        <MSBuild Projects="Calculator\Calculator.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Color">
+        <MSBuild Projects="Color\Color.dproj"/>
+    </Target>
+    <Target Name="Color:Clean">
+        <MSBuild Projects="Color\Color.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Color:Make">
+        <MSBuild Projects="Color\Color.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ContactManager">
+        <MSBuild Projects="ContactManager\ContactManager.dproj"/>
+    </Target>
+    <Target Name="ContactManager:Clean">
+        <MSBuild Projects="ContactManager\ContactManager.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ContactManager:Make">
+        <MSBuild Projects="ContactManager\ContactManager.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CoroutinesSample">
+        <MSBuild Projects="CoroutinesSample\CoroutinesSample.dproj"/>
+    </Target>
+    <Target Name="CoroutinesSample:Clean">
+        <MSBuild Projects="CoroutinesSample\CoroutinesSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CoroutinesSample:Make">
+        <MSBuild Projects="CoroutinesSample\CoroutinesSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DragDropSample">
+        <MSBuild Projects="DragDrop\DragDropSample.dproj"/>
+    </Target>
+    <Target Name="DragDropSample:Clean">
+        <MSBuild Projects="DragDrop\DragDropSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DragDropSample:Make">
+        <MSBuild Projects="DragDrop\DragDropSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="EventAggregatorSample">
+        <MSBuild Projects="EventAggregatorSample\EventAggregatorSample.dproj"/>
+    </Target>
+    <Target Name="EventAggregatorSample:Clean">
+        <MSBuild Projects="EventAggregatorSample\EventAggregatorSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="EventAggregatorSample:Make">
+        <MSBuild Projects="EventAggregatorSample\EventAggregatorSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="GameLibrary">
+        <MSBuild Projects="GameLibrary\GameLibrary.dproj"/>
+    </Target>
+    <Target Name="GameLibrary:Clean">
+        <MSBuild Projects="GameLibrary\GameLibrary.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="GameLibrary:Make">
+        <MSBuild Projects="GameLibrary\GameLibrary.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="GameLibraryFMX">
+        <MSBuild Projects="GameLibrary\GameLibraryFMX.dproj"/>
+    </Target>
+    <Target Name="GameLibraryFMX:Clean">
+        <MSBuild Projects="GameLibrary\GameLibraryFMX.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="GameLibraryFMX:Make">
+        <MSBuild Projects="GameLibrary\GameLibraryFMX.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Hello">
+        <MSBuild Projects="Hello\Hello.dproj"/>
+    </Target>
+    <Target Name="Hello:Clean">
+        <MSBuild Projects="Hello\Hello.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Hello:Make">
+        <MSBuild Projects="Hello\Hello.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="HowToOpenDialog">
+        <MSBuild Projects="HowToOpenDialog\HowToOpenDialog.dproj"/>
+    </Target>
+    <Target Name="HowToOpenDialog:Clean">
+        <MSBuild Projects="HowToOpenDialog\HowToOpenDialog.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="HowToOpenDialog:Make">
+        <MSBuild Projects="HowToOpenDialog\HowToOpenDialog.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="HowToSetFocus">
+        <MSBuild Projects="HowToSetFocus\HowToSetFocus.dproj"/>
+    </Target>
+    <Target Name="HowToSetFocus:Clean">
+        <MSBuild Projects="HowToSetFocus\HowToSetFocus.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="HowToSetFocus:Make">
+        <MSBuild Projects="HowToSetFocus\HowToSetFocus.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL">
+        <MSBuild Projects="MindScape_AppView\MindScape_AppViewVCL.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL:Clean">
+        <MSBuild Projects="MindScape_AppView\MindScape_AppViewVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL:Make">
+        <MSBuild Projects="MindScape_AppView\MindScape_AppViewVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests">
+        <MSBuild Projects="MindScape_AppView\MindScape_AppViewTests.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests:Clean">
+        <MSBuild Projects="MindScape_AppView\MindScape_AppViewTests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests:Make">
+        <MSBuild Projects="MindScape_AppView\MindScape_AppViewTests.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MinimalMVVM">
+        <MSBuild Projects="MinimalMVVM\MinimalMVVM.dproj"/>
+    </Target>
+    <Target Name="MinimalMVVM:Clean">
+        <MSBuild Projects="MinimalMVVM\MinimalMVVM.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MinimalMVVM:Make">
+        <MSBuild Projects="MinimalMVVM\MinimalMVVM.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Photography500px">
+        <MSBuild Projects="Photography500px\Photography500px.dproj"/>
+    </Target>
+    <Target Name="Photography500px:Clean">
+        <MSBuild Projects="Photography500px\Photography500px.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Photography500px:Make">
+        <MSBuild Projects="Photography500px\Photography500px.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="PresentationSample">
+        <MSBuild Projects="PresentationSample\PresentationSample.dproj"/>
+    </Target>
+    <Target Name="PresentationSample:Clean">
+        <MSBuild Projects="PresentationSample\PresentationSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="PresentationSample:Make">
+        <MSBuild Projects="PresentationSample\PresentationSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="PresentationSampleFMX">
+        <MSBuild Projects="PresentationSampleFMX\PresentationSampleFMX.dproj"/>
+    </Target>
+    <Target Name="PresentationSampleFMX:Clean">
+        <MSBuild Projects="PresentationSampleFMX\PresentationSampleFMX.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="PresentationSampleFMX:Make">
+        <MSBuild Projects="PresentationSampleFMX\PresentationSampleFMX.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="SimpleDependencyProperty">
+        <MSBuild Projects="SimpleDependencyProperty\SimpleDependencyProperty.dproj"/>
+    </Target>
+    <Target Name="SimpleDependencyProperty:Clean">
+        <MSBuild Projects="SimpleDependencyProperty\SimpleDependencyProperty.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SimpleDependencyProperty:Make">
+        <MSBuild Projects="SimpleDependencyProperty\SimpleDependencyProperty.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="SimpleNavigation">
+        <MSBuild Projects="SimpleNavigation\SimpleNavigation.dproj"/>
+    </Target>
+    <Target Name="SimpleNavigation:Clean">
+        <MSBuild Projects="SimpleNavigation\SimpleNavigation.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SimpleNavigation:Make">
+        <MSBuild Projects="SimpleNavigation\SimpleNavigation.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TasksVcl">
+        <MSBuild Projects="Tasks\TasksVcl.dproj"/>
+    </Target>
+    <Target Name="TasksVcl:Clean">
+        <MSBuild Projects="Tasks\TasksVcl.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TasksVcl:Make">
+        <MSBuild Projects="Tasks\TasksVcl.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Validation">
+        <MSBuild Projects="Validation\Validation.dproj"/>
+    </Target>
+    <Target Name="Validation:Clean">
+        <MSBuild Projects="Validation\Validation.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Validation:Make">
+        <MSBuild Projects="Validation\Validation.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Calculator;Color;ContactManager;CoroutinesSample;DragDropSample;EventAggregatorSample;GameLibrary;GameLibraryFMX;Hello;HowToOpenDialog;HowToSetFocus;MindScape_AppViewVCL;MindScape_AppViewTests;MinimalMVVM;Photography500px;PresentationSample;PresentationSampleFMX;SimpleDependencyProperty;SimpleNavigation;TasksVcl;Validation"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Calculator:Clean;Color:Clean;ContactManager:Clean;CoroutinesSample:Clean;DragDropSample:Clean;EventAggregatorSample:Clean;GameLibrary:Clean;GameLibraryFMX:Clean;Hello:Clean;HowToOpenDialog:Clean;HowToSetFocus:Clean;MindScape_AppViewVCL:Clean;MindScape_AppViewTests:Clean;MinimalMVVM:Clean;Photography500px:Clean;PresentationSample:Clean;PresentationSampleFMX:Clean;SimpleDependencyProperty:Clean;SimpleNavigation:Clean;TasksVcl:Clean;Validation:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Calculator:Make;Color:Make;ContactManager:Make;CoroutinesSample:Make;DragDropSample:Make;EventAggregatorSample:Make;GameLibrary:Make;GameLibraryFMX:Make;Hello:Make;HowToOpenDialog:Make;HowToSetFocus:Make;MindScape_AppViewVCL:Make;MindScape_AppViewTests:Make;MinimalMVVM:Make;Photography500px:Make;PresentationSample:Make;PresentationSampleFMX:Make;SimpleDependencyProperty:Make;SimpleNavigation:Make;TasksVcl:Make;Validation:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

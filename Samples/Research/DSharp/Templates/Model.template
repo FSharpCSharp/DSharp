@@ -1,0 +1,22 @@
+﻿unit <%UnitName%>;
+
+interface
+
+uses
+  Classes,
+  SysUtils;
+  
+type
+  /// <summary>
+  /// Model <%TypeName%>
+  /// </summary>
+  T<%TypeName%> = class
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+implementation
+
+end.

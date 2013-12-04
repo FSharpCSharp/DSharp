@@ -1,0 +1,69 @@
+object TasksView: TTasksView
+  Left = 0
+  Top = 0
+  ClientHeight = 150
+  ClientWidth = 760
+  FormFactor.Width = 2560
+  FormFactor.Height = 1600
+  FormFactor.Devices = [dkDesktop]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  object Container: TLayout
+    Align = alClient
+    Height = 150.000000000000000000
+    Width = 760.000000000000000000
+    object NewTaskItem: TLayout
+      Align = alTop
+      Height = 50.000000000000000000
+      Width = 760.000000000000000000
+    end
+    object Panel2: TLayout
+      Align = alBottom
+      Height = 50.000000000000000000
+      Padding.Left = 10.000000000000000000
+      Padding.Top = 10.000000000000000000
+      Padding.Right = 10.000000000000000000
+      Padding.Bottom = 10.000000000000000000
+      Position.Y = 100.000000000000000000
+      Width = 760.000000000000000000
+      object ItemsCount: TLabel
+        Align = alLeft
+        AutoSize = True
+        Height = 19.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 10.000000000000000000
+        Text = 'ItemsCount'
+        Width = 60.000000000000000000
+        WordWrap = False
+      end
+      object All: TButton
+        Align = alRight
+        Height = 30.000000000000000000
+        Position.X = 550.000000000000000000
+        Position.Y = 10.000000000000000000
+        TabOrder = 0
+        Text = 'All'
+        Width = 100.000000000000000000
+      end
+      object Completed: TButton
+        Align = alRight
+        Height = 30.000000000000000000
+        Position.X = 650.000000000000000000
+        Position.Y = 10.000000000000000000
+        TabOrder = 1
+        Text = 'Completed'
+        Width = 100.000000000000000000
+      end
+    end
+    object Tasks: TScrollBox
+      Align = alClient
+      Height = 50.000000000000000000
+      TabOrder = 2
+      Width = 760.000000000000000000
+      Top = 50
+    end
+  end
+end

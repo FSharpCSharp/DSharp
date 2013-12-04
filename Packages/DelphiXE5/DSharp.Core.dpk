@@ -54,7 +54,6 @@ contains
   DSharp.Core.EventArgs in '..\..\Source\Core\DSharp.Core.EventArgs.pas',
   DSharp.Core.Events in '..\..\Source\Core\DSharp.Core.Events.pas',
   DSharp.Core.Expressions in '..\..\Source\Core\DSharp.Core.Expressions.pas',
-  DSharp.Core.Extensions in '..\..\Source\Core\DSharp.Core.Extensions.pas',
   DSharp.Core.Fibers in '..\..\Source\Core\DSharp.Core.Fibers.pas',
   DSharp.Core.Framework in '..\..\Source\Core\DSharp.Core.Framework.pas',
   DSharp.Core.Generics in '..\..\Source\Core\DSharp.Core.Generics.pas',
@@ -74,6 +73,9 @@ contains
   DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
   ObjAutoPatch in '..\..\Source\Core\ObjAutoPatch.pas',
   PatchUtils in '..\..\Source\Core\PatchUtils.pas',
-  RttiPatch in '..\..\Source\Core\RttiPatch.pas';
+  RttiPatch in '..\..\Source\Core\RttiPatch.pas',
+  DSharp.Core.PropertyPath in '..\..\Source\Core\DSharp.Core.PropertyPath.pas',
+  DSharp.Core.RegularExpressions in '..\..\Source\Core\DSharp.Core.RegularExpressions.pas',
+  DSharp.Logging.Debug in '..\..\Source\Logging\DSharp.Logging.Debug.pas';
 
 end.

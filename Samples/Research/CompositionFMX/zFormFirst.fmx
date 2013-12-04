@@ -1,0 +1,52 @@
+object FormFirst: TFormFirst
+  Left = 0
+  Top = 0
+  Caption = 'FormFirst'
+  ClientHeight = 400
+  ClientWidth = 600
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  object FirstContainer: TLayout
+    Height = 400.000000000000000000
+    Width = 600.000000000000000000
+    object FirstHeader: TPanel
+      Align = alTop
+      Height = 50.000000000000000000
+      Width = 600.000000000000000000
+      TabOrder = 0
+      object Label1: TLabel
+        Align = alCenter
+        Height = 18.630859375000000000
+        Text = 'FirstHeader'
+        Width = 62.958492279052730000
+        WordWrap = False
+      end
+    end
+    object FirstFooter: TPanel
+      Align = alBottom
+      Height = 50.000000000000000000
+      Position.Y = 350.000000000000000000
+      Width = 600.000000000000000000
+      TabOrder = 1
+      object Label2: TLabel
+        Align = alCenter
+        AutoSize = True
+        Height = 19.000000000000000000
+        Text = 'FirstFooter'
+        Width = 56.000000000000000000
+        WordWrap = False
+      end
+    end
+    object FirstContent: TLayout
+      Align = alClient
+      Height = 300.000000000000000000
+      Width = 600.000000000000000000
+    end
+  end
+end

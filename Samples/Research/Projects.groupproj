@@ -1,0 +1,84 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{FB1584FE-81C8-4BDD-B434-CD10F43073CB}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="CompositionFMX\CompositionFMX.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="CompositionVCL\CompositionVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DependencyPropertySample\DependencyPropertySample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DSharp\DSharp.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Events\Events.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="CompositionFMX">
+        <MSBuild Projects="CompositionFMX\CompositionFMX.dproj"/>
+    </Target>
+    <Target Name="CompositionFMX:Clean">
+        <MSBuild Projects="CompositionFMX\CompositionFMX.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CompositionFMX:Make">
+        <MSBuild Projects="CompositionFMX\CompositionFMX.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CompositionVCL">
+        <MSBuild Projects="CompositionVCL\CompositionVCL.dproj"/>
+    </Target>
+    <Target Name="CompositionVCL:Clean">
+        <MSBuild Projects="CompositionVCL\CompositionVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CompositionVCL:Make">
+        <MSBuild Projects="CompositionVCL\CompositionVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DependencyPropertySample">
+        <MSBuild Projects="DependencyPropertySample\DependencyPropertySample.dproj"/>
+    </Target>
+    <Target Name="DependencyPropertySample:Clean">
+        <MSBuild Projects="DependencyPropertySample\DependencyPropertySample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DependencyPropertySample:Make">
+        <MSBuild Projects="DependencyPropertySample\DependencyPropertySample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharp">
+        <MSBuild Projects="DSharp\DSharp.dproj"/>
+    </Target>
+    <Target Name="DSharp:Clean">
+        <MSBuild Projects="DSharp\DSharp.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp:Make">
+        <MSBuild Projects="DSharp\DSharp.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Events">
+        <MSBuild Projects="Events\Events.dproj"/>
+    </Target>
+    <Target Name="Events:Clean">
+        <MSBuild Projects="Events\Events.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Events:Make">
+        <MSBuild Projects="Events\Events.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="CompositionFMX;CompositionVCL;DependencyPropertySample;DSharp;Events"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="CompositionFMX:Clean;CompositionVCL:Clean;DependencyPropertySample:Clean;DSharp:Clean;Events:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="CompositionFMX:Make;CompositionVCL:Make;DependencyPropertySample:Make;DSharp:Make;Events:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

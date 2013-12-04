@@ -1,0 +1,14 @@
+﻿unit Interfaces;
+
+interface
+
+uses
+  Classes,
+  SysUtils,
+  DSharp.Collections,
+  DSharp.PresentationModel;
+
+type
+implementation
+
+end.

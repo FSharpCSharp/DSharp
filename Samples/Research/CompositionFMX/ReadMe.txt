@@ -1,0 +1,1 @@
+Views are not destroyed by simple means of changes the Parent to nil as in VCL.

@@ -1,0 +1,33 @@
+object ShellView: TShellView
+  Left = 0
+  Top = 0
+  ClientHeight = 484
+  ClientWidth = 649
+  Color = clWindow
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -16
+  Font.Name = 'Arial'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poDesigned
+  WindowState = wsMaximized
+  PixelsPerInch = 96
+  TextHeight = 18
+  object Main: TPanel
+    Left = 0
+    Top = 0
+    Width = 649
+    Height = 484
+    Margins.Left = 1
+    Margins.Top = 1
+    Margins.Right = 1
+    Margins.Bottom = 1
+    Align = alClient
+    BevelOuter = bvNone
+    Caption = 'Main'
+    Color = clWindow
+    ParentBackground = False
+    TabOrder = 0
+  end
+end

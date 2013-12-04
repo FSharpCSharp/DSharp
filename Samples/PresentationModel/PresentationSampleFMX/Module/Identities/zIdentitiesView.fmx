@@ -1,0 +1,60 @@
+object IdentitiesView: TIdentitiesView
+  Left = 0
+  Top = 0
+  Caption = 'Form2'
+  ClientHeight = 827
+  ClientWidth = 1043
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Container: TLayout
+    Align = alClient
+    Height = 827.000000000000000000
+    Width = 1043.000000000000000000
+    object Panel1: TPanel
+      Align = alRight
+      Height = 827.000000000000000000
+      Position.X = 778.000000000000000000
+      Width = 265.000000000000000000
+      TabOrder = 0
+      object ActionShowSelectedAccount: TButton
+        Align = alTop
+        Font.Family = 'Arial'
+        Font.Size = 20.000000000000000000
+        Height = 33.000000000000000000
+        TabOrder = 0
+        Text = 'Show Account'
+        Width = 265.000000000000000000
+      end
+    end
+    object Label1: TLabel
+      AutoSize = True
+      Font.Family = 'Arial'
+      Font.Size = 20.000000000000000000
+      StyledSettings = [ssStyle, ssFontColor]
+      Height = 26.343746185302730000
+      Position.X = 40.000000000000000000
+      Position.Y = 40.000000000000000000
+      Text = 'Identities View'
+      Width = 140.152328491210900000
+      WordWrap = False
+    end
+    object Label2: TLabel
+      AutoSize = True
+      Font.Size = 20.000000000000000000
+      StyledSettings = [ssFamily, ssStyle, ssFontColor]
+      Height = 30.601558685302730000
+      Position.X = 40.000000000000000000
+      Position.Y = 160.000000000000000000
+      Text = '...'
+      Width = 20.718748092651370000
+      WordWrap = False
+    end
+  end
+end

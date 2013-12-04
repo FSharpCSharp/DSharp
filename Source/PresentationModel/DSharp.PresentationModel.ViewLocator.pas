@@ -1,57 +1,106 @@
-(*
-  Copyright (c) 2011, Stefan Glienke
-  All rights reserved.
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-  - Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-  - Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-  - Neither the name of this library nor the names of its contributors may be
-    used to endorse or promote products derived from this software without
-    specific prior written permission.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE.
-*)
-
 unit DSharp.PresentationModel.ViewLocator;
 
 interface
 
 uses
+  Classes,
+  SysUtils,
+  DSharp.Collections,
+  DSharp.Logging,
+  DSharp.PresentationModel,
   DSharp.PresentationModel.NameTransformer;
 
 type
-  ViewLocator = record
+  TLocateForModelFunc = reference to function(Model: TObject;
+    DisplayLocation: TComponent; Context: TValue): TComponent;
+  TLocateForModelTypeFunc = reference to function(Model: TObject;
+    DisplayLocation: TComponent; Context: TValue): TComponent;
+  TLocateTypeForModelTypeFunc = reference to function(ModelType: TClass;
+    DisplayLocation: TComponent; Context: TValue): TClass;
+  TGetOrCreateViewTypeFunc = reference to function(Model: TObject;
+    ViewType: TClass): TComponent;
+
+  ///	<summary>
+  ///	  A strategy for determining which view to use for a given model.
+  ///	</summary>
+  ViewLocator = class
   private
-    class var FNameTransformer: INameTransformer;
+  class var
+    FGetOrCreateViewType: TGetOrCreateViewTypeFunc;
+    FLocateForModel: TLocateForModelFunc;
+    FLocateForModelType: TLocateForModelTypeFunc;
+    FLocateTypeForModelType: TLocateTypeForModelTypeFunc;
+    FLog: ILog;
+    FNameTransformer: INameTransformer;
+    FCreateWarningView: TFunc<TComponent, string, TComponent>;
+
+    class function GetLog: ILog; static;
+    class property Log: ILog read GetLog;
   public
     class constructor Create;
-    class function FindViewType(ModelType: TClass): TClass; static;
-    class function GetOrCreateViewType(ModelType: TClass): TObject; static;
+
+    ///	<summary>
+    ///	  Retrieves the view from the IoC container or tries to create it if
+    ///	  not found.
+    ///	</summary>
+    ///	<remarks>
+    ///	  Pass the type of view as a parameter and recieve an instance of the
+    ///	  view.
+    ///	</remarks>
+    class property GetOrCreateViewType: TGetOrCreateViewTypeFunc
+      read FGetOrCreateViewType write FGetOrCreateViewType;
+
+    ///	<summary>
+    ///	  Locates the view for the specified model instance.
+    ///	</summary>
+    ///	<returns>
+    ///	  The view.
+    ///	</returns>
+    ///	<remarks>
+    ///	  Pass the model instance, display location (or null) and the context
+    ///	  (or null) as parameters and receive a view instance.
+    ///	</remarks>
+    class property LocateForModel: TLocateForModelFunc read FLocateForModel
+      write FLocateForModel;
+
+    ///	<summary>
+    ///	  Locates the view for the specified model type.
+    ///	</summary>
+    ///	<returns>
+    ///	  The view.
+    ///	</returns>
+    ///	<remarks>
+    ///	  Pass the model type, display location (or null) and the context
+    ///	  instance (or null) as parameters and receive a view instance.
+    ///	</remarks>
+    class property LocateForModelType: TLocateForModelTypeFunc
+      read FLocateForModelType write FLocateForModelType;
+
+    ///	<summary>
+    ///	  Locates the view type based on the specified model type.
+    ///	</summary>
+    ///	<returns>
+    ///	  The view.
+    ///	</returns>
+    ///	<remarks>
+    ///	  Pass the model type, display location (or null) and the context
+    ///	  instance (or null) as parameters and receive a view type.
+    ///	</remarks>
+    class property LocateTypeForModelType: TLocateTypeForModelTypeFunc
+      read FLocateTypeForModelType write FLocateTypeForModelType;
+
+    ///	<summary>
+    ///	  Creates warning view if default not found
+    ///	</summary>
+    class property CreateWarningView: TFunc<TComponent, string, TComponent>
+      read FCreateWarningView write FCreateWarningView;
   end;
 
 implementation
 
 uses
   DSharp.Core.Reflection,
-  DSharp.PresentationModel.Composition,
-  Rtti,
-  StrUtils,
-  SysUtils;
+  Rtti;
 
 { ViewLocator }
 
@@ -65,35 +114,127 @@ begin
   FNameTransformer.AddRule('ViewModel$', 'ViewFrame');
   FNameTransformer.AddRule('ViewModel$', 'Form');
   FNameTransformer.AddRule('ViewModel$', 'Frame');
-end;
 
-class function ViewLocator.FindViewType(ModelType: TClass): TClass;
-var
-  LViewTypeName: string;
-  LType: TRttiType;
-begin
-  Result := nil;
-
-  for LViewTypeName in FNameTransformer.Transform(ModelType.ClassName) do
-  begin
-    if FindType(LViewTypeName, LType) then
+  CreateWarningView := function(Owner: TComponent; Warning: string): TComponent
     begin
-      Result := LType.AsInstance.MetaclassType;
+      raise Exception.Create('CreateWarningView() not assigned.');
     end;
-  end;
+
+  LocateForModel :=
+      function(Model: TObject; DisplayLocation: TComponent; Context: TValue)
+      : TComponent
+    var
+      LViewAware: IViewAware;
+      LView: TComponent;
+    begin
+      if Supports(Model, IViewAware, LViewAware) then
+      begin
+        LView := LViewAware.GetView(Context) as TComponent;
+        if Assigned(LView) then
+        begin
+          Log.LogMessage('Using cached view for %s.', [Model]);
+          Exit(LView);
+        end;
+      end;
+      Result := LocateForModelType(Model, DisplayLocation, Context);
+    end;
+
+  LocateForModelType :=
+      function(Model: TObject; DisplayLocation: TComponent; Context: TValue)
+      : TComponent
+    var
+      LViewType: TClass;
+      LWarning: string;
+    begin
+      LViewType := LocateTypeForModelType(Model.ClassType,
+        DisplayLocation, Context);
+
+      if LViewType = nil then
+      begin
+        LWarning := 'View not found for ' + Model.ClassType.ClassName;
+        if not Context.IsEmpty then
+          LWarning := LWarning + ' with context ' + Context.ToString;
+
+        Result := CreateWarningView(DisplayLocation, LWarning);
+      end
+      else
+        Result := GetOrCreateViewType(Model, LViewType);
+    end;
+
+  LocateTypeForModelType :=
+      function(ModelType: TClass; DisplayLocation: TComponent;
+      Context: TValue): TClass
+    var
+      LViewType: TClass;
+      LViewTypeList: IEnumerable<string>;
+      LViewTypeName: string;
+      LType: TRttiType;
+      LSuffix: string;
+      s: string;
+    begin
+      LSuffix := '';
+      if not Context.IsEmpty then
+        LSuffix := Context.ToString;
+
+      LViewType := nil;
+      LViewTypeList := FNameTransformer.Transform(ModelType.ClassName);
+
+      for LViewTypeName in LViewTypeList do
+      begin
+        if FindType(LViewTypeName + LSuffix, LType) then
+        begin
+          LViewType := LType.AsInstance.MetaclassType;
+          Break;
+        end;
+      end;
+
+      if LViewType = nil then
+      begin
+        if FindType(ModelType.ClassName + 'View', LType) then
+        begin
+          LViewType := LType.AsInstance.MetaclassType;
+        end;
+      end;
+
+      if LViewType = nil then
+      begin
+        for LViewTypeName in LViewTypeList do
+          s := s + LViewTypeName + ', ';
+        Log.LogWarning('View not found. Searched: %s.', [s]);
+      end;
+
+      Result := LViewType;
+    end;
+
+  GetOrCreateViewType := function(Model: TObject; ViewType: TClass): TComponent
+    begin
+      if ViewType.InheritsFrom(TComponent) and Model.InheritsFrom(TComponent)
+      then
+      begin
+        Result := TComponentClass(ViewType).Create(TComponent(Model));
+      end
+      else
+        // TODO: Experimental support to enable binding of views to ordinary objects (needed by GameLibrary - TGameDTO)
+        if ViewType.InheritsFrom(TComponent) and Model.InheritsFrom(TObject)
+        then
+        begin
+          Result := TComponentClass(ViewType).Create(nil);
+        end
+        else
+        begin
+          raise Exception.CreateFmt('Cannot create view %s.',
+            [ViewType.ClassName]);
+        end;
+    end;
 end;
 
-class function ViewLocator.GetOrCreateViewType(ModelType: TClass): TObject;
-var
-  LViewClass: TClass;
+class function ViewLocator.GetLog: ILog;
 begin
-  LViewClass := FindViewType(ModelType);
-  Result := Composition.GetInstance(LViewClass.ClassInfo, '').AsObject;
-
-  if Result = nil then
+  if not Assigned(FLog) then
   begin
-    raise Exception.CreateFmt('Cannot find view for %0:s.', [ModelType.ClassName]);
+    FLog := LogManager.GetLog(TypeInfo(ViewLocator));
   end;
+  Result := FLog;
 end;
 
 end.

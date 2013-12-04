@@ -1,0 +1,39 @@
+object ResultsView: TResultsView
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 400
+  ClientWidth = 600
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Layout1: TLayout
+    Align = alClient
+    Height = 400.000000000000000000
+    Width = 600.000000000000000000
+    object StatusMessage: TGroupBox
+      Align = alClient
+      Height = 400.000000000000000000
+      Padding.Left = 20.000000000000000000
+      Padding.Top = 20.000000000000000000
+      Padding.Right = 20.000000000000000000
+      Padding.Bottom = 20.000000000000000000
+      StyleLookup = 'StatusMessageStyle1'
+      Text = 'StatusMessage'
+      Width = 600.000000000000000000
+      TabOrder = 0
+      object Results: TScrollBox
+        Align = alClient
+        Height = 360.000000000000000000
+        TabOrder = 0
+        Width = 560.000000000000000000
+      end
+    end
+  end
+end

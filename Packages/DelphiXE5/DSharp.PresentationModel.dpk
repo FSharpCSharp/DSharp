@@ -120,6 +120,8 @@ contains
   DSharp.PresentationModel.CloseStrategyIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CloseStrategyIntf.pas',
   DSharp.PresentationModel.ResultCompletionEventArgsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgsIntf.pas',
   DSharp.PresentationModel.ResultCompletionEventArgs in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgs.pas',
-  DSharp.PresentationModel.ResultBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultBase.pas';
+  DSharp.PresentationModel.ResultBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultBase.pas',
+  DSharp.PresentationModel.ParentIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ParentIntf.pas',
+  DSharp.PresentationModel.HaveActiveItemIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.HaveActiveItemIntf.pas';
 
 end.

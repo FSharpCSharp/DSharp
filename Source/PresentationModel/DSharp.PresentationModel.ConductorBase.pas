@@ -7,7 +7,8 @@ uses
   DSharp.Core.Events,
   DSharp.PresentationModel,
   DSharp.PresentationModel.ConductorIntf,
-  DSharp.PresentationModel.CloseStrategyIntf;
+  DSharp.PresentationModel.CloseStrategyIntf,
+  DSharp.PresentationModel.ParentIntf;
 
 type
   TConductorBase = class(TScreen, IParent)

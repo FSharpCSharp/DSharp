@@ -36,9 +36,11 @@ uses
   DSharp.PresentationModel.EventAggregatorIntf,
   DSharp.PresentationModel.Execute,
   DSharp.PresentationModel.GuardCloseIntf,
+  DSharp.PresentationModel.HaveActiveItemIntf,
   DSharp.PresentationModel.IHaveDisplayNameIntf,
   DSharp.PresentationModel.IHaveSubjectIntf,
   DSharp.PresentationModel.IoC,
+  DSharp.PresentationModel.ParentIntf,
   DSharp.PresentationModel.ResultBase,
   DSharp.PresentationModel.ResultIntf,
   DSharp.PresentationModel.ResultCompletionEventArgs,
@@ -276,8 +278,6 @@ type
   IClose = DSharp.PresentationModel.CloseIntf.IClose;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.ConductorIntf'}
-  IParent = DSharp.PresentationModel.ConductorIntf.IParent;
-  IHaveActiveItem = DSharp.PresentationModel.ConductorIntf.IHaveActiveItem;
   IConductor = DSharp.PresentationModel.ConductorIntf.IConductor;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.Coroutine'}
@@ -307,6 +307,9 @@ type
   {$REGION 'Redefined types from DSharp.PresentationModel.GuardCloseIntf'}
   IGuardClose = DSharp.PresentationModel.GuardCloseIntf.IGuardClose;
   {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.HaveActiveItemIntf'}
+  IHaveActiveItem = DSharp.PresentationModel.HaveActiveItemIntf.IHaveActiveItem;
+  {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.IHaveDisplayNameIntf'}
   IHaveDisplayName = DSharp.PresentationModel.IHaveDisplayNameIntf.
     IHaveDisplayName;
@@ -316,6 +319,9 @@ type
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.IoC'}
   IoC = DSharp.PresentationModel.IoC.IoC;
+  {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.ParentIntf'}
+  IParent = DSharp.PresentationModel.ParentIntf.IParent;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.ResultCompletionEventArgs'}
   TResultCompletionEventArgs = DSharp.PresentationModel.

@@ -116,6 +116,7 @@ contains
   DSharp.PresentationModel.BindableCollection in '..\..\Source\PresentationModel\DSharp.PresentationModel.BindableCollection.pas',
   DSharp.PresentationModel.NotifyPropertyChangedExIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.NotifyPropertyChangedExIntf.pas',
   DSharp.PresentationModel.PropertyChangedBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.PropertyChangedBase.pas',
-  DSharp.PresentationModel.Execute in '..\..\Source\PresentationModel\DSharp.PresentationModel.Execute.pas';
+  DSharp.PresentationModel.Execute in '..\..\Source\PresentationModel\DSharp.PresentationModel.Execute.pas',
+  DSharp.PresentationModel.CloseStrategyIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CloseStrategyIntf.pas';
 
 end.

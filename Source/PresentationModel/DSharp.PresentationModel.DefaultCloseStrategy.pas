@@ -4,8 +4,9 @@ interface
 
 uses
   Classes,
+  SysUtils,
   DSharp.Collections,
-  SysUtils;
+  DSharp.PresentationModel.CloseStrategyIntf;
 
 type
   ///	<summary>
@@ -15,32 +16,6 @@ type
   ///	<typeparam name="T">
   ///	  The type of child element.
   ///	</typeparam>
-  ICloseStrategy<T> = interface
-
-    ///	<summary>
-    ///	  Executes the strategy.
-    ///	</summary>
-    ///	<param name="ToClose">
-    ///	  Items that are requesting close.
-    ///	</param>
-    ///	<param name="Callback">
-    ///	  The action to call when all enumeration is complete and the close
-    ///	  results are aggregated. The bool indicates whether close can occur.
-    ///	  The enumerable indicates which children should close if the parent
-    ///	  cannot.
-    ///	</param>
-    procedure Execute(ToClose: IEnumerable<T>;
-      Callback: TProc < Boolean, IEnumerable < T >> );
-  end;
-
-  ///	<summary>
-  ///	  Used to gather the results from multiple child elements which may or
-  ///	  may not prevent closing.
-  ///	</summary>
-  ///	<typeparam name="T">
-  ///	  The type of child element.
-  ///	</typeparam>
-
   TDefaultCloseStrategy<T> = class(TInterfacedObject, ICloseStrategy<T>)
   private
     FClosable: IList<T>;

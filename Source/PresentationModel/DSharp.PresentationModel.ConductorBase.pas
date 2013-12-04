@@ -7,7 +7,7 @@ uses
   DSharp.Core.Events,
   DSharp.PresentationModel,
   DSharp.PresentationModel.ConductorIntf,
-  DSharp.PresentationModel.DefaultCloseStrategy;
+  DSharp.PresentationModel.CloseStrategyIntf;
 
 type
   TConductorBase = class(TScreen, IParent)
@@ -118,7 +118,8 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection;
+  DSharp.Core.Reflection, 
+  DSharp.PresentationModel.DefaultCloseStrategy;
 
 { TConductorBase }
 

@@ -6,7 +6,10 @@ uses
   SysUtils,
   DSharp.Collections,
   DSharp.Core.EventArgs,
-  DSharp.PresentationModel;
+  DSharp.PresentationModel.ActionExecutionContext,
+  DSharp.PresentationModel.ResultBase,
+  DSharp.PresentationModel.ResultCompletionEventArgsIntf,
+  DSharp.PresentationModel.ResultIntf;
 
 type
   ///	<summary>
@@ -24,7 +27,7 @@ type
   public
     ///	<summary>
     ///	  Initializes a new instance of the <see cref="SequentialResult" />class
-    ///	   .
+    ///	  .
     ///	</summary>
     ///	<param name="enumerator">
     ///	  The enumerator.
@@ -41,6 +44,10 @@ type
   end;
 
 implementation
+
+uses
+  DSharp.PresentationModel.IoC,
+  DSharp.PresentationModel.ResultCompletionEventArgs;
 
 constructor TSequentialResult.Create(enumerator: IEnumerator<IResult>);
 begin

@@ -39,7 +39,10 @@ uses
   DSharp.PresentationModel.IHaveDisplayNameIntf,
   DSharp.PresentationModel.IHaveSubjectIntf,
   DSharp.PresentationModel.IoC,
-  DSharp.PresentationModel.Result,
+  DSharp.PresentationModel.ResultBase,
+  DSharp.PresentationModel.ResultIntf,
+  DSharp.PresentationModel.ResultCompletionEventArgs,
+  DSharp.PresentationModel.ResultCompletionEventArgsIntf,
   DSharp.PresentationModel.Screen,
   DSharp.PresentationModel.ScreenIntf,
   DSharp.PresentationModel.ViewAttachedEventArgs,
@@ -314,15 +317,21 @@ type
   {$REGION 'Redefined types from DSharp.PresentationModel.IoC'}
   IoC = DSharp.PresentationModel.IoC.IoC;
   {$ENDREGION}
-  {$REGION 'Redefined types from DSharp.PresentationModel.Result'}
-  IResult = DSharp.PresentationModel.Result.IResult;
-  IResultCompletionEventArgs = DSharp.PresentationModel.Result.
-    IResultCompletionEventArgs;
-  TResultCompletionEventArgs = DSharp.PresentationModel.Result.
-    TResultCompletionEventArgs;
-  TResultCompletionEvent = DSharp.PresentationModel.Result.
-    TResultCompletionEvent;
-  TResultBase = DSharp.PresentationModel.Result.TResultBase;
+  {$REGION 'Redefined types from DSharp.PresentationModel.ResultCompletionEventArgs'}
+  TResultCompletionEventArgs = DSharp.PresentationModel.
+    ResultCompletionEventArgs.TResultCompletionEventArgs;
+  {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.ResultCompletionEventArgsIntf'}
+  IResultCompletionEventArgs = DSharp.PresentationModel.
+    ResultCompletionEventArgsIntf.IResultCompletionEventArgs;
+  TResultCompletionEvent = DSharp.PresentationModel.
+    ResultCompletionEventArgsIntf.TResultCompletionEvent;
+  {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.ResultBase'}
+  TResultBase = DSharp.PresentationModel.ResultBase.TResultBase;
+  {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.ResultIntf'}
+  IResult = DSharp.PresentationModel.ResultIntf.IResult;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.ScreenIntf'}
   IScreen = DSharp.PresentationModel.ScreenIntf.IScreen;

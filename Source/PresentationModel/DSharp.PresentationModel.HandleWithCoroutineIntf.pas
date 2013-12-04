@@ -4,7 +4,7 @@ interface
 
 uses
   DSharp.PresentationModel.EventAggregatorIntf,
-  DSharp.PresentationModel.Result;
+  DSharp.PresentationModel.ResultIntf;
 
 type
   ///	<summary>

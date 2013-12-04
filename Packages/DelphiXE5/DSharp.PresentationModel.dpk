@@ -56,7 +56,7 @@ contains
   DSharp.PresentationModel.IoC in '..\..\Source\PresentationModel\DSharp.PresentationModel.IoC.pas',
   DSharp.PresentationModel.NameTransformer in '..\..\Source\PresentationModel\DSharp.PresentationModel.NameTransformer.pas',
   DSharp.PresentationModel in '..\..\Source\PresentationModel\DSharp.PresentationModel.pas',
-  DSharp.PresentationModel.Result in '..\..\Source\PresentationModel\DSharp.PresentationModel.Result.pas',
+  DSharp.PresentationModel.ResultIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultIntf.pas',
   DSharp.PresentationModel.RoutedEvent in '..\..\Source\PresentationModel\DSharp.PresentationModel.RoutedEvent.pas',
   DSharp.PresentationModel.Screen in '..\..\Source\PresentationModel\DSharp.PresentationModel.Screen.pas',
   DSharp.PresentationModel.ScreenExtensions in '..\..\Source\PresentationModel\DSharp.PresentationModel.ScreenExtensions.pas',
@@ -117,6 +117,9 @@ contains
   DSharp.PresentationModel.NotifyPropertyChangedExIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.NotifyPropertyChangedExIntf.pas',
   DSharp.PresentationModel.PropertyChangedBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.PropertyChangedBase.pas',
   DSharp.PresentationModel.Execute in '..\..\Source\PresentationModel\DSharp.PresentationModel.Execute.pas',
-  DSharp.PresentationModel.CloseStrategyIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CloseStrategyIntf.pas';
+  DSharp.PresentationModel.CloseStrategyIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CloseStrategyIntf.pas',
+  DSharp.PresentationModel.ResultCompletionEventArgsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgsIntf.pas',
+  DSharp.PresentationModel.ResultCompletionEventArgs in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgs.pas',
+  DSharp.PresentationModel.ResultBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultBase.pas';
 
 end.

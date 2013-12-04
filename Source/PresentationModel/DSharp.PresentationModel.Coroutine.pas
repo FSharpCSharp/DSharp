@@ -3,13 +3,14 @@ unit DSharp.PresentationModel.Coroutine;
 interface
 
 uses
+  SysUtils,
   DSharp.Core.EventArgs,
   DSharp.Collections,
   DSharp.Logging,
   DSharp.PresentationModel.ActionExecutionContext,
   DSharp.PresentationModel.EventAggregator,
-  DSharp.PresentationModel.Result,
-  SysUtils;
+  DSharp.PresentationModel.ResultIntf,
+  DSharp.PresentationModel.ResultCompletionEventArgsIntf;
 
 type
   ///	<summary>

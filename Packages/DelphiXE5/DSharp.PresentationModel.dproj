@@ -157,7 +157,7 @@
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.IoC.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.NameTransformer.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.pas"/>
-        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.Result.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ResultIntf.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.RoutedEvent.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.Screen.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ScreenExtensions.pas"/>
@@ -219,6 +219,9 @@
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.PropertyChangedBase.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.Execute.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.CloseStrategyIntf.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgsIntf.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgs.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ResultBase.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

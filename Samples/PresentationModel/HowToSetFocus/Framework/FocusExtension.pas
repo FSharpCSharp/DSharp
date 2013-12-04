@@ -32,7 +32,7 @@ type
 implementation
 
 uses
-  DSharp.PresentationModel.INPC;
+  DSharp.PresentationModel.Execute;
 
 { TFocusExtension }
 

@@ -8,7 +8,7 @@ uses
   ConverterInterfaces,
   DSharp.Collections,
   DSharp.PresentationModel,
-  DSharp.PresentationModel.INPC,
+  DSharp.PresentationModel.ObservableCollectionIntf,
   TextConverter;
 
 type
@@ -28,6 +28,9 @@ type
   end;
 
 implementation
+
+uses
+  DSharp.PresentationModel.BindableCollection;
 
 constructor TConverterViewModel.Create;
 begin

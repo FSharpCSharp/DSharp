@@ -9,8 +9,7 @@ uses
   SearchResult,
   IndividualResultViewModel,
   DSharp.Collections,
-  DSharp.Collections.ObservableCollection,
-  DSharp.PresentationModel.INPC;
+  DSharp.Collections.ObservableCollection;
 
 type
   TResultsViewModel = class(TScreen, IResultsViewModel)
@@ -27,6 +26,9 @@ type
   end;
 
 implementation
+
+uses
+  DSharp.PresentationModel.BindableCollection;
 
 constructor TResultsViewModel.Create;
 begin

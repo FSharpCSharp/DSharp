@@ -11,8 +11,7 @@ uses
   DSharp.Collections,
   DSharp.PresentationModel,
   DSharp.PresentationModel.EventAggregator,
-  DSharp.PresentationModel.ConductorWithCollectionOneActive,
-  DSharp.PresentationModel.INPC;
+  DSharp.PresentationModel.ConductorWithCollectionOneActive;
 
 type
   ///	<summary>
@@ -42,7 +41,8 @@ type
 implementation
 
 uses
-  InterestItemViewModel;
+  InterestItemViewModel,
+  DSharp.PresentationModel.BindableCollection;
 
 constructor TInterestSelectorViewModel.Create;
 begin

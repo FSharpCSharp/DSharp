@@ -9,8 +9,7 @@ uses
   DSharp.Collections,
   DSharp.ComponentModel.Composition,
   DSharp.PresentationModel,
-  DSharp.PresentationModel.ConductorWithCollectionOneActive,
-  DSharp.PresentationModel.Inpc;
+  DSharp.PresentationModel.ConductorWithCollectionOneActive;
 
 type
   ///	<summary>
@@ -30,7 +29,8 @@ type
 implementation
 
 uses
-  PhotoViewModel;
+  PhotoViewModel, 
+  DSharp.PresentationModel.BindableCollection;
 
 { TGalleryViewModel }
 

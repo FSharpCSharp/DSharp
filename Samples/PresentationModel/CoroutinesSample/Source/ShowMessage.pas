@@ -11,7 +11,7 @@ type
     FMessage: string;
   public
     constructor Create(AMessage: string);
-    procedure Execute(Context: IActionExecutionContext); override;
+    procedure Execute(Context: ICoroutineExecutionContext); override;
   end;
 
 implementation
@@ -25,15 +25,14 @@ begin
   FMessage := AMessage;
 end;
 
-procedure TShowMessage.Execute(Context: IActionExecutionContext);
+procedure TShowMessage.Execute(Context: ICoroutineExecutionContext);
 begin
   Dialogs.ShowMessage(Format( //
     '%s' + sLineBreak + sLineBreak + //
-    'Method=%s' + sLineBreak + //
     'Sender=%s' + sLineBreak + //
     'Target=%s' + sLineBreak + //
-    'View=%s', [FMessage, Context.Method.ToString, Context.Sender.ToString,
-    Context.Target.ToString, Context.View.ToString]));
+    'View=%s', [FMessage, Context.Sender.ToString, Context.Target.ToString,
+    Context.View.ToString]));
 
   Completed.Invoke(Self, TResultCompletionEventArgs.Create);
 end;

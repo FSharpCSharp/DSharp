@@ -155,9 +155,9 @@ begin
   Execute.QueueActionOnUIThread(
     procedure
     var
-      LContext: IActionExecutionContext;
+      LContext: ICoroutineExecutionContext;
     begin
-      LContext := TActionExecutionContext.Create;
+      LContext := TCoroutineExecutionContext.Create;
       LContext.View := GetView as TComponent;
       // Execute coroutine by code
       TCoroutine.BeginExecute(ExecuteSearch.GetEnumerator, LContext);

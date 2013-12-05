@@ -13,15 +13,15 @@ type
     FChild: TChild;
     FParent: IConductor;
     FProcessed: TActivationProcessedEvent;
-    LocateChild: TFunc<IActionExecutionContext, TChild>;
-    LocateParent: TFunc<IActionExecutionContext, IConductor>;
+    LocateChild: TFunc<ICoroutineExecutionContext, TChild>;
+    LocateParent: TFunc<ICoroutineExecutionContext, IConductor>;
   protected
     procedure OnOpened(Parent: IConductor; Child: TChild); virtual;
   public
     constructor Create;
     function Inside<TParent>: TOpenChildResult<TChild>; overload;
     // function Inside(Parent: IConductor): TOpenChildResult<TChild>; overload;
-    procedure Execute(Context: IActionExecutionContext); override;
+    procedure Execute(Context: ICoroutineExecutionContext); override;
     procedure Processed(Sender: TObject; Args: IActivationProcessedEventArgs);
   end;
 
@@ -34,11 +34,11 @@ uses
 
 constructor TOpenChildResult<TChild>.Create;
 begin
-  LocateChild := function(Context: IActionExecutionContext): TChild
+  LocateChild := function(Context: ICoroutineExecutionContext): TChild
     begin
       Result := IoC.Get<TChild>();
     end;
-  LocateParent := function(Context: IActionExecutionContext): IConductor
+  LocateParent := function(Context: ICoroutineExecutionContext): IConductor
     begin
       // Result := Context.Target;
     end;
@@ -46,7 +46,7 @@ begin
   FProcessed := Processed;
 end;
 
-procedure TOpenChildResult<TChild>.Execute(Context: IActionExecutionContext);
+procedure TOpenChildResult<TChild>.Execute(Context: ICoroutineExecutionContext);
 var
   LObject: TObject;
 begin
@@ -68,7 +68,7 @@ end;
 {
   function TOpenChildResult<TChild>.Inside(Parent: IConductor): TOpenChildResult<TChild>;
   begin
-  LocateParent := function(Context: IActionExecutionContext): IConductor
+  LocateParent := function(Context: ICoroutineExecutionContext): IConductor
   begin
   Result := Parent;
   end;
@@ -78,7 +78,7 @@ end;
 
 function TOpenChildResult<TChild>.Inside<TParent>: TOpenChildResult<TChild>;
 begin
-  LocateParent := function(Context: IActionExecutionContext): IConductor
+  LocateParent := function(Context: ICoroutineExecutionContext): IConductor
     begin
       Supports(TValue.From<TParent>(IoC.Get<TParent>()), IConductor, Result);
     end;

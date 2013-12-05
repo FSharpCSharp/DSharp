@@ -7,7 +7,7 @@ uses
   Sysutils,
   Interfaces,
   DSharp.PresentationModel,
-  DSharp.PresentationModel.Bootstrapper;
+  DSharp.PresentationModel.SpringBootstrapper;
 
 type
   TApplicationBootstrapper = class(TSpringBootstrapper<IShellViewModel>)

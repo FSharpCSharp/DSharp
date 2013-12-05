@@ -13,7 +13,7 @@ type
     FHide: Boolean;
   public
     constructor Create(Hide: Boolean);
-    procedure Execute(Context: IActionExecutionContext); override;
+    procedure Execute(Context: ICoroutineExecutionContext); override;
   end;
 
 implementation
@@ -28,7 +28,7 @@ begin
   FHide := Hide;
 end;
 
-procedure TBusyResult.Execute(Context: IActionExecutionContext);
+procedure TBusyResult.Execute(Context: ICoroutineExecutionContext);
 var
   LView: TComponent;
   LBusyIndicator: TComponent;

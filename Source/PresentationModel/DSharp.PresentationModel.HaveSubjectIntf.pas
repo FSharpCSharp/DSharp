@@ -1,4 +1,4 @@
-unit DSharp.PresentationModel.IHaveSubjectIntf;
+unit DSharp.PresentationModel.HaveSubjectIntf;
 
 interface
 

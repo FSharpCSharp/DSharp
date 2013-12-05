@@ -1,4 +1,4 @@
-unit DSharp.PresentationModel.IHaveDisplayNameIntf;
+unit DSharp.PresentationModel.HaveDisplayNameIntf;
 
 interface
 

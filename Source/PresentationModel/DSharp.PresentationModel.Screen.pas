@@ -12,11 +12,11 @@ uses
   DSharp.PresentationModel.ActivationEventArgsIntf,
   DSharp.PresentationModel.ChildIntf,
   DSharp.PresentationModel.CloseIntf,
-  DSharp.PresentationModel.DeactivateIntf,
-  DSharp.PresentationModel.IHaveDisplayNameIntf,
-  DSharp.PresentationModel.GuardCloseIntf,
   DSharp.PresentationModel.ConductorIntf,
+  DSharp.PresentationModel.DeactivateIntf,
   DSharp.PresentationModel.DeactivationEventArgsIntf,
+  DSharp.PresentationModel.GuardCloseIntf,
+  DSharp.PresentationModel.HaveDisplayNameIntf,
   DSharp.PresentationModel.ScreenIntf,
   DSharp.PresentationModel.ViewAware;
 

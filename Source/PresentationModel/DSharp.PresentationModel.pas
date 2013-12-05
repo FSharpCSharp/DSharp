@@ -41,8 +41,8 @@ uses
   DSharp.PresentationModel.Execute,
   DSharp.PresentationModel.GuardCloseIntf,
   DSharp.PresentationModel.HaveActiveItemIntf,
-  DSharp.PresentationModel.IHaveDisplayNameIntf,
-  DSharp.PresentationModel.IHaveSubjectIntf,
+  DSharp.PresentationModel.HaveDisplayNameIntf,
+  DSharp.PresentationModel.HaveSubjectIntf,
   DSharp.PresentationModel.IoC,
   DSharp.PresentationModel.ParentIntf,
   DSharp.PresentationModel.ResultBase,
@@ -324,12 +324,12 @@ type
   {$REGION 'Redefined types from DSharp.PresentationModel.HaveActiveItemIntf'}
   IHaveActiveItem = DSharp.PresentationModel.HaveActiveItemIntf.IHaveActiveItem;
   {$ENDREGION}
-  {$REGION 'Redefined types from DSharp.PresentationModel.IHaveDisplayNameIntf'}
-  IHaveDisplayName = DSharp.PresentationModel.IHaveDisplayNameIntf.
+  {$REGION 'Redefined types from DSharp.PresentationModel.HaveDisplayNameIntf'}
+  IHaveDisplayName = DSharp.PresentationModel.HaveDisplayNameIntf.
     IHaveDisplayName;
   {$ENDREGION}
-  {$REGION 'Redefined types from DSharp.PresentationModel.IHaveSubjectIntf'}
-  IHaveSubject = DSharp.PresentationModel.IHaveSubjectIntf.IHaveSubject;
+  {$REGION 'Redefined types from DSharp.PresentationModel.HaveSubjectIntf'}
+  IHaveSubject = DSharp.PresentationModel.HaveSubjectIntf.IHaveSubject;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.IoC'}
   IoC = DSharp.PresentationModel.IoC.IoC;

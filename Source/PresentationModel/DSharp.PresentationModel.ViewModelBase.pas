@@ -12,7 +12,7 @@ uses
   DSharp.Core.Cache,
   DSharp.Core.Editable,
   DSharp.Core.Validations,
-  DSharp.PresentationModel.IHaveSubjectIntf,
+  DSharp.PresentationModel.HaveSubjectIntf,
   DSharp.PresentationModel.Screen,
   DSharp.PresentationModel.ScreenIntf,
   DSharp.Validation,

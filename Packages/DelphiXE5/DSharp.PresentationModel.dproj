@@ -199,8 +199,8 @@
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ActivationProcessedEventArgsIntf.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ActivateIntf.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.DeactivateIntf.pas"/>
-        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.IHaveDisplayNameIntf.pas"/>
-        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.IHaveSubjectIntf.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.HaveDisplayNameIntf.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.HaveSubjectIntf.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ViewAttachedEventArgsIntf.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ViewAttachedEventArgs.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.HandleWithCoroutineIntf.pas"/>

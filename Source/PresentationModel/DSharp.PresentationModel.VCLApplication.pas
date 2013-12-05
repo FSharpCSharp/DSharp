@@ -8,6 +8,7 @@ uses
   DSharp.Logging,
   DSharp.PresentationModel.Execute,
   DSharp.PresentationModel.Bootstrapper,
+  DSharp.PresentationModel.SpringBootstrapper,
   DSharp.PresentationModel.VCLFramework,
   DSharp.PresentationModel.VCLView,
   DSharp.PresentationModel.VCLViewLocator,

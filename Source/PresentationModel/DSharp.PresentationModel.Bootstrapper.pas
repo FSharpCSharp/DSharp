@@ -206,8 +206,6 @@ end;
 
 procedure TBootstrapper.StartRuntime;
 begin
-  Execute.InitializeWithDispatcher();
-
   TEventAggregator.HandlerResultProcessing :=
       procedure(Target: TObject; Result: TValue)
     var

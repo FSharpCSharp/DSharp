@@ -19,9 +19,19 @@ type
     class constructor Create;
 
     ///	<summary>
-    ///	  Initializes the framework using the current dispatcher.
+    ///	  Initializes the framework with custom executors
     ///	</summary>
-    class procedure InitializeWithDispatcher; static;
+    class procedure Initialize(UIThreadExecutor: TProc<TProc>;
+      BackgroundThreadExecutor: TProc<TProc>);
+
+    ///	<summary>
+    ///	  Executes the action on the UI thread without waiting for it to
+    ///	  complete.
+    ///	</summary>
+    ///	<param name="Action">
+    ///	  The action to execute.
+    ///	</param>
+    class procedure BeginOnUIThread(Action: TProc); static;
 
     ///	<summary>
     ///	  Executes the action on the background thread.
@@ -38,37 +48,6 @@ type
     ///	  The action to execute.
     ///	</param>
     class procedure OnUIThread(Action: TProc); static;
-
-    ///	<summary>
-    ///	  Executes the action on the UI thread. But it makes sure this is
-    ///	  called from the background thread.
-    ///	</summary>
-    ///	<param name="Action">
-    ///	  The action to execute.
-    ///	</param>
-    class procedure QueueActionOnUIThread(Action: TProc); static;
-
-    ///	<summary>
-    ///	  Resets the executor to use a non-dispatcher-based action executor.
-    ///	</summary>
-    class procedure ResetWithoutDispatcher; static;
-
-    ///	<summary>
-    ///	  Sets a custom background thread marshaller.
-    ///	</summary>
-    ///	<param name="Marshaller">
-    ///	  The marshaller.
-    ///	</param>
-    class procedure SetBackgroundThreadMarshaller
-      (Marshaller: TProc<TProc>); static;
-
-    ///	<summary>
-    ///	  Sets a custom UI thread marshaller.
-    ///	</summary>
-    ///	<param name="Marshaller">
-    ///	  The marshaller.
-    ///	</param>
-    class procedure SetUIThreadMarshaller(Marshaller: TProc<TProc>); static;
   end;
 
 implementation
@@ -82,19 +61,6 @@ class constructor Execute.Create;
 begin
   FUIThreadExecutor := procedure(Action: TProc)
     begin
-      Action();
-    end;
-  FBackgroundThreadExecutor := procedure(Action: TProc)
-    begin
-      Action();
-    end;
-end;
-
-class procedure Execute.InitializeWithDispatcher;
-begin
-  SetUIThreadMarshaller(
-    procedure(Action: TProc)
-    begin
       if GetCurrentThreadId() = MainThreadID then
       begin
         Action();
@@ -107,16 +73,31 @@ begin
             Action();
           end);
       end;
-    end);
+    end;
 
-  SetBackgroundThreadMarshaller(
-    procedure(Action: TProc)
+  FBackgroundThreadExecutor := procedure(Action: TProc)
     begin
       TThread.CreateAnonymousThread(
         procedure
         begin
           Action();
         end).Start;
+    end;
+end;
+
+class procedure Execute.Initialize(UIThreadExecutor, BackgroundThreadExecutor
+  : TProc<TProc>);
+begin
+  FUIThreadExecutor := UIThreadExecutor;
+  FBackgroundThreadExecutor := BackgroundThreadExecutor;
+end;
+
+class procedure Execute.BeginOnUIThread(Action: TProc);
+begin
+  FBackgroundThreadExecutor(
+    procedure
+    begin
+      FUIThreadExecutor(Action);
     end);
 end;
 
@@ -128,40 +109,6 @@ end;
 class procedure Execute.OnUIThread(Action: TProc);
 begin
   FUIThreadExecutor(Action);
-end;
-
-class procedure Execute.QueueActionOnUIThread(Action: TProc);
-begin
-  FBackgroundThreadExecutor(
-    procedure
-    begin
-      FUIThreadExecutor(Action);
-    end);
-end;
-
-class procedure Execute.ResetWithoutDispatcher;
-begin
-  SetUIThreadMarshaller(
-    procedure(Action: TProc)
-    begin
-      Action();
-    end);
-
-  SetBackgroundThreadMarshaller(
-    procedure(Action: TProc)
-    begin
-      Action();
-    end);
-end;
-
-class procedure Execute.SetBackgroundThreadMarshaller(Marshaller: TProc<TProc>);
-begin
-  FBackgroundThreadExecutor := Marshaller;
-end;
-
-class procedure Execute.SetUIThreadMarshaller(Marshaller: TProc<TProc>);
-begin
-  FUIThreadExecutor := Marshaller;
 end;
 
 end.

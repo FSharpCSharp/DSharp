@@ -149,7 +149,7 @@ end;
 
 procedure TEventAggregator.BeginPublishOnUIThread(const AMessage: TValue);
 begin
-  Publish(AMessage, Execute.QueueActionOnUIThread);
+  Publish(AMessage, Execute.BeginOnUIThread);
 end;
 
 class constructor TEventAggregator.Create;

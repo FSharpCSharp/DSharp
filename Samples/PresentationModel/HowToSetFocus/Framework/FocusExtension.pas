@@ -54,7 +54,7 @@ begin
       if LAsBoolean then
       begin
         // Execute action on background thread, ensuring the main UI thread is initialized by the time focus is set
-        Execute.QueueActionOnUIThread(
+        Execute.BeginOnUIThread(
           procedure
           begin
             LControl.SetFocus; // Don't care about false values.

@@ -92,7 +92,7 @@ end;
 procedure TTasksViewModel.RemoveTask(Task: ITaskViewModel);
 begin
   // Remove calling button from callstack; works around issues like these: http://qc.embarcadero.com/wc/qcmain.aspx?d=112018
-  Execute.QueueActionOnUIThread(
+  Execute.BeginOnUIThread(
     procedure
     begin
       Tasks.Remove(Task);

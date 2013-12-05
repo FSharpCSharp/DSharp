@@ -22,6 +22,7 @@ type
   ///	  View for PhotoView
   ///	</summary>
   TPhotoView = class(TFrame)
+    [Binding('Picture', '{Binding Picture}')]
     Photo: TImage;
   private
     { Private declarations }

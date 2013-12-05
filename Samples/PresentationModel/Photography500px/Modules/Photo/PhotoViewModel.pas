@@ -11,23 +11,23 @@ uses
   DSharp.ComponentModel.Composition,
   DSharp.PresentationModel,
   DSharp.PresentationModel.ConductorWithCollectionOneActive,
-  Vcl.Imaging.jpeg;
+  jpeg;
 
 type
-  ///	<summary>
-  ///	  Implementation of <see cref="IPhotoViewModel" />
-  ///	</summary>
+  /// <summary>
+  /// Implementation of <see cref="IPhotoViewModel" />
+  /// </summary>
   // [PartCreationPolicy(cpShared)]
   TPhotoViewModel = class(TScreen, IPhotoViewModel)
   private
     { Private declarations }
-    FPhoto: TPicture;
+    FPicture: TPicture;
     procedure LoadRandomPicture;
   public
     { Public declarations }
     constructor Create; override;
     destructor Destroy; override;
-    property Photo: TPicture read FPhoto;
+    property Picture: TPicture read FPicture;
   end;
 
 implementation
@@ -41,7 +41,7 @@ uses
 constructor TPhotoViewModel.Create;
 begin
   inherited;
-  FPhoto := TPicture.Create;
+  FPicture := TPicture.Create;
   ViewAttached.Add(
     procedure(Sender: TObject; EventArgs: IViewAttachedEventArgs)
     begin
@@ -51,7 +51,7 @@ end;
 
 destructor TPhotoViewModel.Destroy;
 begin
-  FPhoto.Free;
+  FPicture.Free;
   inherited;
 end;
 
@@ -62,18 +62,10 @@ begin
   Execute.OnBackgroundThread(
     procedure
     begin
-      Sleep(100 + Random(300));
+//      Sleep(Random(500));
       LFilename := Format('Images\%d.jpg', [1 + Random(19)]);
-      if TFile.Exists(LFilename) then
-      begin
-        Execute.OnUIThread(
-          procedure
-          begin
-            FPhoto.LoadFromFile(LFilename);
-            TImage(TComponent(GetView).FindComponent('Photo')).Picture
-              := FPhoto;
-          end);
-      end;
+      FPicture.LoadFromFile(LFilename);
+      NotifyOfPropertyChange('Picture');
     end);
 end;
 

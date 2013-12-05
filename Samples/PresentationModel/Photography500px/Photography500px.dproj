@@ -3,7 +3,7 @@
         <ProjectGuid>{B0F67B2E-6B0F-443A-9F67-0A16102B26A4}</ProjectGuid>
         <MainSource>Photography500px.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
@@ -69,6 +69,8 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <DCC_Optimize>false</DCC_Optimize>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
+        <DCC_DebugInformation>true</DCC_DebugInformation>
+        <DCC_MapFile>3</DCC_MapFile>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
@@ -164,7 +166,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
         <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
+        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Win64'">
@@ -172,7 +174,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
         <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
+        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Win32'">
@@ -180,7 +182,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
         <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
+        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Win64'">
@@ -188,7 +190,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
         <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
+        <PostBuildEvent>xcopy &quot;$(PROJECTDIR)\Resources\Images\*.*&quot; &quot;$(OUTPUTDIR)\Images&quot; /i /d /y /e</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
 </Project>

@@ -152,7 +152,7 @@ end;
 procedure TSearchViewModel.ExecuteSearchByCode;
 begin
   // Direct search for 'halo 1' in fmx triggers destruction from handler
-  Execute.QueueActionOnUIThread(
+  Execute.BeginOnUIThread(
     procedure
     var
       LContext: ICoroutineExecutionContext;

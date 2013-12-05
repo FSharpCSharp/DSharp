@@ -38,7 +38,6 @@ type
   ///	<summary>
   ///	  Indicates an item which has subject matter.
   ///	</summary>
-
   IHaveSubject<T> = interface(IHaveSubject)
     {$REGION 'Property Accessors'}
     function GetSubject: T;

@@ -126,6 +126,7 @@ contains
   DSharp.PresentationModel.CoroutineExecutionContext in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContext.pas',
   DSharp.PresentationModel.ActionExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActionExecutionContextIntf.pas',
   DSharp.PresentationModel.CoroutineExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContextIntf.pas',
-  DSharp.PresentationModel.WindowManagerIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.WindowManagerIntf.pas';
+  DSharp.PresentationModel.WindowManagerIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.WindowManagerIntf.pas',
+  DSharp.PresentationModel.DefinesBindingsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.DefinesBindingsIntf.pas';
 
 end.

@@ -36,6 +36,7 @@ uses
   DSharp.PresentationModel.DeactivateIntf,
   DSharp.PresentationModel.DeactivationEventArgs,
   DSharp.PresentationModel.DeactivationEventArgsIntf,
+  DSharp.PresentationModel.DefinesBindingsIntf,
   DSharp.PresentationModel.EventAggregatorIntf,
   DSharp.PresentationModel.Execute,
   DSharp.PresentationModel.GuardCloseIntf,
@@ -306,6 +307,9 @@ type
   TDeactivationEvent = DSharp.PresentationModel.DeactivationEventArgsIntf.
     TDeactivationEvent;
   {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.DefinesBindingsIntf'}
+  IDefinesBindings = DSharp.PresentationModel.DefinesBindingsIntf.IDefinesBindings;
+  {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.EventAggregatorIntf'}
   IHandle = DSharp.PresentationModel.EventAggregatorIntf.IHandle;
   IEventAggregator = DSharp.PresentationModel.EventAggregatorIntf.
@@ -400,17 +404,6 @@ type
     property BindingString: string read FBindingString;
   end;
   {$ENDREGION 'Attributes'}
-  {$REGION 'IDefinesBindings'}
-
-  ///	<summary>
-  ///	  TODO
-  ///	</summary>
-
-  IDefinesBindings = interface
-    ['{9249EEDC-A4B1-491B-9220-9E90ED353A13}']
-    procedure DefineBindings;
-  end;
-  {$ENDREGION 'IDefinesBindings'}
 
 implementation
 

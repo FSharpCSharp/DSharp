@@ -61,7 +61,8 @@ implementation
 uses
   DSharp.Core.Reflection,
   DSharp.PresentationModel,
-  DSharp.PresentationModel.IoC;
+  DSharp.PresentationModel.IoC,
+  DSharp.PresentationModel.WindowManagerIntf;
 
 { TSecurityAspect }
 

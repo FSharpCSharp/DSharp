@@ -227,6 +227,7 @@
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContext.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.ActionExecutionContextIntf.pas"/>
         <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContextIntf.pas"/>
+        <DCCReference Include="..\..\Source\PresentationModel\DSharp.PresentationModel.WindowManagerIntf.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

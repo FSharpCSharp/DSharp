@@ -125,6 +125,7 @@ contains
   DSharp.PresentationModel.HaveActiveItemIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.HaveActiveItemIntf.pas',
   DSharp.PresentationModel.CoroutineExecutionContext in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContext.pas',
   DSharp.PresentationModel.ActionExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActionExecutionContextIntf.pas',
-  DSharp.PresentationModel.CoroutineExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContextIntf.pas';
+  DSharp.PresentationModel.CoroutineExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContextIntf.pas',
+  DSharp.PresentationModel.WindowManagerIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.WindowManagerIntf.pas';
 
 end.

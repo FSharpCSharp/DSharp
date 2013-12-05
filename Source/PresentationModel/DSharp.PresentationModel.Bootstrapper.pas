@@ -151,7 +151,8 @@ uses
   DSharp.PresentationModel.EventAggregator,
   Spring.Reflection,
   DSharp.PresentationModel.CoroutineExecutionContext,
-  DSharp.PresentationModel.CoroutineExecutionContextIntf;
+  DSharp.PresentationModel.CoroutineExecutionContextIntf,
+  DSharp.PresentationModel.WindowManagerIntf;
 
 procedure TBootstrapper.BuildUp(Instance: TObject);
 begin

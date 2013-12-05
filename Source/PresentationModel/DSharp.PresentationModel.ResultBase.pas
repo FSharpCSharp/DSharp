@@ -4,7 +4,7 @@ interface
 
 uses
   DSharp.Core.Events,
-  DSharp.PresentationModel.ActionExecutionContext,
+  DSharp.PresentationModel.CoroutineExecutionContextIntf,
   DSharp.PresentationModel.ResultIntf,
   DSharp.PresentationModel.ResultCompletionEventArgsIntf;
 
@@ -24,7 +24,7 @@ type
     ///	<param name="Context">
     ///	  The context.
     ///	</param>
-    procedure Execute(Context: IActionExecutionContext); virtual; abstract;
+    procedure Execute(Context: ICoroutineExecutionContext); virtual; abstract;
 
     ///	<summary>
     ///	  Occurs when execution has completed.

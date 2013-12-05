@@ -21,6 +21,7 @@ uses
   DSharp.Core.DependencyProperty,
   DSharp.Core.Validations,
   DSharp.PresentationModel.ActionExecutionContext,
+  DSharp.PresentationModel.ActionExecutionContextIntf,
   DSharp.PresentationModel.ActivateIntf,
   DSharp.PresentationModel.ActivationEventArgs,
   DSharp.PresentationModel.ActivationEventArgsIntf,
@@ -30,6 +31,8 @@ uses
   DSharp.PresentationModel.CloseIntf,
   DSharp.PresentationModel.ConductorIntf,
   DSharp.PresentationModel.Coroutine,
+  DSharp.PresentationModel.CoroutineExecutionContext,
+  DSharp.PresentationModel.CoroutineExecutionContextIntf,
   DSharp.PresentationModel.DeactivateIntf,
   DSharp.PresentationModel.DeactivationEventArgs,
   DSharp.PresentationModel.DeactivationEventArgsIntf,
@@ -266,10 +269,10 @@ type
     ActivationProcessedEventArgsIntf.TActivationProcessedEvent;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.ActionExecutionContext'}
-  IActionExecutionContext = DSharp.PresentationModel.ActionExecutionContext.
-    IActionExecutionContext;
-  TActionExecutionContext = DSharp.PresentationModel.ActionExecutionContext.
-    TActionExecutionContext;
+  TActionExecutionContext = DSharp.PresentationModel.ActionExecutionContext.TActionExecutionContext;
+  {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.ActionExecutionContextIntf'}
+  IActionExecutionContext = DSharp.PresentationModel.ActionExecutionContextIntf.IActionExecutionContext;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.ChildIntf'}
   IChild = DSharp.PresentationModel.ChildIntf.IChild;
@@ -282,6 +285,12 @@ type
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.Coroutine'}
   TCoroutine = DSharp.PresentationModel.Coroutine.TCoroutine;
+  {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.CoroutineExecutionContext'}
+  TCoroutineExecutionContext = DSharp.PresentationModel.CoroutineExecutionContext.TCoroutineExecutionContext;
+  {$ENDREGION}
+  {$REGION 'Redefined types from DSharp.PresentationModel.CoroutineExecutionContextIntf'}
+  ICoroutineExecutionContext = DSharp.PresentationModel.CoroutineExecutionContextIntf.ICoroutineExecutionContext;
   {$ENDREGION}
   {$REGION 'Redefined types from DSharp.PresentationModel.DeactivateIntf'}
   IDeactivate = DSharp.PresentationModel.DeactivateIntf.IDeactivate;

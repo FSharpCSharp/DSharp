@@ -8,6 +8,9 @@ uses
   DSharp.PresentationModel.ResultCompletionEventArgsIntf;
 
 type
+  ///	<summary>
+  ///	  An implementation of <see cref="IResultCompletionEventArgs" />
+  ///	</summary>
   TResultCompletionEventArgs = class(TEventArgs, IResultCompletionEventArgs)
   private
     FError: Exception;

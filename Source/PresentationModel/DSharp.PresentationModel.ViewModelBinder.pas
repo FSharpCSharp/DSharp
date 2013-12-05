@@ -142,7 +142,9 @@ uses
   DSharp.PresentationModel.ConventionManager,
   DSharp.PresentationModel.ElementConvention,
   DSharp.PresentationModel.View,
-  DSharp.PresentationModel.InitializeComponent;
+  DSharp.PresentationModel.InitializeComponent,
+  DSharp.PresentationModel.CoroutineExecutionContext,
+  DSharp.PresentationModel.CoroutineExecutionContextIntf;
 
 class constructor ViewModelBinder.Create;
 begin
@@ -341,11 +343,10 @@ begin
 
   // Create new handler
   LEvent := TEvent<TNotifyEvent>.Create < TProc < TObject >> (AControl, [
-  procedure(Sender: TObject)var LContext: IActionExecutionContext;
+  procedure(Sender: TObject)var LContext: ICoroutineExecutionContext;
   LList: IEnumerable<IResult>; begin
   // Prepare context
-  LContext := TActionExecutionContext.Create;
-  LContext.Method := AViewModelMethod; LContext.Sender := Sender;
+  LContext := TCoroutineExecutionContext.Create; LContext.Sender := Sender;
   LContext.Target := AViewModel; LContext.View := AView;
 
   if AViewModelMethod.ReturnType.Handle = TypeInfo(IResult) then begin

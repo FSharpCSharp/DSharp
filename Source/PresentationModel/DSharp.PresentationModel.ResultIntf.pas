@@ -4,9 +4,8 @@ interface
 
 uses
   SysUtils,
-//  DSharp.Core.EventArgs,
   DSharp.Core.Events,
-  DSharp.PresentationModel.ActionExecutionContext,
+  DSharp.PresentationModel.CoroutineExecutionContextIntf,
   DSharp.PresentationModel.ResultCompletionEventArgsIntf;
 
 type
@@ -25,7 +24,7 @@ type
     ///	<param name="Context">
     ///	  The context.
     ///	</param>
-    procedure Execute(Context: IActionExecutionContext);
+    procedure Execute(Context: ICoroutineExecutionContext);
 
     ///	<summary>
     ///	  Occurs when execution has completed.

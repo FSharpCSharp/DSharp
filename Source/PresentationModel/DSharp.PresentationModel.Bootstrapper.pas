@@ -149,7 +149,9 @@ implementation
 uses
   // DSharp.Aspects.Weaver,
   DSharp.PresentationModel.EventAggregator,
-  Spring.Reflection;
+  Spring.Reflection,
+  DSharp.PresentationModel.CoroutineExecutionContext,
+  DSharp.PresentationModel.CoroutineExecutionContextIntf;
 
 procedure TBootstrapper.BuildUp(Instance: TObject);
 begin
@@ -217,7 +219,7 @@ begin
       LCoroutine: IEnumerable<IResult>;
       LViewAware: IViewAware;
       LView: TObject;
-      LContext: IActionExecutionContext;
+      LContext: ICoroutineExecutionContext;
       LObject: TObject;
     begin
       // TODO: Verify this code if converting to IEnumerable<IResult> works as expected?
@@ -233,7 +235,7 @@ begin
         else
           LView := nil;
 
-        LContext := TActionExecutionContext.Create;
+        LContext := TCoroutineExecutionContext.Create;
         LContext.Target := Target;
         LContext.View := LView as TComponent;
 

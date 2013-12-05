@@ -7,7 +7,7 @@ uses
   DSharp.Core.EventArgs,
   DSharp.Collections,
   DSharp.Logging,
-  DSharp.PresentationModel.ActionExecutionContext,
+  DSharp.PresentationModel.CoroutineExecutionContextIntf,
   DSharp.PresentationModel.EventAggregator,
   DSharp.PresentationModel.ResultIntf,
   DSharp.PresentationModel.ResultCompletionEventArgsIntf;
@@ -41,9 +41,9 @@ type
     ///	  The completion callback for the coroutine.
     ///	</param>
     class procedure BeginExecute(Coroutine: IEnumerator<IResult>;
-      Context: IActionExecutionContext = nil); overload; static;
+      Context: ICoroutineExecutionContext = nil); overload; static;
     class procedure BeginExecute(Coroutine: IEnumerator<IResult>;
-      Context: IActionExecutionContext; Callback: TResultCompletionEvent);
+      Context: ICoroutineExecutionContext; Callback: TResultCompletionEvent);
       overload; static;
 
     ///	<summary>
@@ -63,7 +63,8 @@ implementation
 
 uses
   DSharp.PresentationModel.IoC,
-  DSharp.PresentationModel.SequentialResult;
+  DSharp.PresentationModel.SequentialResult,
+  DSharp.PresentationModel.CoroutineExecutionContext;
 
 { TCoroutine }
 
@@ -87,13 +88,13 @@ begin
 end;
 
 class procedure TCoroutine.BeginExecute(Coroutine: IEnumerator<IResult>;
-  Context: IActionExecutionContext = nil);
+  Context: ICoroutineExecutionContext = nil);
 begin
   BeginExecute(Coroutine, Context, nil);
 end;
 
 class procedure TCoroutine.BeginExecute(Coroutine: IEnumerator<IResult>;
-  Context: IActionExecutionContext; Callback: TResultCompletionEvent);
+  Context: ICoroutineExecutionContext; Callback: TResultCompletionEvent);
 var
   LEnumerator: IResult;
 begin
@@ -111,7 +112,7 @@ begin
 
   if not Assigned(Context) then
   begin
-    Context := TActionExecutionContext.Create;
+    Context := TCoroutineExecutionContext.Create;
   end;
 
   LEnumerator.Execute(Context);

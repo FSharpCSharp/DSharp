@@ -6,7 +6,7 @@ uses
   SysUtils,
   DSharp.Collections,
   DSharp.Core.EventArgs,
-  DSharp.PresentationModel.ActionExecutionContext,
+  DSharp.PresentationModel.CoroutineExecutionContextIntf,
   DSharp.PresentationModel.ResultBase,
   DSharp.PresentationModel.ResultCompletionEventArgsIntf,
   DSharp.PresentationModel.ResultIntf;
@@ -18,7 +18,7 @@ type
   ///	</summary>
   TSequentialResult = class(TResultBase)
   strict private
-    FContext: IActionExecutionContext;
+    FContext: ICoroutineExecutionContext;
     FChildCompletedEvent: TResultCompletionEvent;
     procedure ChildCompleted(Sender: TObject; Args: IResultCompletionEventArgs);
     procedure OnComplete(Error: Exception; WasCancelled: Boolean);
@@ -40,7 +40,7 @@ type
     ///	<param name="context">
     ///	  The context.
     ///	</param>
-    procedure Execute(Context: IActionExecutionContext); override;
+    procedure Execute(Context: ICoroutineExecutionContext); override;
   end;
 
 implementation
@@ -103,7 +103,7 @@ begin
   end;
 end;
 
-procedure TSequentialResult.Execute(Context: IActionExecutionContext);
+procedure TSequentialResult.Execute(Context: ICoroutineExecutionContext);
 var
   LArgs: IResultCompletionEventArgs;
 begin

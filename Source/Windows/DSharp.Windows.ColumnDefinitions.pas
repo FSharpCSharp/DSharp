@@ -159,10 +159,11 @@ type
     function GetOwner: TPersistent;
     function GetSortColumnIndex: Integer;
     procedure SetItem(Index: Integer; Value: TColumnDefinition);
+    procedure SetMainColumnIndex(const Value: Integer);
     property AutoSizeIndex: Integer read GetAutoSizeIndex;
     property Count: Integer read GetCount;
     property Items[Index: Integer]: TColumnDefinition read GetItem write SetItem; default;
-    property MainColumnIndex: Integer read GetMainColumnIndex;
+    property MainColumnIndex: Integer read GetMainColumnIndex write SetMainColumnIndex;
     property OnNotify: IEvent<TCollectionNotifyEvent<TColumnDefinition>> read GetOnNotify;
     property Owner: TPersistent read GetOwner;
     property SortColumnIndex: Integer read GetSortColumnIndex;
@@ -175,6 +176,7 @@ type
     function GetAutoSizeIndex: Integer;
     function GetMainColumnIndex: Integer;
     function GetSortColumnIndex: Integer;
+    procedure SetMainColumnIndex(const Value: Integer);
   protected
     FMainColumnIndex: Integer;
     procedure Initialize; virtual;
@@ -386,6 +388,11 @@ end;
 procedure TColumnDefinitions.Initialize;
 begin
   // implemented by descendants
+end;
+
+procedure TColumnDefinitions.SetMainColumnIndex(const Value: Integer);
+begin
+  FMainColumnIndex := Value;
 end;
 
 function TColumnDefinitions.QueryInterface(const IID: TGUID; out Obj): HResult;

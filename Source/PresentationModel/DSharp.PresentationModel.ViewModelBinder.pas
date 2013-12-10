@@ -594,6 +594,8 @@ end;
 
 class function ViewModelBinder.FindControlAndRemove(const LUnmatchedElements
   : IList<TComponent>; const LMethod: TRttiMethod): TComponent;
+const
+  CPresentationModelNamespace: string = 'DSharp.PresentationModel.';
 var
   Parent: TRttiType;
   QualifiedName: string;
@@ -608,7 +610,7 @@ begin
       if Parent.IsPublicType then
       begin
         QualifiedName := Parent.QualifiedName;
-        if QualifiedName.StartsWith('DSharp.PresentationModel.', True) then
+        if StartsText(CPresentationModelNamespace, QualifiedName) then
           Exit;
       end;
     Log.LogWarning

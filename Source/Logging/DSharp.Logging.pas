@@ -295,7 +295,11 @@ var
 begin
   LTypeInfo := GetTypeInfo();
   if Assigned(LTypeInfo) then
-    Result := LTypeInfo.NameFld.ToString() {TODO -o##jwp -cCompatibility : XE2 and higher; before that, use the Name property}
+{$IF CompilerVersion > 22} {-o##jwp -cCompatibility : XE2 and higher; before that, use the Name property}
+    Result := LTypeInfo.NameFld.ToString()
+{$ELSE}
+    Result := string(LTypeInfo.Name)
+{$IFEND}
   else
     Result := '';
 end;

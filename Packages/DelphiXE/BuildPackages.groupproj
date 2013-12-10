@@ -24,6 +24,12 @@
 			<Projects Include="dclTreeViewPresenter.dproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="DSharp.PresentationModel.dproj">
+				<Dependencies/>
+			</Projects>
+			<Projects Include="DSharp.PresentationModelVCL.dproj">
+				<Dependencies/>
+			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -36,73 +42,91 @@
 			<MSBuild Projects="DSharp.Core.dproj"/>
 		</Target>
 		<Target Name="DSharp_Core:Clean">
-			<MSBuild Projects="DSharp.Core.dproj" Targets="Clean"/>
+			<MSBuild Targets="Clean" Projects="DSharp.Core.dproj"/>
 		</Target>
 		<Target Name="DSharp_Core:Make">
-			<MSBuild Projects="DSharp.Core.dproj" Targets="Make"/>
+			<MSBuild Targets="Make" Projects="DSharp.Core.dproj"/>
 		</Target>
 		<Target Name="DataBindings">
 			<MSBuild Projects="DataBindings.dproj"/>
 		</Target>
 		<Target Name="DataBindings:Clean">
-			<MSBuild Projects="DataBindings.dproj" Targets="Clean"/>
+			<MSBuild Targets="Clean" Projects="DataBindings.dproj"/>
 		</Target>
 		<Target Name="DataBindings:Make">
-			<MSBuild Projects="DataBindings.dproj" Targets="Make"/>
+			<MSBuild Targets="Make" Projects="DataBindings.dproj"/>
 		</Target>
 		<Target Name="dclDataBindings">
 			<MSBuild Projects="dclDataBindings.dproj"/>
 		</Target>
 		<Target Name="dclDataBindings:Clean">
-			<MSBuild Projects="dclDataBindings.dproj" Targets="Clean"/>
+			<MSBuild Targets="Clean" Projects="dclDataBindings.dproj"/>
 		</Target>
 		<Target Name="dclDataBindings:Make">
-			<MSBuild Projects="dclDataBindings.dproj" Targets="Make"/>
+			<MSBuild Targets="Make" Projects="dclDataBindings.dproj"/>
 		</Target>
 		<Target Name="DataBindingsVCL">
 			<MSBuild Projects="DataBindingsVCL.dproj"/>
 		</Target>
 		<Target Name="DataBindingsVCL:Clean">
-			<MSBuild Projects="DataBindingsVCL.dproj" Targets="Clean"/>
+			<MSBuild Targets="Clean" Projects="DataBindingsVCL.dproj"/>
 		</Target>
 		<Target Name="DataBindingsVCL:Make">
-			<MSBuild Projects="DataBindingsVCL.dproj" Targets="Make"/>
+			<MSBuild Targets="Make" Projects="DataBindingsVCL.dproj"/>
 		</Target>
 		<Target Name="dclDataBindingsVCL">
 			<MSBuild Projects="dclDataBindingsVCL.dproj"/>
 		</Target>
 		<Target Name="dclDataBindingsVCL:Clean">
-			<MSBuild Projects="dclDataBindingsVCL.dproj" Targets="Clean"/>
+			<MSBuild Targets="Clean" Projects="dclDataBindingsVCL.dproj"/>
 		</Target>
 		<Target Name="dclDataBindingsVCL:Make">
-			<MSBuild Projects="dclDataBindingsVCL.dproj" Targets="Make"/>
+			<MSBuild Targets="Make" Projects="dclDataBindingsVCL.dproj"/>
 		</Target>
 		<Target Name="TreeViewPresenter">
 			<MSBuild Projects="TreeViewPresenter.dproj"/>
 		</Target>
 		<Target Name="TreeViewPresenter:Clean">
-			<MSBuild Projects="TreeViewPresenter.dproj" Targets="Clean"/>
+			<MSBuild Targets="Clean" Projects="TreeViewPresenter.dproj"/>
 		</Target>
 		<Target Name="TreeViewPresenter:Make">
-			<MSBuild Projects="TreeViewPresenter.dproj" Targets="Make"/>
+			<MSBuild Targets="Make" Projects="TreeViewPresenter.dproj"/>
 		</Target>
 		<Target Name="dclTreeViewPresenter">
 			<MSBuild Projects="dclTreeViewPresenter.dproj"/>
 		</Target>
 		<Target Name="dclTreeViewPresenter:Clean">
-			<MSBuild Projects="dclTreeViewPresenter.dproj" Targets="Clean"/>
+			<MSBuild Targets="Clean" Projects="dclTreeViewPresenter.dproj"/>
 		</Target>
 		<Target Name="dclTreeViewPresenter:Make">
-			<MSBuild Projects="dclTreeViewPresenter.dproj" Targets="Make"/>
+			<MSBuild Targets="Make" Projects="dclTreeViewPresenter.dproj"/>
+		</Target>
+		<Target Name="DSharp_PresentationModel">
+			<MSBuild Projects="DSharp.PresentationModel.dproj"/>
+		</Target>
+		<Target Name="DSharp_PresentationModel:Clean">
+			<MSBuild Targets="Clean" Projects="DSharp.PresentationModel.dproj"/>
+		</Target>
+		<Target Name="DSharp_PresentationModel:Make">
+			<MSBuild Targets="Make" Projects="DSharp.PresentationModel.dproj"/>
+		</Target>
+		<Target Name="DSharp_PresentationModelVCL">
+			<MSBuild Projects="DSharp.PresentationModelVCL.dproj"/>
+		</Target>
+		<Target Name="DSharp_PresentationModelVCL:Clean">
+			<MSBuild Targets="Clean" Projects="DSharp.PresentationModelVCL.dproj"/>
+		</Target>
+		<Target Name="DSharp_PresentationModelVCL:Make">
+			<MSBuild Targets="Make" Projects="DSharp.PresentationModelVCL.dproj"/>
 		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="DSharp_Core;DataBindings;dclDataBindings;DataBindingsVCL;dclDataBindingsVCL;TreeViewPresenter;dclTreeViewPresenter"/>
+			<CallTarget Targets="DSharp_Core;DataBindings;dclDataBindings;DataBindingsVCL;dclDataBindingsVCL;TreeViewPresenter;dclTreeViewPresenter;DSharp_PresentationModel;DSharp_PresentationModelVCL"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="DSharp_Core:Clean;DataBindings:Clean;dclDataBindings:Clean;DataBindingsVCL:Clean;dclDataBindingsVCL:Clean;TreeViewPresenter:Clean;dclTreeViewPresenter:Clean"/>
+			<CallTarget Targets="DSharp_Core:Clean;DataBindings:Clean;dclDataBindings:Clean;DataBindingsVCL:Clean;dclDataBindingsVCL:Clean;TreeViewPresenter:Clean;dclTreeViewPresenter:Clean;DSharp_PresentationModel:Clean;DSharp_PresentationModelVCL:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="DSharp_Core:Make;DataBindings:Make;dclDataBindings:Make;DataBindingsVCL:Make;dclDataBindingsVCL:Make;TreeViewPresenter:Make;dclTreeViewPresenter:Make"/>
+			<CallTarget Targets="DSharp_Core:Make;DataBindings:Make;dclDataBindings:Make;DataBindingsVCL:Make;dclDataBindingsVCL:Make;TreeViewPresenter:Make;dclTreeViewPresenter:Make;DSharp_PresentationModel:Make;DSharp_PresentationModelVCL:Make"/>
 		</Target>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
 	</Project>

@@ -461,7 +461,7 @@ uses
   DSharp.Validation.ValidationResultExtensions,
   DSharp.Validation.RuleResult,
   DSharp.PresentationModel.Execute,
-  System.SyncObjs;
+  SyncObjs;
 
 constructor TValidationHelper.Create(Owner: TObject);
 begin

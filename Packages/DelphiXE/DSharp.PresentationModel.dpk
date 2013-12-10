@@ -1,0 +1,132 @@
+package DSharp.PresentationModel;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'DSharp presentation model runtime package'}
+{$LIBSUFFIX '150'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  DataBindings,
+  DSharp.Core,
+  Spring.Base,
+  Spring.Core;
+
+contains
+  DSharp.PresentationModel.Action in '..\..\Source\PresentationModel\DSharp.PresentationModel.Action.pas',
+  DSharp.PresentationModel.ActionExecutionContext in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActionExecutionContext.pas',
+  DSharp.PresentationModel.Bind in '..\..\Source\PresentationModel\DSharp.PresentationModel.Bind.pas',
+  DSharp.PresentationModel.BindingScope in '..\..\Source\PresentationModel\DSharp.PresentationModel.BindingScope.pas',
+  DSharp.PresentationModel.Bootstrapper in '..\..\Source\PresentationModel\DSharp.PresentationModel.Bootstrapper.pas',
+  DSharp.PresentationModel.Conductor in '..\..\Source\PresentationModel\DSharp.PresentationModel.Conductor.pas',
+  DSharp.PresentationModel.ConductorBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.ConductorBase.pas',
+  DSharp.PresentationModel.ConductorBaseWithActiveItem in '..\..\Source\PresentationModel\DSharp.PresentationModel.ConductorBaseWithActiveItem.pas',
+  DSharp.PresentationModel.ConductorWithCollectionAllActive in '..\..\Source\PresentationModel\DSharp.PresentationModel.ConductorWithCollectionAllActive.pas',
+  DSharp.PresentationModel.ConductorWithCollectionOneActive in '..\..\Source\PresentationModel\DSharp.PresentationModel.ConductorWithCollectionOneActive.pas',
+  DSharp.PresentationModel.ConventionManager in '..\..\Source\PresentationModel\DSharp.PresentationModel.ConventionManager.pas',
+  DSharp.PresentationModel.Coroutine in '..\..\Source\PresentationModel\DSharp.PresentationModel.Coroutine.pas',
+  DSharp.PresentationModel.DefaultCloseStrategy in '..\..\Source\PresentationModel\DSharp.PresentationModel.DefaultCloseStrategy.pas',
+  DSharp.PresentationModel.ElementConvention in '..\..\Source\PresentationModel\DSharp.PresentationModel.ElementConvention.pas',
+  DSharp.PresentationModel.EventAggregator in '..\..\Source\PresentationModel\DSharp.PresentationModel.EventAggregator.pas',
+  DSharp.PresentationModel.InitializeComponent in '..\..\Source\PresentationModel\DSharp.PresentationModel.InitializeComponent.pas',
+  DSharp.PresentationModel.IoC in '..\..\Source\PresentationModel\DSharp.PresentationModel.IoC.pas',
+  DSharp.PresentationModel.NameTransformer in '..\..\Source\PresentationModel\DSharp.PresentationModel.NameTransformer.pas',
+  DSharp.PresentationModel in '..\..\Source\PresentationModel\DSharp.PresentationModel.pas',
+  DSharp.PresentationModel.ResultIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultIntf.pas',
+  DSharp.PresentationModel.RoutedEvent in '..\..\Source\PresentationModel\DSharp.PresentationModel.RoutedEvent.pas',
+  DSharp.PresentationModel.Screen in '..\..\Source\PresentationModel\DSharp.PresentationModel.Screen.pas',
+  DSharp.PresentationModel.ScreenExtensions in '..\..\Source\PresentationModel\DSharp.PresentationModel.ScreenExtensions.pas',
+  DSharp.PresentationModel.SequentialResult in '..\..\Source\PresentationModel\DSharp.PresentationModel.SequentialResult.pas',
+  DSharp.PresentationModel.View in '..\..\Source\PresentationModel\DSharp.PresentationModel.View.pas',
+  DSharp.PresentationModel.ViewAware in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewAware.pas',
+  DSharp.PresentationModel.ViewLocator in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewLocator.pas',
+  DSharp.PresentationModel.ViewModelBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewModelBase.pas',
+  DSharp.PresentationModel.ViewModelBinder in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewModelBinder.pas',
+  DSharp.PresentationModel.ViewSettings in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewSettings.pas',
+  DSharp.PresentationModel.ScreenIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ScreenIntf.pas',
+  DSharp.PresentationModel.ChildIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ChildIntf.pas',
+  DSharp.PresentationModel.ConductorIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ConductorIntf.pas',
+  DSharp.PresentationModel.ViewAwareIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewAwareIntf.pas',
+  DSharp.Validation in '..\..\Source\Validation\DSharp.Validation.pas',
+  DSharp.Validation.ValidationHelper in '..\..\Source\Validation\DSharp.Validation.ValidationHelper.pas',
+  DSharp.Validation.RuleResult in '..\..\Source\Validation\DSharp.Validation.RuleResult.pas',
+  DSharp.Validation.UndefinedValidationTarget in '..\..\Source\Validation\DSharp.Validation.UndefinedValidationTarget.pas',
+  DSharp.Validation.PropertyCollectionValidationTarget in '..\..\Source\Validation\DSharp.Validation.PropertyCollectionValidationTarget.pas',
+  DSharp.Validation.PropertyValidationTarget in '..\..\Source\Validation\DSharp.Validation.PropertyValidationTarget.pas',
+  DSharp.Validation.GenericValidationTarget in '..\..\Source\Validation\DSharp.Validation.GenericValidationTarget.pas',
+  DSharp.Validation.ValidationRule in '..\..\Source\Validation\DSharp.Validation.ValidationRule.pas',
+  DSharp.Validation.ValidationResult in '..\..\Source\Validation\DSharp.Validation.ValidationResult.pas',
+  DSharp.Validation.ValidationError in '..\..\Source\Validation\DSharp.Validation.ValidationError.pas',
+  DSharp.Validation.ValidationResultChangedEventArgs in '..\..\Source\Validation\DSharp.Validation.ValidationResultChangedEventArgs.pas',
+  DSharp.Validation.DataAnnotationValidationRule in '..\..\Source\Validation\DSharp.Validation.DataAnnotationValidationRule.pas',
+  DSharp.Validation.ValidationResultExtensions in '..\..\Source\Validation\DSharp.Validation.ValidationResultExtensions.pas',
+  DSharp.Validation.RuleResultExtensions in '..\..\Source\Validation\DSharp.Validation.RuleResultExtensions.pas',
+  DSharp.Validation.NumberedListValidationResultFormatter in '..\..\Source\Validation\DSharp.Validation.NumberedListValidationResultFormatter.pas',
+  DSharp.Validation.DataAnnotations in '..\..\Source\Validation\DSharp.Validation.DataAnnotations.pas',
+  DSharp.PresentationModel.BindingString in '..\..\Source\PresentationModel\DSharp.PresentationModel.BindingString.pas',
+  DSharp.PresentationModel.ActivationEventArgsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActivationEventArgsIntf.pas',
+  DSharp.PresentationModel.ActivationEventArgs in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActivationEventArgs.pas',
+  DSharp.PresentationModel.DeactivationEventArgsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.DeactivationEventArgsIntf.pas',
+  DSharp.PresentationModel.DeactivationEventArgs in '..\..\Source\PresentationModel\DSharp.PresentationModel.DeactivationEventArgs.pas',
+  DSharp.PresentationModel.GuardCloseIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.GuardCloseIntf.pas',
+  DSharp.PresentationModel.CloseIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CloseIntf.pas',
+  DSharp.PresentationModel.ActivationProcessedEventArgs in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActivationProcessedEventArgs.pas',
+  DSharp.PresentationModel.ActivationProcessedEventArgsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActivationProcessedEventArgsIntf.pas',
+  DSharp.PresentationModel.ActivateIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActivateIntf.pas',
+  DSharp.PresentationModel.DeactivateIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.DeactivateIntf.pas',
+  DSharp.PresentationModel.HaveDisplayNameIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.HaveDisplayNameIntf.pas',
+  DSharp.PresentationModel.HaveSubjectIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.HaveSubjectIntf.pas',
+  DSharp.PresentationModel.ViewAttachedEventArgsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewAttachedEventArgsIntf.pas',
+  DSharp.PresentationModel.ViewAttachedEventArgs in '..\..\Source\PresentationModel\DSharp.PresentationModel.ViewAttachedEventArgs.pas',
+  DSharp.PresentationModel.HandleWithCoroutineIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.HandleWithCoroutineIntf.pas',
+  DSharp.PresentationModel.EventAggregatorIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.EventAggregatorIntf.pas',
+  DSharp.ComponentModel.Composition in '..\..\Source\ComponentModel\DSharp.ComponentModel.Composition.pas',
+  DSharp.ComponentModel.Composition.SpringContainer in '..\..\Source\ComponentModel\DSharp.ComponentModel.Composition.SpringContainer.pas',
+  DSharp.PresentationModel.Extensions in '..\..\Source\PresentationModel\DSharp.PresentationModel.Extensions.pas',
+  DSharp.Aspects.Intercepts in '..\..\Source\Aspects\DSharp.Aspects.Intercepts.pas',
+  DSharp.Aspects.Logging in '..\..\Source\Aspects\DSharp.Aspects.Logging.pas',
+  DSharp.Aspects in '..\..\Source\Aspects\DSharp.Aspects.pas',
+  DSharp.Aspects.Security in '..\..\Source\Aspects\DSharp.Aspects.Security.pas',
+  DSharp.Aspects.Weaver in '..\..\Source\Aspects\DSharp.Aspects.Weaver.pas',
+  DSharp.PresentationModel.ObservableCollectionIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ObservableCollectionIntf.pas',
+  DSharp.PresentationModel.BindableCollection in '..\..\Source\PresentationModel\DSharp.PresentationModel.BindableCollection.pas',
+  DSharp.PresentationModel.NotifyPropertyChangedExIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.NotifyPropertyChangedExIntf.pas',
+  DSharp.PresentationModel.PropertyChangedBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.PropertyChangedBase.pas',
+  DSharp.PresentationModel.Execute in '..\..\Source\PresentationModel\DSharp.PresentationModel.Execute.pas',
+  DSharp.PresentationModel.CloseStrategyIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CloseStrategyIntf.pas',
+  DSharp.PresentationModel.ResultCompletionEventArgsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgsIntf.pas',
+  DSharp.PresentationModel.ResultCompletionEventArgs in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultCompletionEventArgs.pas',
+  DSharp.PresentationModel.ResultBase in '..\..\Source\PresentationModel\DSharp.PresentationModel.ResultBase.pas',
+  DSharp.PresentationModel.ParentIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ParentIntf.pas',
+  DSharp.PresentationModel.HaveActiveItemIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.HaveActiveItemIntf.pas',
+  DSharp.PresentationModel.CoroutineExecutionContext in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContext.pas',
+  DSharp.PresentationModel.ActionExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.ActionExecutionContextIntf.pas',
+  DSharp.PresentationModel.CoroutineExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContextIntf.pas',
+  DSharp.PresentationModel.WindowManagerIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.WindowManagerIntf.pas',
+  DSharp.PresentationModel.DefinesBindingsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.DefinesBindingsIntf.pas',
+  DSharp.PresentationModel.SpringBootstrapper in '..\..\Source\PresentationModel\DSharp.PresentationModel.SpringBootstrapper.pas',
+  Actions in '..\..\Source\PresentationModel\Actions.pas';
+
+end.

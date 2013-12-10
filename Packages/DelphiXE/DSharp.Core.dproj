@@ -71,7 +71,6 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.EventArgs.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Extensions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Fibers.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Framework.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Generics.pas"/>
@@ -93,6 +92,9 @@
 			<DCCReference Include="..\..\Source\Core\ObjAutoPatch.pas"/>
 			<DCCReference Include="..\..\Source\Core\PatchUtils.pas"/>
 			<DCCReference Include="..\..\Source\Core\RttiPatch.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyPath.pas"/>
+			<DCCReference Include="..\..\Source\Core\DSharp.Core.RegularExpressions.pas"/>
+			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.Debug.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -105,8 +107,8 @@
 				<CfgParent>Base</CfgParent>
 			</BuildConfiguration>
 		</ItemGroup>
-		<Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
-		<Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
+		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
+		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
 			<Borland.ProjectType>Package</Borland.ProjectType>

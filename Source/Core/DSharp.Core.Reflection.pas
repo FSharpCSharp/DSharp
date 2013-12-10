@@ -2774,6 +2774,21 @@ begin
 end;
 
 class function TValueHelper.ToString(const Value: TValue): string;
+
+  function ArrayToString(const value: TValue): string;
+  var
+    i: Integer;
+  begin
+    Result := '[';
+    for i := 0 to value.GetArrayLength - 1 do
+    begin
+      if i > 0 then
+        Result := Result + ', ';
+      Result := Result + TValue.ToString(value.GetArrayElement(i));
+    end;
+    Result := Result + ']';
+  end;
+
 var
   LInterface: IInterface;
   LObject: TObject;
@@ -2809,9 +2824,16 @@ begin
       LObject := LInterface as TObject;
       Result := Format('%s($%x) as %s', [StripUnitName(LObject.ClassName),
         NativeInt(LInterface), StripUnitName(string(Value.TypeInfo.Name))]);
-    end
+    end;
+    tkArray, tkDynArray:
+    begin
+      Result := ArrayToString(Value);
+    end;
   else
-    Result := Value.ToString;
+    if Value.IsString then
+      Result := '''' + Value.ToString + ''''
+    else
+      Result := Value.ToString;
   end;
 end;
 

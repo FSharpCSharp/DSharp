@@ -237,7 +237,7 @@ end;
 destructor TMock<T>.Destroy;
 begin
   case FTypeInfo.Kind of
-    tkClass: PObject(@FProxy)^.FreeInstance;
+    tkClass: PObject(@FProxy)^.Free;
   end;
 
   inherited Destroy;

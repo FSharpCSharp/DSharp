@@ -28,7 +28,9 @@ uses
   DSharp.Core.Nullable,
   DSharp.Core.Reflection,
   Rtti,
+  StrUtils,
   SysUtils,
+  Types,
   TestClasses,
   TestFramework;
 
@@ -224,6 +226,11 @@ type
   TRttiObjectHelperTestCase = class(TTestCase)
   published
     procedure Test;
+  end;
+
+  TToStringTestCase = class(TTestCase)
+  published
+    procedure StringDynArrayToString;
   end;
 
 var
@@ -1058,11 +1065,29 @@ begin
   base.Free;
 end;
 
+{ TToStringTestCase }
+
+procedure TToStringTestCase.StringDynArrayToString;
+var
+  values: array of array of string;
+  v: TValue;
+  s: string;
+begin
+  SetLength(values, 2, 2);
+  values[0,0] := 'A';
+  values[0,1] := 'B';
+  values[1,0] := 'C';
+  values[1,1] := 'D';
+  v := TValue.From(values);
+  s := TValue.ToString(v);
+  CheckEquals('[[''A'', ''B''], [''C'', ''D'']]', s);
+end;
+
 initialization
   RegisterTest('DSharp.Core.Reflection', TRttiTypeHelperTestCase.Suite);
   RegisterTest('DSharp.Core.Reflection', TValueHelperTestCase.Suite);
   RegisterTest('DSharp.Core.Reflection', TSameValueTestCase.Suite);
   RegisterTest('DSharp.Core.Reflection', TRttiObjectHelperTestCase.Suite);
+  RegisterTest('DSharp.Core.Reflection', TToStringTestCase.Suite);
 
 end.
-

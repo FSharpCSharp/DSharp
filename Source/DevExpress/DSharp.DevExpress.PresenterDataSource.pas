@@ -84,6 +84,7 @@ implementation
 uses
   DSharp.Bindings.Notifications,
   DSharp.Core.DataTemplates,
+  Rtti,
   Variants;
 
 { TGridViewPresenterDataSource }
@@ -141,7 +142,7 @@ var
   LItemTemplate: IDataTemplate;
 begin
   LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
-  LItemTemplate.SetText(ARecordHandle, Integer(AItemHandle), VarToStrDef(AValue, ''));
+  LItemTemplate.SetValue(ARecordHandle, Integer(AItemHandle), TValue.FromVariant(AValue));
 end;
 
 { TTreeListPresenterDataSource }
@@ -212,7 +213,7 @@ var
   LItemTemplate: IDataTemplate;
 begin
   LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
-  LItemTemplate.SetText(ARecordHandle, Integer(AItemHandle), VarToStrDef(AValue, ''));
+  LItemTemplate.SetValue(ARecordHandle, Integer(AItemHandle), TValue.FromVariant(AValue));
 end;
 {$ENDIF}
 

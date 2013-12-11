@@ -1843,6 +1843,7 @@ begin
           end;
         end;
       end;
+      FTreeView.Header.MainColumn := ColumnDefinitions.MainColumnIndex;
       FTreeView.Header.AutoSizeIndex := ColumnDefinitions.AutoSizeIndex;
       if FTreeView.Header.AutoSizeIndex = -1 then
       begin

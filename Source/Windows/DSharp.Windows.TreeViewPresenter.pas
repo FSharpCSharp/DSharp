@@ -1098,6 +1098,11 @@ begin
     begin
       Sender.ChildCount[Node] := LItemTemplate.GetItemCount(LItem);
     end;
+
+    if not LItemTemplate.IsCheckBoxVisible(LItem) then
+    begin
+      Node.CheckType := ctNone;
+    end;
   end
   else
   begin

@@ -43,6 +43,7 @@ type
     function GetImageIndex(const Item: TObject; const ColumnIndex: Integer): Integer;
     function GetText(const Item: TObject; const ColumnIndex: Integer): string;
     function GetValue(const Item: TObject; const ColumnIndex: Integer): TValue;
+    function IsCheckBoxVisible(const Item: TObject): Boolean;
 
     // methods to edit items
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
@@ -80,6 +81,8 @@ type
       const ColumnIndex: Integer): string; virtual;
     function GetValue(const Item: TObject;
       const ColumnIndex: Integer): TValue; virtual;
+
+    function IsCheckBoxVisible(const Item: TObject): Boolean; virtual;
 
     procedure SetText(const Item: TObject; const ColumnIndex: Integer;
       const Value: string); virtual;
@@ -136,6 +139,9 @@ type
     function GetItemCount(const Item: T): Integer; reintroduce; overload; virtual;
     function GetItems(const Item: TObject): IList; overload; override; final;
     function GetItems(const Item: T): IList; reintroduce; overload; virtual;
+
+    function IsCheckBoxVisible(const Item: TObject): Boolean; overload; override; final;
+    function IsCheckBoxVisible(const Item: T): Boolean; reintroduce; overload; virtual;
 
     function GetTemplateDataClass: TClass; override; final;
   end;
@@ -291,6 +297,11 @@ begin
   Result := TValue.Empty;
 end;
 
+function TDataTemplate.IsCheckBoxVisible(const Item: TObject): Boolean;
+begin
+  Result := True;
+end;
+
 procedure TDataTemplate.RegisterDataTemplate(const DataTemplate: IDataTemplate);
 begin
   FTemplates.Add(DataTemplate);
@@ -392,6 +403,16 @@ function TDataTemplate<T>.GetValue(const Item: T;
   const ColumnIndex: Integer): TValue;
 begin
   Result := inherited GetValue(Item, ColumnIndex);
+end;
+
+function TDataTemplate<T>.IsCheckBoxVisible(const Item: TObject): Boolean;
+begin
+  Result := IsCheckBoxVisible(T(Item));
+end;
+
+function TDataTemplate<T>.IsCheckBoxVisible(const Item: T): Boolean;
+begin
+  Result := inherited IsCheckBoxVisible(Item);
 end;
 
 procedure TDataTemplate<T>.SetText(const Item: TObject;

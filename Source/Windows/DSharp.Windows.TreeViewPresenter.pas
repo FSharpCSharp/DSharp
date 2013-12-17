@@ -52,6 +52,7 @@ type
   TDragOperation = VirtualTrees.TDragOperation;
   TDropMode = VirtualTrees.TDropMode;
 
+  TCollapsedEvent = procedure(Sender: TObject; CollapsedItem: TObject) of object;
   TCompareEvent = procedure(Sender: TObject; Item1, Item2: TObject;
     ColumnIndex: Integer; var Result: Integer) of object;
   TDragBeginEvent = procedure(Sender: TObject; Item: TObject;
@@ -61,6 +62,7 @@ type
   TDragDropEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
     DragOperation: TDragOperation; var DropMode: TDropMode;
     var Handled: Boolean) of object;
+  TExpandedEvent = procedure(Sender: TObject; ExpandedItem: TObject) of object;
   TSelectionChangingEvent = procedure(Sender: TObject; TargetItem: TObject;
     var AllowChange: Boolean) of object;
 
@@ -81,10 +83,12 @@ type
     FExpandedItems: IList<TObject>;
     FHitInfo: THitInfo;
     FListMode: Boolean;
+    FOnCollapsed: TCollapsedEvent;
     FOnCompare: TCompareEvent;
     FOnDragBegin: TDragBeginEvent;
     FOnDragDrop: TDragDropEvent;
     FOnDragOver: TDragOverEvent;
+    FOnExpanded: TExpandedEvent;
     FOnKeyAction: TKeyEvent;
     FOnSelectionChanged: TNotifyEvent;
     FOnSelectionChanging: TSelectionChangingEvent;
@@ -254,10 +258,12 @@ type
     property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
     property FilterDirection: TFilterDirection read FFilterDirection write FFilterDirection default fdRootToLeafs;
     property ListMode: Boolean read FListMode write SetListMode default False;
+    property OnCollapsed: TCollapsedEvent read FOnCollapsed write FOnCollapsed;
     property OnCompare: TCompareEvent read FOnCompare write FOnCompare;
     property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
     property OnDragDrop: TDragDropEvent read FOnDragDrop write FOnDragDrop;
     property OnDragOver: TDragOverEvent read FOnDragOver write FOnDragOver;
+    property OnExpanded: TExpandedEvent read FOnExpanded write FOnExpanded;
     property OnKeyAction: TKeyEvent read FOnKeyAction write FOnKeyAction;
     property OnSelectionChanged: TNotifyEvent
       read FOnSelectionChanged write FOnSelectionChanged;
@@ -564,7 +570,15 @@ end;
 
 procedure TTreeViewPresenter.DoCollapsed(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
+var
+  LItem: TObject;
 begin
+  if Assigned(FOnCollapsed) then
+  begin
+    LItem := GetNodeItem(Sender, Node);
+    FOnCollapsed(Sender, LItem);
+  end;
+
   UpdateExpandedItems();
 
   DoPropertyChanged('ExpandedItems');
@@ -769,7 +783,15 @@ end;
 
 procedure TTreeViewPresenter.DoExpanded(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
+var
+  LItem: TObject;
 begin
+  if Assigned(FOnExpanded) then
+  begin
+    LItem := GetNodeItem(Sender, Node);
+    FOnExpanded(Sender, LItem);
+  end;
+
   UpdateExpandedItems();
 
   DoPropertyChanged('ExpandedItems');

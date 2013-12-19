@@ -94,6 +94,7 @@ type
     FOnSelectionChanging: TSelectionChangingEvent;
     FProgressBar: TProgressBar;
     FSelectedItems: IList<TObject>;
+    FSelectedItemPath: IList<TObject>;
     FShowHeader: Boolean;
     FSelectionMode: TSelectionMode;
     FSorting: Boolean;
@@ -178,6 +179,7 @@ type
     function GetParentItem(const Level: Integer): TObject;
     function GetSelectedItem: TObject;
     function GetSelectedItems: IList<TObject>;
+    function GetSelectedItemPath: IList<TObject>;
 
     function CalcCheckBoxRect(const Rect: TRect): TRect;
     function CalcImageRect(const Rect: TRect): TRect;
@@ -206,6 +208,7 @@ type
     procedure UpdateCheckedItems;
     procedure UpdateExpandedItems;
     procedure UpdateSelectedItems;
+    procedure UpdateSelectedItemPath;
   protected
     procedure DefineProperties(Filer: TFiler); override;
     procedure DoCheckedItemsChanged(Sender: TObject; const Item: TObject;
@@ -251,6 +254,7 @@ type
     property ParentItem[const Level: Integer]: TObject read GetParentItem;
     property SelectedItem: TObject read GetSelectedItem write SetSelectedItem;
     property SelectedItems: IList<TObject> read GetSelectedItems write SetSelectedItems;
+    property SelectedItemPath: IList<TObject> read FSelectedItemPath;
   published
     property AllowClearSelection: Boolean
       read FAllowClearSelection write FAllowClearSelection default True;
@@ -357,6 +361,7 @@ begin
   FExpandedItems.OnCollectionChanged.Add(DoExpandedItemsChanged);
   FSelectedItems := TList<TObject>.Create();
   FSelectedItems.OnCollectionChanged.Add(DoSelectedItemsChanged);
+  FSelectedItemPath := TList<TObject>.Create();
   inherited;
   FAllowClearSelection := True;
   FAllowMove := True;
@@ -369,6 +374,7 @@ end;
 
 destructor TTreeViewPresenter.Destroy;
 begin
+  FSelectedItemPath := nil;
   FCheckedItems.OnCollectionChanged.Remove(DoCheckedItemsChanged);
   FExpandedItems.OnCollectionChanged.Remove(DoExpandedItemsChanged);
   FSelectedItems.OnCollectionChanged.Remove(DoSelectedItemsChanged);
@@ -514,10 +520,12 @@ begin
   if FSelectionMode <> smNone then
   begin
     UpdateSelectedItems();
+    UpdateSelectedItemPath();
 
     DoPropertyChanged('View');
     DoPropertyChanged('SelectedItem');
     DoPropertyChanged('SelectedItems');
+    DoPropertyChanged('SelectedItemPath');
 
     if Assigned(FOnSelectionChanged) then
     begin
@@ -1828,6 +1836,15 @@ begin
   end;
 end;
 
+function TTreeViewPresenter.GetSelectedItemPath: IList<TObject>;
+begin
+  if (FSelectedItemPath.Count > 0) and (FSelectionMode = smNone) then
+  begin
+    FSelectedItemPath.Clear;
+  end;
+  Result := FSelectedItemPath;
+end;
+
 function TTreeViewPresenter.GetSelectedItems: IList<TObject>;
 begin
   if (FSelectedItems.Count > 0) and (FSelectionMode = smNone) then
@@ -2573,6 +2590,38 @@ begin
       Synchronize(FExpandedItems, LExpandedItems);
     finally
       Dec(FCollectionChanging);
+    end;
+  end;
+end;
+
+procedure TTreeViewPresenter.UpdateSelectedItemPath;
+var
+  LItem: TObject;
+  LNode: PVirtualNode;
+begin
+  if Assigned(FTreeView) and (FSelectionMode <> smNone) then
+  begin
+    FSelectedItemPath.Clear;
+
+    LItem := SelectedItem;
+    if Assigned(LItem) then
+    begin
+      FSelectedItemPath.Add(LItem);
+      LNode := FTreeView.IterateSubtree(nil, GetItemNode, Pointer(LItem));
+
+      if Assigned(LNode) then
+      begin
+        LNode := FTreeView.NodeParent[LNode];
+        while Assigned(LNode) do
+        begin
+          LItem := GetNodeItem(FTreeView, LNode);
+          if Assigned(LItem) then
+          begin
+            FSelectedItemPath.Insert(0, LItem);
+          end;
+          LNode := FTreeView.NodeParent[LNode];
+        end;
+      end;
     end;
   end;
 end;

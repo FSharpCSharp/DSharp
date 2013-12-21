@@ -1,0 +1,552 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{92358984-700A-43F1-BC62-9EEDFA567C9D}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Packages\DelphiXE5\DSharp.Core.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\DataBindings.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\DSharp.PresentationModel.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\DSharp.PresentationModelFMX.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\TreeViewPresenter.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\DataBindingsVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\DSharp.PresentationModelVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\DSharpInterception.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\dclDataBindings.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\dclDataBindingsVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Packages\DelphiXE5\dclTreeViewPresenter.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample1.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample10.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample2.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample3.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample4.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample5.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample6.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample7.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample8.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Sample9.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\VirtualTreeviewSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\AOP\AOPDemo.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Bindings\SpinEdit\SpinEditSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Bindings\Validations\ValidationsSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\DelphiTage\TreeviewPresenter\TreeviewPresenter_Beispiel.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\DuckTyping\DuckTypingSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\EKON 17\Interception\1 - VirtualMethodInterceptor\VirtualMethodInterceptor.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\EKON 17\Interception\2 - VirtualInterface\VirtualInterface.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Mocks\ServerTest.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\MVVM\Calculator\Calculator.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\MVVM\ContactManager\ContactManager.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\MVVM\DragDrop\DragDropSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\MVVM\Explorer\Explorer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\MVVM\PageControl\PageControlSample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Research\CompositionFMX\CompositionFMX.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Research\CompositionVCL\CompositionVCL.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Research\DependencyPropertySample\DependencyPropertySample.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Research\DSharp\DSharp.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\Research\Events\Events.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\UnitTesting\MockDemo.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\UnitTesting\TestCaseAttributes.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Samples\WeakReference\Example.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Tests\Tests.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DSharp_Core">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.Core.dproj"/>
+    </Target>
+    <Target Name="DSharp_Core:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.Core.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_Core:Make">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.Core.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DataBindings">
+        <MSBuild Projects="Packages\DelphiXE5\DataBindings.dproj"/>
+    </Target>
+    <Target Name="DataBindings:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\DataBindings.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DataBindings:Make">
+        <MSBuild Projects="Packages\DelphiXE5\DataBindings.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharp_PresentationModel">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModel.dproj"/>
+    </Target>
+    <Target Name="DSharp_PresentationModel:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModel.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_PresentationModel:Make">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModel.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelFMX">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModelFMX.dproj"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelFMX:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModelFMX.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelFMX:Make">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModelFMX.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TreeViewPresenter">
+        <MSBuild Projects="Packages\DelphiXE5\TreeViewPresenter.dproj"/>
+    </Target>
+    <Target Name="TreeViewPresenter:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\TreeViewPresenter.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TreeViewPresenter:Make">
+        <MSBuild Projects="Packages\DelphiXE5\TreeViewPresenter.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DataBindingsVCL">
+        <MSBuild Projects="Packages\DelphiXE5\DataBindingsVCL.dproj"/>
+    </Target>
+    <Target Name="DataBindingsVCL:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\DataBindingsVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DataBindingsVCL:Make">
+        <MSBuild Projects="Packages\DelphiXE5\DataBindingsVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelVCL">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModelVCL.dproj"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelVCL:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModelVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp_PresentationModelVCL:Make">
+        <MSBuild Projects="Packages\DelphiXE5\DSharp.PresentationModelVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharpInterception">
+        <MSBuild Projects="Packages\DelphiXE5\DSharpInterception.dproj"/>
+    </Target>
+    <Target Name="DSharpInterception:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\DSharpInterception.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharpInterception:Make">
+        <MSBuild Projects="Packages\DelphiXE5\DSharpInterception.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDataBindings">
+        <MSBuild Projects="Packages\DelphiXE5\dclDataBindings.dproj"/>
+    </Target>
+    <Target Name="dclDataBindings:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\dclDataBindings.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDataBindings:Make">
+        <MSBuild Projects="Packages\DelphiXE5\dclDataBindings.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDataBindingsVCL">
+        <MSBuild Projects="Packages\DelphiXE5\dclDataBindingsVCL.dproj"/>
+    </Target>
+    <Target Name="dclDataBindingsVCL:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\dclDataBindingsVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDataBindingsVCL:Make">
+        <MSBuild Projects="Packages\DelphiXE5\dclDataBindingsVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclTreeViewPresenter">
+        <MSBuild Projects="Packages\DelphiXE5\dclTreeViewPresenter.dproj"/>
+    </Target>
+    <Target Name="dclTreeViewPresenter:Clean">
+        <MSBuild Projects="Packages\DelphiXE5\dclTreeViewPresenter.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclTreeViewPresenter:Make">
+        <MSBuild Projects="Packages\DelphiXE5\dclTreeViewPresenter.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample1">
+        <MSBuild Projects="Samples\Sample1.dproj"/>
+    </Target>
+    <Target Name="Sample1:Clean">
+        <MSBuild Projects="Samples\Sample1.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample1:Make">
+        <MSBuild Projects="Samples\Sample1.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample10">
+        <MSBuild Projects="Samples\Sample10.dproj"/>
+    </Target>
+    <Target Name="Sample10:Clean">
+        <MSBuild Projects="Samples\Sample10.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample10:Make">
+        <MSBuild Projects="Samples\Sample10.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample2">
+        <MSBuild Projects="Samples\Sample2.dproj"/>
+    </Target>
+    <Target Name="Sample2:Clean">
+        <MSBuild Projects="Samples\Sample2.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample2:Make">
+        <MSBuild Projects="Samples\Sample2.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample3">
+        <MSBuild Projects="Samples\Sample3.dproj"/>
+    </Target>
+    <Target Name="Sample3:Clean">
+        <MSBuild Projects="Samples\Sample3.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample3:Make">
+        <MSBuild Projects="Samples\Sample3.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample4">
+        <MSBuild Projects="Samples\Sample4.dproj"/>
+    </Target>
+    <Target Name="Sample4:Clean">
+        <MSBuild Projects="Samples\Sample4.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample4:Make">
+        <MSBuild Projects="Samples\Sample4.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample5">
+        <MSBuild Projects="Samples\Sample5.dproj"/>
+    </Target>
+    <Target Name="Sample5:Clean">
+        <MSBuild Projects="Samples\Sample5.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample5:Make">
+        <MSBuild Projects="Samples\Sample5.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample6">
+        <MSBuild Projects="Samples\Sample6.dproj"/>
+    </Target>
+    <Target Name="Sample6:Clean">
+        <MSBuild Projects="Samples\Sample6.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample6:Make">
+        <MSBuild Projects="Samples\Sample6.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample7">
+        <MSBuild Projects="Samples\Sample7.dproj"/>
+    </Target>
+    <Target Name="Sample7:Clean">
+        <MSBuild Projects="Samples\Sample7.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample7:Make">
+        <MSBuild Projects="Samples\Sample7.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample8">
+        <MSBuild Projects="Samples\Sample8.dproj"/>
+    </Target>
+    <Target Name="Sample8:Clean">
+        <MSBuild Projects="Samples\Sample8.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample8:Make">
+        <MSBuild Projects="Samples\Sample8.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Sample9">
+        <MSBuild Projects="Samples\Sample9.dproj"/>
+    </Target>
+    <Target Name="Sample9:Clean">
+        <MSBuild Projects="Samples\Sample9.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Sample9:Make">
+        <MSBuild Projects="Samples\Sample9.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="VirtualTreeviewSample">
+        <MSBuild Projects="Samples\VirtualTreeviewSample.dproj"/>
+    </Target>
+    <Target Name="VirtualTreeviewSample:Clean">
+        <MSBuild Projects="Samples\VirtualTreeviewSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VirtualTreeviewSample:Make">
+        <MSBuild Projects="Samples\VirtualTreeviewSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="AOPDemo">
+        <MSBuild Projects="Samples\AOP\AOPDemo.dproj"/>
+    </Target>
+    <Target Name="AOPDemo:Clean">
+        <MSBuild Projects="Samples\AOP\AOPDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="AOPDemo:Make">
+        <MSBuild Projects="Samples\AOP\AOPDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="SpinEditSample">
+        <MSBuild Projects="Samples\Bindings\SpinEdit\SpinEditSample.dproj"/>
+    </Target>
+    <Target Name="SpinEditSample:Clean">
+        <MSBuild Projects="Samples\Bindings\SpinEdit\SpinEditSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="SpinEditSample:Make">
+        <MSBuild Projects="Samples\Bindings\SpinEdit\SpinEditSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ValidationsSample">
+        <MSBuild Projects="Samples\Bindings\Validations\ValidationsSample.dproj"/>
+    </Target>
+    <Target Name="ValidationsSample:Clean">
+        <MSBuild Projects="Samples\Bindings\Validations\ValidationsSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ValidationsSample:Make">
+        <MSBuild Projects="Samples\Bindings\Validations\ValidationsSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TreeviewPresenter_Beispiel">
+        <MSBuild Projects="Samples\DelphiTage\TreeviewPresenter\TreeviewPresenter_Beispiel.dproj"/>
+    </Target>
+    <Target Name="TreeviewPresenter_Beispiel:Clean">
+        <MSBuild Projects="Samples\DelphiTage\TreeviewPresenter\TreeviewPresenter_Beispiel.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TreeviewPresenter_Beispiel:Make">
+        <MSBuild Projects="Samples\DelphiTage\TreeviewPresenter\TreeviewPresenter_Beispiel.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DuckTypingSample">
+        <MSBuild Projects="Samples\DuckTyping\DuckTypingSample.dproj"/>
+    </Target>
+    <Target Name="DuckTypingSample:Clean">
+        <MSBuild Projects="Samples\DuckTyping\DuckTypingSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DuckTypingSample:Make">
+        <MSBuild Projects="Samples\DuckTyping\DuckTypingSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="VirtualMethodInterceptor">
+        <MSBuild Projects="Samples\EKON 17\Interception\1 - VirtualMethodInterceptor\VirtualMethodInterceptor.dproj"/>
+    </Target>
+    <Target Name="VirtualMethodInterceptor:Clean">
+        <MSBuild Projects="Samples\EKON 17\Interception\1 - VirtualMethodInterceptor\VirtualMethodInterceptor.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VirtualMethodInterceptor:Make">
+        <MSBuild Projects="Samples\EKON 17\Interception\1 - VirtualMethodInterceptor\VirtualMethodInterceptor.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="VirtualInterface">
+        <MSBuild Projects="Samples\EKON 17\Interception\2 - VirtualInterface\VirtualInterface.dproj"/>
+    </Target>
+    <Target Name="VirtualInterface:Clean">
+        <MSBuild Projects="Samples\EKON 17\Interception\2 - VirtualInterface\VirtualInterface.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VirtualInterface:Make">
+        <MSBuild Projects="Samples\EKON 17\Interception\2 - VirtualInterface\VirtualInterface.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ServerTest">
+        <MSBuild Projects="Samples\Mocks\ServerTest.dproj"/>
+    </Target>
+    <Target Name="ServerTest:Clean">
+        <MSBuild Projects="Samples\Mocks\ServerTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ServerTest:Make">
+        <MSBuild Projects="Samples\Mocks\ServerTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Calculator">
+        <MSBuild Projects="Samples\MVVM\Calculator\Calculator.dproj"/>
+    </Target>
+    <Target Name="Calculator:Clean">
+        <MSBuild Projects="Samples\MVVM\Calculator\Calculator.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Calculator:Make">
+        <MSBuild Projects="Samples\MVVM\Calculator\Calculator.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ContactManager">
+        <MSBuild Projects="Samples\MVVM\ContactManager\ContactManager.dproj"/>
+    </Target>
+    <Target Name="ContactManager:Clean">
+        <MSBuild Projects="Samples\MVVM\ContactManager\ContactManager.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ContactManager:Make">
+        <MSBuild Projects="Samples\MVVM\ContactManager\ContactManager.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DragDropSample">
+        <MSBuild Projects="Samples\MVVM\DragDrop\DragDropSample.dproj"/>
+    </Target>
+    <Target Name="DragDropSample:Clean">
+        <MSBuild Projects="Samples\MVVM\DragDrop\DragDropSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DragDropSample:Make">
+        <MSBuild Projects="Samples\MVVM\DragDrop\DragDropSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Explorer">
+        <MSBuild Projects="Samples\MVVM\Explorer\Explorer.dproj"/>
+    </Target>
+    <Target Name="Explorer:Clean">
+        <MSBuild Projects="Samples\MVVM\Explorer\Explorer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Explorer:Make">
+        <MSBuild Projects="Samples\MVVM\Explorer\Explorer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="PageControlSample">
+        <MSBuild Projects="Samples\MVVM\PageControl\PageControlSample.dproj"/>
+    </Target>
+    <Target Name="PageControlSample:Clean">
+        <MSBuild Projects="Samples\MVVM\PageControl\PageControlSample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="PageControlSample:Make">
+        <MSBuild Projects="Samples\MVVM\PageControl\PageControlSample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CompositionFMX">
+        <MSBuild Projects="Samples\Research\CompositionFMX\CompositionFMX.dproj"/>
+    </Target>
+    <Target Name="CompositionFMX:Clean">
+        <MSBuild Projects="Samples\Research\CompositionFMX\CompositionFMX.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CompositionFMX:Make">
+        <MSBuild Projects="Samples\Research\CompositionFMX\CompositionFMX.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CompositionVCL">
+        <MSBuild Projects="Samples\Research\CompositionVCL\CompositionVCL.dproj"/>
+    </Target>
+    <Target Name="CompositionVCL:Clean">
+        <MSBuild Projects="Samples\Research\CompositionVCL\CompositionVCL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CompositionVCL:Make">
+        <MSBuild Projects="Samples\Research\CompositionVCL\CompositionVCL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DependencyPropertySample">
+        <MSBuild Projects="Samples\Research\DependencyPropertySample\DependencyPropertySample.dproj"/>
+    </Target>
+    <Target Name="DependencyPropertySample:Clean">
+        <MSBuild Projects="Samples\Research\DependencyPropertySample\DependencyPropertySample.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DependencyPropertySample:Make">
+        <MSBuild Projects="Samples\Research\DependencyPropertySample\DependencyPropertySample.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DSharp">
+        <MSBuild Projects="Samples\Research\DSharp\DSharp.dproj"/>
+    </Target>
+    <Target Name="DSharp:Clean">
+        <MSBuild Projects="Samples\Research\DSharp\DSharp.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DSharp:Make">
+        <MSBuild Projects="Samples\Research\DSharp\DSharp.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Events">
+        <MSBuild Projects="Samples\Research\Events\Events.dproj"/>
+    </Target>
+    <Target Name="Events:Clean">
+        <MSBuild Projects="Samples\Research\Events\Events.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Events:Make">
+        <MSBuild Projects="Samples\Research\Events\Events.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MockDemo">
+        <MSBuild Projects="Samples\UnitTesting\MockDemo.dproj"/>
+    </Target>
+    <Target Name="MockDemo:Clean">
+        <MSBuild Projects="Samples\UnitTesting\MockDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MockDemo:Make">
+        <MSBuild Projects="Samples\UnitTesting\MockDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TestCaseAttributes">
+        <MSBuild Projects="Samples\UnitTesting\TestCaseAttributes.dproj"/>
+    </Target>
+    <Target Name="TestCaseAttributes:Clean">
+        <MSBuild Projects="Samples\UnitTesting\TestCaseAttributes.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TestCaseAttributes:Make">
+        <MSBuild Projects="Samples\UnitTesting\TestCaseAttributes.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Example">
+        <MSBuild Projects="Samples\WeakReference\Example.dproj"/>
+    </Target>
+    <Target Name="Example:Clean">
+        <MSBuild Projects="Samples\WeakReference\Example.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Example:Make">
+        <MSBuild Projects="Samples\WeakReference\Example.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Tests">
+        <MSBuild Projects="Tests\Tests.dproj"/>
+    </Target>
+    <Target Name="Tests:Clean">
+        <MSBuild Projects="Tests\Tests.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Tests:Make">
+        <MSBuild Projects="Tests\Tests.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DSharp_Core;DataBindings;DSharp_PresentationModel;DSharp_PresentationModelFMX;TreeViewPresenter;DataBindingsVCL;DSharp_PresentationModelVCL;DSharpInterception;dclDataBindings;dclDataBindingsVCL;dclTreeViewPresenter;Sample1;Sample10;Sample2;Sample3;Sample4;Sample5;Sample6;Sample7;Sample8;Sample9;VirtualTreeviewSample;AOPDemo;SpinEditSample;ValidationsSample;TreeviewPresenter_Beispiel;DuckTypingSample;VirtualMethodInterceptor;VirtualInterface;ServerTest;Calculator;ContactManager;DragDropSample;Explorer;PageControlSample;CompositionFMX;CompositionVCL;DependencyPropertySample;DSharp;Events;MockDemo;TestCaseAttributes;Example;Tests"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DSharp_Core:Clean;DataBindings:Clean;DSharp_PresentationModel:Clean;DSharp_PresentationModelFMX:Clean;TreeViewPresenter:Clean;DataBindingsVCL:Clean;DSharp_PresentationModelVCL:Clean;DSharpInterception:Clean;dclDataBindings:Clean;dclDataBindingsVCL:Clean;dclTreeViewPresenter:Clean;Sample1:Clean;Sample10:Clean;Sample2:Clean;Sample3:Clean;Sample4:Clean;Sample5:Clean;Sample6:Clean;Sample7:Clean;Sample8:Clean;Sample9:Clean;VirtualTreeviewSample:Clean;AOPDemo:Clean;SpinEditSample:Clean;ValidationsSample:Clean;TreeviewPresenter_Beispiel:Clean;DuckTypingSample:Clean;VirtualMethodInterceptor:Clean;VirtualInterface:Clean;ServerTest:Clean;Calculator:Clean;ContactManager:Clean;DragDropSample:Clean;Explorer:Clean;PageControlSample:Clean;CompositionFMX:Clean;CompositionVCL:Clean;DependencyPropertySample:Clean;DSharp:Clean;Events:Clean;MockDemo:Clean;TestCaseAttributes:Clean;Example:Clean;Tests:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DSharp_Core:Make;DataBindings:Make;DSharp_PresentationModel:Make;DSharp_PresentationModelFMX:Make;TreeViewPresenter:Make;DataBindingsVCL:Make;DSharp_PresentationModelVCL:Make;DSharpInterception:Make;dclDataBindings:Make;dclDataBindingsVCL:Make;dclTreeViewPresenter:Make;Sample1:Make;Sample10:Make;Sample2:Make;Sample3:Make;Sample4:Make;Sample5:Make;Sample6:Make;Sample7:Make;Sample8:Make;Sample9:Make;VirtualTreeviewSample:Make;AOPDemo:Make;SpinEditSample:Make;ValidationsSample:Make;TreeviewPresenter_Beispiel:Make;DuckTypingSample:Make;VirtualMethodInterceptor:Make;VirtualInterface:Make;ServerTest:Make;Calculator:Make;ContactManager:Make;DragDropSample:Make;Explorer:Make;PageControlSample:Make;CompositionFMX:Make;CompositionVCL:Make;DependencyPropertySample:Make;DSharp:Make;Events:Make;MockDemo:Make;TestCaseAttributes:Make;Example:Make;Tests:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

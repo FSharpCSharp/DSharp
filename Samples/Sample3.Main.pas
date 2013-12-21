@@ -28,7 +28,7 @@ implementation
 
 uses
   DSharp.Collections,
-  DSharp.Collections.Yield,
+  DSharp.Collections.Iterators,
   Rtti;
 
 procedure Enumerate;
@@ -50,7 +50,7 @@ end;
 
 function Power(ANumber, AExponent: Integer): IEnumerable<Integer>;
 begin
-  Result := TYieldEnumerable<Integer>.Create(
+  Result := TIteratorBlock<Integer>.Create(
     procedure
     var
       i, k: Integer;
@@ -67,7 +67,7 @@ end;
 
 function Fibonacci: IEnumerable<UInt64>;
 begin
-  Result := TYieldEnumerable<UInt64>.Create(Enumerate);
+  Result := TIteratorBlock<UInt64>.Create(Enumerate);
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);

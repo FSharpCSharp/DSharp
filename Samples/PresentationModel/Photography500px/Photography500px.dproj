@@ -23,6 +23,12 @@
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win32)'!=''">
+        <Cfg_1_Win32>true</Cfg_1_Win32>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_2)'!=''">
         <Cfg_2>true</Cfg_2>
         <CfgParent>Base</CfgParent>
@@ -39,7 +45,7 @@
 $(PostBuildEvent)]]></PostBuildEvent>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(Spring4D)\Source\Base;$(Spring4D)\Source\Base\Collections;$(Spring4D)\Source\Core\Container;$(Spring4D)\Source\Base\Reflection;$(Spring4D)\Source\Core\Services;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <VerInfo_Locale>1060</VerInfo_Locale>
         <DCC_S>false</DCC_S>
@@ -62,6 +68,10 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <DCC_DebugInformation>0</DCC_DebugInformation>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>

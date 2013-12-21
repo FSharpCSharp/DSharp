@@ -57,7 +57,7 @@
         <DCC_DependencyCheckOutputName>Demo.exe</DCC_DependencyCheckOutputName>
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <DCC_E>false</DCC_E>
-        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(Spring4D)\Source\Base;$(Spring4D)\Source\Base\Collections;$(Spring4D)\Source\Core\Container;$(Spring4D)\Source\Base\Reflection;$(Spring4D)\Source\Core\Services;$(VirtualTreeView)\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_N>false</DCC_N>
         <DCC_S>false</DCC_S>
         <DCC_F>false</DCC_F>

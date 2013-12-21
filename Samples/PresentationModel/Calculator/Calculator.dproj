@@ -42,12 +42,11 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;Winapi;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1031</VerInfo_Locale>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(Spring4D)\Source\Base\Reflection;$(Spring4D)\Source\Base;$(Spring4D)\Source\Base\Collections;$(Spring4D)\Source\Core\Container;$(Spring4D)\Source\Core\Services;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DependencyCheckOutputName>Debug\Win32\Calculator.exe</DCC_DependencyCheckOutputName>
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
@@ -65,7 +64,6 @@
         <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
         <DCC_Define>CodeSite;$(DCC_Define)</DCC_Define>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>

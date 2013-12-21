@@ -28,7 +28,7 @@ implementation
 
 uses
   DSharp.Collections,
-  DSharp.Collections.Yield,
+  DSharp.Collections.Iterators,
   Rtti;
 
 procedure Enumerate;

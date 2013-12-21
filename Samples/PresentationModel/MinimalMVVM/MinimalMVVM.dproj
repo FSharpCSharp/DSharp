@@ -48,7 +48,7 @@
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;Winapi;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\..\..\Source\Aspects;..\..\..\Source\Bindings;..\..\..\Source\Collections;..\..\..\Source\ComponentModel;..\..\..\Source\Core;..\..\..\Source\Logging;..\..\..\Source\PresentationModel;..\..\..\Source\Validation;..\..\..\Source\Windows;$(Spring4D)\Source\Base;$(Spring4D)\Source\Base\Collections;$(Spring4D)\Source\Core\Container;$(Spring4D)\Source\Base\Reflection;$(Spring4D)\Source\Core\Services;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_F>false</DCC_F>
         <DCC_DebugInformation>true</DCC_DebugInformation>
         <DCC_S>false</DCC_S>

@@ -2027,7 +2027,7 @@ begin
   FIndex := -1;
   FName := APropertyName;
 
-  FProperty := FindPropertyExtension;
+  FProperty := FindPropertyExtension();
 
   if Assigned(FProperty) then
   begin

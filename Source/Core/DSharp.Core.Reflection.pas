@@ -739,7 +739,7 @@ uses
   Math,
   StrUtils,
   SysConst,
-  DSharp.Core.PropertyPath;
+  DSharp.Core.Expressions;
 
 var
   Context: TRttiContext;
@@ -1574,9 +1574,9 @@ begin
     else
     begin
       Result := Format('@$%p', [Pointer(Self)]);
-{$ifdef DEBUG}
+{$IFDEF DEBUG}
       Result := Format('%s(%s)', [Result, Self.QualifiedClassName]);
-{$endif DEBUG}
+{$ENDIF DEBUG}
     end;
   end
   else
@@ -1584,18 +1584,18 @@ begin
 end;
 
 function TObjectHelper.Describe(const AComponent: TComponent): string;
-{$ifdef DEBUG}
+{$IFDEF DEBUG}
 var
   LOwner: TComponent;
   LOwnerName: string;
-{$endif DEBUG}
+{$ENDIF DEBUG}
 begin
   if Assigned(AComponent) then
   begin
     Result := AComponent.Name;
     if '' = Result then
       Result := Format('@$%p', [Pointer(AComponent)]);
-{$ifdef DEBUG}
+{$IFDEF DEBUG}
     Result := Format('%s(%s)', [Result, AComponent.QualifiedClassName]);
     if Assigned(AComponent) then
     begin
@@ -1607,7 +1607,7 @@ begin
           Result := Format('%s%s  of %s', [Result, #13#10, LOwnerName]);
       end;
     end;
-{$endif DEBUG}
+{$ENDIF DEBUG}
   end
   else
     Result := '<nil>';
@@ -1615,26 +1615,34 @@ end;
 
 function TObjectHelper.Describe(const AMemberNamePath: string): string;
 var
-  LPropertyPath: IPropertyPath;
+  LMemberNamePathRttiMember: TRttiMember;
+  LPropertyExpression: IMemberExpression;
   LRttiType: TRttiType;
-{$ifdef DEBUG}
+{$IFDEF DEBUG}
   LDelimitedText: string;
   LRttiProperty: TRttiProperty;
   LMemberNames: TStrings;
-  LMemberName: string;
+  LCurrentMemberName: string;
   LParent: TObject;
   LResult: TStrings;
-  LRttiMember: TRttiMember;
-{$endif DEBUG}
+  LCurrentRttiMember: TRttiMember;
+{$ENDIF DEBUG}
 begin
   if Assigned(Self) then
   begin
-    LPropertyPath := TPropertyPath.Create(Self, AMemberNamePath);
-    LRttiType := LPropertyPath.PropertyType;
+    LPropertyExpression := Expression.PropertyAccess(Expression.Constant(Self), AMemberNamePath);
+    LMemberNamePathRttiMember := LPropertyExpression.Member; // .Value .Value.ToString);
+    if LMemberNamePathRttiMember is TRttiMethod then
+      LRttiType := Context.GetType(TypeInfo(TMethod))
+    else if LMemberNamePathRttiMember is TRttiProperty then
+      LRttiType := (LMemberNamePathRttiMember as TRttiProperty).PropertyType
+    else {TODO -o##jwp -cEnhance : Add support for other member types: TRttiField, TRttiIndexedProperty }
+      raise Exception.CreateFmt('Unsupported member type %s', [LMemberNamePathRttiMember.ClassName]);
+
     if Assigned(LRttiType) then
     begin
       Result := Format('%s:%s', [AMemberNamePath, LRttiType.ToString()]);
-  {$ifdef DEBUG}
+  {$IFDEF DEBUG}
       LResult := TStringList.Create();
       try
         LMemberNames := TStringList.Create();
@@ -1642,13 +1650,13 @@ begin
           LMemberNames.Delimiter := '.';
           LMemberNames.DelimitedText := AMemberNamePath;
           LParent := Self;
-          for LMemberName in LMemberNames do
+          for LCurrentMemberName in LMemberNames do
           begin
-            LRttiMember := LParent.GetMember(LMemberName);
-            if Assigned(LRttiMember) then
+            LCurrentRttiMember := LParent.GetMember(LCurrentMemberName);
+            if Assigned(LCurrentRttiMember) then
             begin
-              LResult.Add(LRttiMember.ToString());
-              if LParent.TryGetProperty(LMemberName, LRttiProperty) then
+              LResult.Add(LCurrentRttiMember.ToString());
+              if LParent.TryGetProperty(LCurrentMemberName, LRttiProperty) then
                 if LRttiProperty.PropertyType.TypeKind in [tkClass, tkInterface] then
                 begin
                   if LRttiProperty.PropertyType.IsInstance then
@@ -1667,7 +1675,7 @@ begin
       finally
         LResult.Free;
       end;
-{$endif DEBUG}
+{$ENDIF DEBUG}
     end;
   end
   else
@@ -2094,20 +2102,20 @@ end;
 { TRttiMethodHelper }
 
 function TRttiMethodHelper.Describe(): string;
-{$ifdef DEBUG}
+{$IFDEF DEBUG}
 var
   LFullName: string;
   LMethodString: string;
   LParentName: string;
   LParentRttiType: TRttiType;
-{$endif DEBUG}
+{$ENDIF DEBUG}
 begin
   if nil = Self then
     Result := '<nil>'
   else
   begin
     Result := Self.Name;
-{$ifdef DEBUG}
+{$IFDEF DEBUG}
     if Self.HasExtendedInfo then
     begin
       LParentRttiType := Self.Parent;
@@ -2120,7 +2128,7 @@ begin
       LMethodString := Self.ToString();
       Result := StringReplace(LMethodString, ' '+Self.Name, LFullName, []);
     end;
-{$endif DEBUG}
+{$ENDIF DEBUG}
   end;
 end;
 

@@ -56,7 +56,7 @@ begin
   Result :=
     function: TValue
     begin
-      Result := TValue.From<Boolean>(StrUtils.StartsText(LeftDelegate().ToString, RightDelegate().ToString));
+      Result := TValue.From<Boolean>(StrUtils.StartsText(LeftDelegate().ToString(), RightDelegate().ToString()));
     end;
 end;
 
@@ -79,7 +79,7 @@ procedure TMainForm.Button1Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
-  Memo1.Lines.Add(Lambda.GetExpression(filter1).ToString);
+  Memo1.Lines.Add(Lambda.GetExpression(filter1).ToString());
   for cust in Enumerable<TCustomer>(customers).Where(filter1) do
   begin
     Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));
@@ -90,7 +90,7 @@ procedure TMainForm.Button2Click(Sender: TObject);
 var
   cust: TCustomer;
 begin
-  Memo1.Lines.Add(Lambda.GetExpression(filter2).ToString);
+  Memo1.Lines.Add(Lambda.GetExpression(filter2).ToString());
   for cust in Enumerable<TCustomer>(customers).Where(filter2) do
   begin
     Memo1.Lines.Add(Format('%s %s', [cust.CustomerId, cust.CompanyName]));

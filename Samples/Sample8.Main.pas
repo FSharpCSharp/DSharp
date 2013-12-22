@@ -64,7 +64,7 @@ begin
   i := Lambda.Make<Integer, Integer>(e)(5);
   ShowMessage(IntToStr(i));
 
-  Memo1.Lines.Add(e.ToString);
+  Memo1.Lines.Add(e.ToString());
 end;
 
 procedure TMainForm.ShowMessage(const Msg: string);

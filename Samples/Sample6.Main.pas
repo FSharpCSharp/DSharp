@@ -19,10 +19,7 @@ type
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
   private
-    { Private declarations }
     func: TFunc<Integer, Integer>;
-  public
-    { Public declarations }
   end;
 
 var
@@ -48,11 +45,11 @@ var
 begin
   e := Lambda.GetExpression(func);
   Memo1.Lines.Add(Format('%s Result: %s',
-    [e.ToString, e.Execute().ToString]));
+    [e.ToString, e.Execute().ToString()]));
   // setting arg for result to show
   ExpressionParams[0].Value := TValue.From<Integer>(12);
   Memo1.Lines.Add(Format('%s Result: %s',
-    [e.ToString, e.Execute().ToString]));
+    [e.ToString, e.Execute().ToString()]));
 end;
 
 procedure TMainForm.Button3Click(Sender: TObject);
@@ -63,7 +60,7 @@ begin
     TConstantExpression.Create(12),
     TConstantExpression.Create(5));
   Lambda.SetExpression(func, e);
-  Memo1.Lines.Add(e.ToString);
+  Memo1.Lines.Add(e.ToString());
   Memo1.Lines.Add(IntToStr(func(0)));
 end;
 

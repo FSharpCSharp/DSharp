@@ -13,10 +13,6 @@ type
     Button2: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
-  private
-    { Private-Deklarationen }
-  public
-    { Public-Deklarationen }
   end;
 
 var
@@ -81,7 +77,7 @@ begin
     for i in Fibonacci() do
     begin
       Memo1.Lines.Add(UIntToStr(i));
-//      Memo1.Lines.Add(i.ToString);
+//      Memo1.Lines.Add(i.ToString());
     end;
   finally
     Memo1.Lines.EndUpdate();

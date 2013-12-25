@@ -1,5 +1,6 @@
 rem comment; for documentation, see Dependencies.md in <https://bitbucket.org/jeroenp/besharp.net/src/tip/Dependencies.md>
 
+git DSharp https://bitbucket.org/sglienke/dsharp.git
+git Spring4D https://bitbucket.org/sglienke/spring4d.git
 svn VirtualTreeView http://virtual-treeview.googlecode.com/svn/trunk
-git Spring4D https://jeroenp@bitbucket.org/sglienke/spring4d.git
-hg BeSharpNet https://jeroenp@bitbucket.org/jeroenp/besharp.net
+hg BeSharpNet https://bitbucket.org/jeroenp/besharp.net

@@ -1632,7 +1632,9 @@ begin
   begin
     LPropertyExpression := Expression.PropertyAccess(Expression.Constant(Self), AMemberNamePath);
     LMemberNamePathRttiMember := LPropertyExpression.Member; // .Value .Value.ToString);
-    if LMemberNamePathRttiMember is TRttiMethod then
+    if not Assigned(LMemberNamePathRttiMember) then
+      LRttiType := nil
+    else if LMemberNamePathRttiMember is TRttiMethod then
       LRttiType := Context.GetType(TypeInfo(TMethod))
     else if LMemberNamePathRttiMember is TRttiProperty then
       LRttiType := (LMemberNamePathRttiMember as TRttiProperty).PropertyType

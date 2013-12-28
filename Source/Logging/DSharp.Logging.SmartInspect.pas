@@ -58,48 +58,48 @@ begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
+          SiMain.EnterMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.FormatText)
         else if ALogEntry.Value.IsObject then
-          SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+          SiMain.EnterMethod(ALogEntry.Value.AsObject, ALogEntry.FormatText)
         else
-          SiMain.EnterMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
+          SiMain.EnterMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.FormatText);
       end
       else
-        SiMain.EnterMethod(ALogEntry.Text);
+        SiMain.EnterMethod(ALogEntry.FormatText);
     end;
     lkLeaveMethod:
     begin
       if not ALogEntry.Value.IsEmpty then
       begin
         if ALogEntry.Value.IsClass then
-          SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.Text)
+          SiMain.LeaveMethod(ALogEntry.Value.AsClass.ClassName + '.' + ALogEntry.FormatText)
         else if ALogEntry.Value.IsObject then
-          SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.Text)
+          SiMain.LeaveMethod(ALogEntry.Value.AsObject, ALogEntry.FormatText)
         else
-          SiMain.LeaveMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.Text);
+          SiMain.LeaveMethod(UTF8ToString(ALogEntry.Value.TypeInfo.Name) + '.' + ALogEntry.FormatText);
       end
       else
-        SiMain.LeaveMethod(ALogEntry.Text);
+        SiMain.LeaveMethod(ALogEntry.FormatText);
     end;
     lkMessage:
     begin
-      SiMain.LogMessage(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
+      SiMain.LogMessage(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values));
     end;
     lkWarning:
     begin
-      SiMain.LogWarning(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
+      SiMain.LogWarning(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values));
     end;
     lkError:
     begin
-      SiMain.LogError(ALogEntry.Text, TValue.ToVarRecs(ALogEntry.Values));
+      SiMain.LogError(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values));
     end;
     lkException:
     begin
-      SiMain.LogException(ALogEntry.Value.AsType<Exception>, ALogEntry.Text);
+      SiMain.LogException(ALogEntry.Value.AsType<Exception>, ALogEntry.FormatText);
     end;
     lkValue:
     begin
-      SiMain.LogValue(ALogEntry.Text, ALogEntry.Value);
+      SiMain.LogValue(ALogEntry.FormatText, ALogEntry.Value);
     end;
   end;
 end;

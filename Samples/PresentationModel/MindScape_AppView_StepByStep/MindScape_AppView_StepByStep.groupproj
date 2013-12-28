@@ -1,0 +1,384 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{57A035F7-1ED8-49E5-93DF-3EC6E973F544}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="MindScape_AppView_Step_00\MindScape_AppViewVCL_Step00.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_00\MindScape_AppViewTests_Step00.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_01\MindScape_AppViewVCL_Step01.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_01\MindScape_AppViewTests_Step01.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_02\MindScape_AppViewVCL_Step02.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_02\MindScape_AppViewTests_Step02.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_03\MindScape_AppViewVCL_Step03.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_03\MindScape_AppViewTests_Step03.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_04\MindScape_AppViewVCL_Step04.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_04\MindScape_AppViewTests_Step04.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_05\MindScape_AppViewVCL_Step05.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_05\MindScape_AppViewTests_Step05.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_06\MindScape_AppViewVCL_Step06.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_06\MindScape_AppViewTests_Step06.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_07\MindScape_AppViewVCL_Step07.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_07\MindScape_AppViewTests_Step07.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_08\MindScape_AppViewVCL_Step08.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_08\MindScape_AppViewTests_Step08.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_09\MindScape_AppViewVCL_Step09.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_09\MindScape_AppViewTests_Step09.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_10\MindScape_AppViewVCL_Step10.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_10\MindScape_AppViewTests_Step10.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_11\MindScape_AppViewVCL_Step11.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_11\MindScape_AppViewTests_Step11.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_12\MindScape_AppViewVCL_Step12.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_12\MindScape_AppViewTests_Step12.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_13\MindScape_AppViewVCL_Step13.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_13\MindScape_AppViewTests_Step13.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_14\MindScape_AppViewVCL_Step14.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_14\MindScape_AppViewTests_Step14.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="MindScape_AppViewVCL_Step00">
+        <MSBuild Projects="MindScape_AppView_Step_00\MindScape_AppViewVCL_Step00.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step00:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_00\MindScape_AppViewVCL_Step00.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step00:Make">
+        <MSBuild Projects="MindScape_AppView_Step_00\MindScape_AppViewVCL_Step00.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step00">
+        <MSBuild Projects="MindScape_AppView_Step_00\MindScape_AppViewTests_Step00.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step00:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_00\MindScape_AppViewTests_Step00.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step00:Make">
+        <MSBuild Projects="MindScape_AppView_Step_00\MindScape_AppViewTests_Step00.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step01">
+        <MSBuild Projects="MindScape_AppView_Step_01\MindScape_AppViewVCL_Step01.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step01:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_01\MindScape_AppViewVCL_Step01.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step01:Make">
+        <MSBuild Projects="MindScape_AppView_Step_01\MindScape_AppViewVCL_Step01.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step01">
+        <MSBuild Projects="MindScape_AppView_Step_01\MindScape_AppViewTests_Step01.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step01:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_01\MindScape_AppViewTests_Step01.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step01:Make">
+        <MSBuild Projects="MindScape_AppView_Step_01\MindScape_AppViewTests_Step01.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step02">
+        <MSBuild Projects="MindScape_AppView_Step_02\MindScape_AppViewVCL_Step02.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step02:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_02\MindScape_AppViewVCL_Step02.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step02:Make">
+        <MSBuild Projects="MindScape_AppView_Step_02\MindScape_AppViewVCL_Step02.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step02">
+        <MSBuild Projects="MindScape_AppView_Step_02\MindScape_AppViewTests_Step02.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step02:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_02\MindScape_AppViewTests_Step02.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step02:Make">
+        <MSBuild Projects="MindScape_AppView_Step_02\MindScape_AppViewTests_Step02.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step03">
+        <MSBuild Projects="MindScape_AppView_Step_03\MindScape_AppViewVCL_Step03.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step03:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_03\MindScape_AppViewVCL_Step03.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step03:Make">
+        <MSBuild Projects="MindScape_AppView_Step_03\MindScape_AppViewVCL_Step03.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step03">
+        <MSBuild Projects="MindScape_AppView_Step_03\MindScape_AppViewTests_Step03.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step03:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_03\MindScape_AppViewTests_Step03.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step03:Make">
+        <MSBuild Projects="MindScape_AppView_Step_03\MindScape_AppViewTests_Step03.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step04">
+        <MSBuild Projects="MindScape_AppView_Step_04\MindScape_AppViewVCL_Step04.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step04:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_04\MindScape_AppViewVCL_Step04.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step04:Make">
+        <MSBuild Projects="MindScape_AppView_Step_04\MindScape_AppViewVCL_Step04.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step04">
+        <MSBuild Projects="MindScape_AppView_Step_04\MindScape_AppViewTests_Step04.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step04:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_04\MindScape_AppViewTests_Step04.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step04:Make">
+        <MSBuild Projects="MindScape_AppView_Step_04\MindScape_AppViewTests_Step04.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step05">
+        <MSBuild Projects="MindScape_AppView_Step_05\MindScape_AppViewVCL_Step05.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step05:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_05\MindScape_AppViewVCL_Step05.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step05:Make">
+        <MSBuild Projects="MindScape_AppView_Step_05\MindScape_AppViewVCL_Step05.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step05">
+        <MSBuild Projects="MindScape_AppView_Step_05\MindScape_AppViewTests_Step05.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step05:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_05\MindScape_AppViewTests_Step05.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step05:Make">
+        <MSBuild Projects="MindScape_AppView_Step_05\MindScape_AppViewTests_Step05.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step06">
+        <MSBuild Projects="MindScape_AppView_Step_06\MindScape_AppViewVCL_Step06.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step06:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_06\MindScape_AppViewVCL_Step06.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step06:Make">
+        <MSBuild Projects="MindScape_AppView_Step_06\MindScape_AppViewVCL_Step06.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step06">
+        <MSBuild Projects="MindScape_AppView_Step_06\MindScape_AppViewTests_Step06.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step06:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_06\MindScape_AppViewTests_Step06.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step06:Make">
+        <MSBuild Projects="MindScape_AppView_Step_06\MindScape_AppViewTests_Step06.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step07">
+        <MSBuild Projects="MindScape_AppView_Step_07\MindScape_AppViewVCL_Step07.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step07:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_07\MindScape_AppViewVCL_Step07.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step07:Make">
+        <MSBuild Projects="MindScape_AppView_Step_07\MindScape_AppViewVCL_Step07.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step07">
+        <MSBuild Projects="MindScape_AppView_Step_07\MindScape_AppViewTests_Step07.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step07:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_07\MindScape_AppViewTests_Step07.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step07:Make">
+        <MSBuild Projects="MindScape_AppView_Step_07\MindScape_AppViewTests_Step07.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step08">
+        <MSBuild Projects="MindScape_AppView_Step_08\MindScape_AppViewVCL_Step08.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step08:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_08\MindScape_AppViewVCL_Step08.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step08:Make">
+        <MSBuild Projects="MindScape_AppView_Step_08\MindScape_AppViewVCL_Step08.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step08">
+        <MSBuild Projects="MindScape_AppView_Step_08\MindScape_AppViewTests_Step08.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step08:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_08\MindScape_AppViewTests_Step08.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step08:Make">
+        <MSBuild Projects="MindScape_AppView_Step_08\MindScape_AppViewTests_Step08.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step09">
+        <MSBuild Projects="MindScape_AppView_Step_09\MindScape_AppViewVCL_Step09.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step09:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_09\MindScape_AppViewVCL_Step09.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step09:Make">
+        <MSBuild Projects="MindScape_AppView_Step_09\MindScape_AppViewVCL_Step09.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step09">
+        <MSBuild Projects="MindScape_AppView_Step_09\MindScape_AppViewTests_Step09.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step09:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_09\MindScape_AppViewTests_Step09.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step09:Make">
+        <MSBuild Projects="MindScape_AppView_Step_09\MindScape_AppViewTests_Step09.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step10">
+        <MSBuild Projects="MindScape_AppView_Step_10\MindScape_AppViewVCL_Step10.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step10:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_10\MindScape_AppViewVCL_Step10.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step10:Make">
+        <MSBuild Projects="MindScape_AppView_Step_10\MindScape_AppViewVCL_Step10.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step10">
+        <MSBuild Projects="MindScape_AppView_Step_10\MindScape_AppViewTests_Step10.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step10:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_10\MindScape_AppViewTests_Step10.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step10:Make">
+        <MSBuild Projects="MindScape_AppView_Step_10\MindScape_AppViewTests_Step10.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step11">
+        <MSBuild Projects="MindScape_AppView_Step_11\MindScape_AppViewVCL_Step11.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step11:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_11\MindScape_AppViewVCL_Step11.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step11:Make">
+        <MSBuild Projects="MindScape_AppView_Step_11\MindScape_AppViewVCL_Step11.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step11">
+        <MSBuild Projects="MindScape_AppView_Step_11\MindScape_AppViewTests_Step11.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step11:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_11\MindScape_AppViewTests_Step11.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step11:Make">
+        <MSBuild Projects="MindScape_AppView_Step_11\MindScape_AppViewTests_Step11.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step12">
+        <MSBuild Projects="MindScape_AppView_Step_12\MindScape_AppViewVCL_Step12.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step12:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_12\MindScape_AppViewVCL_Step12.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step12:Make">
+        <MSBuild Projects="MindScape_AppView_Step_12\MindScape_AppViewVCL_Step12.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step12">
+        <MSBuild Projects="MindScape_AppView_Step_12\MindScape_AppViewTests_Step12.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step12:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_12\MindScape_AppViewTests_Step12.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step12:Make">
+        <MSBuild Projects="MindScape_AppView_Step_12\MindScape_AppViewTests_Step12.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step13">
+        <MSBuild Projects="MindScape_AppView_Step_13\MindScape_AppViewVCL_Step13.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step13:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_13\MindScape_AppViewVCL_Step13.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step13:Make">
+        <MSBuild Projects="MindScape_AppView_Step_13\MindScape_AppViewVCL_Step13.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step13">
+        <MSBuild Projects="MindScape_AppView_Step_13\MindScape_AppViewTests_Step13.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step13:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_13\MindScape_AppViewTests_Step13.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step13:Make">
+        <MSBuild Projects="MindScape_AppView_Step_13\MindScape_AppViewTests_Step13.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step14">
+        <MSBuild Projects="MindScape_AppView_Step_14\MindScape_AppViewVCL_Step14.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step14:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_14\MindScape_AppViewVCL_Step14.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step14:Make">
+        <MSBuild Projects="MindScape_AppView_Step_14\MindScape_AppViewVCL_Step14.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step14">
+        <MSBuild Projects="MindScape_AppView_Step_14\MindScape_AppViewTests_Step14.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step14:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_14\MindScape_AppViewTests_Step14.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step14:Make">
+        <MSBuild Projects="MindScape_AppView_Step_14\MindScape_AppViewTests_Step14.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="MindScape_AppViewVCL_Step00;MindScape_AppViewTests_Step00;MindScape_AppViewVCL_Step01;MindScape_AppViewTests_Step01;MindScape_AppViewVCL_Step02;MindScape_AppViewTests_Step02;MindScape_AppViewVCL_Step03;MindScape_AppViewTests_Step03;MindScape_AppViewVCL_Step04;MindScape_AppViewTests_Step04;MindScape_AppViewVCL_Step05;MindScape_AppViewTests_Step05;MindScape_AppViewVCL_Step06;MindScape_AppViewTests_Step06;MindScape_AppViewVCL_Step07;MindScape_AppViewTests_Step07;MindScape_AppViewVCL_Step08;MindScape_AppViewTests_Step08;MindScape_AppViewVCL_Step09;MindScape_AppViewTests_Step09;MindScape_AppViewVCL_Step10;MindScape_AppViewTests_Step10;MindScape_AppViewVCL_Step11;MindScape_AppViewTests_Step11;MindScape_AppViewVCL_Step12;MindScape_AppViewTests_Step12;MindScape_AppViewVCL_Step13;MindScape_AppViewTests_Step13;MindScape_AppViewVCL_Step14;MindScape_AppViewTests_Step14"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="MindScape_AppViewVCL_Step00:Clean;MindScape_AppViewTests_Step00:Clean;MindScape_AppViewVCL_Step01:Clean;MindScape_AppViewTests_Step01:Clean;MindScape_AppViewVCL_Step02:Clean;MindScape_AppViewTests_Step02:Clean;MindScape_AppViewVCL_Step03:Clean;MindScape_AppViewTests_Step03:Clean;MindScape_AppViewVCL_Step04:Clean;MindScape_AppViewTests_Step04:Clean;MindScape_AppViewVCL_Step05:Clean;MindScape_AppViewTests_Step05:Clean;MindScape_AppViewVCL_Step06:Clean;MindScape_AppViewTests_Step06:Clean;MindScape_AppViewVCL_Step07:Clean;MindScape_AppViewTests_Step07:Clean;MindScape_AppViewVCL_Step08:Clean;MindScape_AppViewTests_Step08:Clean;MindScape_AppViewVCL_Step09:Clean;MindScape_AppViewTests_Step09:Clean;MindScape_AppViewVCL_Step10:Clean;MindScape_AppViewTests_Step10:Clean;MindScape_AppViewVCL_Step11:Clean;MindScape_AppViewTests_Step11:Clean;MindScape_AppViewVCL_Step12:Clean;MindScape_AppViewTests_Step12:Clean;MindScape_AppViewVCL_Step13:Clean;MindScape_AppViewTests_Step13:Clean;MindScape_AppViewVCL_Step14:Clean;MindScape_AppViewTests_Step14:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="MindScape_AppViewVCL_Step00:Make;MindScape_AppViewTests_Step00:Make;MindScape_AppViewVCL_Step01:Make;MindScape_AppViewTests_Step01:Make;MindScape_AppViewVCL_Step02:Make;MindScape_AppViewTests_Step02:Make;MindScape_AppViewVCL_Step03:Make;MindScape_AppViewTests_Step03:Make;MindScape_AppViewVCL_Step04:Make;MindScape_AppViewTests_Step04:Make;MindScape_AppViewVCL_Step05:Make;MindScape_AppViewTests_Step05:Make;MindScape_AppViewVCL_Step06:Make;MindScape_AppViewTests_Step06:Make;MindScape_AppViewVCL_Step07:Make;MindScape_AppViewTests_Step07:Make;MindScape_AppViewVCL_Step08:Make;MindScape_AppViewTests_Step08:Make;MindScape_AppViewVCL_Step09:Make;MindScape_AppViewTests_Step09:Make;MindScape_AppViewVCL_Step10:Make;MindScape_AppViewTests_Step10:Make;MindScape_AppViewVCL_Step11:Make;MindScape_AppViewTests_Step11:Make;MindScape_AppViewVCL_Step12:Make;MindScape_AppViewTests_Step12:Make;MindScape_AppViewVCL_Step13:Make;MindScape_AppViewTests_Step13:Make;MindScape_AppViewVCL_Step14:Make;MindScape_AppViewTests_Step14:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

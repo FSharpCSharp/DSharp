@@ -20,7 +20,7 @@ begin
   Application.WithDebugLogger();
 {$ENDIF DEBUG}
 {$IFDEF CodeSite}
-  Application.WithLogger<TCodeSiteLog>;
+  Application.WithLogger<TCodeSiteLog>();
 {$ENDIF CodeSite}
   Application.Start<TAppViewModel>();
 end.

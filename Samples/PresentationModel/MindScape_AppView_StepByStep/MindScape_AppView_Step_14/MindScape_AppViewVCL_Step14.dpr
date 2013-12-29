@@ -14,14 +14,14 @@ uses
 {$R *.res}
 
 begin
-  Application.Initialize;
+  Application.Initialize();
   Application.MainFormOnTaskbar := True;
   ReportMemoryLeaksOnShutdown := True;
 {$IFDEF DEBUG}
   Application.WithDebugLogger();
 {$ENDIF DEBUG}
 {$IFDEF CodeSite}
-  Application.WithLogger<TCodeSiteLog>;
+  Application.WithLogger<TCodeSiteLog>();
 {$ENDIF CodeSite}
   Application.Start<IAppViewModel>();
 end.

@@ -96,6 +96,19 @@ type
     property View: TCollectionView read FView implements ICollectionView;
   end;
 
+  TTrackBar = class(FMX.StdCtrls.TTrackBar, INotifyPropertyChanged)
+  private
+    FNotifyPropertyChanged: INotifyPropertyChanged;
+    property NotifyPropertyChanged: INotifyPropertyChanged
+      read FNotifyPropertyChanged implements INotifyPropertyChanged;
+  protected
+//    procedure Changed; override;
+//    procedure CMExit(var Message: TCMExit); message CM_EXIT;
+    procedure DoChanged; override;
+  public
+    constructor Create(AOwner: TComponent); override;
+  end;
+
 implementation
 
 uses
@@ -199,6 +212,20 @@ destructor TScrollBox.Destroy;
 begin
   FView.Free();
   inherited;
+end;
+
+{ TTrackBar }
+
+constructor TTrackBar.Create(AOwner: TComponent);
+begin
+  inherited;
+  FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+end;
+
+procedure TTrackBar.DoChanged;
+begin
+  inherited;
+  NotifyPropertyChanged.DoPropertyChanged('Value');
 end;
 
 end.

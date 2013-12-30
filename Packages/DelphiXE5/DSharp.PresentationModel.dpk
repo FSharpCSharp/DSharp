@@ -128,6 +128,7 @@ contains
   DSharp.PresentationModel.CoroutineExecutionContextIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.CoroutineExecutionContextIntf.pas',
   DSharp.PresentationModel.WindowManagerIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.WindowManagerIntf.pas',
   DSharp.PresentationModel.DefinesBindingsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.DefinesBindingsIntf.pas',
-  DSharp.PresentationModel.SpringBootstrapper in '..\..\Source\PresentationModel\DSharp.PresentationModel.SpringBootstrapper.pas';
+  DSharp.PresentationModel.SpringBootstrapper in '..\..\Source\PresentationModel\DSharp.PresentationModel.SpringBootstrapper.pas',
+  DSharp.PresentationModel.RegExHelper in '..\..\Source\PresentationModel\DSharp.PresentationModel.RegExHelper.pas';
 
 end.

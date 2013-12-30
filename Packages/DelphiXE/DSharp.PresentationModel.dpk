@@ -127,6 +127,7 @@ contains
   DSharp.PresentationModel.WindowManagerIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.WindowManagerIntf.pas',
   DSharp.PresentationModel.DefinesBindingsIntf in '..\..\Source\PresentationModel\DSharp.PresentationModel.DefinesBindingsIntf.pas',
   DSharp.PresentationModel.SpringBootstrapper in '..\..\Source\PresentationModel\DSharp.PresentationModel.SpringBootstrapper.pas',
-  Actions in '..\..\Source\PresentationModel\Actions.pas';
+  Actions in '..\..\Source\PresentationModel\Actions.pas',
+  DSharp.PresentationModel.RegExHelper in '..\..\Source\PresentationModel\DSharp.PresentationModel.RegExHelper.pas';
 
 end.

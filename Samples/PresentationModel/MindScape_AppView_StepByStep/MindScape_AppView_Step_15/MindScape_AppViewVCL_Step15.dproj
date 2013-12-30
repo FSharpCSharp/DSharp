@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{3144023B-6DB8-45AF-B214-53DF7FB88FCB}</ProjectGuid>
-        <ProjectVersion>15.2</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <MainSource>MindScape_AppViewVCL_Step15.dpr</MainSource>
         <Base>True</Base>

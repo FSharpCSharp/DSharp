@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{9FC9A094-7C45-4D35-87B3-2725686A3E6F}</ProjectGuid>
-        <ProjectVersion>15.2</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <MainSource>TasksFmx.dpr</MainSource>
         <Base>True</Base>

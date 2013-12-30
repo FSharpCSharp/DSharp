@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{5D985AC2-4C33-4D80-A8CD-19843E8562F9}</ProjectGuid>
-        <ProjectVersion>15.2</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <MainSource>MindScape_AppViewTests_Step08.dpr</MainSource>
         <Base>True</Base>

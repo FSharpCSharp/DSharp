@@ -7,7 +7,7 @@
         <AppType>Package</AppType>
         <FrameworkType>None</FrameworkType>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-        <ProjectVersion>15.2</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>7</TargetedPlatforms>
     </PropertyGroup>

@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{EC3A5787-CA66-45FD-B226-ABD78E66CB6F}</ProjectGuid>
         <MainSource>DSharp.PresentationModel.dpk</MainSource>
-        <ProjectVersion>15.2</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>

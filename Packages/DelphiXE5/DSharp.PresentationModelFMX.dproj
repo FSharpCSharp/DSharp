@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{D0E2FC77-9772-4BF0-A07B-84297ECDEEB9}</ProjectGuid>
         <MainSource>DSharp.PresentationModelFMX.dpk</MainSource>
-        <ProjectVersion>15.2</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>

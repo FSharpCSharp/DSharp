@@ -92,7 +92,6 @@
 			<DCCReference Include="..\..\Source\Core\ObjAutoPatch.pas"/>
 			<DCCReference Include="..\..\Source\Core\PatchUtils.pas"/>
 			<DCCReference Include="..\..\Source\Core\RttiPatch.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyPath.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.RegularExpressions.pas"/>
 			<DCCReference Include="..\..\Source\Logging\DSharp.Logging.Debug.pas"/>
 			<BuildConfiguration Include="Release">

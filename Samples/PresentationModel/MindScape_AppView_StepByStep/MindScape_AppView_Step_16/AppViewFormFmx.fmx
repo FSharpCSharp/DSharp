@@ -1,0 +1,177 @@
+object AppView: TAppView
+  Left = 0
+  Top = 0
+  Caption = 'AppView'
+  ClientHeight = 320
+  ClientWidth = 320
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [dkDesktop, dkiPhone, dkiPad]
+  DesignerMobile = False
+  DesignerWidth = 0
+  DesignerHeight = 0
+  DesignerDeviceName = ''
+  DesignerOrientation = 0
+  DesignerOSVersion = ''
+  object Count: TEdit
+    Touch.InteractiveGestures = [igLongTap, igDoubleTap]
+    TabOrder = 0
+    Font.Size = 36.000000000000000000
+    Text = 'Count'
+    Position.X = 24.000000000000000000
+    Position.Y = 56.000000000000000000
+    Width = 177.000000000000000000
+    Height = 66.000000000000000000
+    StyledSettings = [ssFamily, ssStyle, ssFontColor]
+    KillFocusByReturn = False
+  end
+  object Button1: TButton
+    Action = MultipyByTwo
+    Font.Size = 36.000000000000000000
+    StyledSettings = [ssFamily, ssStyle, ssFontColor]
+    Height = 66.000000000000000000
+    Position.X = 216.000000000000000000
+    Position.Y = 56.000000000000000000
+    TabOrder = 1
+    Width = 80.000000000000000000
+  end
+  object DecrementCount: TButton
+    Font.Size = 36.000000000000000000
+    StyledSettings = [ssFamily, ssStyle, ssFontColor]
+    Height = 66.000000000000000000
+    Position.X = 24.000000000000000000
+    Position.Y = 136.000000000000000000
+    TabOrder = 2
+    Text = '-1'
+    Width = 80.000000000000000000
+  end
+  object IncrementCount: TButton
+    Font.Size = 36.000000000000000000
+    StyledSettings = [ssFamily, ssStyle, ssFontColor]
+    Height = 66.000000000000000000
+    Position.X = 120.000000000000000000
+    Position.Y = 136.000000000000000000
+    TabOrder = 3
+    Text = '+1'
+    Width = 80.000000000000000000
+  end
+  object Button2: TButton
+    Action = IncrementByTwo
+    Font.Size = 36.000000000000000000
+    StyledSettings = [ssFamily, ssStyle, ssFontColor]
+    Height = 66.000000000000000000
+    Position.X = 216.000000000000000000
+    Position.Y = 136.000000000000000000
+    TabOrder = 4
+    Width = 80.000000000000000000
+  end
+  object IncVal: TLabel
+    Font.Size = 36.000000000000000000
+    StyledSettings = [ssFamily, ssStyle, ssFontColor]
+    Height = 66.000000000000000000
+    Position.X = 24.000000000000000000
+    Position.Y = 216.000000000000000000
+    Text = 'IncVal'
+    Width = 177.000000000000000000
+  end
+  object IncrementValue: TTrackBar
+    Height = 20.000000000000000000
+    Max = 5.000000000000000000
+    Min = -5.000000000000000000
+    Orientation = orHorizontal
+    Position.X = 24.000000000000000000
+    Position.Y = 264.000000000000000000
+    TabOrder = 6
+    Width = 177.000000000000000000
+  end
+  object IncrementCountByIncrementValue: TButton
+    Font.Size = 36.000000000000000000
+    StyledSettings = [ssFamily, ssStyle, ssFontColor]
+    Height = 66.000000000000000000
+    Position.X = 216.000000000000000000
+    Position.Y = 216.000000000000000000
+    TabOrder = 7
+    Text = 'Inc'
+    Width = 80.000000000000000000
+  end
+  object MenuBar1: TMenuBar
+    Align = alTop
+    Height = 24.000000000000000000
+    TabOrder = 8
+    Width = 320.000000000000000000
+    object MenuItem1: TMenuItem
+      Action = IncrementByTwo
+      StyleLookup = 'menubaritemstyle'
+    end
+    object MenuItem2: TMenuItem
+      Action = MultipyByTwo
+      StyleLookup = 'menubaritemstyle'
+    end
+    object MenuItem3: TMenuItem
+      StyleLookup = 'menubaritemstyle'
+      Text = 'Count'
+      object MenuItem4: TMenuItem
+        Action = IncrementByTwo
+        Locked = True
+      end
+      object MenuItem5: TMenuItem
+        Action = MultipyByTwo
+        Locked = True
+      end
+    end
+  end
+  object MainMenu1: TMainMenu
+    Left = 264
+    Top = 8
+    object MenuItem6: TMenuItem
+      Action = IncrementByTwo
+    end
+    object MenuItem7: TMenuItem
+      Action = MultipyByTwo
+    end
+    object MenuItem8: TMenuItem
+      Text = 'Count'
+      object MenuItem9: TMenuItem
+        Action = IncrementByTwo
+        Locked = True
+      end
+      object MenuItem10: TMenuItem
+        Action = MultipyByTwo
+        Locked = True
+      end
+    end
+  end
+  object FrequencyIncrementValue: TTrackBar
+    Frequency = 1.000000000000000000
+    Height = 20.000000000000000000
+    Max = 5.000000000000000000
+    Min = -5.000000000000000000
+    Orientation = orHorizontal
+    Position.X = 24.000000000000000000
+    Position.Y = 216.000000000000000000
+    TabOrder = 9
+    Width = 177.000000000000000000
+  end
+  object FloatIncrementValue: TTrackBar
+    Height = 20.000000000000000000
+    Max = 5.000000000000000000
+    Min = -5.000000000000000000
+    Orientation = orHorizontal
+    Position.X = 24.000000000000000000
+    Position.Y = 280.000000000000000000
+    TabOrder = 10
+    Width = 177.000000000000000000
+  end
+  object ActionList1: TActionList
+    Left = 192
+    Top = 8
+    object IncrementByTwo: TAction
+      Category = 'Count'
+      Text = '+2'
+    end
+    object MultipyByTwo: TAction
+      Category = 'Count'
+      Text = '*2'
+    end
+  end
+end

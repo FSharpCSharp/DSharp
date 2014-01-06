@@ -3,16 +3,10 @@ unit AppViewFormFmx;
 interface
 
 uses
-//  System.SysUtils,
-//  System.Types,
-//  System.UITypes,
   System.Classes,
-//  System.Variants,
   FMX.Types,
-//  FMX.Graphics,
   FMX.Controls,
   FMX.Forms,
-//  FMX.Dialogs,
   FMX.StdCtrls,
   FMX.Edit,
   System.Actions,
@@ -63,19 +57,6 @@ uses
 
 procedure TAppView.DefineBindings();
 begin
-(*
-//    [Binding('OnExecute', '{Binding IncrementCountBy2}')]
-//    [Binding('Enabled', '{Binding CanIncrementCountBy2}')]
-    IncrementByTwo: TAction;
-//    [Binding('OnExecute', '{Binding MultiplyCountBy2}')]
-//    [Binding('Enabled', '{Binding CanMultiplyCountBy2}')]
-    MultipyByTwo: TAction;
-    ActionToolBar1: TActionToolBar;
-    ActionMainMenuBar1: TActionMainMenuBar;
-//    [Binding('Caption', '{Binding IncrementValue}')]
-    IncVal: TLabel;
-    IncrementCountByIncrementValue: TButton;
-*)
   IncrementByTwo.SetBinding('OnExecute', 'IncrementCountBy2');
   IncrementByTwo.SetBinding('Enabled', 'CanIncrementCountBy2');
   MultipyByTwo.SetBinding('OnExecute', 'MultiplyCountBy2');

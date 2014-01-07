@@ -83,15 +83,15 @@ begin
     end;
     lkMessage:
     begin
-      SiMain.LogMessage(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values));
+      SiMain.LogMessage(Format(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values)));
     end;
     lkWarning:
     begin
-      SiMain.LogWarning(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values));
+      SiMain.LogWarning(Format(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values)));
     end;
     lkError:
     begin
-      SiMain.LogError(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values));
+      SiMain.LogError(Format(ALogEntry.FormatText, TValue.ToVarRecs(ALogEntry.Values)));
     end;
     lkException:
     begin

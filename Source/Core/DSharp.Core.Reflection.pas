@@ -55,7 +55,7 @@ type
     ///   In DEBUG it returns more details than in RELEASE.
     ///	</summary>
     {$ENDREGION}
-    function Describe(): string; overload;
+    function Describe: string; overload;
 
     {$REGION 'Documentation'}
     ///	<summary>
@@ -64,7 +64,7 @@ type
     ///   In DEBUG it returns more details than in RELEASE.
     ///	</summary>
     {$ENDREGION}
-    function Describe(const AComponent: TComponent): string; overload;
+    class function Describe(const AComponent: TComponent): string; overload;
 
     {$REGION 'Documentation'}
     ///	<summary>
@@ -1560,7 +1560,7 @@ end;
 
 { TObjectHelper }
 
-function TObjectHelper.Describe(): string;
+function TObjectHelper.Describe: string;
 var
   LComponent: TComponent;
 begin
@@ -1575,7 +1575,7 @@ begin
     begin
       Result := Format('@$%p', [Pointer(Self)]);
 {$IFDEF DEBUG}
-      Result := Format('%s(%s)', [Result, Self.QualifiedClassName]);
+      Result := Format('%s (%s)', [Result, Self.QualifiedClassName]);
 {$ENDIF DEBUG}
     end;
   end
@@ -1583,7 +1583,7 @@ begin
     Result := '<nil>';
 end;
 
-function TObjectHelper.Describe(const AComponent: TComponent): string;
+class function TObjectHelper.Describe(const AComponent: TComponent): string;
 {$IFDEF DEBUG}
 var
   LOwner: TComponent;
@@ -1596,7 +1596,7 @@ begin
     if '' = Result then
       Result := Format('@$%p', [Pointer(AComponent)]);
 {$IFDEF DEBUG}
-    Result := Format('%s(%s)', [Result, AComponent.QualifiedClassName]);
+    Result := Format('%s (%s)', [Result, AComponent.QualifiedClassName]);
     if Assigned(AComponent) then
     begin
       LOwner := AComponent.Owner;
@@ -1604,7 +1604,7 @@ begin
       begin
         LOwnerName := Describe(LOwner);
         if '' <> LOwnerName then
-          Result := Format('%s%s  of %s', [Result, #13#10, LOwnerName]);
+          Result := Format('%s'#13#10'  of %s', [Result, LOwnerName]);
       end;
     end;
 {$ENDIF DEBUG}

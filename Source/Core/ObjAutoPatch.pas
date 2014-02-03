@@ -134,7 +134,7 @@ type
 function PassByRef(P: PByte; ParamInfos: PParameterInfos; I: Integer): Boolean;
 begin
   Result := (TParamFlags(P[0]) * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [])
-    and not (ParamInfos^[I]^.Kind in [tkMethod, tkInt64]);
+    and not (ParamInfos^[I]^.Kind in [tkFloat, tkMethod, tkInt64]);
 end;
 
 procedure UseFunction(P: Pointer);
@@ -172,6 +172,18 @@ begin
   UseFunction(@ObjAuto.CreateMethodPointer);
   // Replace if TParamFlags(P[0]) * [pfVar, pfConst, pfAddress, pfReference, pfOut] <> [] then with if PassByRef(P, ParamInfos, I) then
   P := FindMethodBytes(PByte(GetActualAddr(@ObjAuto.GetInvokeInstance)), ParamFlagsBytes, 300);
+  if P <> nil then
+  begin
+    if not WriteProcessMemory(GetCurrentProcess, P, @PassByRefBytes, SizeOf(PassByRefBytes), n) then
+      RaiseLastOSError;
+    Offset := PByte(@PassByRef) - (PByte(P + 8) + 5);
+    if not WriteProcessMemory(GetCurrentProcess, P + 9, @Offset, SizeOf(Offset), n) then
+      RaiseLastOSError;
+  end
+  else
+    raise Exception.Create('Patching TBaseMethodHandlerInstance.Create failed. Do you have set a breakpoint in the method?');
+
+  P := FindMethodBytes(P, ParamFlagsBytes, 300);
   if P <> nil then
   begin
     if not WriteProcessMemory(GetCurrentProcess, P, @PassByRefBytes, SizeOf(PassByRefBytes), n) then

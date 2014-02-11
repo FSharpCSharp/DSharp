@@ -495,7 +495,9 @@ end;
 procedure TComboBox.Change;
 begin
   inherited;
+  NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
   NotifyPropertyChanged.DoPropertyChanged('Text');
+  NotifyPropertyChanged.DoPropertyChanged('View');
 end;
 
 procedure TComboBox.CMExit(var Message: TCMExit);
@@ -503,6 +505,7 @@ begin
   try
     NotifyPropertyChanged.DoPropertyChanged('ItemIndex', utLostFocus);
     NotifyPropertyChanged.DoPropertyChanged('Text', utLostFocus);
+    NotifyPropertyChanged.DoPropertyChanged('View', utLostFocus);
     inherited;
   except
     on EValidationError do
@@ -520,13 +523,25 @@ end;
 procedure TComboBox.Select;
 begin
   inherited;
+  if FView.ItemIndex <> ItemIndex then
+  begin
+    FView.ItemIndex := ItemIndex;
+  end;
   NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
+  NotifyPropertyChanged.DoPropertyChanged('Text');
+  NotifyPropertyChanged.DoPropertyChanged('View');
 end;
 
 procedure TComboBox.SetItemIndex(const Value: Integer);
 begin
   inherited;
+  if FView.ItemIndex <> ItemIndex then
+  begin
+    FView.ItemIndex := ItemIndex;
+  end;
   NotifyPropertyChanged.DoPropertyChanged('ItemIndex');
+  NotifyPropertyChanged.DoPropertyChanged('Text');
+  NotifyPropertyChanged.DoPropertyChanged('View');
 end;
 
 procedure TComboBox.SetText(const Value: TCaption);

@@ -2830,10 +2830,7 @@ begin
       Result := ArrayToString(Value);
     end;
   else
-    if Value.IsString then
-      Result := '''' + Value.ToString + ''''
-    else
-      Result := Value.ToString;
+    Result := Value.ToString;
   end;
 end;
 

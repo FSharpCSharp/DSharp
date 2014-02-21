@@ -334,7 +334,7 @@ begin
       end
       else
       begin
-        FCurrentNode.NodeValue := FloatToStr(AValue.AsExtended, XmlFormatSettings);
+        AValue := StrToFloat(FCurrentNode.NodeValue, XmlFormatSettings);
       end;
     end;
     tkSet:

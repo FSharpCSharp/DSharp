@@ -43,6 +43,7 @@ uses
 
 type
   TValue = Rtti.TValue;
+  TRttiType = Rtti.TRttiType;
 
   Mock<T> = record
   private

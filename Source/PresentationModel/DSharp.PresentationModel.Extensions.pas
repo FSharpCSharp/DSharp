@@ -88,6 +88,21 @@ type
     ///	  Attaches a binding to this element, based on the provided source
     ///	  property name as a path qualification to the data source.
     ///	</summary>
+    ///	<param name="ATargetPropertyName">
+    ///	  Identifies the destination property where the binding should be
+    ///	  established.
+    ///	</param>
+    ///	<param name="ASourcePropertyName">
+    ///	  The source property name or the path to the property used for the
+    ///	  binding.
+    ///	</param>
+    function SetBinding(ATargetPropertyName, ASourcePropertyName: string;
+      AConverter: IValueConverter): TBinding; overload;
+
+    ///	<summary>
+    ///	  Attaches a binding to this element, based on the provided source
+    ///	  property name as a path qualification to the data source.
+    ///	</summary>
     function SetBinding(ATargetPropertyName: string = '';
       ASource: TObject = nil; ASourcePropertyName: string = '';
       ABindingMode: TBindingMode = BindingModeDefault;
@@ -182,6 +197,13 @@ function TComponentHelper.SetBinding(ATargetPropertyName: string = '';
   ASourcePropertyName: string = ''): TBinding;
 begin
   Result := SetBinding(ATargetPropertyName, DataContext, ASourcePropertyName);
+end;
+
+function TComponentHelper.SetBinding(ATargetPropertyName, ASourcePropertyName: string;
+  AConverter: IValueConverter): TBinding;
+begin
+  Result := SetBinding(ATargetPropertyName, DataContext, ASourcePropertyName,
+    BindingModeDefault, AConverter);
 end;
 
 function TComponentHelper.SetBinding(ATargetPropertyName: string;

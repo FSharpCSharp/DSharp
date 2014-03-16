@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{4D925E40-1A77-45CF-9F8D-CE52053B35B8}</ProjectGuid>
-        <ProjectVersion>15.1</ProjectVersion>
+        <ProjectVersion>15.3</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <MainSource>MindScape_AppViewFMX_Step15.dpr</MainSource>
         <Base>True</Base>

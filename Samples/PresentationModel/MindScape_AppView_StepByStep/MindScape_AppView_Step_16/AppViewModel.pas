@@ -37,9 +37,9 @@ type
       read GetCanIncrementCountByIncrementValue;
     property CanMultiplyCountBy2: Boolean read GetCanMultiplyCountBy2;
     property Count: Integer read GetCount write SetCount;
+    //1 Read from FFloatIncrementValue field, not the IncrementValue Integer so the FMX trackbar behaves smoothly
     property FloatIncrementValue: Double read FFloatIncrementValue write SetFloatIncrementValue;
-    property IncrementValue: Integer read GetIncrementValue
-      write SetIncrementValue;
+    property IncrementValue: Integer read GetIncrementValue write SetIncrementValue;
   end;
 
 implementation

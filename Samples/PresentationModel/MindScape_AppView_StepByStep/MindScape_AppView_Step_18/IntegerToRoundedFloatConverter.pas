@@ -3,7 +3,6 @@ unit IntegerToRoundedFloatConverter;
 interface
 
 uses
-  SysUtils,
   DSharp.Core.DataConversion;
 
 type
@@ -14,8 +13,6 @@ type
   end;
 
 implementation
-
-{ TIntegerToRoundedFloatConverter }
 
 function TIntegerToRoundedFloatConverter.Convert(const Value: TValue): TValue;
 begin

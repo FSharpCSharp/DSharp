@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2013, Stefan Glienke
+  Copyright (c) 2011-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -37,74 +37,88 @@ uses
 
 type
   ITask = interface
-    function Canceled: Boolean;
-    function Finished: Boolean;
+    function GetIsCanceled: Boolean;
+    function GetIsCompleted: Boolean;
 
     procedure Cancel;
     procedure Start;
     procedure Wait;
+
+    property IsCanceled: Boolean read GetIsCanceled;
+    property IsCompleted: Boolean read GetIsCompleted;
   end;
 
   ITask<T> = interface(ITask)
-    function Value: T;
+    function GetResult: T;
+
+    property Result: T read GetResult;
   end;
 
   TAbstractTaskThread = class(TThread)
   private
-    FYielding: Boolean;
+    fYielding: Boolean;
   protected
     procedure DoTerminate; override;
   public
     constructor Create;
     destructor Destroy; override;
+
     procedure Continue;
     procedure RaiseException;
     procedure Yield;
   end;
 
   TAbstractTask = class(TInterfacedObject, ITask)
+  private
+    function GetIsCanceled: Boolean;
+    function GetIsCompleted: Boolean;
   protected
-    FCanceled: Boolean;
-    FWorker: TAbstractTaskThread;
+    fCanceled: Boolean;
+    fWorker: TAbstractTaskThread;
   public
     destructor Destroy; override;
-
-    function Canceled: Boolean;
-    function Finished: Boolean;
 
     procedure Cancel; virtual;
     procedure Start; virtual;
     procedure Wait; virtual;
+
+    property IsCanceled: Boolean read GetIsCanceled;
+    property IsCompleted: Boolean read GetIsCompleted;
   end;
 
   TTaskThread = class(TAbstractTaskThread)
   private
-    FAction: TProc;
+    fAction: TProc;
   public
-    constructor Create(const AAction: TProc);
+    constructor Create(const action: TProc);
+
     procedure Execute; override;
   end;
 
   TTask = class(TAbstractTask)
   public
-    constructor Create(const AAction: TProc);
+    constructor Create(const action: TProc);
   end;
 
   TTaskThread<T> = class(TAbstractTaskThread)
   private
-    FAction: TFunc<T>;
-    FResult: T;
+    fAction: TFunc<T>;
+    fResult: T;
   public
-    constructor Create(const AAction: TFunc<T>);
+    constructor Create(const action: TFunc<T>);
+
     procedure Execute; override;
-    property Result: T read FResult;
+
+    property Result: T read fResult;
   end;
 
   TTask<T> = class(TAbstractTask, ITask<T>)
+  private
+    function GetResult: T;
   public
-    constructor Create(const AAction: TFunc<T>);
+    constructor Create(const action: TFunc<T>);
 
-    function Value: T;
+    property Result: T read GetResult;
   end;
 
 implementation
@@ -125,9 +139,7 @@ begin
     Self.FFatalException := nil;
   end
   else
-  begin
     Result := nil;
-  end;
 end;
 
 { TAbstractTaskThread }
@@ -152,14 +164,10 @@ begin
   TMonitor.Enter(Self);
   try
     if Suspended then
-    begin
       Start;
-    end;
-    while not FYielding do
-    begin
+    while not fYielding do
       TMonitor.Wait(Self, INFINITE);
-    end;
-    FYielding := False;
+    fYielding := False;
     TMonitor.PulseAll(Self);
   finally
     TMonitor.Exit(Self);
@@ -178,18 +186,16 @@ var
 begin
   E := DetachException;
   if Assigned(E) and not (E is EAbort) then
-  begin
     raise E;
-  end;
 end;
 
 procedure TAbstractTaskThread.Yield;
 begin
   TMonitor.Enter(Self);
   try
-    while FYielding and not Terminated do
+    while fYielding and not Terminated do
       TMonitor.Wait(Self, INFINITE);
-    FYielding := True;
+    fYielding := True;
     TMonitor.PulseAll(Self);
   finally
     TMonitor.Exit(Self);
@@ -200,96 +206,94 @@ end;
 
 destructor TAbstractTask.Destroy;
 begin
-  FreeAndNil(FWorker);
+  FreeAndNil(fWorker);
   inherited;
 end;
 
 procedure TAbstractTask.Cancel;
 begin
-  if FCanceled then
+  if fCanceled then
     raise Exception.Create('Action already canceled');
 
-  if not FWorker.Finished then
+  if not fWorker.Finished then
   begin
-    FWorker.Terminate();
-    FCanceled := True;
+    fWorker.Terminate;
+    fCanceled := True;
   end;
 end;
 
-function TAbstractTask.Canceled: Boolean;
+function TAbstractTask.GetIsCanceled: Boolean;
 begin
-  Result := FCanceled;
+  Result := fCanceled;
 end;
 
-function TAbstractTask.Finished: Boolean;
+function TAbstractTask.GetIsCompleted: Boolean;
 begin
-  Result := FWorker.Finished;
+  Result := fWorker.Finished;
 end;
 
 procedure TAbstractTask.Start;
 begin
-  FWorker.Start();
+  fWorker.Start;
 end;
 
 procedure TAbstractTask.Wait;
 begin
-  FWorker.WaitFor();
+  fWorker.WaitFor;
 end;
 
 { TTaskThread }
 
-constructor TTaskThread.Create(const AAction: TProc);
+constructor TTaskThread.Create(const action: TProc);
 begin
-  inherited Create();
-  FAction := AAction;
+  inherited Create;
+  fAction := action;
 end;
 
 procedure TTaskThread.Execute;
 begin
   inherited;
-  FAction();
+  fAction;
 end;
 
 { TTask }
 
-constructor TTask.Create(const AAction: TProc);
+constructor TTask.Create(const action: TProc);
 begin
-  inherited Create();
-  FWorker := TTaskThread.Create(AAction);
+  inherited Create;
+  fWorker := TTaskThread.Create(action);
 end;
 
 { TTaskThread<T> }
 
-constructor TTaskThread<T>.Create(const AAction: TFunc<T>);
+constructor TTaskThread<T>.Create(const action: TFunc<T>);
 begin
-  inherited Create();
-  FAction := AAction;
+  inherited Create;
+  fAction := action;
 end;
 
 procedure TTaskThread<T>.Execute;
 begin
   inherited;
-  FResult := FAction();
+  fResult := fAction;
 end;
 
 { TTask<T> }
 
-constructor TTask<T>.Create(const AAction: TFunc<T>);
+constructor TTask<T>.Create(const action: TFunc<T>);
 begin
   inherited Create;
-  FWorker := TTaskThread<T>.Create(AAction);
+  fWorker := TTaskThread<T>.Create(action);
 end;
 
-function TTask<T>.Value: T;
+function TTask<T>.GetResult: T;
 begin
-  if FCanceled then
+  if fCanceled then
     raise Exception.Create('Action was canceled');
 
-  if not Finished then
-  begin
-    Wait();
-  end;
-  Result := TTaskThread<T>(FWorker).Result;
+  if not IsCompleted then
+    Wait;
+  Result := TTaskThread<T>(fWorker).Result;
 end;
 
 end.

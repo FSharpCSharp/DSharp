@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011, Stefan Glienke
+  Copyright (c) 2011-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,9 @@ uses
 type
   Async = record
   private
-    FTask: ITask;
+    fTask: ITask;
   public
-    class operator Implicit(const Value: TProc): Async;
+    class operator Implicit(const value: TProc): Async;
 
     procedure Await;
     procedure Cancel;
@@ -49,10 +49,10 @@ type
 
   Async<T> = record
   private
-    FTask: ITask<T>;
+    fTask: ITask<T>;
   public
-    class operator Implicit(const Value: TFunc<T>): Async<T>;
-    class operator Implicit(const Value: Async<T>): T;
+    class operator Implicit(const value: TFunc<T>): Async<T>;
+    class operator Implicit(const value: Async<T>): T;
 
     function Await: T;
     procedure Cancel;
@@ -69,9 +69,9 @@ type
   end;
 
 function AsyncCanceled: Boolean;
-procedure Delay(Milliseconds: Integer);
-procedure Synchronize(AProc: TProc);
-procedure WaitFor(AThread: TThread);
+procedure Delay(milliseconds: Integer);
+procedure Synchronize(const proc: TProc);
+procedure WaitFor(const thread: TThread);
 
 implementation
 
@@ -86,113 +86,97 @@ begin
   Result := (TThread.CurrentThread.ThreadID <> MainThreadID) and TThread.CheckTerminated;
 end;
 
-procedure Delay(Milliseconds: Integer);
+procedure Delay(milliseconds: Integer);
 var
-  Tick: Cardinal;
-  Event: THandle;
+  ticks: Cardinal;
+  event: THandle;
 begin
-  Event := CreateEvent(nil, False, False, nil);
+  event := CreateEvent(nil, False, False, nil);
   try
-    Tick := GetTickCount() + Cardinal(Milliseconds);
-    while (Milliseconds > 0) and (MsgWaitForMultipleObjects(1, Event, False,
-      Milliseconds, QS_ALLINPUT) <> WAIT_TIMEOUT) do
+    ticks := GetTickCount + Cardinal(milliseconds);
+    while (milliseconds > 0) and (MsgWaitForMultipleObjects(1, event, False,
+      milliseconds, QS_ALLINPUT) <> WAIT_TIMEOUT) do
     begin
-      Application.ProcessMessages();
-      Milliseconds := Tick - GetTickCount();
+      Application.ProcessMessages;
+      milliseconds := ticks - GetTickCount;
     end;
   finally
-    CloseHandle(Event);
+    CloseHandle(event);
   end;
 end;
 
-procedure Synchronize(AProc: TProc);
+procedure Synchronize(const proc: TProc);
 begin
   if TThread.CurrentThread.ThreadID <> MainThreadID then
-  begin
-    TThread.Synchronize(TThread.CurrentThread, TThreadProcedure(AProc));
-  end
+    TThread.Synchronize(TThread.CurrentThread, TThreadProcedure(proc))
   else
-  begin
-    AProc();
-  end;
+    proc;
 end;
 
-procedure WaitFor(AThread: TThread);
+procedure WaitFor(const thread: TThread);
 var
-  LHandles: array[0..1] of THandle;
+  handles: array[0..1] of THandle;
 begin
-  LHandles[0] := AThread.Handle;
+  handles[0] := thread.Handle;
   if GetCurrentThreadId = MainThreadID then
   begin
-    LHandles[1] := SyncEvent;
+    handles[1] := SyncEvent;
     repeat
-      case MsgWaitForMultipleObjects(2, LHandles, False, INFINITE, QS_ALLINPUT) of
-        WAIT_OBJECT_0 + 1: CheckSynchronize();
-        WAIT_OBJECT_0 + 2: Application.ProcessMessages();
+      case MsgWaitForMultipleObjects(2, handles, False, INFINITE, QS_ALLINPUT) of
+        WAIT_OBJECT_0 + 1: CheckSynchronize;
+        WAIT_OBJECT_0 + 2: Application.ProcessMessages;
       end;
-    until AThread.Finished;
+    until thread.Finished;
   end
   else
-  begin
-    WaitForSingleObject(LHandles[0], INFINITE);
-  end;
+    WaitForSingleObject(handles[0], INFINITE);
 end;
 
 { Async }
 
 procedure Async.Await;
 begin
-  if Assigned(FTask) then
-  begin
-    FTask.Wait();
-  end;
+  if Assigned(fTask) then
+    fTask.Wait;
 end;
 
 procedure Async.Cancel;
 begin
-  if Assigned(FTask) then
-  begin
-    FTask.Cancel();
-  end;
+  if Assigned(fTask) then
+    fTask.Cancel;
 end;
 
-class operator Async.Implicit(const Value: TProc): Async;
+class operator Async.Implicit(const value: TProc): Async;
 begin
-  Result.FTask := TAsync.Create(Value);
-  Result.FTask.Start();
+  Result.fTask := TAsync.Create(value);
+  Result.fTask.Start;
 end;
 
 { Async<T> }
 
 function Async<T>.Await: T;
 begin
-  if Assigned(FTask) then
-  begin
-    Result := FTask.Value;
-  end
+  if Assigned(fTask) then
+    Result := fTask.Result
   else
-  begin
     Result := Default(T);
-  end;
 end;
 
 procedure Async<T>.Cancel;
 begin
-  if Assigned(FTask) then
-  begin
-    FTask.Cancel();
-  end;
+  if Assigned(fTask) then
+    fTask.Cancel;
 end;
 
-class operator Async<T>.Implicit(const Value: TFunc<T>): Async<T>;
+class operator Async<T>.Implicit(const value: TFunc<T>): Async<T>;
 begin
-  Result.FTask := TAsync<T>.Create(Value);
-  Result.FTask.Start();
+  Result.fTask := TAsync<T>.Create(value);
+  Result.fTask.Start;
 end;
 
-class operator Async<T>.Implicit(const Value: Async<T>): T;
+class operator Async<T>.Implicit(const value: Async<T>): T;
 begin
-  Result := Value.Await;
+  Result := value.Await;
 end;
 
 { TAsync }

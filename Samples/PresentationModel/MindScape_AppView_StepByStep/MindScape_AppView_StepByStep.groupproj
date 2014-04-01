@@ -129,6 +129,15 @@
         <Projects Include="MindScape_AppView_Step_18\MindScape_AppViewVCL_Step18.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="MindScape_AppView_Step_19\MindScape_AppViewFMX_Step19.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_19\MindScape_AppViewTests_Step19.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="MindScape_AppView_Step_19\MindScape_AppViewVCL_Step19.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -515,14 +524,41 @@
     <Target Name="MindScape_AppViewVCL_Step18:Make">
         <MSBuild Projects="MindScape_AppView_Step_18\MindScape_AppViewVCL_Step18.dproj" Targets="Make"/>
     </Target>
+    <Target Name="MindScape_AppViewFMX_Step19">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewFMX_Step19.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewFMX_Step19:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewFMX_Step19.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewFMX_Step19:Make">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewFMX_Step19.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step19">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewTests_Step19.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step19:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewTests_Step19.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewTests_Step19:Make">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewTests_Step19.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step19">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewVCL_Step19.dproj"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step19:Clean">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewVCL_Step19.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MindScape_AppViewVCL_Step19:Make">
+        <MSBuild Projects="MindScape_AppView_Step_19\MindScape_AppViewVCL_Step19.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="MindScape_AppViewVCL_Step00;MindScape_AppViewTests_Step00;MindScape_AppViewVCL_Step01;MindScape_AppViewTests_Step01;MindScape_AppViewVCL_Step02;MindScape_AppViewTests_Step02;MindScape_AppViewVCL_Step03;MindScape_AppViewTests_Step03;MindScape_AppViewVCL_Step04;MindScape_AppViewTests_Step04;MindScape_AppViewVCL_Step05;MindScape_AppViewTests_Step05;MindScape_AppViewVCL_Step06;MindScape_AppViewTests_Step06;MindScape_AppViewVCL_Step07;MindScape_AppViewTests_Step07;MindScape_AppViewVCL_Step08;MindScape_AppViewTests_Step08;MindScape_AppViewVCL_Step09;MindScape_AppViewTests_Step09;MindScape_AppViewVCL_Step10;MindScape_AppViewTests_Step10;MindScape_AppViewVCL_Step11;MindScape_AppViewTests_Step11;MindScape_AppViewVCL_Step12;MindScape_AppViewTests_Step12;MindScape_AppViewVCL_Step13;MindScape_AppViewTests_Step13;MindScape_AppViewVCL_Step14;MindScape_AppViewTests_Step14;MindScape_AppViewFMX_Step15;MindScape_AppViewVCL_Step15;MindScape_AppViewTests_Step15;MindScape_AppViewFMX_Step16;MindScape_AppViewVCL_Step16;MindScape_AppViewTests_Step16;MindScape_AppViewFMX_Step17;MindScape_AppViewVCL_Step17;MindScape_AppViewTests_Step17;MindScape_AppViewFMX_Step18;MindScape_AppViewTests_Step18;MindScape_AppViewVCL_Step18"/>
+        <CallTarget Targets="MindScape_AppViewVCL_Step00;MindScape_AppViewTests_Step00;MindScape_AppViewVCL_Step01;MindScape_AppViewTests_Step01;MindScape_AppViewVCL_Step02;MindScape_AppViewTests_Step02;MindScape_AppViewVCL_Step03;MindScape_AppViewTests_Step03;MindScape_AppViewVCL_Step04;MindScape_AppViewTests_Step04;MindScape_AppViewVCL_Step05;MindScape_AppViewTests_Step05;MindScape_AppViewVCL_Step06;MindScape_AppViewTests_Step06;MindScape_AppViewVCL_Step07;MindScape_AppViewTests_Step07;MindScape_AppViewVCL_Step08;MindScape_AppViewTests_Step08;MindScape_AppViewVCL_Step09;MindScape_AppViewTests_Step09;MindScape_AppViewVCL_Step10;MindScape_AppViewTests_Step10;MindScape_AppViewVCL_Step11;MindScape_AppViewTests_Step11;MindScape_AppViewVCL_Step12;MindScape_AppViewTests_Step12;MindScape_AppViewVCL_Step13;MindScape_AppViewTests_Step13;MindScape_AppViewVCL_Step14;MindScape_AppViewTests_Step14;MindScape_AppViewFMX_Step15;MindScape_AppViewVCL_Step15;MindScape_AppViewTests_Step15;MindScape_AppViewFMX_Step16;MindScape_AppViewVCL_Step16;MindScape_AppViewTests_Step16;MindScape_AppViewFMX_Step17;MindScape_AppViewVCL_Step17;MindScape_AppViewTests_Step17;MindScape_AppViewFMX_Step18;MindScape_AppViewTests_Step18;MindScape_AppViewVCL_Step18;MindScape_AppViewFMX_Step19;MindScape_AppViewTests_Step19;MindScape_AppViewVCL_Step19"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="MindScape_AppViewVCL_Step00:Clean;MindScape_AppViewTests_Step00:Clean;MindScape_AppViewVCL_Step01:Clean;MindScape_AppViewTests_Step01:Clean;MindScape_AppViewVCL_Step02:Clean;MindScape_AppViewTests_Step02:Clean;MindScape_AppViewVCL_Step03:Clean;MindScape_AppViewTests_Step03:Clean;MindScape_AppViewVCL_Step04:Clean;MindScape_AppViewTests_Step04:Clean;MindScape_AppViewVCL_Step05:Clean;MindScape_AppViewTests_Step05:Clean;MindScape_AppViewVCL_Step06:Clean;MindScape_AppViewTests_Step06:Clean;MindScape_AppViewVCL_Step07:Clean;MindScape_AppViewTests_Step07:Clean;MindScape_AppViewVCL_Step08:Clean;MindScape_AppViewTests_Step08:Clean;MindScape_AppViewVCL_Step09:Clean;MindScape_AppViewTests_Step09:Clean;MindScape_AppViewVCL_Step10:Clean;MindScape_AppViewTests_Step10:Clean;MindScape_AppViewVCL_Step11:Clean;MindScape_AppViewTests_Step11:Clean;MindScape_AppViewVCL_Step12:Clean;MindScape_AppViewTests_Step12:Clean;MindScape_AppViewVCL_Step13:Clean;MindScape_AppViewTests_Step13:Clean;MindScape_AppViewVCL_Step14:Clean;MindScape_AppViewTests_Step14:Clean;MindScape_AppViewFMX_Step15:Clean;MindScape_AppViewVCL_Step15:Clean;MindScape_AppViewTests_Step15:Clean;MindScape_AppViewFMX_Step16:Clean;MindScape_AppViewVCL_Step16:Clean;MindScape_AppViewTests_Step16:Clean;MindScape_AppViewFMX_Step17:Clean;MindScape_AppViewVCL_Step17:Clean;MindScape_AppViewTests_Step17:Clean;MindScape_AppViewFMX_Step18:Clean;MindScape_AppViewTests_Step18:Clean;MindScape_AppViewVCL_Step18:Clean"/>
+        <CallTarget Targets="MindScape_AppViewVCL_Step00:Clean;MindScape_AppViewTests_Step00:Clean;MindScape_AppViewVCL_Step01:Clean;MindScape_AppViewTests_Step01:Clean;MindScape_AppViewVCL_Step02:Clean;MindScape_AppViewTests_Step02:Clean;MindScape_AppViewVCL_Step03:Clean;MindScape_AppViewTests_Step03:Clean;MindScape_AppViewVCL_Step04:Clean;MindScape_AppViewTests_Step04:Clean;MindScape_AppViewVCL_Step05:Clean;MindScape_AppViewTests_Step05:Clean;MindScape_AppViewVCL_Step06:Clean;MindScape_AppViewTests_Step06:Clean;MindScape_AppViewVCL_Step07:Clean;MindScape_AppViewTests_Step07:Clean;MindScape_AppViewVCL_Step08:Clean;MindScape_AppViewTests_Step08:Clean;MindScape_AppViewVCL_Step09:Clean;MindScape_AppViewTests_Step09:Clean;MindScape_AppViewVCL_Step10:Clean;MindScape_AppViewTests_Step10:Clean;MindScape_AppViewVCL_Step11:Clean;MindScape_AppViewTests_Step11:Clean;MindScape_AppViewVCL_Step12:Clean;MindScape_AppViewTests_Step12:Clean;MindScape_AppViewVCL_Step13:Clean;MindScape_AppViewTests_Step13:Clean;MindScape_AppViewVCL_Step14:Clean;MindScape_AppViewTests_Step14:Clean;MindScape_AppViewFMX_Step15:Clean;MindScape_AppViewVCL_Step15:Clean;MindScape_AppViewTests_Step15:Clean;MindScape_AppViewFMX_Step16:Clean;MindScape_AppViewVCL_Step16:Clean;MindScape_AppViewTests_Step16:Clean;MindScape_AppViewFMX_Step17:Clean;MindScape_AppViewVCL_Step17:Clean;MindScape_AppViewTests_Step17:Clean;MindScape_AppViewFMX_Step18:Clean;MindScape_AppViewTests_Step18:Clean;MindScape_AppViewVCL_Step18:Clean;MindScape_AppViewFMX_Step19:Clean;MindScape_AppViewTests_Step19:Clean;MindScape_AppViewVCL_Step19:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="MindScape_AppViewVCL_Step00:Make;MindScape_AppViewTests_Step00:Make;MindScape_AppViewVCL_Step01:Make;MindScape_AppViewTests_Step01:Make;MindScape_AppViewVCL_Step02:Make;MindScape_AppViewTests_Step02:Make;MindScape_AppViewVCL_Step03:Make;MindScape_AppViewTests_Step03:Make;MindScape_AppViewVCL_Step04:Make;MindScape_AppViewTests_Step04:Make;MindScape_AppViewVCL_Step05:Make;MindScape_AppViewTests_Step05:Make;MindScape_AppViewVCL_Step06:Make;MindScape_AppViewTests_Step06:Make;MindScape_AppViewVCL_Step07:Make;MindScape_AppViewTests_Step07:Make;MindScape_AppViewVCL_Step08:Make;MindScape_AppViewTests_Step08:Make;MindScape_AppViewVCL_Step09:Make;MindScape_AppViewTests_Step09:Make;MindScape_AppViewVCL_Step10:Make;MindScape_AppViewTests_Step10:Make;MindScape_AppViewVCL_Step11:Make;MindScape_AppViewTests_Step11:Make;MindScape_AppViewVCL_Step12:Make;MindScape_AppViewTests_Step12:Make;MindScape_AppViewVCL_Step13:Make;MindScape_AppViewTests_Step13:Make;MindScape_AppViewVCL_Step14:Make;MindScape_AppViewTests_Step14:Make;MindScape_AppViewFMX_Step15:Make;MindScape_AppViewVCL_Step15:Make;MindScape_AppViewTests_Step15:Make;MindScape_AppViewFMX_Step16:Make;MindScape_AppViewVCL_Step16:Make;MindScape_AppViewTests_Step16:Make;MindScape_AppViewFMX_Step17:Make;MindScape_AppViewVCL_Step17:Make;MindScape_AppViewTests_Step17:Make;MindScape_AppViewFMX_Step18:Make;MindScape_AppViewTests_Step18:Make;MindScape_AppViewVCL_Step18:Make"/>
+        <CallTarget Targets="MindScape_AppViewVCL_Step00:Make;MindScape_AppViewTests_Step00:Make;MindScape_AppViewVCL_Step01:Make;MindScape_AppViewTests_Step01:Make;MindScape_AppViewVCL_Step02:Make;MindScape_AppViewTests_Step02:Make;MindScape_AppViewVCL_Step03:Make;MindScape_AppViewTests_Step03:Make;MindScape_AppViewVCL_Step04:Make;MindScape_AppViewTests_Step04:Make;MindScape_AppViewVCL_Step05:Make;MindScape_AppViewTests_Step05:Make;MindScape_AppViewVCL_Step06:Make;MindScape_AppViewTests_Step06:Make;MindScape_AppViewVCL_Step07:Make;MindScape_AppViewTests_Step07:Make;MindScape_AppViewVCL_Step08:Make;MindScape_AppViewTests_Step08:Make;MindScape_AppViewVCL_Step09:Make;MindScape_AppViewTests_Step09:Make;MindScape_AppViewVCL_Step10:Make;MindScape_AppViewTests_Step10:Make;MindScape_AppViewVCL_Step11:Make;MindScape_AppViewTests_Step11:Make;MindScape_AppViewVCL_Step12:Make;MindScape_AppViewTests_Step12:Make;MindScape_AppViewVCL_Step13:Make;MindScape_AppViewTests_Step13:Make;MindScape_AppViewVCL_Step14:Make;MindScape_AppViewTests_Step14:Make;MindScape_AppViewFMX_Step15:Make;MindScape_AppViewVCL_Step15:Make;MindScape_AppViewTests_Step15:Make;MindScape_AppViewFMX_Step16:Make;MindScape_AppViewVCL_Step16:Make;MindScape_AppViewTests_Step16:Make;MindScape_AppViewFMX_Step17:Make;MindScape_AppViewVCL_Step17:Make;MindScape_AppViewTests_Step17:Make;MindScape_AppViewFMX_Step18:Make;MindScape_AppViewTests_Step18:Make;MindScape_AppViewVCL_Step18:Make;MindScape_AppViewFMX_Step19:Make;MindScape_AppViewTests_Step19:Make;MindScape_AppViewVCL_Step19:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

@@ -12,7 +12,16 @@ procedure RedirectFunction(OrgProc, NewProc: Pointer);
 implementation
 
 uses
-  SysUtils, Windows;
+  SysUtils
+{$IFDEF MSWINDOWS}
+  , Windows
+{$ENDIF}
+  ;
+
+{$IFNDEF MSWINDOWS} // copied the below types from Windows.pas
+type
+  UINT_PTR = System.UIntPtr;  // NativeUInt;
+{$ENDIF}
 
 function FindMethodBytes(StartAddress: Pointer; const Bytes: array of SmallInt; MaxCount: Integer): PByte;
 

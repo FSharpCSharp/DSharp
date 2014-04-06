@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2012, Stefan Glienke
+  Copyright (c) 2012-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,10 @@ uses
 
 type
   TInterceptionExtension = class(TContainerExtension)
+  private
+    procedure DoResolve(Sender: TObject; var instance: TValue);
   protected
-    procedure DoResolve(Sender: TObject; var instance: TValue); override;
+    procedure Initialize; override;
   end;
 
 implementation
@@ -51,6 +53,12 @@ uses
 procedure TInterceptionExtension.DoResolve(Sender: TObject; var instance: TValue);
 begin
   instance := TIntercept.ThroughProxyByAttributes(instance, instance.TypeInfo);
+end;
+
+procedure TInterceptionExtension.Initialize;
+begin
+  Context.ServiceResolver.OnResolve.Add(DoResolve);
+  Context.DependencyResolver.OnResolve.Add(DoResolve);
 end;
 
 end.

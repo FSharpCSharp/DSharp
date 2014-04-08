@@ -95,7 +95,7 @@ begin
         Inc(handlerIndex);
         if handlerIndex < FHandlers.Count then
         begin
-          Result := FHandlers[handlerIndex] as IInvokeHandlerDelegate;
+          Result := TInvokeHandlerDelegate(FHandlers[handlerIndex]);
         end
         else
         begin

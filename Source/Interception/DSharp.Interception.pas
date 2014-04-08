@@ -65,13 +65,9 @@ type
     Input: IMethodInvocation;
     GetNext: TFunc<TInvokeHandlerDelegate>): IMethodReturn;
 
-  IInvokeHandlerDelegate = interface(TInvokeHandlerDelegate)
-    ['{B647E6CE-49A9-434B-92B9-7EC1BE20A654}']
-  end;
-
   ICallHandler = interface
     ['{E583D6ED-82F2-4AC8-B899-C70ED56BCBE0}']
-    function Invoke(Input: IMethodInvocation;
+    function Invoke(Input: IMethodInvocation; // DO NOT ADD ANY METHOD BEFORE THIS ONE
       GetNext: TFunc<TInvokeHandlerDelegate>): IMethodReturn;
     function GetOrder: Integer;
     procedure SetOrder(const Value: Integer);
@@ -82,13 +78,9 @@ type
     Input: IMethodInvocation;
     GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
 
-  IInvokeInterceptionBehaviorDelegate = interface(TInvokeInterceptionBehaviorDelegate)
-    ['{5C26AD28-61E5-41EC-8975-94AB058002FA}']
-  end;
-
   IInterceptionBehavior = interface
     ['{B55F8EC2-EE17-4907-967F-B6BD08004A6A}']
-    function Invoke(Input: IMethodInvocation;
+    function Invoke(Input: IMethodInvocation; // DO NOT ADD ANY METHOD BEFORE THIS ONE
       GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
 //    function GetRequiredInterfaces: TArray<PTypeInfo>;
     function WillExecute: Boolean;

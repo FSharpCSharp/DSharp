@@ -103,7 +103,7 @@ begin
         Inc(interceptorIndex);
         if interceptorIndex < FInterceptionBehaviors.Count then
         begin
-          Result := FInterceptionBehaviors[interceptorIndex] as IInvokeInterceptionBehaviorDelegate;
+          Result := TInvokeInterceptionBehaviorDelegate(FInterceptionBehaviors[interceptorIndex]);
         end
         else
         begin

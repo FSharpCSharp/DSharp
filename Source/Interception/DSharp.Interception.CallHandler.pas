@@ -36,7 +36,7 @@ uses
   SysUtils;
 
 type
-  TCallHandler = class(TInterfacedObject, ICallHandler, IInvokeHandlerDelegate)
+  TCallHandler = class(TInterfacedObject, ICallHandler)
   private
     FOrder: Integer;
     function GetOrder: Integer;

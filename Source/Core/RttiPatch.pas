@@ -146,7 +146,7 @@ begin
     Exit(0);
 
   case TypeInfo^.Kind of
-    tkInteger, tkEnumeration, tkChar, tkWChar:
+    tkInteger, tkEnumeration, tkChar, tkWChar, tkSet:
       case GetTypeData(TypeInfo)^.OrdType of
         otSByte, otUByte: Exit(1);
         otSWord, otUWord: Exit(2);
@@ -154,7 +154,26 @@ begin
       else
         Exit(0);
       end;
+    tkFloat:
+      case GetTypeData(TypeInfo)^.FloatType of
+        ftSingle: Exit(4);
+        ftDouble: Exit(8);
+        ftExtended: Exit(SizeOf(Extended));
+        ftComp: Exit(8);
+        ftCurr: Exit(8);
+      else
+        Exit(0);
+      end;
+    tkClass, tkClassRef: Exit(SizeOf(Pointer));
+    tkMethod: Exit(SizeOf(TMethod));
     tkInt64: Exit(8);
+    tkDynArray, tkUString, tkLString, tkWString, tkInterface: Exit(-SizeOf(Pointer));
+    tkString: Exit(-GetTypeData(TypeInfo)^.MaxLength + 1);
+    tkPointer: Exit(SizeOf(Pointer));
+    tkProcedure: Exit(SizeOf(Pointer));
+    tkRecord: Exit(-GetTypeData(TypeInfo)^.RecSize);
+    tkArray: Exit(-GetTypeData(TypeInfo)^.ArrayData.Size);
+    tkVariant: Exit(-SizeOf(Variant));
   else
     Exit(0);
   end;
@@ -600,6 +619,38 @@ const
     $EB, $0D
   );
 
+{$IF CompilerVersion = 21}
+  GetInlineSizeBytes: array[0..36] of SmallInt = (
+    // begin
+    $53, $8B, $D8,
+    // if TypeInfo = nil then
+    $85, $DB, $75, $04,
+    // Exit(0);
+    $33, $C0, $5B, $C3,
+    // case TypeInfo^.Kind of
+    $0F, $B6, $03,
+    $83, $F8, $14,
+    $0F, $87, $37, $01, $00, $00,
+    $FF, $24, $85, -1, -1, -1, -1,
+    $C6, $B1, $4A, -1, -1, -1, -1
+  );
+{$ELSEIF CompilerVersion = 22}
+  GetInlineSizeBytes: array[0..31] of SmallInt = (
+    // begin
+    $53, $8B, $D8,
+    // if TypeInfo = nil then
+    $85, $DB, $75, $04,
+    // Exit(0);
+    $33, $C0, $5B, $C3,
+    // case TypeInfo^.Kind of
+    $0F, $B6, $03,
+    $83, $F8, $14,
+    $0F, $87, $30, $01, $00, $00,
+    $FF, $24, $85, -1, -1, -1, -1,
+    $7F, $4E
+  );
+{$IFEND}
+
 procedure PatchRtti;
 {$HINTS OFF}
 var
@@ -647,6 +698,15 @@ begin
     RedirectFunction(P, @PassByRef)
   else
     raise Exception.Create('Patching PassByRef failed. Do you have set a breakpoint in the method?');
+{$IFEND}
+
+{$IF CompilerVersion <= 22}
+  // Fix GetInlineSize
+  P := FindMethodBytes(@Rtti.IsManaged, GetInlineSizeBytes, 1000);
+  if P <> nil then
+    RedirectFunction(P, @GetInlineSize)
+  else
+    raise Exception.Create('Patching GetInlineSize failed. Do you have set a breakpoint in the method?');
 {$IFEND}
 
 {$IF CompilerVersion = 21}

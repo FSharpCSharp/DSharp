@@ -620,7 +620,7 @@ const
   );
 
 {$IF CompilerVersion = 21}
-  GetInlineSizeBytes: array[0..36] of SmallInt = (
+  GetInlineSizeBytes: array[0..29] of SmallInt = (
     // begin
     $53, $8B, $D8,
     // if TypeInfo = nil then
@@ -631,11 +631,10 @@ const
     $0F, $B6, $03,
     $83, $F8, $14,
     $0F, $87, $37, $01, $00, $00,
-    $FF, $24, $85, -1, -1, -1, -1,
-    $C6, $B1, $4A, -1, -1, -1, -1
+    $FF, $24, $85, -1, -1, -1, -1
   );
 {$ELSEIF CompilerVersion = 22}
-  GetInlineSizeBytes: array[0..31] of SmallInt = (
+  GetInlineSizeBytes: array[0..29] of SmallInt = (
     // begin
     $53, $8B, $D8,
     // if TypeInfo = nil then
@@ -646,8 +645,7 @@ const
     $0F, $B6, $03,
     $83, $F8, $14,
     $0F, $87, $30, $01, $00, $00,
-    $FF, $24, $85, -1, -1, -1, -1,
-    $7F, $4E
+    $FF, $24, $85, -1, -1, -1, -1
   );
 {$IFEND}
 

@@ -676,7 +676,7 @@ begin
   else
     raise Exception.Create('Patching TMethodImplementation.TInvokeInfo.SaveArguments failed. Do you have set a breakpoint in the method?');
 
-  RedirectFunction(@Rtti.IsManaged, @IsManaged);
+  RedirectFunction(GetActualAddr(@Rtti.IsManaged), @IsManaged);
 {$IFEND}
 
 {$IF CompilerVersion < 23}
@@ -691,7 +691,7 @@ begin
 
 {$IF Defined(CPUX64)}
   // Fix PassByRef
-  P := FindMethodBytes(@Rtti.IsManaged, PassByRefBytes, 1000);
+  P := FindMethodBytes(GetActualAddr(@Rtti.IsManaged), PassByRefBytes, 1000);
   if P <> nil then
     RedirectFunction(P, @PassByRef)
   else
@@ -700,7 +700,7 @@ begin
 
 {$IF CompilerVersion <= 22}
   // Fix GetInlineSize
-  P := FindMethodBytes(@Rtti.IsManaged, GetInlineSizeBytes, 1000);
+  P := FindMethodBytes(GetActualAddr(@Rtti.IsManaged), GetInlineSizeBytes, 1000);
   if P <> nil then
     RedirectFunction(P, @GetInlineSize)
   else

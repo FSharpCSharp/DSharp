@@ -843,6 +843,7 @@ var
   function IsNodeWithNonFilteredChildren(Node: PVirtualNode): Boolean;
   begin
     Result := False;
+    Sender.ValidateChildren(Node, False);
     Node := Sender.GetFirstChild(Node);
     while Assigned(Node) do
     begin

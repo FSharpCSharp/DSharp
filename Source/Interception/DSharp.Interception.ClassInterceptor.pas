@@ -48,13 +48,18 @@ type
 implementation
 
 uses
-  DSharp.Interception.ClassProxy;
+  DSharp.Interception.ClassProxy,
+  DSharp.Core.Reflection,
+  Rtti;
 
 { TClassInterceptor }
 
 function TClassInterceptor.CanIntercept(TypeInfo: PTypeInfo): Boolean;
+var
+  rttiType: TRttiType;
 begin
-  Result := TypeInfo.Kind = tkClass;
+  rttiType := GetRttiType(TypeInfo);
+  Result := Assigned(rttiType) and rttiType.IsInstance and (rttiType.VirtualMethodCount > 0);
 end;
 
 function TClassInterceptor.CreateProxy(TypeInfo: PTypeInfo;

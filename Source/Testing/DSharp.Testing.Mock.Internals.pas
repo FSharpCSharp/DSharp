@@ -80,7 +80,6 @@ type
     function Setup: ISetup<T>;
   public
     constructor Create;
-    destructor Destroy; override;
 
     // IExpect<T>
     function Any: IWhen<T>;
@@ -227,20 +226,7 @@ var
 begin
   inherited Create;
   FTypeInfo := TypeInfo(T);
-
-  case FTypeInfo.Kind of
-    tkClass: PObject(@FProxy)^ := GetTypeData(FTypeInfo).ClassType.NewInstance;
-  end;
   FProxy := TIntercept.ThroughProxy<T>(FProxy, nil, [TMockBehavior.Create(Self)]);
-end;
-
-destructor TMock<T>.Destroy;
-begin
-  case FTypeInfo.Kind of
-    tkClass: PObject(@FProxy)^.Free;
-  end;
-
-  inherited Destroy;
 end;
 
 function TMock<T>.Any: IWhen<T>;

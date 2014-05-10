@@ -43,7 +43,9 @@ type
   private
     FInterceptionBehaviorPipeline: TInterceptionBehaviorPipeline;
     FRefCount: Integer;
+    FProxy: TObject;
     procedure AddInterceptionBehavior(Interceptor: IInterceptionBehavior);
+    function GetProxy: TObject;
   protected
     procedure Invoke(Method: TRttiMethod; const Args: TArray<TValue>;
       out Result: TValue);
@@ -53,6 +55,8 @@ type
   public
     constructor Create(TypeInfo: PTypeInfo; Target: Pointer);
     destructor Destroy; override;
+
+    property Proxy: TObject read GetProxy;
   end;
 
 implementation
@@ -72,18 +76,22 @@ begin
   inherited Create(GetTypeData(TypeInfo).ClassType);
   FInterceptionBehaviorPipeline := TInterceptionBehaviorPipeline.Create;
   Instance := Target;
+  FProxy := GetTypeData(TypeInfo).ClassType.NewInstance;
+  PPointer(FProxy)^ := MetaclassType;
   OnInvoke := Invoke;
-  if Assigned(Instance) then
-  begin
-    PPointer(Instance)^ := MetaclassType;
-    FreeOnInstanceDestroy := True;
-  end;
+  FreeOnInstanceDestroy := True;
 end;
 
 destructor TClassProxy.Destroy;
 begin
+  Instance.Free;
   FInterceptionBehaviorPipeline.Free;
   inherited;
+end;
+
+function TClassProxy.GetProxy: TObject;
+begin
+  Result := FProxy;
 end;
 
 procedure TClassProxy.AddInterceptionBehavior(
@@ -107,46 +115,49 @@ begin
     var
       LArgs: TArray<TValue>;
 
-      procedure PassArgs;
-      var
-        k: Integer;
-        LParams: TArray<TRttiParameter>;
-      begin
-        LParams := LInput.Method.GetParameters;
-        SetLength(LArgs, Length(LParams) + 1);
-        LArgs[0] := LInput.Target;
-        for k := 1 to High(LArgs) do
-        begin
-{$WARNINGS OFF}
-          if ((pfConst in LParams[k - 1].Flags) and (LParams[k - 1].ParamType.TypeSize > SizeOf(Pointer)))
-{$IFDEF CPUX86}
-            or ((Input.Method.CallingConvention in [ccCdecl, ccStdCall, ccSafeCall])
-            and (pfConst in LParams[k - 1].Flags) and (LParams[k - 1].ParamType.TypeKind = tkVariant))
-{$ENDIF CPUX86}
-            or ([pfVar, pfOut] * LParams[k - 1].Flags <> []) then
-            LArgs[k] := Input.Arguments[k - 1].GetReferenceToRawData
-          else
-            LArgs[k] := Input.Arguments[k - 1];
-        end;
-      end;
+//      procedure PassArgs;
+//      var
+//        k: Integer;
+//        LParams: TArray<TRttiParameter>;
+//      begin
+//        LParams := LInput.Method.GetParameters;
+//        SetLength(LArgs, Length(LParams) + 1);
+//        LArgs[0] := LInput.Target;
+//        for k := 1 to High(LArgs) do
+//        begin
+//{$WARNINGS OFF}
+//          if ((pfConst in LParams[k - 1].Flags) and (LParams[k - 1].ParamType.TypeSize > SizeOf(Pointer)))
+//{$IFDEF CPUX86}
+//            or ((Input.Method.CallingConvention in [ccCdecl, ccStdCall, ccSafeCall])
+//            and (pfConst in LParams[k - 1].Flags) and (LParams[k - 1].ParamType.TypeKind = tkVariant))
+//{$ENDIF CPUX86}
+//            or ([pfVar, pfOut] * LParams[k - 1].Flags <> []) then
+//            LArgs[k] := Input.Arguments[k - 1].GetReferenceToRawData
+//          else
+//            LArgs[k] := Input.Arguments[k - 1];
+//        end;
+//      end;
 
     begin
       if Assigned(Instance) then
       begin
-        PassArgs;
+        LArgs := Input.Arguments;
+//        PassArgs;
         try
-          if Input.Method.ReturnType <> nil then
-          begin
-            Result := Input.CreateMethodReturn(
-              Rtti.Invoke(Input.Method.CodeAddress, LArgs,
-              Input.Method.CallingConvention, Input.Method.ReturnType.Handle));
-          end
-          else
-          begin
-            Result := Input.CreateMethodReturn(
-              Rtti.Invoke(Input.Method.CodeAddress, LArgs,
-              Input.Method.CallingConvention, nil));
-          end;
+          Result := Input.CreateMethodReturn(
+            Method.Invoke(TValue.From<TObject>(Instance), LArgs));
+//          if Input.Method.ReturnType <> nil then
+//          begin
+//            Result := Input.CreateMethodReturn(
+//              Rtti.Invoke(Input.Method.CodeAddress, LArgs,
+//              Input.Method.CallingConvention, Input.Method.ReturnType.Handle));
+//          end
+//          else
+//          begin
+//            Result := Input.CreateMethodReturn(
+//              Rtti.Invoke(Input.Method.CodeAddress, LArgs,
+//              Input.Method.CallingConvention, nil));
+//          end;
         except
           Result := Input.CreateExceptionMethodReturn(AcquireExceptionObject);
         end;

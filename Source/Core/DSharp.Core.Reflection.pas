@@ -415,6 +415,7 @@ type
     function GetAsInterface: TRttiInterfaceType;
     function GetIsInterface: Boolean;
     function GetMethodCount: Integer;
+    function GetVirtualMethodCount: Integer;
     function InheritsFrom(OtherType: PTypeInfo): Boolean;
   public
     function GetAttributesOfType<T: TCustomAttribute>: TArray<T>; deprecated 'use GetCustomAttributes instead';
@@ -526,6 +527,7 @@ type
     property AsInterface: TRttiInterfaceType read GetAsInterface;
     property IsInterface: Boolean read GetIsInterface;
     property MethodCount: Integer read GetMethodCount;
+    property VirtualMethodCount: Integer read GetVirtualMethodCount;
   end;
 
   TValue = Rtti.TValue;
@@ -2193,6 +2195,24 @@ begin
       Break;
     end;
   end;
+end;
+
+function TRttiTypeHelper.GetVirtualMethodCount: Integer;
+var
+  LMethod: TRttiMethod;
+begin
+  Result := -1;
+  for LMethod in GetMethods do
+  begin
+    if LMethod.DispatchKind = dkVtable then
+    begin
+      if LMethod.VirtualIndex > Result then
+      begin
+        Result := LMethod.VirtualIndex;
+      end;
+    end;
+  end;
+  Inc(Result);
 end;
 
 function TRttiTypeHelper.InheritsFrom(OtherType: PTypeInfo): Boolean;

@@ -168,6 +168,8 @@ type
       Interceptor: IInstanceInterceptor = nil): T; overload; static;
   end;
 
+  EInterceptionException = class(Exception);
+
 implementation
 
 uses
@@ -208,21 +210,15 @@ var
   i: Integer;
 begin
   if not Assigned(Interceptor) then
-  begin
     Interceptor := CreateInterceptor(InterceptedType);
-  end;
 
   if not Interceptor.CanIntercept(InterceptedType) then
-    raise EArgumentException.CreateResFmt(@SInterceptionNotSupported, [InterceptedType.Name]);
+    raise EInterceptionException.CreateResFmt(@SInterceptionNotSupported, [InterceptedType.Name]);
 
   Result := Interceptor.CreateProxy(InterceptedType, Target);
   for i := 0 to High(InterceptionBehaviors) do
-  begin
     if InterceptionBehaviors[i].WillExecute then
-    begin
       Result.AddInterceptionBehavior(InterceptionBehaviors[i]);
-    end;
-  end;
 end;
 
 class function TIntercept.ThroughProxy(const Target: TValue;
@@ -245,17 +241,17 @@ var
   proxy: IInterceptingProxy;
   instance: Pointer;
 begin
-  if not Target.IsEmpty then
-  begin
-    instance := PPointer(Target.GetReferenceToRawData)^;
-  end
+  if not (TypeInfo.Kind in [tkClass, tkInterface]) then
+    raise EInterceptionException.CreateResFmt(@SInterceptionNotSupported, [TypeInfo.Name]);
+
+  if Target.IsEmpty then
+    instance := nil
   else
-  begin
-    instance := nil;
-  end;
+    instance := PPointer(Target.GetReferenceToRawData)^;
+
   proxy := ThroughProxy(TypeInfo, instance, Interceptor, InterceptionBehaviors);
   case TypeInfo.Kind of
-    tkClass: instance := (proxy as TClassProxy).Instance;
+    tkClass: instance := (proxy as TClassProxy).Proxy;
     tkInterface:
     begin
       proxy.QueryInterface(GetTypeData(TypeInfo).Guid, instance);
@@ -289,9 +285,7 @@ class function TIntercept.ThroughProxyByAttributes(const Target: TValue;
   TypeInfo: PTypeInfo; Interceptor: IInstanceInterceptor): TValue;
 begin
   if not Assigned(Interceptor) then
-  begin
     Interceptor := CreateInterceptor(TypeInfo);
-  end;
 
   Result := ThroughProxy(Target, TypeInfo, Interceptor, [
     TPolicyInjectionBehavior.Create(TCurrentInterceptionRequest.Create(

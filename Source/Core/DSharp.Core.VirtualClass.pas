@@ -31,6 +31,8 @@ unit DSharp.Core.VirtualClass;
 
 interface
 
+{$OVERFLOWCHECKS OFF}
+
 uses
   DSharp.Core.MethodIntercept,
   Rtti,

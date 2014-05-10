@@ -2778,13 +2778,18 @@ class function TValueHelper.ToString(const Value: TValue): string;
   function ArrayToString(const value: TValue): string;
   var
     i: Integer;
+    v: TValue;
   begin
     Result := '[';
     for i := 0 to value.GetArrayLength - 1 do
     begin
       if i > 0 then
         Result := Result + ', ';
-      Result := Result + TValue.ToString(value.GetArrayElement(i));
+      v := value.GetArrayElement(i);
+      if v.IsString then
+        Result := Result + QuotedStr(TValue.ToString(v))
+      else
+        Result := Result + TValue.ToString(v);
     end;
     Result := Result + ']';
   end;

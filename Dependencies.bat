@@ -19,7 +19,7 @@
     set remoteURL=%%n
     set otherParameters=%%o
     call :forOneRepository
-    for /f "delims=" %%a in ('set ^| find "%%m="') do echo 1 & endlocal & if not ""=="%%~a" set "%%~a"
+    for /f "delims=" %%a in ('set ^| find "%%m="') do endlocal & if not ""=="%%~a" set "%%~a"
     endlocal
     echo .
   )
@@ -40,7 +40,7 @@
   ::echo localName=%localName%
   ::echo remoteURL=%remoteURL%
   ::echo otherParameters="%otherParameters%"
-  ::for %%d in (%~dp0..) do echo LocalDirectory=%%~fd\%localName%
+  ::for %%d in ("%~dp0..") do echo LocalDirectory=%%~fd\%localName%
   ::echo.
 
   :: skip comments and empty lines
@@ -68,7 +68,9 @@
   goto :eof
 
 :setSpecific
-  for %%d in (%~dp0..) do set %localName%=%%~fd\%localName%
+  for %%d in ("%~dp0..") do set %localName%="%%~fd\%localName%"
+:: http://stackoverflow.com/questions/9369874/windows-batch-programming-indirect-nested-variable-evaluation
+  if "%tool%"=="dir" for /F "usebackq delims==" %%l in (`echo %remoteURL%`) do set %localName%=%%l
   set %localName%
   goto :eof
 
@@ -83,7 +85,7 @@
   echo remoteURL=%remoteURL%
   echo otherParameters=%otherParameters%
 
-  for %%d in (%~dp0..) do echo LocalDirectory=%%~fd\%localName%
+  for %%d in ("%~dp0..") do echo LocalDirectory=%%~fd\%localName%
   goto :eof
 
 :: a bit ugly setlocal/endlocal, but it is the cleanest way to do this.
@@ -101,9 +103,9 @@
   goto :eof
 
 :cloneSpecific
-  if  hg==%tool% for %%d in (%~dp0..) do call :do %tool% clone %remoteURL% %%~fd\%localName% %otherParameters%
-  if  git==%tool% for %%d in (%~dp0..) do call :do %tool% clone %remoteURL% %%~fd\%localName% %otherParameters%
-  if  svn==%tool% for %%d in (%~dp0..) do call :do %tool% checkout %remoteURL% %%~fd\%localName% %otherParameters%
+  if  hg==%tool% for %%d in ("%~dp0..") do call :do %tool% clone %remoteURL% "%%~fd\%localName%" %otherParameters%
+  if  git==%tool% for %%d in ("%~dp0..") do call :do %tool% clone %remoteURL% "%%~fd\%localName%" %otherParameters%
+  if  svn==%tool% for %%d in ("%~dp0..") do call :do %tool% checkout %remoteURL% "%%~fd\%localName%" %otherParameters%
   goto :eof
   
 :: trick to perform a command while being able to echo it
@@ -149,14 +151,14 @@
 
 :pullSpecific
   :: http://mercurial.selenic.com/wiki/GitConcepts#Command_equivalence_table
-  if  hg==%tool% for %%d in (%~dp0..) do call :do %tool% pull %%~fd\%localName%
+  if  hg==%tool% for %%d in ("%~dp0..") do call :do %tool% pull "%%~fd\%localName%"
 
   :: git needs to run in the local repository directory
-  if  git==%tool% for %%d in (%~dp0..) do call :do pushd %%~fd\%localName%
-  if  git==%tool% for %%d in (%~dp0..) do call :do %tool% fetch %%~fd\%localName%
-  if  git==%tool% for %%d in (%~dp0..) do call :do popd
+  if  git==%tool% for %%d in ("%~dp0..") do call :do pushd "%%~fd\%localName%"
+  if  git==%tool% for %%d in ("%~dp0..") do call :do %tool% fetch "%%~fd\%localName%"
+  if  git==%tool% for %%d in ("%~dp0..") do call :do popd
 
-  if  svn==%tool% for %%d in (%~dp0..) do call :do %tool% update %%~fd\%localName%
+  if  svn==%tool% for %%d in ("%~dp0..") do call :do %tool% update "%%~fd\%localName%"
   goto :eof
 
 :help

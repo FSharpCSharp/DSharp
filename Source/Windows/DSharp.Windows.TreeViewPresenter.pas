@@ -43,40 +43,20 @@ uses
   DSharp.Core.Events,
   DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.CustomPresenter,
+  DSharp.Windows.CustomPresenter.Types,
   Menus,
   SysUtils,
   Types,
   VirtualTrees;
 
+{$I DSharp.Windows.CustomPresenter.Types.inc}
+
 type
-  TDragOperation = VirtualTrees.TDragOperation;
-  TDropMode = VirtualTrees.TDropMode;
-
-  TCollapsedEvent = procedure(Sender: TObject; CollapsedItem: TObject) of object;
-  TCompareEvent = procedure(Sender: TObject; Item1, Item2: TObject;
-    ColumnIndex: Integer; var Result: Integer) of object;
-  TDragBeginEvent = procedure(Sender: TObject; Item: TObject;
-    var AllowDrag: Boolean) of object;
-  TDragOverEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
-    var AllowDrop: Boolean) of object;
-  TDragDropEvent = procedure(Sender: TObject; Source: TObject; TargetItem: TObject;
-    DragOperation: TDragOperation; var DropMode: TDropMode;
-    var Handled: Boolean) of object;
-  TExpandedEvent = procedure(Sender: TObject; ExpandedItem: TObject) of object;
-  TSelectionChangingEvent = procedure(Sender: TObject; TargetItem: TObject;
-    var AllowChange: Boolean) of object;
-
-  TCheckSupport = (csNone, csSimple, csTriState, csRadio);
-  TFilterDirection = (fdRootToLeafs, fdLeafsToRoot);
-  TSelectionMode = (smSingle, smLevel, smMulti, smNone);
-
   TTreeViewPresenter = class(TCustomPresenter)
   private
     FAllowClearSelection: Boolean;
-    FAllowMove: Boolean;
     FCheckedItems: IList<TObject>;
     FChecking: Boolean;
-    FCheckSupport: TCheckSupport;
     FCollectionChanging: Integer;
     FCurrentNode: PVirtualNode;
     FFilterDirection: TFilterDirection;
@@ -85,9 +65,6 @@ type
     FListMode: Boolean;
     FOnCollapsed: TCollapsedEvent;
     FOnCompare: TCompareEvent;
-    FOnDragBegin: TDragBeginEvent;
-    FOnDragDrop: TDragDropEvent;
-    FOnDragOver: TDragOverEvent;
     FOnExpanded: TExpandedEvent;
     FOnKeyAction: TKeyEvent;
     FOnSelectionChanged: TNotifyEvent;
@@ -95,8 +72,6 @@ type
     FProgressBar: TProgressBar;
     FSelectedItems: IList<TObject>;
     FSelectedItemPath: IList<TObject>;
-    FShowHeader: Boolean;
-    FSelectionMode: TSelectionMode;
     FSorting: Boolean;
     FSyncing: Boolean;
     FSyncMode: Boolean;
@@ -116,10 +91,10 @@ type
       Column: TColumnIndex; var Allowed: Boolean);
     procedure DoDragDrop(Sender: TBaseVirtualTree; Source: TObject;
       DataObject: IDataObject; Formats: TFormatArray; Shift: TShiftState;
-      Pt: TPoint; var Effect: Integer; Mode: TDropMode);
+      Pt: TPoint; var Effect: Integer; Mode: VirtualTrees.TDropMode);
     procedure DoDragOver(Sender: TBaseVirtualTree; Source: TObject;
-      Shift: TShiftState; State: TDragState; Pt: TPoint; Mode: TDropMode;
-      var Effect: Integer; var Accept: Boolean);
+      Shift: TShiftState; State: TDragState; Pt: TPoint;
+      Mode: VirtualTrees.TDropMode; var Effect: Integer; var Accept: Boolean);
     procedure DoEdited(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex);
     procedure DoEditing(Sender: TBaseVirtualTree; Node: PVirtualNode;
@@ -193,15 +168,12 @@ type
 
     procedure SetCheckedItem(const Value: TObject);
     procedure SetCheckedItems(const Value: IList<TObject>);
-    procedure SetCheckSupport(const Value: TCheckSupport);
     procedure SetExpandedItems(const Value: IList<TObject>);
     procedure SetListMode(const Value: Boolean);
     procedure SetNodeItem(Tree: TBaseVirtualTree; Node: PVirtualNode; Item: TObject);
     procedure SetNodeItems(Tree: TBaseVirtualTree; Node: PVirtualNode; Items: IList);
     procedure SetSelectedItem(const Value: TObject);
     procedure SetSelectedItems(const Value: IList<TObject>);
-    procedure SetSelectionMode(const Value: TSelectionMode);
-    procedure SetShowHeader(const Value: Boolean);
     procedure SetSorting(const Value: Boolean);
     procedure SetTreeView(const Value: TVirtualStringTree);
 
@@ -210,6 +182,10 @@ type
     procedure UpdateSelectedItems;
     procedure UpdateSelectedItemPath;
   protected
+    procedure ApplyAllowMove; override;
+    procedure ApplyCheckSupport; override;
+    procedure ApplySelectionMode; override;
+    procedure ApplyShowHeader; override;
     procedure DefineProperties(Filer: TFiler); override;
     procedure DoCheckedItemsChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction);
@@ -258,23 +234,16 @@ type
   published
     property AllowClearSelection: Boolean
       read FAllowClearSelection write FAllowClearSelection default True;
-    property AllowMove: Boolean read FAllowMove write FAllowMove default True;
-    property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
     property FilterDirection: TFilterDirection read FFilterDirection write FFilterDirection default fdRootToLeafs;
     property ListMode: Boolean read FListMode write SetListMode default False;
     property OnCollapsed: TCollapsedEvent read FOnCollapsed write FOnCollapsed;
     property OnCompare: TCompareEvent read FOnCompare write FOnCompare;
-    property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
-    property OnDragDrop: TDragDropEvent read FOnDragDrop write FOnDragDrop;
-    property OnDragOver: TDragOverEvent read FOnDragOver write FOnDragOver;
     property OnExpanded: TExpandedEvent read FOnExpanded write FOnExpanded;
     property OnKeyAction: TKeyEvent read FOnKeyAction write FOnKeyAction;
     property OnSelectionChanged: TNotifyEvent
       read FOnSelectionChanged write FOnSelectionChanged;
     property OnSelectionChanging: TSelectionChangingEvent
       read FOnSelectionChanging write FOnSelectionChanging;
-    property SelectionMode: TSelectionMode read FSelectionMode write SetSelectionMode default smSingle;
-    property ShowHeader: Boolean read FShowHeader write SetShowHeader default True;
     property Sorting: Boolean read FSorting write SetSorting default True;
     property SyncMode: Boolean read FSyncMode write FSyncMode default False;
     property TreeView: TVirtualStringTree read FTreeView write SetTreeView;
@@ -364,8 +333,8 @@ begin
   FSelectedItemPath := TList<TObject>.Create();
   inherited;
   FAllowClearSelection := True;
-  FAllowMove := True;
-  FShowHeader := True;
+  AllowMove := True;
+  ShowHeader := True;
   FSorting := True;
   FProgressBar := TProgressBar.Create(Self);
   FProgressBar.Smooth := True;
@@ -379,6 +348,18 @@ begin
   FExpandedItems.OnCollectionChanged.Remove(DoExpandedItemsChanged);
   FSelectedItems.OnCollectionChanged.Remove(DoSelectedItemsChanged);
   inherited;
+end;
+
+procedure TTreeViewPresenter.ApplyAllowMove;
+begin
+  inherited;
+  InitProperties();
+end;
+
+procedure TTreeViewPresenter.ApplyCheckSupport;
+begin
+  inherited;
+  InitProperties();
 end;
 
 procedure TTreeViewPresenter.ApplyFilter;
@@ -413,6 +394,18 @@ begin
       FTreeView.EndUpdate;
     end;
   end;
+end;
+
+procedure TTreeViewPresenter.ApplySelectionMode;
+begin
+  inherited;
+  InitProperties();
+end;
+
+procedure TTreeViewPresenter.ApplyShowHeader;
+begin
+  inherited;
+  InitProperties();
 end;
 
 procedure TTreeViewPresenter.BeginUpdate;
@@ -517,7 +510,7 @@ end;
 procedure TTreeViewPresenter.DoChange(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 begin
-  if FSelectionMode <> smNone then
+  if SelectionMode <> smNone then
   begin
     UpdateSelectedItems();
     UpdateSelectedItemPath();
@@ -659,18 +652,19 @@ procedure TTreeViewPresenter.DoDragAllowed(Sender: TBaseVirtualTree;
 var
   LItem: TObject;
 begin
-  Allowed := FAllowMove;
+  Allowed := AllowMove;
   LItem := GetNodeItem(Sender, Node);
 
-  if Assigned(FOnDragBegin) then
+  if Assigned(OnDragBegin) then
   begin
-    FOnDragBegin(Self, LItem, Allowed);
+    OnDragBegin(Self, LItem, Allowed);
   end;
 end;
 
 procedure TTreeViewPresenter.DoDragDrop(Sender: TBaseVirtualTree;
   Source: TObject; DataObject: IDataObject; Formats: TFormatArray;
-  Shift: TShiftState; Pt: TPoint; var Effect: Integer; Mode: TDropMode);
+  Shift: TShiftState; Pt: TPoint; var Effect: Integer;
+  Mode: VirtualTrees.TDropMode);
 var
   i: Integer;
   LItem: TObject;
@@ -685,17 +679,17 @@ begin
   LSelectedNodes := Sender.GetSortedSelection(False);
   if ssCtrl in Shift then
   begin
-    if Assigned(FOnDragDrop) then
+    if Assigned(OnDragDrop) then
     begin
-      FOnDragDrop(Sender, Source, LItem, doCopy, Mode, LHandled);
+      OnDragDrop(Sender, Source, LItem, doCopy, TDropMode(Mode), LHandled);
     end;
     Sender.ReinitNode(LNode, True);
   end
   else
   begin
-    if Assigned(FOnDragDrop) then
+    if Assigned(OnDragDrop) then
     begin
-      FOnDragDrop(Sender, Source, LItem, doMove, Mode, LHandled);
+      OnDragDrop(Sender, Source, LItem, doMove, TDropMode(Mode), LHandled);
     end;
 
     if not LHandled and (Sender = Source) then
@@ -705,7 +699,7 @@ begin
         for i := Low(LSelectedNodes) to High(LSelectedNodes) do
         begin
           FCurrentNode := LSelectedNodes[i].Parent;
-          case Mode of
+          case TDropMode(Mode) of
             dmNowhere: FTreeView.MoveTo(LSelectedNodes[i], nil, amAddChildLast, False);
             dmAbove: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertBefore, False);
             dmOnNode:
@@ -728,7 +722,7 @@ end;
 
 procedure TTreeViewPresenter.DoDragOver(Sender: TBaseVirtualTree;
   Source: TObject; Shift: TShiftState; State: TDragState; Pt: TPoint;
-  Mode: TDropMode; var Effect: Integer; var Accept: Boolean);
+  Mode: VirtualTrees.TDropMode; var Effect: Integer; var Accept: Boolean);
 var
   LItem: TObject;
   LNode: PVirtualNode;
@@ -738,12 +732,12 @@ begin
   begin
     LNode := Sender.GetNodeAt(Pt.X, Pt.Y);
     LItem := GetNodeItem(Sender, LNode);
-    case Mode of
-      dmAbove, dmBelow: Accept := FAllowMove;
+    case TDropMode(Mode) of
+      dmAbove, dmBelow: Accept := AllowMove;
     end;
-    if Assigned(FOnDragOver) then
+    if Assigned(OnDragOver) then
     begin
-      FOnDragOver(Sender, Source, LItem, Accept);
+      OnDragOver(Sender, Source, LItem, Accept);
     end
     else
     begin
@@ -831,7 +825,6 @@ end;
 procedure TTreeViewPresenter.DoFilterNode(Sender: TBaseVirtualTree;
   Node: PVirtualNode);
 var
-  i: Integer;
   LItem: TObject;
   LAccepted: Boolean;
 
@@ -863,20 +856,8 @@ begin
     fdLeafsToRoot: LAccepted := IsLeaf(Node) or IsNodeWithNonFilteredChildren(Node);
   end;
 
-  View.Filter.Invoke(LItem, LAccepted);
+  DoFilterItem(LItem, LAccepted);
   Sender.IsFiltered[Node] := not LAccepted;
-
-  if Assigned(ColumnDefinitions) then
-  begin
-    for i := 0 to Pred(ColumnDefinitions.Count) do
-    begin
-      if Assigned(ColumnDefinitions[i].Filter) then
-      begin
-        Sender.IsFiltered[Node] := Sender.IsFiltered[Node]
-          or not ColumnDefinitions[i].Filter(LItem);
-      end;
-    end;
-  end;
 
   if Sender.IsFiltered[Node] and Sender.Selected[Node] then
   begin
@@ -1087,7 +1068,7 @@ begin
   FCurrentNode := Node;
   DoPropertyChanged('ParentItem');
 
-  case FCheckSupport of
+  case CheckSupport of
     csTriState: Node.CheckType := ctTriStateCheckBox;
     csRadio: Node.CheckType := ctRadioButton;
   else
@@ -1173,7 +1154,7 @@ begin
   end;
 
   // moving elements with Ctrl+Up and Ctrl+Down only when sorting is off
-  if FAllowMove and (ssCtrl in Shift) and (FTreeView.Header.SortColumn = -1) then
+  if AllowMove and (ssCtrl in Shift) and (FTreeView.Header.SortColumn = -1) then
   begin
     case Key of
       VK_UP:
@@ -1425,7 +1406,7 @@ var
   LNode: PVirtualNode;
 begin
   if Assigned(FTreeView) and not (csDestroying in ComponentState)
-    and (FSelectionMode <> smNone) then
+    and (SelectionMode <> smNone) then
   begin
     if FCollectionChanging = 0 then
     begin
@@ -1478,7 +1459,7 @@ begin
         LNode := FTreeView.IterateSubtree(LNode, GetItemNode, Pointer(Item));
 
         // find node to select after deleting current node
-        if FTreeView.Selected[LNode] and (FSelectionMode = smSingle) then
+        if FTreeView.Selected[LNode] and (SelectionMode = smSingle) then
         begin
           LSelectedNode := FTreeView.GetNextVisibleSibling(LNode);
 
@@ -1827,7 +1808,7 @@ end;
 
 function TTreeViewPresenter.GetSelectedItem: TObject;
 begin
-  if (FSelectedItems.Count > 0) and (FSelectionMode <> smNone) then
+  if (FSelectedItems.Count > 0) and (SelectionMode <> smNone) then
   begin
     Result := FSelectedItems[0];
   end
@@ -1839,7 +1820,7 @@ end;
 
 function TTreeViewPresenter.GetSelectedItemPath: IList<TObject>;
 begin
-  if (FSelectedItemPath.Count > 0) and (FSelectionMode = smNone) then
+  if (FSelectedItemPath.Count > 0) and (SelectionMode = smNone) then
   begin
     FSelectedItemPath.Clear;
   end;
@@ -1848,7 +1829,7 @@ end;
 
 function TTreeViewPresenter.GetSelectedItems: IList<TObject>;
 begin
-  if (FSelectedItems.Count > 0) and (FSelectionMode = smNone) then
+  if (FSelectedItems.Count > 0) and (SelectionMode = smNone) then
   begin
     FSelectedItems.Clear;
   end;
@@ -1971,7 +1952,7 @@ procedure TTreeViewPresenter.InitProperties;
 begin
   if Assigned(FTreeView) and not (csDesigning in ComponentState) then
   begin
-    if FAllowMove then
+    if AllowMove then
     begin
       FTreeView.DragMode := dmAutomatic;
     end
@@ -1980,7 +1961,7 @@ begin
       FTreeView.DragMode := dmManual;
     end;
 
-    if FCheckSupport <> csNone then
+    if CheckSupport <> csNone then
     begin
       FTreeView.TreeOptions.MiscOptions :=
         FTreeView.TreeOptions.MiscOptions + [toCheckSupport];
@@ -2007,7 +1988,7 @@ begin
         FTreeView.TreeOptions.PaintOptions + [toShowButtons, toShowRoot, toShowTreeLines];
     end;
 
-    if FSelectionMode = smSingle then
+    if SelectionMode = smSingle then
     begin
       FTreeView.TreeOptions.SelectionOptions :=
         FTreeView.TreeOptions.SelectionOptions - [toMultiSelect];
@@ -2018,7 +1999,7 @@ begin
         FTreeView.TreeOptions.SelectionOptions + [toMultiSelect];
     end;
 
-    if FSelectionMode = smLevel then
+    if SelectionMode = smLevel then
     begin
       FTreeView.TreeOptions.SelectionOptions :=
         FTreeView.TreeOptions.SelectionOptions + [toLevelSelectConstraint];
@@ -2029,7 +2010,7 @@ begin
         FTreeView.TreeOptions.SelectionOptions - [toLevelSelectConstraint];
     end;
 
-    if FSelectionMode = smNone then
+    if SelectionMode = smNone then
     begin
       FTreeView.TreeOptions.PaintOptions :=
         FTreeView.TreeOptions.PaintOptions + [toHideSelection, toAlwaysHideSelection];
@@ -2044,7 +2025,7 @@ begin
         FTreeView.TreeOptions.SelectionOptions - [toDisableDrawSelection];
     end;
 
-    if FShowHeader then
+    if ShowHeader then
     begin
       FTreeView.Header.Options := FTreeView.Header.Options + [hoVisible];
     end
@@ -2210,11 +2191,11 @@ procedure TTreeViewPresenter.ReadMultiSelect(Reader: TReader);
 begin
   if Reader.ReadBoolean then
   begin
-    FSelectionMode := smMulti;
+    SelectionMode := smMulti;
   end
   else
   begin
-    FSelectionMode := smSingle;
+    SelectionMode := smSingle;
   end;
 end;
 
@@ -2287,12 +2268,6 @@ begin
       LNode := FTreeView.GetNextInitialized(LNode);
     end;
   end;
-end;
-
-procedure TTreeViewPresenter.SetCheckSupport(const Value: TCheckSupport);
-begin
-  FCheckSupport := Value;
-  InitProperties();
 end;
 
 procedure TTreeViewPresenter.SetCurrentItem(const Value: TObject);
@@ -2369,7 +2344,7 @@ end;
 procedure TTreeViewPresenter.SetSelectedItem(const Value: TObject);
 begin
   if ((Value <> SelectedItem) or (SelectedItems.Count > 1))
-    and (FSelectionMode <> smNone) then
+    and (SelectionMode <> smNone) then
   begin
     FSelectedItems.Clear();
     if Assigned(Value) then
@@ -2386,7 +2361,7 @@ var
   LNode: PVirtualNode;
 begin
   if Assigned(FTreeView) and not (csDestroying in FTreeView.ComponentState)
-    and (FSelectionMode <> smNone) then
+    and (SelectionMode <> smNone) then
   begin
     FTreeView.BeginUpdate();
     FTreeView.ClearSelection();
@@ -2412,18 +2387,6 @@ begin
     end;
     FTreeView.EndUpdate();
   end;
-end;
-
-procedure TTreeViewPresenter.SetSelectionMode(const Value: TSelectionMode);
-begin
-  FSelectionMode := Value;
-  InitProperties();
-end;
-
-procedure TTreeViewPresenter.SetShowHeader(const Value: Boolean);
-begin
-  FShowHeader := Value;
-  InitProperties();
 end;
 
 procedure TTreeViewPresenter.SetSorting(const Value: Boolean);
@@ -2600,7 +2563,7 @@ var
   LItem: TObject;
   LNode: PVirtualNode;
 begin
-  if Assigned(FTreeView) and (FSelectionMode <> smNone) then
+  if Assigned(FTreeView) and (SelectionMode <> smNone) then
   begin
     FSelectedItemPath.Clear;
 
@@ -2634,7 +2597,7 @@ var
   LSelectedItems: IList<TObject>;
   LSelectedNodes: TNodeArray;
 begin
-  if Assigned(FTreeView) and (FSelectionMode <> smNone) then
+  if Assigned(FTreeView) and (SelectionMode <> smNone) then
   begin
     Inc(FCollectionChanging);
     LSelectedItems := TList<TObject>.Create();

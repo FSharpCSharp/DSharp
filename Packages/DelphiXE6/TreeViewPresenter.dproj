@@ -99,6 +99,7 @@
         <DCCReference Include="..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.XmlDataTemplate.pas"/>
         <DCCReference Include="..\..\Source\Windows\DSharp.Windows.ControlTemplates.pas"/>
         <DCCReference Include="..\..\Source\Windows\DSharp.Windows.CustomPresenter.pas"/>
+        <DCCReference Include="..\..\Source\Windows\DSharp.Windows.CustomPresenter.Types.pas"/>
         <DCCReference Include="..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

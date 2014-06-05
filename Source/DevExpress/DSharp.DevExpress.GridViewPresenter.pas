@@ -129,7 +129,9 @@ type
 implementation
 
 uses
+  cxCheckBox,
   cxControls,
+  cxProgressBar,
   cxTextEdit,
   dxCore,
   DSharp.Windows.ColumnDefinitions,
@@ -657,51 +659,44 @@ end;
 
 procedure TGridViewPresenter.InitCardViewColumns(ACardView: TcxGridCardView);
 var
-  i, LOffset, LColumnIndex, LDefinitionIndex: Integer;
+  i: Integer;
+  LRow: TcxGridCardViewRow;
+  LColumnDefinition: TColumnDefinition;
 begin
   ACardView.ClearItems();
   if FDataSource.CheckColumnIndex <> -1 then
   begin
-    LOffset := 1;
-    ACardView.CreateRow();
-    ACardView.Rows[0].DataBinding.ValueType := 'Boolean';
-    ACardView.Rows[0].Options.Moving := False;
-  end
-  else
-  begin
-    LOffset := 0;
+    LRow := ACardView.CreateRow();
+    LRow.Options.Moving := False;
+    LRow.PropertiesClass := TcxCheckBoxProperties;
   end;
   for i := 0 to Pred(ColumnDefinitions.Count) do
   begin
-    LColumnIndex := i + LOffset;
-    LDefinitionIndex := i;
-    if LColumnIndex >= ACardView.RowCount then
-    begin
-      ACardView.CreateRow();
-    end;
-    ACardView.Rows[LColumnIndex].Caption := ColumnDefinitions[LDefinitionIndex].Caption;
-    ACardView.Rows[LColumnIndex].Visible := ColumnDefinitions[LDefinitionIndex].Visible;
-//    ACardView.Rows[LColumnIndex].Width := ColumnDefinitions[LDefinitionIndex].Width;
-    ACardView.Rows[LColumnIndex].Options.Editing := ColumnDefinitions[LDefinitionIndex].AllowEdit;
+    LColumnDefinition := ColumnDefinitions[i];
+    LRow := ACardView.CreateRow();
+    LRow.Caption := LColumnDefinition.Caption;
+    LRow.Options.Editing := LColumnDefinition.AllowEdit;
+    LRow.Visible := LColumnDefinition.Visible;
 
     // apply sort order
-    case ColumnDefinitions[LDefinitionIndex].SortingDirection of
-      sdAscending: ACardView.Rows[LColumnIndex].SortOrder := soAscending;
-      sdDescending: ACardView.Rows[LColumnIndex].SortOrder := soDescending;
+    case LColumnDefinition.SortingDirection of
+      sdAscending: LRow.SortOrder := soAscending;
+      sdDescending: LRow.SortOrder := soDescending;
     else
-      ACardView.Rows[LColumnIndex].SortOrder := soNone;
+      LRow.SortOrder := soNone;
     end;
 
     // apply sizing etc options
-//    ACardView.Rows[LColumnIndex].Options.HorzSizing := coResizable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
-    ACardView.Rows[LColumnIndex].Options.Moving := coDraggable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
-//    ACardView.Rows[LColumnIndex].Options.Sorting := coSortable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+    LRow.Options.Moving := coDraggable in LColumnDefinition.ColumnOptions;
 
-    // apply Boolean in case of Checkbox
-    case ColumnDefinitions[LDefinitionIndex].ColumnType of
-      ctCheckBox: ACardView.Rows[LColumnIndex].DataBinding.ValueType := 'Boolean';
-    else
-      ACardView.Rows[LColumnIndex].DataBinding.ValueType := 'String';
+    // apply column types
+    case LColumnDefinition.ColumnType of
+      ctCheckBox: LRow.PropertiesClass := TcxCheckBoxProperties;
+      ctProgressBar:
+      begin
+        LRow.PropertiesClass := TcxProgressBarProperties;
+        TcxProgressBarProperties(LRow.Properties).ShowText := False;
+      end;
     end;
   end;
 end;
@@ -771,54 +766,51 @@ end;
 
 procedure TGridViewPresenter.InitTableViewColumns(ATableView: TcxGridTableView);
 var
-  i, LOffset: Integer;
-  LColumnIndex, LDefinitionIndex: Integer;
+  i: Integer;
+  LColumn: TcxGridColumn;
+  LColumnDefinition: TColumnDefinition;
 begin
   ATableView.ClearItems();
-  if FDataSource.CheckColumnIndex <> -1 then
+  if FDataSource.CheckColumnIndex > -1 then
   begin
-    LOffset := 1;
-    ATableView.CreateColumn();
-    ATableView.Columns[0].Width := 20;
-    ATableView.Columns[0].DataBinding.ValueType := 'Boolean';
-    ATableView.Columns[0].Options.Moving := False;
-    ATableView.Columns[0].Options.HorzSizing := False;
-  end
-  else
-  begin
-    LOffset := 0;
+    LColumn := ATableView.CreateColumn();
+    LColumn.Options.Filtering := False;
+    LColumn.Options.HorzSizing := False;
+    LColumn.Options.Moving := False;
+    LColumn.PropertiesClass := TcxCheckBoxProperties;
+    LColumn.Width := 20;
   end;
   for i := 0 to Pred(ColumnDefinitions.Count) do
   begin
-    LColumnIndex := i + LOffset;
-    LDefinitionIndex := i;
-    if LColumnIndex >= ATableView.ColumnCount then
-    begin
-      ATableView.CreateColumn();
-    end;
-    ATableView.Columns[LColumnIndex].Caption := ColumnDefinitions[LDefinitionIndex].Caption;
-    ATableView.Columns[LColumnIndex].Visible := ColumnDefinitions[LDefinitionIndex].Visible;
-    ATableView.Columns[LColumnIndex].Width := ColumnDefinitions[LDefinitionIndex].Width + GetReservedImageWidth();
-    ATableView.Columns[LColumnIndex].MinWidth := ColumnDefinitions[LDefinitionIndex].MinWidth + GetReservedImageWidth();
-    ATableView.Columns[LColumnIndex].Options.Editing := ColumnDefinitions[LDefinitionIndex].AllowEdit;
-    //apply sortorder
-    case ColumnDefinitions[LDefinitionIndex].SortingDirection of
-      sdAscending: ATableView.Columns[LColumnIndex].SortOrder := soAscending;
-      sdDescending: ATableView.Columns[LColumnIndex].SortOrder := soDescending;
+    LColumnDefinition := ColumnDefinitions[i];
+    LColumn := ATableView.CreateColumn();
+    LColumn.Caption := LColumnDefinition.Caption;
+    LColumn.MinWidth := LColumnDefinition.MinWidth + GetReservedImageWidth();
+    LColumn.Options.Editing := LColumnDefinition.AllowEdit;
+    LColumn.Visible := LColumnDefinition.Visible;
+    LColumn.Width := LColumnDefinition.Width + GetReservedImageWidth();
+
+    // apply sort order
+    case LColumnDefinition.SortingDirection of
+      sdAscending: LColumn.SortOrder := soAscending;
+      sdDescending: LColumn.SortOrder := soDescending;
     else
-      ATableView.Columns[LColumnIndex].SortOrder := soNone;
+      LColumn.SortOrder := soNone;
     end;
 
-    //apply sizing etc options
-    ATableView.Columns[LColumnIndex].Options.HorzSizing := coResizable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
-    ATableView.Columns[LColumnIndex].Options.Moving := coDraggable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
-    ATableView.Columns[LColumnIndex].Options.Sorting := coSortable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+    // apply sizing etc options
+    LColumn.Options.HorzSizing := coResizable in LColumnDefinition.ColumnOptions;
+    LColumn.Options.Moving := coDraggable in LColumnDefinition.ColumnOptions;
+    LColumn.Options.Sorting := coSortable in LColumnDefinition.ColumnOptions;
 
-    //apply Boolean in case of Checkbox
-    case ColumnDefinitions[LDefinitionIndex].ColumnType of
-      ctCheckBox: ATableView.Columns[LColumnIndex].DataBinding.ValueType := 'Boolean';
-    else
-      ATableView.Columns[LColumnIndex].DataBinding.ValueType := 'String';
+    // apply column type
+    case LColumnDefinition.ColumnType of
+      ctCheckBox: LColumn.PropertiesClass := TcxCheckBoxProperties;
+      ctProgressBar:
+      begin
+        LColumn.PropertiesClass := TcxProgressBarProperties;
+        TcxProgressBarProperties(LColumn.Properties).ShowText := False;
+      end;
     end;
   end;
 end;
@@ -851,8 +843,21 @@ procedure TGridViewPresenter.SetGridView(const Value: TcxCustomGridView);
 begin
   if IsCustomDataSourceSupported(Value) then
   begin
-    FGridView := Value;
-    InitControl();
+    if FGridView <> Value then
+    begin
+      if Assigned(FGridView) then
+      begin
+        FGridView.RemoveFreeNotification(Self);
+      end;
+
+      FGridView := Value;
+
+      if Assigned(FGridView) then
+      begin
+        FGridView.FreeNotification(Self);
+      end;
+      InitControl();
+    end;
   end
   else
   begin

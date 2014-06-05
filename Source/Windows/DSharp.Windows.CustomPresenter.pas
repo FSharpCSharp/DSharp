@@ -60,6 +60,8 @@ type
     FOnDragDrop: TDragDropEvent;
     FOnDragOver: TDragOverEvent;
     FOnDragBegin: TDragBeginEvent;
+    FOnSelectionChanged: TNotifyEvent;
+    FOnSelectionChanging: TSelectionChangingEvent;
     FPopupMenu: TPopupMenu;
     FShowHeader: Boolean;
     FSelectionMode: TSelectionMode;
@@ -80,6 +82,7 @@ type
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
     procedure WriteColumnDefinitions(Writer: TWriter);
   protected
+    FCollectionUpdateLock: Integer;
     FUpdateCount: Integer;
     procedure ApplyAllowMove; virtual;
     procedure ApplyCheckSupport; virtual;
@@ -132,6 +135,10 @@ type
     property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
     property OnDragDrop: TDragDropEvent read FOnDragDrop write FOnDragDrop;
     property OnDragOver: TDragOverEvent read FOnDragOver write FOnDragOver;
+    property OnSelectionChanged: TNotifyEvent
+      read FOnSelectionChanged write FOnSelectionChanged;
+    property OnSelectionChanging: TSelectionChangingEvent
+      read FOnSelectionChanging write FOnSelectionChanging;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
     property SelectionMode: TSelectionMode read FSelectionMode write SetSelectionMode default smSingle;
     property ShowHeader: Boolean read FShowHeader write SetShowHeader default True;
@@ -174,6 +181,8 @@ uses
 constructor TCustomPresenter.Create(AOwner: TComponent);
 begin
   inherited;
+  FAllowMove := True;
+  FShowHeader := True;
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
   FView := TCollectionViewPresenterAdapter.Create(Self);
 

@@ -36,28 +36,78 @@ uses
   Controls,
   cxCustomData,
   cxGraphics,
+  cxGridCardView,
   cxGridCustomTableView,
   cxGridCustomView,
+  cxGridTableView,
   DSharp.Collections,
   DSharp.DevExpress.PresenterDataSource,
-  DSharp.Windows.CustomPresenter;
+  DSharp.Windows.CustomPresenter,
+  DSharp.WIndows.CustomPresenter.Types;
+
+{$I '..\Windows\DSharp.Windows.CustomPresenter.Types.inc'}
 
 type
   TGridViewPresenter = class(TCustomPresenter)
   private
+    FCheckedItems: IList<TObject>;
     FDataSource: TGridViewPresenterDataSource;
     FGridView: TcxCustomGridView;
-
+    FSelectedItems: IList<TObject>;
     procedure DoCellDblClick(Sender: TcxCustomGridTableView;
       CellViewInfo: TcxGridTableDataCellViewInfo; Button: TMouseButton;
       Shift: TShiftState; var Handled: Boolean);
     procedure DoFocusedRecordChanged(Sender: TcxCustomGridTableView;
       PrevFocusedRecord, FocusedRecord: TcxCustomGridRecord;
       NewItemRecordFocusingChanged: Boolean);
+    procedure DoSelectionChanged(AView: TcxCustomGridTableView);
 
+    function GetAutoCellHeight: Boolean;
+    function GetCellImageIndex(AViewInfo: TcxGridTableDataCellViewInfo): Integer;
+    function GetItemAtPosition(AGrid: TcxGridSite; X, Y: Integer): TObject;
+    function GetRecordItem(ARecord: TcxCustomGridRecord): TObject; inline;
+    function GetReservedImageHeight: Integer;
+    function GetReservedImageWidth: Integer;
+    function GetSelectedItem: TObject;
     procedure SetGridView(const Value: TcxCustomGridView);
+    property AutoCellHeight: Boolean read GetAutoCellHeight;
   protected
+    procedure ApplyAllowMove; override;
+    procedure ApplyCheckSupport; override;
+    procedure ApplySelectionMode; override;
+    procedure ApplyShowHeader; override;
+    function CalcCellContentHeight(
+      AViewInfo: TcxGridTableDataCellViewInfo): Integer;
+
+    procedure DoCheckedItemsChanged(Sender: TObject; const Item: TObject;
+      Action: TCollectionChangedAction);
+    procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
+      Action: TCollectionChangedAction); reintroduce;
+    procedure DoSelectedItemsChanged(Sender: TObject; const Item: TObject;
+      Action: TCollectionChangedAction);
+
+    procedure HandleDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure HandleDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure HandleStartDrag(Sender: TObject; var DragObject: TDragObject);
+
+    procedure HandleCanFocusRecord(Sender: TcxCustomGridTableView;
+      ARecord: TcxCustomGridRecord; var AAllow: Boolean);
+    procedure HandleDrawCell(Sender: TcxCustomGridTableView; ACanvas: TcxCanvas;
+      AViewInfo: TcxGridTableDataCellViewInfo; var ADone: Boolean);
+    procedure HandleEditValueChanged(Sender: TcxCustomGridTableView;
+      AItem: TcxCustomGridTableItem);
+    procedure HandleFilterRecord(ADataController: TcxCustomDataController;
+      ARecordIndex: Integer; var Accept: Boolean);
+    procedure HandleGetCellHeight(Sender: TcxCustomGridTableView;
+      ARecord: TcxCustomGridRecord; AItem: TcxCustomGridTableItem;
+      ACellViewInfo: TcxGridTableDataCellViewInfo; var AHeight: Integer);
+
+    function IsCustomDataSourceSupported(AGridView: TcxCustomGridView): Boolean;
+
     function GetCurrentItem: TObject; override;
+    procedure InitCardViewColumns(ACardView: TcxGridCardView);
+    procedure InitTableViewColumns(ATableView: TcxGridTableView);
     procedure InitColumns; override;
     procedure InitEvents; override;
     procedure InitProperties; override;
@@ -66,7 +116,12 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure ApplyFilter; override;
     procedure Refresh; override;
+
+    property CheckedItems: IList<TObject> read FCheckedItems;
+    property SelectedItem: TObject read GetSelectedItem;
+    property SelectedItems: IList<TObject> read FSelectedItems;
   published
     property GridView: TcxCustomGridView read FGridView write SetGridView;
   end;
@@ -74,23 +129,135 @@ type
 implementation
 
 uses
-  cxGridCardView,
-  cxGridTableView,
+  cxControls,
+  cxTextEdit,
+  dxCore,
+  DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.ControlTemplates,
   SysUtils;
+
+const
+  CIconSpacing = 2;
+
+type
+  TcxDataControllerAccessor = class(TcxCustomDataController)
+  end;
+
+  TcxCellPainter = class(TcxGridTableDataCellPainter)
+  end;
+
+  TcxCellViewInfoAccessor = class(TcxGridTableDataCellViewInfo)
+  end;
+
+  TcxProviderAccessor = class(TcxCustomDataProvider)
+  end;
+
+
+procedure UpdateList(const Target, Source: IList<TObject>);
+var
+  i: Integer;
+begin
+  i := 0;
+  while i < Target.Count do
+  begin
+    if Source.Contains(Target[i]) then
+    begin
+      Inc(i);
+    end
+    else
+    begin
+      Target.Delete(i);
+    end;
+  end;
+  for i := 0 to Pred(Source.Count) do
+  begin
+    if not Target.Contains(Source[i]) then
+    begin
+      Target.Add(Source[i]);
+    end;
+  end;
+end;
 
 { TGridViewPresenter }
 
 constructor TGridViewPresenter.Create(AOwner: TComponent);
 begin
   inherited;
-  FDataSource := TGridViewPresenterDataSource.Create(Self);
+  FCheckedItems := TList<TObject>.Create();
+  FCheckedItems.OnCollectionChanged.Add(DoCheckedItemsChanged);
+  FDataSource := TGridViewPresenterDataSource.Create(Self.View, FCheckedItems);
+  FSelectedItems := TList<TObject>.Create();
+  FSelectedItems.OnCollectionChanged.Add(DoSelectedItemsChanged);
+  AllowMove := False;
+  ShowHeader := True;
+  View.OnCollectionChanged.Add(DoSourceCollectionChanged);
 end;
 
 destructor TGridViewPresenter.Destroy;
 begin
+  FCheckedItems.OnCollectionChanged.Remove(DoCheckedItemsChanged);
+  FSelectedItems.OnCollectionChanged.Remove(DoSelectedItemsChanged);
+  View.OnCollectionChanged.Remove(DoSourceCollectionChanged);
   FDataSource.Free();
   inherited;
+end;
+
+procedure TGridViewPresenter.ApplyAllowMove;
+begin
+  if Assigned(FGridView) then
+  begin
+    if AllowMove then
+    begin
+      FGridView.DragMode := dmAutomatic;
+    end
+    else
+    begin
+      FGridView.DragMode := dmManual;
+    end;
+  end;
+end;
+
+procedure TGridViewPresenter.ApplyCheckSupport;
+begin
+  inherited;
+  if CheckSupport = csNone then
+  begin
+    FCheckedItems.Clear;
+    FDataSource.CheckColumnIndex := -1;
+  end
+  else
+  begin
+    FDataSource.CheckColumnIndex := 0;
+  end;
+  if Assigned(FGridView) then
+  begin
+    InitColumns();
+  end;
+end;
+
+procedure TGridViewPresenter.ApplyFilter;
+begin
+  inherited;
+  FDataSource.DataChanged();
+end;
+
+procedure TGridViewPresenter.ApplySelectionMode;
+begin
+  if FGridView is TcxCustomGridTableView then
+  begin
+    TcxCustomGridTableView(FGridView).OptionsSelection.MultiSelect := SelectionMode = smMulti;
+  end;
+end;
+
+procedure TGridViewPresenter.ApplyShowHeader;
+var
+  LTable: TcxGridTableView;
+begin
+  if Assigned(FGridView) and (FGridView is TcxGridTableView) then
+  begin
+    LTable := TcxGridTableView(FGridView);
+    LTable.OptionsView.Header := ShowHeader;
+  end;
 end;
 
 procedure TGridViewPresenter.DoCellDblClick(Sender: TcxCustomGridTableView;
@@ -98,6 +265,17 @@ procedure TGridViewPresenter.DoCellDblClick(Sender: TcxCustomGridTableView;
   Shift: TShiftState; var Handled: Boolean);
 begin
   DoDblClick(Sender);
+end;
+
+procedure TGridViewPresenter.DoCheckedItemsChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
+begin
+  case Action of
+    caAdd, caRemove, caExtract:
+    begin
+      FDataSource.DataChanged();
+    end;
+  end;
 end;
 
 procedure TGridViewPresenter.DoFocusedRecordChanged(
@@ -112,8 +290,90 @@ begin
   begin
     View.ItemIndex := -1;
   end;
+  if not Sender.OptionsSelection.MultiSelect then
+  begin
+    DoSelectionChanged(Sender);
+  end;
 
   DoPropertyChanged('View');
+end;
+
+procedure TGridViewPresenter.DoSelectedItemsChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
+var
+  i: Integer;
+  LTableView: TcxCustomGridTableView;
+begin
+  if FCollectionUpdateLock > 0 then
+    Exit;
+
+  LTableView := TcxCustomGridTableView(FGridView);
+  case Action of
+    caAdd:
+    begin
+      for i := 0 to LTableView.ViewData.RecordCount - 1 do
+      begin
+        if Item = GetRecordItem(LTableView.ViewData.Records[i]) then
+        begin
+          LTableView.ViewData.Records[i].Selected := True;
+          LTableView.ViewData.Records[i].Focused := True;
+          Break;
+        end;
+      end;
+    end;
+    caRemove, caExtract:
+    begin
+      for i := 0 to LTableView.ViewData.RecordCount - 1 do
+      begin
+        if Item = GetRecordItem(LTableView.ViewData.Records[i]) then
+        begin
+          LTableView.ViewData.Records[i].Selected := False;
+          LTableView.ViewData.Records[i].Focused := False;
+          Break;
+        end;
+      end;
+    end;
+//    caReplace: ;
+//    caMove: ;
+//    caReset: ;
+  end;
+end;
+
+procedure TGridViewPresenter.DoSelectionChanged(AView: TcxCustomGridTableView);
+var
+  i: Integer;
+  LSelectedItems: IList<TObject>;
+begin
+  Inc(FCollectionUpdateLock);
+//  BeginInternalCollectionUpdate();
+  try
+    LSelectedItems := TList<TObject>.Create();
+    for i := 0 to AView.Controller.SelectedRecordCount - 1 do
+    begin
+      LSelectedItems.Add(GetRecordItem(AView.Controller.SelectedRecords[i]));
+    end;
+    UpdateList(FSelectedItems, LSelectedItems);
+  finally
+    Dec(FCollectionUpdateLock);
+//    EndInternalCollectionUpdate();
+  end;
+
+  if Assigned(OnSelectionChanged) then
+  begin
+    OnSelectionChanged(Self);
+  end;
+end;
+
+procedure TGridViewPresenter.DoSourceCollectionChanged(Sender: TObject;
+  const Item: TObject; Action: TCollectionChangedAction);
+begin
+  case Action of
+    caRemove, caExtract:
+    begin
+      FSelectedItems.Remove(Item);
+      FCheckedItems.Remove(Item);
+    end;
+  end;
 end;
 
 function TGridViewPresenter.GetCurrentItem: TObject;
@@ -128,11 +388,325 @@ begin
   end;
 end;
 
-procedure TGridViewPresenter.InitColumns;
+function TGridViewPresenter.CalcCellContentHeight(
+  AViewInfo: TcxGridTableDataCellViewInfo): Integer;
 var
-  i: Integer;
-  LTableView: TcxGridTableView;
-  LCardView: TcxGridCardView;
+  LCanvas: TcxCanvas;
+  LWidth: Integer;
+  LRect: TRect;
+  LText: string;
+  LLines: TSTringList;
+  LLine: string;
+  LRows: Integer;
+begin
+  Result := 0;
+  LWidth := AViewInfo.ClientBounds.Right - AViewInfo.ClientBounds.Left -
+    AViewInfo.TextWidthWithOffset;
+  if GetCellImageIndex(AViewInfo) > -1 then
+  begin
+    LWidth := LWidth - GetReservedImageWidth();
+  end;
+
+  LCanvas := TcxCellViewInfoAccessor(AViewInfo).Canvas;
+  LRect := Rect(0, 0, LWidth, 50);
+  LText := AViewInfo.Value;
+  LLines := TStringList.Create();
+  try
+    cxGetTextLines(LText, LCanvas, LRect, LLines);
+    for LLine in LLines do
+    begin
+      LRows := cxTextWidth(LCanvas.Font, LLine) div LWidth;
+      if (cxTextWidth(LCanvas.Font, LLine) mod LWidth) > 0 then
+      begin
+        Inc(LRows);
+      end;
+      Inc(Result, LRows * cxTextHeight(LCanvas.Font));
+    end;
+    Result := Result + AViewInfo.TextHeightWithOffset;
+  finally
+    LLines.Free;
+  end;
+end;
+
+function TGridViewPresenter.GetItemAtPosition(AGrid: TcxGridSite;
+  X, Y: Integer): TObject;
+var
+  LHitTest: TcxCustomGridHitTest;
+begin
+  LHitTest := AGrid.ViewInfo.GetHitTest(X, Y);
+  if LHitTest is TcxGridRecordHitTest then
+  begin
+    Result := GetRecordItem(TcxGridRecordHitTest(LHitTest).GridRecord);
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+function TGridViewPresenter.GetAutoCellHeight: Boolean;
+begin
+  Result := (FGridView is TcxGridTableView)
+    and TcxGridTableView(FGridView).OptionsView.CellAutoHeight;
+end;
+
+function TGridViewPresenter.GetCellImageIndex(
+  AViewInfo: TcxGridTableDataCellViewInfo): Integer;
+var
+  LColumn: TcxGridColumn;
+  LItem: TObject;
+begin
+  LColumn := TcxGridColumn(AViewInfo.Item);
+  LItem := GetRecordItem(AViewInfo.GridRecord);
+  Result := View.ItemTemplate.GetItemTemplate(LItem).GetImageIndex(
+    LItem, FDataSource.RelativeItemIndex[LColumn.Index]);
+end;
+
+function TGridViewPresenter.GetRecordItem(ARecord: TcxCustomGridRecord): TObject;
+begin
+  Result := FDataSource.RecordHandle[ARecord.RecordIndex];
+end;
+
+function TGridViewPresenter.GetReservedImageHeight: Integer;
+begin
+  Result := 0;
+  if Assigned(ImageList) then
+  begin
+    Result := ImageList.Height + CIconSpacing * 2;
+  end;
+end;
+
+function TGridViewPresenter.GetReservedImageWidth: Integer;
+begin
+  Result := 0;
+  if Assigned(ImageList) then
+  begin
+    Result := ImageList.Width + CIconSpacing * 2;
+  end;
+end;
+
+function TGridViewPresenter.GetSelectedItem: TObject;
+begin
+  if FSelectedItems.Count > 0 then
+  begin
+    Result := FSelectedItems[0];
+  end
+  else
+  begin
+    Result := nil;
+  end;
+end;
+
+procedure TGridViewPresenter.HandleCanFocusRecord(
+  Sender: TcxCustomGridTableView; ARecord: TcxCustomGridRecord;
+  var AAllow: Boolean);
+var
+  LItem: TObject;
+begin
+  if Sender.DataController.FocusedRecordIndex <> ARecord.RecordIndex then
+  begin
+    if Assigned(OnSelectionChanging) then
+    begin
+      LItem := GetRecordItem(ARecord);
+      OnSelectionChanging(Sender, LItem, AAllow);
+    end;
+  end;
+end;
+
+procedure TGridViewPresenter.HandleDragDrop(Sender, Source: TObject;
+  X, Y: Integer);
+var
+  LDropMode: TDropMode;
+  LHandled: Boolean;
+  LSource: TObject;
+begin
+  LDropMode := dmBelow;
+  LHandled := False;
+  if Assigned(OnDragDrop) then
+  begin
+    LSource := Source;
+    if LSource is TcxDragControlObject then
+    begin
+      LSource := TcxDragControlObject(LSource).Control;
+    end;
+    OnDragDrop(Sender, LSource, GetItemAtPosition(TcxGridSite(Sender), X, Y),
+      doMove, LDropMode, LHandled);
+  end;
+end;
+
+procedure TGridViewPresenter.HandleDragOver(Sender, Source: TObject;
+  X, Y: Integer; State: TDragState; var Accept: Boolean);
+var
+  LSource: TObject;
+begin
+  if Assigned(OnDragOver) then
+  begin
+    LSource := Source;
+    if LSource is TcxDragControlObject then
+    begin
+      LSource := TcxDragControlObject(LSource).Control;
+    end;
+    OnDragOver(Sender, LSource, GetItemAtPosition(TcxGridSite(Sender), X, Y), Accept);
+  end
+  else
+  begin
+    Accept := True;
+  end;
+end;
+
+procedure TGridViewPresenter.HandleDrawCell(Sender: TcxCustomGridTableView;
+  ACanvas: TcxCanvas; AViewInfo: TcxGridTableDataCellViewInfo;
+  var ADone: Boolean);
+var
+  LIndex: Integer;
+  LPainter: TcxCellPainter;
+  LEditView: TcxCustomTextEditViewInfo;
+  LTop, LHeight: Integer;
+begin
+  if Assigned(ImageList) and (AViewInfo.Item is TcxGridColumn) then
+  begin
+    LPainter := TcxCellPainter(TcxCellViewInfoAccessor(
+      AViewInfo).GetPainterClass.Create(ACanvas, AViewInfo));
+    try
+      // paint image if available
+      LIndex := GetCellImageIndex(AViewInfo);
+      if LIndex >= 0 then
+      begin
+        // adjust existing text
+        if AViewInfo.EditViewInfo is TcxCustomTextEditViewInfo then
+        begin
+          LEditView := TcxCustomTextEditViewInfo(AViewInfo.EditViewInfo);
+          LEditView.TextRect.Left := LEditView.TextRect.Left + ImageList.Width + CIconSpacing * 2;
+        end;
+        LPainter.DrawBackground();
+        LPainter.DrawContent();
+        // calculate Top-Offset to center Icon vertically
+        LHeight := AViewInfo.Bounds.Bottom - AViewInfo.Bounds.Top;
+        LTop := (LHeight - ImageList.Height) div 2;
+        ImageList.Draw(ACanvas.Canvas, AViewInfo.Bounds.Left + CIconSpacing,
+          AViewInfo.Bounds.Top + LTop, LIndex);
+        ADone := True;
+      end;
+    finally
+      LPainter.Free();
+    end;
+  end;
+end;
+
+procedure TGridViewPresenter.HandleEditValueChanged(
+  Sender: TcxCustomGridTableView; AItem: TcxCustomGridTableItem);
+begin
+  if AItem.Index = FDataSource.CheckColumnIndex then
+  begin
+    Sender.DataController.PostEditingData();
+  end;
+end;
+
+procedure TGridViewPresenter.HandleFilterRecord(
+  ADataController: TcxCustomDataController; ARecordIndex: Integer;
+  var Accept: Boolean);
+var
+  LItem: TObject;
+begin
+  LItem := FDataSource.RecordHandle[ARecordIndex];
+  DoFilterItem(LItem, Accept);
+end;
+
+procedure TGridViewPresenter.HandleGetCellHeight(Sender: TcxCustomGridTableView;
+  ARecord: TcxCustomGridRecord; AItem: TcxCustomGridTableItem;
+  ACellViewInfo: TcxGridTableDataCellViewInfo; var AHeight: Integer);
+var
+  LHeight, LContentHeight: Integer;
+begin
+  if Assigned(ImageList) then
+  begin
+    LHeight := GetReservedImageHeight();
+    if AutoCellHeight then
+    begin
+      LContentHeight := CalcCellContentHeight(ACellViewInfo);
+    end
+    else
+    begin
+      LContentHeight := 0;
+    end;
+
+    if not AutoCellHeight or (LHeight > LContentHeight) then
+    begin
+      AHeight := LHeight;
+    end
+    else
+    begin
+      AHeight := LContentHeight;
+    end;
+  end;
+end;
+
+procedure TGridViewPresenter.HandleStartDrag(Sender: TObject;
+  var DragObject: TDragObject);
+var
+  LDragItem: TObject;
+  LAllow: Boolean;
+begin
+  LDragItem := SelectedItem;
+  LAllow := False;
+  if Assigned(OnDragBegin) then
+  begin
+    OnDragBegin(Self, LDragItem, LAllow);
+  end;
+end;
+
+procedure TGridViewPresenter.InitCardViewColumns(ACardView: TcxGridCardView);
+var
+  i, LOffset, LColumnIndex, LDefinitionIndex: Integer;
+begin
+  ACardView.ClearItems();
+  if FDataSource.CheckColumnIndex <> -1 then
+  begin
+    LOffset := 1;
+    ACardView.CreateRow();
+    ACardView.Rows[0].DataBinding.ValueType := 'Boolean';
+    ACardView.Rows[0].Options.Moving := False;
+  end
+  else
+  begin
+    LOffset := 0;
+  end;
+  for i := 0 to Pred(ColumnDefinitions.Count) do
+  begin
+    LColumnIndex := i + LOffset;
+    LDefinitionIndex := i;
+    if LColumnIndex >= ACardView.RowCount then
+    begin
+      ACardView.CreateRow();
+    end;
+    ACardView.Rows[LColumnIndex].Caption := ColumnDefinitions[LDefinitionIndex].Caption;
+    ACardView.Rows[LColumnIndex].Visible := ColumnDefinitions[LDefinitionIndex].Visible;
+//    ACardView.Rows[LColumnIndex].Width := ColumnDefinitions[LDefinitionIndex].Width;
+    ACardView.Rows[LColumnIndex].Options.Editing := ColumnDefinitions[LDefinitionIndex].AllowEdit;
+
+    // apply sort order
+    case ColumnDefinitions[LDefinitionIndex].SortingDirection of
+      sdAscending: ACardView.Rows[LColumnIndex].SortOrder := soAscending;
+      sdDescending: ACardView.Rows[LColumnIndex].SortOrder := soDescending;
+    else
+      ACardView.Rows[LColumnIndex].SortOrder := soNone;
+    end;
+
+    // apply sizing etc options
+//    ACardView.Rows[LColumnIndex].Options.HorzSizing := coResizable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+    ACardView.Rows[LColumnIndex].Options.Moving := coDraggable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+//    ACardView.Rows[LColumnIndex].Options.Sorting := coSortable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+
+    // apply Boolean in case of Checkbox
+    case ColumnDefinitions[LDefinitionIndex].ColumnType of
+      ctCheckBox: ACardView.Rows[LColumnIndex].DataBinding.ValueType := 'Boolean';
+    else
+      ACardView.Rows[LColumnIndex].DataBinding.ValueType := 'String';
+    end;
+  end;
+end;
+
+procedure TGridViewPresenter.InitColumns;
 begin
   if Assigned(FGridView) and UseColumnDefinitions then
   begin
@@ -140,44 +714,47 @@ begin
     begin
       if FGridView is TcxGridTableView then
       begin
-        LTableView := TcxGridTableView(FGridView);
-        for i := 0 to Pred(ColumnDefinitions.Count) do
-        begin
-          if i < LTableView.ColumnCount then
-          begin
-            LTableView.Columns[i].Caption := ColumnDefinitions[i].Caption;
-            LTableView.Columns[i].Visible := ColumnDefinitions[i].Visible;
-            LTableView.Columns[i].Width := ColumnDefinitions[i].Width;
-          end;
-        end;
+        InitTableViewColumns(TcxGridTableView(FGridView));
       end else
       if FGridView is TcxGridCardView then
       begin
-        LCardView := TcxGridCardView(FGridView);
-        for i := 0 to Pred(ColumnDefinitions.Count) do
-        begin
-          if i < LCardView.RowCount then
-          begin
-            LCardView.Rows[i].Caption := ColumnDefinitions[i].Caption;
-            LCardView.Rows[i].Visible := ColumnDefinitions[i].Visible;
-          end;
-        end;
+        InitCardViewColumns(TcxGridCardView(FGridView));
       end;
     end;
   end;
 end;
 
 procedure TGridViewPresenter.InitEvents;
+var
+  LTableView: TcxCustomGridTableView;
 begin
   if Assigned(FGridView) then
   begin
     if FGridView is TcxCustomGridTableView then
     begin
-      TcxCustomGridTableView(FGridView).OnFocusedRecordChanged := DoFocusedRecordChanged;
-      TcxCustomGridTableView(FGridView).OnCellDblClick := DoCellDblClick;
+      LTableView := TcxCustomGridTableView(FGridView);
+      LTableView.DataController.OnFilterRecord := HandleFilterRecord;
+      LTableView.OnCanFocusRecord := HandleCanFocusRecord;
+      LTableView.OnCellDblClick := DoCellDblClick;
+      LTableView.OnCustomDrawCell := HandleDrawCell;
+      LTableView.OnDragOver := HandleDragOver;
+      LTableView.OnDragDrop := HandleDragDrop;
+      LTableView.OnEditValueChanged := HandleEditValueChanged;
+      LTableView.OnFocusedRecordChanged := DoFocusedRecordChanged;
+      if Assigned(ImageList) then
+      begin
+        LTableView.OnGetCellHeight := HandleGetCellHeight;
+      end
+      else
+      begin
+        LTableView.OnGetCellHeight := nil;
+      end;
+      LTableView.OnSelectionChanged := DoSelectionChanged;
+      LTableView.OnStartDrag := HandleStartDrag;
     end;
   end;
 end;
+
 
 procedure TGridViewPresenter.InitProperties;
 begin
@@ -185,7 +762,72 @@ begin
   begin
     FGridView.PopupMenu := PopupMenu;
     FGridView.DataController.CustomDataSource := FDataSource;
+    ApplyAllowMove();
+    ApplySelectionMode();
+    ApplyShowHeader();
   end;
+end;
+
+
+procedure TGridViewPresenter.InitTableViewColumns(ATableView: TcxGridTableView);
+var
+  i, LOffset: Integer;
+  LColumnIndex, LDefinitionIndex: Integer;
+begin
+  ATableView.ClearItems();
+  if FDataSource.CheckColumnIndex <> -1 then
+  begin
+    LOffset := 1;
+    ATableView.CreateColumn();
+    ATableView.Columns[0].Width := 20;
+    ATableView.Columns[0].DataBinding.ValueType := 'Boolean';
+    ATableView.Columns[0].Options.Moving := False;
+    ATableView.Columns[0].Options.HorzSizing := False;
+  end
+  else
+  begin
+    LOffset := 0;
+  end;
+  for i := 0 to Pred(ColumnDefinitions.Count) do
+  begin
+    LColumnIndex := i + LOffset;
+    LDefinitionIndex := i;
+    if LColumnIndex >= ATableView.ColumnCount then
+    begin
+      ATableView.CreateColumn();
+    end;
+    ATableView.Columns[LColumnIndex].Caption := ColumnDefinitions[LDefinitionIndex].Caption;
+    ATableView.Columns[LColumnIndex].Visible := ColumnDefinitions[LDefinitionIndex].Visible;
+    ATableView.Columns[LColumnIndex].Width := ColumnDefinitions[LDefinitionIndex].Width + GetReservedImageWidth();
+    ATableView.Columns[LColumnIndex].MinWidth := ColumnDefinitions[LDefinitionIndex].MinWidth + GetReservedImageWidth();
+    ATableView.Columns[LColumnIndex].Options.Editing := ColumnDefinitions[LDefinitionIndex].AllowEdit;
+    //apply sortorder
+    case ColumnDefinitions[LDefinitionIndex].SortingDirection of
+      sdAscending: ATableView.Columns[LColumnIndex].SortOrder := soAscending;
+      sdDescending: ATableView.Columns[LColumnIndex].SortOrder := soDescending;
+    else
+      ATableView.Columns[LColumnIndex].SortOrder := soNone;
+    end;
+
+    //apply sizing etc options
+    ATableView.Columns[LColumnIndex].Options.HorzSizing := coResizable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+    ATableView.Columns[LColumnIndex].Options.Moving := coDraggable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+    ATableView.Columns[LColumnIndex].Options.Sorting := coSortable in ColumnDefinitions[LDefinitionIndex].ColumnOptions;
+
+    //apply Boolean in case of Checkbox
+    case ColumnDefinitions[LDefinitionIndex].ColumnType of
+      ctCheckBox: ATableView.Columns[LColumnIndex].DataBinding.ValueType := 'Boolean';
+    else
+      ATableView.Columns[LColumnIndex].DataBinding.ValueType := 'String';
+    end;
+  end;
+end;
+
+function TGridViewPresenter.IsCustomDataSourceSupported(
+  AGridView: TcxCustomGridView): Boolean;
+begin
+  Result := Assigned(AGridView) and TcxProviderAccessor(TcxDataControllerAccessor(
+    AGridView.DataController).Provider).IsCustomDataSourceSupported;
 end;
 
 procedure TGridViewPresenter.Refresh;
@@ -200,14 +842,22 @@ procedure TGridViewPresenter.SetCurrentItem(const Value: TObject);
 begin
   if Assigned(FGridView) then
   begin
-    FDataSource.DataController.FocusedRecordIndex := FDataSource.GetRecordIndexByHandle(Value);
+    FDataSource.DataController.FocusedRecordIndex :=
+      FDataSource.GetRecordIndexByHandle(Value);
   end;
 end;
 
 procedure TGridViewPresenter.SetGridView(const Value: TcxCustomGridView);
 begin
-  FGridView := Value;
-  InitControl();
+  if IsCustomDataSourceSupported(Value) then
+  begin
+    FGridView := Value;
+    InitControl();
+  end
+  else
+  begin
+    raise Exception.CreateFmt('GridView does not support custom data source: "%s".', [Value.ClassName]);
+  end;
 end;
 
 end.

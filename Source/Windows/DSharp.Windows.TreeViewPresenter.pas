@@ -57,7 +57,6 @@ type
     FAllowClearSelection: Boolean;
     FCheckedItems: IList<TObject>;
     FChecking: Boolean;
-    FCollectionChanging: Integer;
     FCurrentNode: PVirtualNode;
     FFilterDirection: TFilterDirection;
     FExpandedItems: IList<TObject>;
@@ -67,8 +66,6 @@ type
     FOnCompare: TCompareEvent;
     FOnExpanded: TExpandedEvent;
     FOnKeyAction: TKeyEvent;
-    FOnSelectionChanged: TNotifyEvent;
-    FOnSelectionChanging: TSelectionChangingEvent;
     FProgressBar: TProgressBar;
     FSelectedItems: IList<TObject>;
     FSelectedItemPath: IList<TObject>;
@@ -240,10 +237,6 @@ type
     property OnCompare: TCompareEvent read FOnCompare write FOnCompare;
     property OnExpanded: TExpandedEvent read FOnExpanded write FOnExpanded;
     property OnKeyAction: TKeyEvent read FOnKeyAction write FOnKeyAction;
-    property OnSelectionChanged: TNotifyEvent
-      read FOnSelectionChanged write FOnSelectionChanged;
-    property OnSelectionChanging: TSelectionChangingEvent
-      read FOnSelectionChanging write FOnSelectionChanging;
     property Sorting: Boolean read FSorting write SetSorting default True;
     property SyncMode: Boolean read FSyncMode write FSyncMode default False;
     property TreeView: TVirtualStringTree read FTreeView write SetTreeView;
@@ -278,7 +271,7 @@ type
 var
   CheckBoxSize: Byte;
 
-procedure Synchronize(Target, Source: IList<TObject>);
+procedure UpdateList(const Target, Source: IList<TObject>);
 var
   i: Integer;
 begin
@@ -333,8 +326,6 @@ begin
   FSelectedItemPath := TList<TObject>.Create();
   inherited;
   FAllowClearSelection := True;
-  AllowMove := True;
-  ShowHeader := True;
   FSorting := True;
   FProgressBar := TProgressBar.Create(Self);
   FProgressBar.Smooth := True;
@@ -520,9 +511,9 @@ begin
     DoPropertyChanged('SelectedItems');
     DoPropertyChanged('SelectedItemPath');
 
-    if Assigned(FOnSelectionChanged) then
+    if Assigned(OnSelectionChanged) then
     begin
-      FOnSelectionChanged(Self);
+      OnSelectionChanged(Self);
     end;
   end;
 end;
@@ -543,7 +534,7 @@ var
 begin
   if Assigned(FTreeView) and not (csDestroying in ComponentState) then
   begin
-    if FCollectionChanging = 0 then
+    if FCollectionUpdateLock = 0 then
     begin
       LNode := FTreeView.GetFirst();
       while Assigned(LNode) do
@@ -805,7 +796,7 @@ var
   LNode: PVirtualNode;
 begin
   if Assigned(FTreeView) and not (csDestroying in ComponentState)
-    and (FCollectionChanging = 0) then
+    and (FCollectionUpdateLock = 0) then
   begin
     LNode := FTreeView.GetFirst();
     while Assigned(LNode) do
@@ -886,9 +877,9 @@ begin
   if OldNode <> NewNode then
   begin
     LItem := GetNodeItem(Sender, NewNode);
-    if Assigned(FOnSelectionChanging) then
+    if Assigned(OnSelectionChanging) then
     begin
-      FOnSelectionChanging(Sender, LItem, Allowed);
+      OnSelectionChanging(Sender, LItem, Allowed);
       if not Allowed and Assigned(OldNode) then
       begin
         FTreeView.Selected[OldNode] := True;
@@ -1408,7 +1399,7 @@ begin
   if Assigned(FTreeView) and not (csDestroying in ComponentState)
     and (SelectionMode <> smNone) then
   begin
-    if FCollectionChanging = 0 then
+    if FCollectionUpdateLock = 0 then
     begin
       LNode := FTreeView.GetFirst();
       while Assigned(LNode) do
@@ -2379,7 +2370,7 @@ begin
       end;
       LNode := FTreeView.GetFirstSelected();
       FTreeView.FocusedNode := LNode;
-      if Assigned(LNode) and (FCollectionChanging = 0)
+      if Assigned(LNode) and (FCollectionUpdateLock = 0)
         and FTreeView.HandleAllocated then
       begin
         FTreeView.ScrollIntoView(LNode, True, True);
@@ -2508,7 +2499,7 @@ var
 begin
   if Assigned(FTreeView) then
   begin
-    Inc(FCollectionChanging);
+    Inc(FCollectionUpdateLock);
     LCheckedItems := TList<TObject>.Create();
     try
       LNode := FTreeView.GetFirstChecked();
@@ -2522,9 +2513,9 @@ begin
         LNode := FTreeView.GetNextChecked(LNode);
       end;
 
-      Synchronize(FCheckedItems, LCheckedItems);
+      UpdateList(FCheckedItems, LCheckedItems);
     finally
-      Dec(FCollectionChanging);
+      Dec(FCollectionUpdateLock);
     end;
   end;
 end;
@@ -2537,7 +2528,7 @@ var
 begin
   if Assigned(FTreeView) then
   begin
-    Inc(FCollectionChanging);
+    Inc(FCollectionUpdateLock);
     LExpandedItems := TList<TObject>.Create();
     try
       LNode := FTreeView.GetFirstInitialized();
@@ -2551,9 +2542,9 @@ begin
         LNode := FTreeView.GetNextInitialized(LNode);
       end;
 
-      Synchronize(FExpandedItems, LExpandedItems);
+      UpdateList(FExpandedItems, LExpandedItems);
     finally
-      Dec(FCollectionChanging);
+      Dec(FCollectionUpdateLock);
     end;
   end;
 end;
@@ -2599,7 +2590,7 @@ var
 begin
   if Assigned(FTreeView) and (SelectionMode <> smNone) then
   begin
-    Inc(FCollectionChanging);
+    Inc(FCollectionUpdateLock);
     LSelectedItems := TList<TObject>.Create();
     try
       LSelectedNodes := FTreeView.GetSortedSelection(False);
@@ -2613,9 +2604,9 @@ begin
         end;
       end;
 
-      Synchronize(FSelectedItems, LSelectedItems);
+      UpdateList(FSelectedItems, LSelectedItems);
     finally
-      Dec(FCollectionChanging);
+      Dec(FCollectionUpdateLock);
     end;
   end;
 end;

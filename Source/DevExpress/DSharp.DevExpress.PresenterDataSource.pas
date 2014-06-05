@@ -36,23 +36,37 @@ uses
   cxTLData,
 {$ENDIF}
   cxCustomData,
+  DSharp.Bindings.CollectionView,
+  DSharp.Collections,
   DSharp.Windows.CustomPresenter;
 
 type
   TGridViewPresenterDataSource = class(TcxCustomDataSource)
   private
-    FPresenter: TCustomPresenter;
+    FCheckColumnIndex: Integer;
+    FCheckedItems: IList<TObject>;
+    FView: TCollectionView;
   protected
+    function GetRelativeItemIndex(AIndex: Integer): Integer;
+
     // Load all records mode
     function GetRecordCount: Integer; override;
     function GetRecordHandle(ARecordIndex: Integer): TcxDataRecordHandle; override;
+
+    // for correct tracking when changing column order
+    function GetItemHandle(AItemIndex: Integer): TcxDataItemHandle; override;
 
     function GetValue(ARecordHandle: TcxDataRecordHandle;
       AItemHandle: TcxDataItemHandle): Variant; override;
     procedure SetValue(ARecordHandle: TcxDataRecordHandle;
       AItemHandle: TcxDataItemHandle; const AValue: Variant); override;
   public
-    constructor Create(APresenter: TCustomPresenter);
+    constructor Create(const AView: TCollectionView; const ACheckedItems: IList<TObject>);
+
+    property CheckColumnIndex: Integer read FCheckColumnIndex write FCheckColumnIndex;
+    property RecordHandle[ARecordIndex: Integer]: TcxDataRecordHandle
+      read GetRecordHandle;
+    property RelativeItemIndex[AIndex: Integer]: Integer read GetRelativeItemIndex;
   end;
 
 {$IFDEF USE_TREELIST}
@@ -82,67 +96,146 @@ type
 implementation
 
 uses
+  cxGridCustomTableView,
   DSharp.Bindings.Notifications,
   DSharp.Core.DataTemplates,
   Rtti,
+  TypInfo,
   Variants;
 
 { TGridViewPresenterDataSource }
 
-constructor TGridViewPresenterDataSource.Create(APresenter: TCustomPresenter);
+constructor TGridViewPresenterDataSource.Create(const AView: TCollectionView;
+  const ACheckedItems: IList<TObject>);
 begin
   inherited Create();
-  FPresenter := APresenter;
+  FCheckColumnIndex := -1;
+  FCheckedItems := ACheckedItems;
+  FView := AView;
+end;
+
+function TGridViewPresenterDataSource.GetItemHandle(
+  AItemIndex: Integer): TcxDataItemHandle;
+var
+  LGridColumn: TcxCustomGridTableItem;
+begin
+  LGridColumn := TcxCustomGridTableItem(DataController.GetItem(AItemIndex));
+  Result := TcxDataItemHandle(LGridColumn.ID);
 end;
 
 function TGridViewPresenterDataSource.GetRecordCount: Integer;
-var
-  LItem: TObject;
-  LItemTemplate: IDataTemplate;
 begin
   Result := 0;
-
-  LItem := FPresenter.View.ItemsSource as TObject;
-  LItemTemplate := FPresenter.GetItemTemplate(LItem);
-  if Assigned(LItemTemplate) then
+  if Assigned(FView.ItemsSource) then
   begin
-    Result := LItemTemplate.GetItemCount(LItem);
+    Result := FView.ItemTemplate.GetItemCount(FView.ItemsSource.AsObject);
   end;
 end;
 
 function TGridViewPresenterDataSource.GetRecordHandle(
   ARecordIndex: Integer): TcxDataRecordHandle;
-var
-  LItem: TObject;
-  LItemTemplate: IDataTemplate;
 begin
   Result := nil;
-
-  LItem := FPresenter.View.ItemsSource as TObject;
-  LItemTemplate := FPresenter.GetItemTemplate(LItem);
-  if Assigned(LItemTemplate) then
+  if Assigned(FView.ItemsSource) then
   begin
-    Result := LItemTemplate.GetItem(LItem, ARecordIndex);
+    Result := FView.ItemTemplate.GetItem(FView.ItemsSource.AsObject, ARecordIndex);
+  end;
+end;
+
+function TGridViewPresenterDataSource.GetRelativeItemIndex(
+  AIndex: Integer): Integer;
+begin
+  if (FCheckColumnIndex > -1) and (AIndex >= FCheckColumnIndex) then
+  begin
+    Result := AIndex - 1;
+  end
+  else
+  begin
+    Result := AIndex;
   end;
 end;
 
 function TGridViewPresenterDataSource.GetValue(
   ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle): Variant;
+
+  // TODO: implement in TValueHelper
+  function ValueToVariant(AValue: TValue): Variant;
+  begin
+    case AValue.Kind of
+      tkInteger: Result := AValue.AsInteger;
+      tkChar: Result := AValue.AsString;
+      tkEnumeration:
+      begin
+        if AValue.TypeInfo = TypeInfo(Boolean) then
+        begin
+          Result := AValue.AsBoolean;
+        end
+        else
+        begin
+          Result := AValue.AsOrdinal;
+        end;
+      end;
+      tkFloat: Result := AValue.AsExtended;
+      tkString: Result := AValue.AsString;
+  //    tkSet: ;
+  //    tkClass: Result := AValue.AsClass;
+  //    tkMethod: ;
+      tkWChar: Result := AValue.AsString;
+      tkLString: Result := AValue.AsString;
+      tkWString: Result := AValue.AsString;
+  //    tkVariant: ;
+  //    tkArray: ;
+  //    tkRecord: ;
+      tkInterface: Result := AValue.AsInterface;
+      tkInt64: Result := AValue.AsInt64;
+  //    tkDynArray: ;
+      tkUString: Result := AValue.AsString;
+  //    tkClassRef: ;
+  //    tkPointer: Result := AValue.as;
+  //    tkProcedure: ;
+    else
+      //may crash
+      try
+        Result := AValue.AsVariant;
+      except
+        Result := Null;
+      end;
+    end;
+  end;
+
 var
-  LItemTemplate: IDataTemplate;
+  LValue: TValue;
 begin
-  LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
-  Result := LItemTemplate.GetText(ARecordHandle, Integer(AItemHandle));
+  if Integer(AItemHandle) = FCheckColumnIndex then
+  begin
+    Result := FCheckedItems.Contains(ARecordHandle);
+  end
+  else
+  begin
+    LValue := FView.ItemTemplate.GetValue(ARecordHandle, GetRelativeItemIndex(Integer(AItemHandle)));
+    Result := ValueToVariant(LValue);
+  end;
 end;
 
 procedure TGridViewPresenterDataSource.SetValue(
   ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle;
   const AValue: Variant);
-var
-  LItemTemplate: IDataTemplate;
 begin
-  LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
-  LItemTemplate.SetValue(ARecordHandle, Integer(AItemHandle), TValue.FromVariant(AValue));
+  if Integer(AItemHandle) = FCheckColumnIndex then
+  begin
+    if AValue and not FCheckedItems.Contains(ARecordHandle) then
+    begin
+      FCheckedItems.Add(ARecordHandle);
+    end
+    else
+    begin
+      FCheckedItems.Remove(ARecordHandle);
+    end;
+  end
+  else
+  begin
+    FView.ItemTemplate.SetValue(ARecordHandle, GetRelativeItemIndex(Integer(AItemHandle)), TValue.FromVariant(AValue));
+  end;
 end;
 
 { TTreeListPresenterDataSource }

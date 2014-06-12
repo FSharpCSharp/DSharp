@@ -206,6 +206,7 @@ type
     procedure MoveCurrentToLast; override;
     procedure MoveCurrentToNext; override;
     procedure MoveCurrentToPrevious; override;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -2175,6 +2176,17 @@ begin
         FTreeView.ScrollIntoView(LNode, True, True);
       end;
     end;
+  end;
+end;
+
+procedure TTreeViewPresenter.Notification(AComponent: TComponent;
+  Operation: TOperation);
+begin
+  inherited;
+  if Operation = opRemove then
+  begin
+    if AComponent = FTreeView then
+      FTreeView := nil;
   end;
 end;
 

@@ -111,6 +111,7 @@ type
     procedure InitColumns; override;
     procedure InitEvents; override;
     procedure InitProperties; override;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure SetCurrentItem(const Value: TObject); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -820,6 +821,17 @@ function TGridViewPresenter.IsCustomDataSourceSupported(
 begin
   Result := Assigned(AGridView) and TcxProviderAccessor(TcxDataControllerAccessor(
     AGridView.DataController).Provider).IsCustomDataSourceSupported;
+end;
+
+procedure TGridViewPresenter.Notification(AComponent: TComponent;
+  Operation: TOperation);
+begin
+  inherited;
+  if Operation = opRemove then
+  begin
+    if AComponent = FGridView then
+      FGridView := nil;
+  end;
 end;
 
 procedure TGridViewPresenter.Refresh;

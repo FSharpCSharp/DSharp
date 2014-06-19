@@ -2944,6 +2944,8 @@ var
   LClass: TClass;
   LPointer: Pointer;
 begin
+  FRegister.Free;
+
   for LClass in FPatchedClasses.Values do
   begin
     LPointer := PByte(LClass) + vmtSelfPtr;
@@ -2951,7 +2953,6 @@ begin
   end;
 
   FPatchedClasses.Free;
-  FRegister.Free;
 end;
 
 constructor TRttiPropertyExtension.Create(Parent: PTypeInfo;

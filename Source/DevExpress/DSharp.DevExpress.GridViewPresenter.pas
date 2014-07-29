@@ -124,6 +124,7 @@ type
     property SelectedItem: TObject read GetSelectedItem;
     property SelectedItems: IList<TObject> read FSelectedItems;
   published
+    property AllowMove default False;
     property GridView: TcxCustomGridView read FGridView write SetGridView;
   end;
 
@@ -135,6 +136,7 @@ uses
   cxProgressBar,
   cxTextEdit,
   dxCore,
+  DSharp.Core.DataTemplates,
   DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.ControlTemplates,
   SysUtils;
@@ -458,11 +460,20 @@ function TGridViewPresenter.GetCellImageIndex(
 var
   LColumn: TcxGridColumn;
   LItem: TObject;
+  LTemplate: IDataTemplate;
 begin
   LColumn := TcxGridColumn(AViewInfo.Item);
   LItem := GetRecordItem(AViewInfo.GridRecord);
-  Result := View.ItemTemplate.GetItemTemplate(LItem).GetImageIndex(
-    LItem, FDataSource.RelativeItemIndex[LColumn.Index]);
+  LTemplate := View.ItemTemplate.GetItemTemplate(LItem);
+  if Assigned(LTemplate) then
+  begin
+    Result := LTemplate.GetImageIndex(
+      LItem, FDataSource.RelativeItemIndex[LColumn.Index]);
+  end
+  else
+  begin
+    Result := -1;
+  end;
 end;
 
 function TGridViewPresenter.GetRecordItem(ARecord: TcxCustomGridRecord): TObject;

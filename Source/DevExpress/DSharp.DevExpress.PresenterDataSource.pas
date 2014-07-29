@@ -205,6 +205,7 @@ function TGridViewPresenterDataSource.GetValue(
 
 var
   LValue: TValue;
+  LTemplate: IDataTemplate;
 begin
   if Integer(AItemHandle) = FCheckColumnIndex then
   begin
@@ -212,14 +213,24 @@ begin
   end
   else
   begin
-    LValue := FView.ItemTemplate.GetValue(ARecordHandle, GetRelativeItemIndex(Integer(AItemHandle)));
-    Result := ValueToVariant(LValue);
+    LTemplate := FView.ItemTemplate.GetItemTemplate(ARecordHandle);
+    if Assigned(LTemplate) then
+    begin
+      LValue := LTemplate.GetValue(ARecordHandle, GetRelativeItemIndex(Integer(AItemHandle)));
+      Result := ValueToVariant(LValue);
+    end
+    else
+    begin
+      Result := Null;
+    end;
   end;
 end;
 
 procedure TGridViewPresenterDataSource.SetValue(
   ARecordHandle: TcxDataRecordHandle; AItemHandle: TcxDataItemHandle;
   const AValue: Variant);
+var
+  LTemplate: IDataTemplate;
 begin
   if Integer(AItemHandle) = FCheckColumnIndex then
   begin
@@ -234,7 +245,11 @@ begin
   end
   else
   begin
-    FView.ItemTemplate.SetValue(ARecordHandle, GetRelativeItemIndex(Integer(AItemHandle)), TValue.FromVariant(AValue));
+    LTemplate := FView.ItemTemplate.GetItemTemplate(ARecordHandle);
+    if Assigned(LTemplate) then
+    begin
+      LTemplate.SetValue(ARecordHandle, GetRelativeItemIndex(Integer(AItemHandle)), TValue.FromVariant(AValue));
+    end;
   end;
 end;
 
@@ -297,7 +312,14 @@ var
   LItemTemplate: IDataTemplate;
 begin
   LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
-  Result := LItemTemplate.GetText(ARecordHandle, Integer(AItemHandle));
+  if Assigned(LItemTemplate) then
+  begin
+    Result := LItemTemplate.GetText(ARecordHandle, Integer(AItemHandle));
+  end
+  else
+  begin
+    Result := Null;
+  end;
 end;
 
 procedure TTreeListPresenterDataSource.SetValue(ARecordHandle: TcxDataRecordHandle;
@@ -306,7 +328,10 @@ var
   LItemTemplate: IDataTemplate;
 begin
   LItemTemplate := FPresenter.GetItemTemplate(ARecordHandle);
-  LItemTemplate.SetValue(ARecordHandle, Integer(AItemHandle), TValue.FromVariant(AValue));
+  if Assigned(LItemTemplate) then
+  begin
+    LItemTemplate.SetValue(ARecordHandle, Integer(AItemHandle), TValue.FromVariant(AValue));
+  end;
 end;
 {$ENDIF}
 

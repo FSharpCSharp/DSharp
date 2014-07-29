@@ -151,7 +151,6 @@ type
     function GetParentItem(const Level: Integer): TObject;
     function GetSelectedItem: TObject;
     function GetSelectedItems: IList<TObject>;
-    function GetSelectedItemPath: IList<TObject>;
 
     function CalcCheckBoxRect(const Rect: TRect): TRect;
     function CalcImageRect(const Rect: TRect): TRect;
@@ -1408,7 +1407,13 @@ begin
         if GetNodeItem(FTreeView, LNode) = Item then
         begin
           case Action of
-            caAdd: FTreeView.Selected[LNode] := True;
+            caAdd:
+              begin
+                FTreeView.Selected[LNode] := True;
+                ExpandNode(LNode);
+                if SelectionMode = smSingle then
+                  FTreeView.ScrollIntoView(LNode, True);
+              end;
             caRemove: FTreeView.Selected[LNode] := False;
           end;
         end;
@@ -1429,8 +1434,9 @@ end;
 procedure TTreeViewPresenter.DoSourceCollectionChanged(Sender: TObject;
   const Item: TObject; Action: TCollectionChangedAction);
 var
-  LNode: PVirtualNode;
+  LParentNode, LNode: PVirtualNode;
   LSelectedNode: PVirtualNode;
+  LItems: IList;
 begin
   if Assigned(FTreeView) and not (csDestroying in ComponentState)
     and (FUpdateCount = 0) then
@@ -1447,26 +1453,36 @@ begin
 
       caRemove:
       begin
-        LNode := FTreeView.IterateSubtree(nil, GetItemsNode, Pointer(Sender));
-        LNode := FTreeView.IterateSubtree(LNode, GetItemNode, Pointer(Item));
-
-        // find node to select after deleting current node
-        if FTreeView.Selected[LNode] and (SelectionMode = smSingle) then
+        LParentNode := FTreeView.IterateSubtree(nil, GetItemsNode, Pointer(Sender));
+        LNode := FTreeView.IterateSubtree(LParentNode, GetItemNode, Pointer(Item));
+        if Assigned(LNode) then
         begin
-          LSelectedNode := FTreeView.GetNextVisibleSibling(LNode);
-
-          if not Assigned(LSelectedNode) then
-            LSelectedNode := FTreeView.GetPreviousVisibleSibling(LNode);
-          if not Assigned(LSelectedNode) then
-            LSelectedNode := LNode.Parent;
-          if Assigned(LSelectedNode) then
+          // find node to select after deleting current node
+          if FTreeView.Selected[LNode] and (SelectionMode = smSingle) then
           begin
-            FTreeView.Selected[LSelectedNode] := True;
-            FTreeView.FocusedNode := LSelectedNode;
-          end;
-        end;
+            LSelectedNode := FTreeView.GetNextVisibleSibling(LNode);
 
-        FTreeView.DeleteNode(LNode);
+            if not Assigned(LSelectedNode) then
+              LSelectedNode := FTreeView.GetPreviousVisibleSibling(LNode);
+            if not Assigned(LSelectedNode) then
+              LSelectedNode := LNode.Parent;
+            if Assigned(LSelectedNode) then
+            begin
+              FTreeView.Selected[LSelectedNode] := True;
+              FTreeView.FocusedNode := LSelectedNode;
+            end;
+          end;
+
+          FTreeView.DeleteNode(LNode);
+        end
+        else
+        begin
+          LItems := GetNodeItems(FTreeView, LParentNode);
+          if Assigned(LItems) then
+            FTreeView.ChildCount[LParentNode] := LItems.Count
+          else
+            FTreeView.ChildCount[LParentNode] := 0;
+        end;
       end;
 
       caReplace:
@@ -1808,15 +1824,6 @@ begin
   begin
     Result := nil;
   end;
-end;
-
-function TTreeViewPresenter.GetSelectedItemPath: IList<TObject>;
-begin
-  if (FSelectedItemPath.Count > 0) and (SelectionMode = smNone) then
-  begin
-    FSelectedItemPath.Clear;
-  end;
-  Result := FSelectedItemPath;
 end;
 
 function TTreeViewPresenter.GetSelectedItems: IList<TObject>;

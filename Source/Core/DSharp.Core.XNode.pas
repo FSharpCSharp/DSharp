@@ -32,9 +32,9 @@ unit DSharp.Core.XNode;
 interface
 
 uses
-  DSharp.Collections,
   DSharp.Collections.ObservableCollection,
   DSharp.Core.PropertyChangedBase,
+  Spring.Collections,
   xmldom;
 
 type

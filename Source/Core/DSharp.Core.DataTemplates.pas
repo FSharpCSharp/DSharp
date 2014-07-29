@@ -32,7 +32,7 @@ unit DSharp.Core.DataTemplates;
 interface
 
 uses
-  DSharp.Collections,
+  Spring.Collections,
   Rtti;
 
 type
@@ -54,7 +54,7 @@ type
     // methods to build the tree structure
     function GetItem(const Item: TObject; const Index: Integer): TObject;
     function GetItemCount(const Item: TObject): Integer;
-    function GetItems(const Item: TObject): IList;
+    function GetItems(const Item: TObject): IObjectList;
     function GetItemTemplate(const Item: TObject): IDataTemplate;
 
     function CompareItems(const Item1, Item2: TObject; const ColumnIndex: Integer): Integer;
@@ -92,7 +92,7 @@ type
     function GetItem(const Item: TObject;
       const Index: Integer): TObject; virtual;
     function GetItemCount(const Item: TObject): Integer; virtual;
-    function GetItems(const Item: TObject): IList; virtual;
+    function GetItems(const Item: TObject): IObjectList; virtual;
     function GetItemTemplate(const Item: TObject): IDataTemplate; virtual;
 
     function CompareItems(const Item1, Item2: TObject;
@@ -137,8 +137,8 @@ type
       const Index: Integer): TObject; reintroduce; overload; virtual;
     function GetItemCount(const Item: TObject): Integer; overload; override; final;
     function GetItemCount(const Item: T): Integer; reintroduce; overload; virtual;
-    function GetItems(const Item: TObject): IList; overload; override; final;
-    function GetItems(const Item: T): IList; reintroduce; overload; virtual;
+    function GetItems(const Item: TObject): IObjectList; overload; override; final;
+    function GetItems(const Item: T): IObjectList; reintroduce; overload; virtual;
 
     function IsCheckBoxVisible(const Item: TObject): Boolean; overload; override; final;
     function IsCheckBoxVisible(const Item: T): Boolean; reintroduce; overload; virtual;
@@ -150,6 +150,7 @@ implementation
 
 uses
   DSharp.Core.Reflection,
+  Spring.Collections.Lists,
   SysUtils,
   TypInfo;
 
@@ -195,7 +196,7 @@ end;
 
 constructor TDataTemplate.Create;
 begin
-  FTemplates := TList<IDataTemplate>.Create();
+  FTemplates := TCollections.CreateInterfaceList<IDataTemplate>;
 end;
 
 destructor TDataTemplate.Destroy;
@@ -218,29 +219,29 @@ end;
 function TDataTemplate.GetItem(const Item: TObject;
   const Index: Integer): TObject;
 var
-  list: IList;
+  list: IObjectList;
 begin
   Result := nil;
 
-  if Supports(Item, IList, list) and (list.Count > 0) then
+  if Supports(Item, IObjectList, list) and (list.Count > 0) then
   begin
-    Result := list[Index].ToObject;
+    Result := list[Index];
   end;
 end;
 
 function TDataTemplate.GetItemCount(const Item: TObject): Integer;
 var
-  list: IList;
+  list: IObjectList;
 begin
   Result := 0;
 
-  if Supports(Item, IList, list) then
+  if Supports(Item, IObjectList, list) then
   begin
     Result := list.Count;
   end;
 end;
 
-function TDataTemplate.GetItems(const Item: TObject): IList;
+function TDataTemplate.GetItems(const Item: TObject): IObjectList;
 begin
   Result := nil;
 end;
@@ -366,12 +367,12 @@ begin
   Result := inherited GetItemCount(Item);
 end;
 
-function TDataTemplate<T>.GetItems(const Item: TObject): IList;
+function TDataTemplate<T>.GetItems(const Item: TObject): IObjectList;
 begin
   Result := GetItems(T(Item));
 end;
 
-function TDataTemplate<T>.GetItems(const Item: T): IList;
+function TDataTemplate<T>.GetItems(const Item: T): IObjectList;
 begin
   Result := inherited GetItems(Item);
 end;

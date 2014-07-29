@@ -27,9 +27,9 @@ implementation
 {$R *.dfm}
 
 uses
-  DSharp.Collections,
   DSharp.Collections.Iterators,
-  Rtti;
+  Rtti,
+  Spring.Collections;
 
 procedure Enumerate;
 var

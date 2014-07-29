@@ -36,7 +36,8 @@ unit DSharp.Collections.Iterators;
 interface
 
 uses
-  DSharp.Collections,
+  Spring.Collections,
+  Spring.Collections.Extensions,
   Rtti,
   SysUtils;
 

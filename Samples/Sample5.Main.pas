@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, Sample5.Contact, DSharp.Collections.ObservableCollection,
-  DSharp.Collections, ExtCtrls, StdCtrls, ComCtrls, Grids,
+  Spring.Collections, ExtCtrls, StdCtrls, ComCtrls, Grids,
   DSharp.Bindings.VCLControls, DSharp.Bindings;
 
 type

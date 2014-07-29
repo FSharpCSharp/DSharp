@@ -32,9 +32,9 @@ unit DSharp.Windows.ColumnDefinitions.XmlDataTemplate;
 interface
 
 uses
-  DSharp.Collections,
   DSharp.Core.XNode,
-  DSharp.Windows.ColumnDefinitions.ControlTemplate;
+  DSharp.Windows.ColumnDefinitions.ControlTemplate,
+  Spring.Collections;
 
 type
   TXmlDataTemplate = class(TColumnDefinitionsControlTemplate)
@@ -43,7 +43,7 @@ type
 
     function GetItem(const Item: TObject; const Index: Integer): TObject; override;
     function GetItemCount(const Item: TObject): Integer; override;
-    function GetItems(const Item: TObject): IList; override;
+    function GetItems(const Item: TObject): IObjectList; override;
 
     function GetTemplateDataClass: TClass; override;
   end;
@@ -77,11 +77,11 @@ begin
   end;
 end;
 
-function TXmlDataTemplate.GetItems(const Item: TObject): IList;
+function TXmlDataTemplate.GetItems(const Item: TObject): IObjectList;
 begin
   if Assigned(Item) then
   begin
-    Result := TXNode(Item).ChildNodes.AsList;
+    Result := TXNode(Item).ChildNodes as IObjectList;
   end
   else
   begin

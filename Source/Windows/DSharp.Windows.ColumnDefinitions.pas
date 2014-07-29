@@ -33,13 +33,13 @@ interface
 
 uses
   Classes,
-  DSharp.Collections,
   DSharp.Core.Collections,
   DSharp.Core.Events,
   DSharp.Core.Expressions,
   DSharp.Windows.ControlTemplates,
   Graphics,
   ImgList,
+  Spring.Collections,
   SysUtils,
   Types;
 

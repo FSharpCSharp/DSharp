@@ -60,7 +60,6 @@ implementation
 {$R *.dfm}
 
 uses
-  DSharp.Collections,
   DSharp.Collections.ObservableCollection,
   DSharp.Collections.XmlDocument,
   DSharp.Core.XNode,
@@ -68,6 +67,7 @@ uses
   DSharp.Core.Reflection,
   DSharp.Windows.ColumnDefinitions.XmlDataTemplate,
   Sample5.Contact,
+  Spring.Collections,
   StrUtils;
 
 type
@@ -125,16 +125,16 @@ begin
   list.Add(TContact.Create('John', 'Doe'));
   list.Add(TContact.Create('Jane', 'Doe'));
   list.Add(TContact.Create('Baby', 'Doe'));
-  ContactsPresenter.View.ItemsSource := list.AsList;
+  ContactsPresenter.View.ItemsSource := list as IObjectList;
 
   xmlItems := TXNodeList.Create();
   xmlItems.AddRange(
     XMLDocument1.SelectElements('//*[@Stock=''out''] | //*[@Number>=8 or @Number=3]'));
 
-  InventoryPresenter.View.ItemsSource := xmlItems.AsList;
+  InventoryPresenter.View.ItemsSource := xmlItems as IObjectList;
   InventoryPresenter.View.ItemTemplate := TXmlDataTemplate.Create(InventoryPresenter.ColumnDefinitions);
 
-  TreeView1.View.ItemsSource := xmlItems.AsList;
+  TreeView1.View.ItemsSource := xmlItems as IObjectList;
   TreeView1.View.ItemTemplate := TXmlDataTemplate.Create(nil);
 
   ComboBox1.View.ItemsSource := ContactsPresenter.View.ItemsSource;

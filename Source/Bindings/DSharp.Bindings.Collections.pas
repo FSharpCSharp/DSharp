@@ -33,9 +33,9 @@ interface
 
 uses
   Classes,
-  DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.Events,
+  Spring.Collections,
   SysUtils;
 
 type
@@ -54,14 +54,14 @@ type
     function GetCurrentItem: TObject;
     procedure SetCurrentItem(const Value: TObject);
     function GetFilter: IEvent<TFilterEvent>;
-    function GetItemsSource: IList;
-    procedure SetItemsSource(const Value: IList);
+    function GetItemsSource: IObjectList;
+    procedure SetItemsSource(const Value: IObjectList);
     function GetItemTemplate: IDataTemplate;
     procedure SetItemTemplate(const Value: IDataTemplate);
 
     property CurrentItem: TObject read GetCurrentItem write SetCurrentItem;
     property Filter: IEvent<TFilterEvent> read GetFilter;
-    property ItemsSource: IList read GetItemsSource write SetItemsSource;
+    property ItemsSource: IObjectList read GetItemsSource write SetItemsSource;
     property ItemTemplate: IDataTemplate read GetItemTemplate write SetItemTemplate;
   end;
 

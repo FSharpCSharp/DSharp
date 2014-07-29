@@ -36,12 +36,12 @@ uses
   DSharp.Bindings.Collections,
   DSharp.Bindings.CollectionView,
   DSharp.Bindings.Notifications,
-  DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.Events,
   DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.CustomPresenter.Types,
   Menus,
+  Spring.Collections,
   SysUtils;
 
 {$Include DSharp.Windows.CustomPresenter.Types.inc}

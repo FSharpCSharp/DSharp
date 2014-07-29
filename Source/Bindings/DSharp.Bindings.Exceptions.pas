@@ -33,8 +33,8 @@ interface
 
 uses
   DSharp.Bindings,
-  DSharp.Collections,
   DSharp.Core.Validations,
+  Spring.Collections,
   SysUtils;
 
 type

@@ -28,11 +28,9 @@ package DSharp.Core;
 {$IMPLICITBUILD OFF}
 
 requires
-  rtl;
+  Spring.Base;
 
 contains
-  DSharp.Collections in '..\..\Source\Collections\DSharp.Collections.pas',
-  DSharp.Collections.Extensions in '..\..\Source\Collections\DSharp.Collections.Extensions.pas',
   DSharp.Collections.Fibers in '..\..\Source\Collections\DSharp.Collections.Fibers.pas',
   DSharp.Collections.Iterators in '..\..\Source\Collections\DSharp.Collections.Iterators.pas',
   DSharp.Collections.Threading in '..\..\Source\Collections\DSharp.Collections.Threading.pas',
@@ -63,7 +61,6 @@ contains
   DSharp.Core.Times in '..\..\Source\Core\DSharp.Core.Times.pas',
   DSharp.Core.Utils in '..\..\Source\Core\DSharp.Core.Utils.pas',
   DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
-  DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas',
   DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',
   ObjAutoPatch in '..\..\Source\Core\ObjAutoPatch.pas',
   PatchUtils in '..\..\Source\Core\PatchUtils.pas';

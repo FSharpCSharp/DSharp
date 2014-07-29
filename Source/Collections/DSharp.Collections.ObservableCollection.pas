@@ -34,9 +34,10 @@ interface
 uses
   DSharp.Bindings.Collections,
   DSharp.Bindings.Notifications,
-  DSharp.Collections,
   DSharp.Core.Events,
-  DSharp.Core.Utils;
+  DSharp.Core.Utils,
+  Spring.Collections,
+  Spring.Collections.Lists;
 
 type
   TObservableCollection<T: class> = class(TObjectList<T>,
@@ -50,7 +51,7 @@ type
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    procedure Notify(const Value: T; const Action: TCollectionChangedAction); override;
+    procedure Changed(const Value: T; Action: TCollectionChangedAction); override;
   public
     property OnPropertyChanged: IEvent<TPropertyChangedEvent> read GetOnPropertyChanged;
   end;
@@ -62,7 +63,7 @@ implementation
 procedure TObservableCollection<T>.DoItemPropertyChanged(ASender: TObject;
   APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  inherited Notify(T(ASender), caReplace);
+  inherited Changed(T(ASender), caReplaced);
 end;
 
 procedure TObservableCollection<T>.DoPropertyChanged(
@@ -73,7 +74,7 @@ end;
 
 function TObservableCollection<T>.GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
 begin
-  IEvent<TCollectionChangedEvent<T>>(Result) := inherited OnCollectionChanged;
+  ICollectionChangedEvent<T>(Result) := OnChanged;
 end;
 
 function TObservableCollection<T>.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
@@ -81,7 +82,7 @@ begin
   Result := FOnPropertyChanged;
 end;
 
-procedure TObservableCollection<T>.Notify(const Value: T; const Action: TCollectionChangedAction);
+procedure TObservableCollection<T>.Changed(const Value: T; Action: TCollectionChangedAction);
 var
   LNotifyPropertyChanged: INotifyPropertyChanged;
   LPropertyChanged: IEvent<TPropertyChangedEvent>;
@@ -90,8 +91,8 @@ begin
   begin
     LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
     case Action of
-      caAdd: LPropertyChanged.Add(DoItemPropertyChanged);
-      caRemove, caExtract: LPropertyChanged.Remove(DoItemPropertyChanged);
+      caAdded: LPropertyChanged.Add(DoItemPropertyChanged);
+      caRemoved, caExtracted: LPropertyChanged.Remove(DoItemPropertyChanged);
     end;
   end;
 

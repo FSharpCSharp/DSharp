@@ -4,8 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, Sample7.Customer, DSharp.Collections,
-  DSharp.Collections.Extensions;
+  Dialogs, StdCtrls, Sample7.Customer, Spring.Collections;
 
 type
   TMainForm = class(TForm)

@@ -33,9 +33,9 @@ interface
 
 uses
   Classes,
-  DSharp.Collections,
   DSharp.Bindings.CollectionView,
-  DSharp.Bindings.Notifications;
+  DSharp.Bindings.Notifications,
+  Spring.Collections;
 
 type
   TCollectionViewAdapter = class(TCollectionView)
@@ -53,7 +53,7 @@ type
     procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction); override;
     function GetOwner: TPersistent; override;
-    procedure SetItemsSource(const Value: IList); override;
+    procedure SetItemsSource(const Value: IObjectList); override;
     procedure UpdateItemIndex(ACurrentItem: TObject);
     procedure UpdateItems(AClearItems: Boolean = False); override;
   public
@@ -143,13 +143,13 @@ var
 begin
   LItem := Item;
 
-  if FItemsSource.ItemType.Kind = tkInterface then
+  if FItemsSource.ElementType.Kind = tkInterface then
     LItem := IInterface(Pointer(Item)) as TObject;
 
   inherited DoSourceCollectionChanged(Sender, LItem, Action);
 
   case Action of
-    caAdd:
+    caAdded:
     begin
       if not IsFiltered(LItem) then
       begin
@@ -157,7 +157,7 @@ begin
         UpdateDisplayItem(LIndex, LItem);
       end;
     end;
-    caRemove:
+    caRemoved:
     begin
       LIndex := FindDisplayItem(LItem);
       if LIndex > -1 then
@@ -191,7 +191,7 @@ begin
 
 end;
 
-procedure TCollectionViewAdapter.SetItemsSource(const Value: IList);
+procedure TCollectionViewAdapter.SetItemsSource(const Value: IObjectList);
 begin
   inherited;
   NotifyPropertyChanged(FOwner, Self, 'View');

@@ -34,7 +34,7 @@ interface
 uses
   Generics.Collections,
   Generics.Defaults,
-  DSharp.Collections,
+  Spring.Collections,
   SysUtils;
 
 type

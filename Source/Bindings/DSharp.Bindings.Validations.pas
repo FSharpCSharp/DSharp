@@ -32,9 +32,9 @@ unit DSharp.Bindings.Validations;
 interface
 
 uses
-  DSharp.Collections,
   DSharp.Core.DependencyProperty,
   DSharp.Core.Validations,
+  Spring.Collections,
   Rtti;
 
 type

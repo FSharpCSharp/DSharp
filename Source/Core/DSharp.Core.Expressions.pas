@@ -33,7 +33,6 @@ interface
 
 uses
   Classes,
-  DSharp.Collections,
   Rtti,
   SysUtils;
 
@@ -522,17 +521,17 @@ type
     function ToString: string; override;
   end;
 
-  IValueExpressionList = IList<IValueExpression>;
-
-function AsBoolean(const Value: Boolean): TBooleanExpression;
-function ExpressionParams: IValueExpressionList;
-function ExpressionStack: IStack<IExpression>;
-procedure ForceStack;
+//function AsBoolean(const Value: Boolean): TBooleanExpression;
+//function ExpressionParams: TList<IValueExpression>;
+//function ExpressionStack: TStack<IExpression>;
+//procedure ForceStack;
 
 implementation
 
 uses
   DSharp.Core.Reflection,
+  Generics.Collections,
+  Spring.Collections,
   StrUtils,
   TypInfo;
 
@@ -547,44 +546,45 @@ type
     FParams: TList<IValueExpression>;
     FStack: TStack<IExpression>;
   class var
-    FManagedObjects: IList<IEnumerable>;
+    FManagedObjects: TList<TObject>;
     FUseParentheses: Boolean;
     class function GetForceStack: Boolean; static;
     class function GetIndentLevel: Integer; static;
-    class function GetParams: IList<IValueExpression>; static;
-    class function GetStack: IStack<IExpression>; static;
+    class function GetParams: TList<IValueExpression>; static;
+    class function GetStack: TStack<IExpression>; static;
   public
     class constructor Create;
+    class destructor Destroy;
 
     class procedure Indent; static;
     class procedure Unindent; static;
 
     class property ForceStack: Boolean read GetForceStack;
     class property IndentLevel: Integer read GetIndentLevel;
-    class property Params: IList<IValueExpression> read GetParams;
-    class property Stack: IStack<IExpression> read GetStack;
+    class property Params: TList<IValueExpression> read GetParams;
+    class property Stack: TStack<IExpression> read GetStack;
     class property UseParentheses: Boolean read FUseParentheses write FUseParentheses;
   end;
 
-function AsBoolean(const Value: Boolean): TBooleanExpression;
-begin
-  Result := Value;
-end;
-
-function ExpressionParams: IValueExpressionList;
+//function AsBoolean(const Value: Boolean): TBooleanExpression;
+//begin
+//  Result := Value;
+//end;
+//
+function ExpressionParams: TList<IValueExpression>;
 begin
   Result := ExpressionManager.Params;
 end;
-
-function ExpressionStack: IStack<IExpression>;
+//
+function ExpressionStack: TStack<IExpression>;
 begin
   Result := ExpressionManager.Stack;
 end;
-
-procedure ForceStack;
-begin
-  ExpressionManager.FForceStack := True;
-end;
+//
+//procedure ForceStack;
+//begin
+//  ExpressionManager.FForceStack := True;
+//end;
 
 function GetIndentation: string;
 begin
@@ -595,7 +595,12 @@ end;
 
 class constructor ExpressionManager.Create;
 begin
-  FManagedObjects := TList<IEnumerable>.Create();
+  FManagedObjects := TObjectList<TObject>.Create();
+end;
+
+class destructor ExpressionManager.Destroy;
+begin
+  FManagedObjects.Free;
 end;
 
 class function ExpressionManager.GetForceStack: Boolean;
@@ -609,7 +614,7 @@ begin
   Result := FIndentLevel;
 end;
 
-class function ExpressionManager.GetParams: IList<IValueExpression>;
+class function ExpressionManager.GetParams: TList<IValueExpression>;
 begin
   if not Assigned(FParams) then
   begin
@@ -623,7 +628,7 @@ begin
   Result := FParams;
 end;
 
-class function ExpressionManager.GetStack: IStack<IExpression>;
+class function ExpressionManager.GetStack: TStack<IExpression>;
 begin
   if not Assigned(FStack) then
   begin

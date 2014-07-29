@@ -153,8 +153,6 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="rtl.dcp"/>
-        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.pas"/>
-        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Extensions.pas"/>
         <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Fibers.pas"/>
         <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Iterators.pas"/>
         <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Threading.pas"/>
@@ -187,7 +185,6 @@
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Times.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Utils.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Variants.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.VirtualClass.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.VirtualInterface.pas"/>
         <DCCReference Include="..\..\Source\Logging\DSharp.Logging.pas"/>

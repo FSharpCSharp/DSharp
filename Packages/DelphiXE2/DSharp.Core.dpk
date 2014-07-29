@@ -31,11 +31,9 @@ package DSharp.Core;
 {$IMPLICITBUILD OFF}
 
 requires
-  rtl;
+  Spring.Base;
 
 contains
-  DSharp.Collections in '..\..\Source\Collections\DSharp.Collections.pas',
-  DSharp.Collections.Extensions in '..\..\Source\Collections\DSharp.Collections.Extensions.pas',
   DSharp.Collections.Fibers in '..\..\Source\Collections\DSharp.Collections.Fibers.pas',
   DSharp.Collections.Iterators in '..\..\Source\Collections\DSharp.Collections.Iterators.pas',
   DSharp.Collections.Threading in '..\..\Source\Collections\DSharp.Collections.Threading.pas',
@@ -58,7 +56,6 @@ contains
   DSharp.Core.Fibers in '..\..\Source\Core\DSharp.Core.Fibers.pas',
   DSharp.Core.Framework in '..\..\Source\Core\DSharp.Core.Framework.pas',
   DSharp.Core.Generics in '..\..\Source\Core\DSharp.Core.Generics.pas',
-  DSharp.Core.Lambda in '..\..\Source\Core\DSharp.Core.Lambda.pas',
   DSharp.Core.Lazy in '..\..\Source\Core\DSharp.Core.Lazy.pas',
   DSharp.Core.MethodIntercept in '..\..\Source\Core\DSharp.Core.MethodIntercept.pas',
   DSharp.Core.NotificationHandler in '..\..\Source\Core\DSharp.Core.NotificationHandler.pas',
@@ -69,7 +66,6 @@ contains
   DSharp.Core.Times in '..\..\Source\Core\DSharp.Core.Times.pas',
   DSharp.Core.Utils in '..\..\Source\Core\DSharp.Core.Utils.pas',
   DSharp.Core.Validations in '..\..\Source\Core\DSharp.Core.Validations.pas',
-  DSharp.Core.Variants in '..\..\Source\Core\DSharp.Core.Variants.pas',
   DSharp.Core.VirtualClass in '..\..\Source\Core\DSharp.Core.VirtualClass.pas',
   DSharp.Core.VirtualInterface in '..\..\Source\Core\DSharp.Core.VirtualInterface.pas',
   DSharp.Logging in '..\..\Source\Logging\DSharp.Logging.pas',

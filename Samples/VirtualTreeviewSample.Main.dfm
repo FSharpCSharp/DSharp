@@ -265,11 +265,11 @@ object MainForm: TMainForm
     ColumnDefinitions = <
       item
         Caption = 'Firstname'
-        TextPropertyName = 'Firstname'
+        ValuePropertyName = 'Firstname'
       end
       item
         Caption = 'Lastname'
-        TextPropertyName = 'Lastname'
+        ValuePropertyName = 'Lastname'
       end>
   end
   object BindingGroup: TBindingGroup

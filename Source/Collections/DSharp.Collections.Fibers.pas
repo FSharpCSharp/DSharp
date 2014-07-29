@@ -32,8 +32,8 @@ unit DSharp.Collections.Fibers;
 interface
 
 uses
-  DSharp.Collections,
   DSharp.Core.Fibers,
+  Spring.Collections,
   Rtti,
   SysUtils;
 

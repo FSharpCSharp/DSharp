@@ -32,7 +32,7 @@ unit DSharp.Core.Validations;
 interface
 
 uses
-  DSharp.Collections,
+  Spring.Collections,
   Rtti,
   SysUtils;
 

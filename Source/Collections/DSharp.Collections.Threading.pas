@@ -33,7 +33,7 @@ interface
 
 uses
   Classes,
-  DSharp.Collections,
+  Spring.Collections,
   Rtti,
   SyncObjs,
   SysUtils;

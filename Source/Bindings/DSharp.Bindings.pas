@@ -35,7 +35,6 @@ uses
   Classes,
   DSharp.Bindings.Collections,
   DSharp.Bindings.Notifications,
-  DSharp.Collections,
   DSharp.Core.Collections,
   DSharp.Core.DataConversion,
   DSharp.Core.Editable,
@@ -44,6 +43,7 @@ uses
   DSharp.Core.NotificationHandler,
   DSharp.Core.Validations,
   Rtti,
+  Spring.Collections,
   SysUtils;
 
 type
@@ -314,6 +314,7 @@ uses
   DSharp.Bindings.Validations,
   DSharp.Core.Reflection,
   DSharp.Core.Utils,
+  Spring.Collections.Lists,
   StrUtils,
   TypInfo;
 
@@ -445,10 +446,10 @@ begin
   inherited;
 
   FNotificationHandler := TNotificationHandler.Create(Self, Notification);
-  FValidationErrors := TList<IValidationResult>.Create();
-  FValidationErrors.OnCollectionChanged.Add(DoValidationErrorsChanged);
-  FValidationRules := TList<IValidationRule>.Create();
-  FValidationRules.OnCollectionChanged.Add(DoValidationRulesChanged);
+  FValidationErrors := TCollections.CreateInterfaceList<IValidationResult>;
+  FValidationErrors.OnChanged.Add(DoValidationErrorsChanged);
+  FValidationRules := TCollections.CreateInterfaceList<IValidationRule>;
+  FValidationRules.OnChanged.Add(DoValidationRulesChanged);
 
   FBindingMode := BindingModeDefault;
   FEnabled := True;
@@ -493,8 +494,8 @@ begin
   SetTarget(nil);
 
   FNotificationHandler.Free();
-  FValidationErrors.OnCollectionChanged.Remove(DoValidationErrorsChanged);
-  FValidationRules.OnCollectionChanged.Remove(DoValidationRulesChanged);
+  FValidationErrors.OnChanged.Remove(DoValidationErrorsChanged);
+  FValidationRules.OnChanged.Remove(DoValidationRulesChanged);
 
   inherited;
 end;
@@ -1401,10 +1402,10 @@ var
 begin
   FBindings := TBindingCollection.Create(Self);
   FItems := TList<TObject>.Create();
-  FValidationErrors := TList<IValidationResult>.Create();
-  FValidationErrors.OnCollectionChanged.Add(DoValidationErrorsChanged);
-  FValidationRules := TList<IValidationRule>.Create();
-  FValidationRules.OnCollectionChanged.Add(DoValidationRulesChanged);
+  FValidationErrors := TCollections.CreateInterfaceList<IValidationResult>;
+  FValidationErrors.OnChanged.Add(DoValidationErrorsChanged);
+  FValidationRules := TCollections.CreateInterfaceList<IValidationRule>;
+  FValidationRules.OnChanged.Add(DoValidationRulesChanged);
 
   if Assigned(AOwner) then
   begin
@@ -1424,8 +1425,8 @@ destructor TBindingGroup.Destroy;
 begin
   BindingGroups.Remove(Self);
   FBindings.Free();
-  FValidationErrors.OnCollectionChanged.Remove(DoValidationErrorsChanged);
-  FValidationRules.OnCollectionChanged.Remove(DoValidationRulesChanged);
+  FValidationErrors.OnChanged.Remove(DoValidationErrorsChanged);
+  FValidationRules.OnChanged.Remove(DoValidationRulesChanged);
   inherited;
 end;
 

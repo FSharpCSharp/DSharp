@@ -104,70 +104,70 @@ object MainForm: TMainForm
     Bindings = <
       item
         BindingMode = bmOneWay
-        Target = ListBox1
-        TargetPropertyName = 'View.ItemsSource'
         Source = Owner
         SourcePropertyName = 'Contacts'
+        Target = ListBox1
+        TargetPropertyName = 'View.ItemsSource'
       end
       item
+        Source = ListBox1
+        SourcePropertyName = 'View.CurrentItem'
         Target = Panel1
         TargetPropertyName = 'BindingSource'
-        Source = ListBox1
-        SourcePropertyName = 'View.CurrentItem'
       end
       item
-        Target = Edit1
-        TargetPropertyName = 'Text'
         Source = Panel1
         SourcePropertyName = 'BindingSource.Firstname'
+        Target = Edit1
+        TargetPropertyName = 'Text'
       end
       item
-        Target = Edit2
-        TargetPropertyName = 'Text'
         Source = Panel1
         SourcePropertyName = 'BindingSource.Lastname'
+        Target = Edit2
+        TargetPropertyName = 'Text'
       end
       item
-        Target = MoveNext
-        TargetPropertyName = 'Enabled'
         Source = ListBox1
         SourcePropertyName = 'View.CanMoveCurrentToNext'
+        Target = MoveNext
+        TargetPropertyName = 'Enabled'
       end
       item
-        Target = MovePrevious
-        TargetPropertyName = 'Enabled'
         Source = ListBox1
         SourcePropertyName = 'View.CanMoveCurrentToPrevious'
+        Target = MovePrevious
+        TargetPropertyName = 'Enabled'
       end
       item
-        Target = MoveNext
-        TargetPropertyName = 'OnClick'
         Source = ListBox1
         SourcePropertyName = 'View.MoveCurrentToNext'
+        Target = MoveNext
+        TargetPropertyName = 'OnClick'
       end
       item
-        Target = MovePrevious
-        TargetPropertyName = 'OnClick'
         Source = ListBox1
         SourcePropertyName = 'View.MoveCurrentToPrevious'
+        Target = MovePrevious
+        TargetPropertyName = 'OnClick'
       end
       item
-        Target = SelectFirst
-        TargetPropertyName = 'OnClick'
         Source = ListBox1
         SourcePropertyName = 'View.MoveCurrentToFirst'
+        Target = SelectFirst
+        TargetPropertyName = 'OnClick'
       end
       item
-        Target = DeleteContact
-        TargetPropertyName = 'Enabled'
         Source = ListBox1
         SourcePropertyName = 'View.CurrentItem'
+        Target = DeleteContact
+        TargetPropertyName = 'Enabled'
       end
       item
-        Target = SelectFirst
-        TargetPropertyName = 'Enabled'
         Source = ListBox1
         SourcePropertyName = 'View.CanMoveCurrentToPrevious'
+        Target = SelectFirst
+        TargetPropertyName = 'Enabled'
       end>
   end
 end

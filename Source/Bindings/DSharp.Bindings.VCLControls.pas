@@ -39,7 +39,6 @@ uses
   DSharp.Bindings.Collections,
   DSharp.Bindings.CollectionView,
   DSharp.Bindings.Notifications,
-  DSharp.Collections,
   DSharp.Core.DataTemplates,
   DSharp.Core.DataTemplates.Default,
   DSharp.Core.Events,
@@ -1112,7 +1111,7 @@ begin
     if (FView.ItemsSource <> nil) and (FView.ItemTemplate <> nil)
       and (FView.ItemsSource.Count > ARow - FixedRows) then
     begin
-      FView.ItemTemplate.SetText(FView.ItemsSource[ARow - FixedRows].ToObject, ACol - FixedCols, Value);
+      FView.ItemTemplate.SetText(FView.ItemsSource[ARow - FixedRows], ACol - FixedCols, Value);
     end;
   finally
     FView.EndUpdate;

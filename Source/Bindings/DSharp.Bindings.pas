@@ -38,11 +38,11 @@ uses
   DSharp.Core.Collections,
   DSharp.Core.DataConversion,
   DSharp.Core.Editable,
-  DSharp.Core.Events,
   DSharp.Core.Expressions,
   DSharp.Core.NotificationHandler,
   DSharp.Core.Validations,
   Rtti,
+  Spring,
   Spring.Collections,
   SysUtils;
 
@@ -119,8 +119,8 @@ type
     procedure BeginUpdateTarget;
     procedure BeginValidate;
 
-    function CanUpdateSource(AUpdateTrigger: TUpdateTrigger): Boolean;
-    function CanUpdateTarget(AUpdateTrigger: TUpdateTrigger): Boolean;
+    function CanUpdateSource(const AEventArgs: IPropertyChangedEventArgs): Boolean;
+    function CanUpdateTarget(const AEventArgs: IPropertyChangedEventArgs): Boolean;
 
     procedure CompileExpressions;
 
@@ -129,13 +129,13 @@ type
     procedure DoSourceCollectionChanged(Sender: TObject; const Item: TObject;
       Action: TCollectionChangedAction);
     procedure DoSourcePropertyChanged(ASender: TObject;
-      APropertyName: string; AUpdateTrigger: TUpdateTrigger);
-    procedure DoSourceUpdated(ASender: TObject; APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger);
+      const AEventArgs: IPropertyChangedEventArgs);
+    procedure DoSourceUpdated(ASender: TObject;
+      const AEventArgs: IPropertyChangedEventArgs);
     procedure DoTargetPropertyChanged(ASender: TObject;
-      APropertyName: string; AUpdateTrigger: TUpdateTrigger);
-    procedure DoTargetUpdated(ASender: TObject; APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger);
+      const AEventArgs: IPropertyChangedEventArgs);
+    procedure DoTargetUpdated(ASender: TObject;
+      const AEventArgs: IPropertyChangedEventArgs);
     procedure DoValidationErrorsChanged(Sender: TObject;
       const Item: IValidationResult; Action: TCollectionChangedAction);
     procedure DoValidationRulesChanged(Sender: TObject;
@@ -484,6 +484,22 @@ begin
 end;
 
 destructor TBinding.Destroy;
+
+  function IsValid(AObject: TObject): Boolean;
+  {$IFDEF VER210}
+  type
+    PNativeInt = ^NativeInt;
+  {$ENDIF}
+  begin
+    Result := False;
+    if Assigned(AObject) then
+    try
+      if PNativeInt(AObject)^ > $FFFF then  // "hotfix" to prevent some access violations (no clue if this works) :)
+        Result := PNativeInt(AObject)^ = PNativeInt(PNativeInt(AObject)^ + vmtSelfPtr)^;
+    except
+    end;
+  end;
+
 begin
   if IsValid(FSource) then  // workaround for already freed non TComponent source
   begin
@@ -565,19 +581,37 @@ begin
   end;
 end;
 
-function TBinding.CanUpdateSource(AUpdateTrigger: TUpdateTrigger): Boolean;
+function TBinding.CanUpdateSource(const AEventArgs: IPropertyChangedEventArgs): Boolean;
+var
+  LEventArgs: TPropertyChangedEventArgsEx;
+  LUpdateTrigger: TUpdateTrigger;
 begin
+  LEventArgs := AEventArgs as TPropertyChangedEventArgsEx;
+  if Assigned(LEventArgs) then
+    LUpdateTrigger := LEventArgs.UpdateTrigger
+  else
+    LUpdateTrigger := utPropertyChanged;
+
   Result := FActive and not IsUpdatingSource
     and (FBindingMode in [bmTwoWay..bmOneWayToSource])
-    and (AUpdateTrigger = FSourceUpdateTrigger)
+    and (LUpdateTrigger = FSourceUpdateTrigger)
     and ((FTriggerMode = tmTwoWay) or not IsUpdatingTarget);
 end;
 
-function TBinding.CanUpdateTarget(AUpdateTrigger: TUpdateTrigger): Boolean;
+function TBinding.CanUpdateTarget(const AEventArgs: IPropertyChangedEventArgs): Boolean;
+var
+  LEventArgs: TPropertyChangedEventArgsEx;
+  LUpdateTrigger: TUpdateTrigger;
 begin
+  LEventArgs := AEventArgs as TPropertyChangedEventArgsEx;
+  if Assigned(LEventArgs) then
+    LUpdateTrigger := LEventArgs.UpdateTrigger
+  else
+    LUpdateTrigger := utPropertyChanged;
+
   Result := FActive and not IsUpdatingTarget
     and (FBindingMode in [bmOneWay..bmTwoWay])
-    and (AUpdateTrigger = FTargetUpdateTrigger)
+    and (LUpdateTrigger = FTargetUpdateTrigger)
     and ((FTriggerMode = tmTwoWay) or not IsUpdatingSource);
 end;
 
@@ -625,12 +659,12 @@ begin
   end;
 end;
 
-procedure TBinding.DoTargetUpdated(ASender: TObject; APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
+procedure TBinding.DoTargetUpdated(ASender: TObject;
+  const AEventArgs: IPropertyChangedEventArgs);
 begin
   if FNotifyOnTargetUpdated and Assigned(FOnTargetUpdated) then
   begin
-    FOnTargetUpdated(ASender, APropertyName, AUpdateTrigger);
+    FOnTargetUpdated(ASender, AEventArgs);
   end;
 end;
 
@@ -656,7 +690,8 @@ end;
 procedure TBinding.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+  FOnPropertyChanged.Invoke(Self, TPropertyChangedEventArgsEx.Create(
+    APropertyName, AUpdateTrigger) as IPropertyChangedEventArgs);
 end;
 
 procedure TBinding.DoSourceCollectionChanged(Sender: TObject;
@@ -673,14 +708,14 @@ begin
 end;
 
 procedure TBinding.DoSourcePropertyChanged(ASender: TObject;
-  APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+  const AEventArgs: IPropertyChangedEventArgs);
 begin
-  if CanUpdateTarget(AUpdateTrigger)
-    and IsRootProperty(APropertyName, FSourceProperty) then
+  if CanUpdateTarget(AEventArgs)
+    and IsRootProperty(AEventArgs.PropertyName, FSourceProperty) then
   begin
     BeginUpdateTarget();
     try
-      DoTargetUpdated(ASender, APropertyName, AUpdateTrigger);
+      DoTargetUpdated(ASender, AEventArgs);
 
       UpdateTarget(True);
 
@@ -691,26 +726,26 @@ begin
   end;
 end;
 
-procedure TBinding.DoSourceUpdated(ASender: TObject; APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
+procedure TBinding.DoSourceUpdated(ASender: TObject;
+  const AEventArgs: IPropertyChangedEventArgs);
 begin
   if FNotifyOnSourceUpdated and Assigned(FOnSourceUpdated) then
   begin
-    FOnSourceUpdated(ASender, APropertyName, AUpdateTrigger);
+    FOnSourceUpdated(ASender, AEventArgs);
   end;
 end;
 
 procedure TBinding.DoTargetPropertyChanged(ASender: TObject;
-  APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+  const AEventArgs: IPropertyChangedEventArgs);
 begin
-  if CanUpdateSource(AUpdateTrigger) and not IsValidating
-    and IsRootProperty(APropertyName, FTargetProperty) then
+  if CanUpdateSource(AEventArgs) and not IsValidating
+    and IsRootProperty(AEventArgs.PropertyName, FTargetProperty) then
   begin
     BeginUpdateSource();
     try
       if Validate() then
       begin
-        DoSourceUpdated(ASender, APropertyName, AUpdateTrigger);
+        DoSourceUpdated(ASender, AEventArgs);
 
         UpdateSource(True);
       end
@@ -1433,7 +1468,8 @@ end;
 procedure TBindingGroup.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  FOnPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+  FOnPropertyChanged.Invoke(Self, TPropertyChangedEventArgsEx.Create(
+    APropertyName, AUpdateTrigger) as IPropertyChangedEventArgs);
 end;
 
 procedure TBindingGroup.DoValidationErrorsChanged(Sender: TObject;
@@ -1528,11 +1564,13 @@ begin
     begin
       if LBinding.Source = ASender then
       begin
-        LBinding.DoSourcePropertyChanged(ASender, APropertyName, AUpdateTrigger);
+        LBinding.DoSourcePropertyChanged(ASender, TPropertyChangedEventArgsEx.Create(
+          APropertyName, AUpdateTrigger) as IPropertyChangedEventArgs);
       end;
       if LBinding.Target = ASender then
       begin
-        LBinding.DoTargetPropertyChanged(ASender, APropertyName, AUpdateTrigger);
+        LBinding.DoTargetPropertyChanged(ASender, TPropertyChangedEventArgsEx.Create(
+          APropertyName, AUpdateTrigger) as IPropertyChangedEventArgs);
       end;
     end;
   end;

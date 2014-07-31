@@ -34,8 +34,8 @@ interface
 uses
   DSharp.Bindings.Collections,
   DSharp.Bindings.Notifications,
-  DSharp.Core.Events,
   DSharp.Core.Utils,
+  Spring,
   Spring.Collections,
   Spring.Collections.Lists;
 
@@ -47,8 +47,8 @@ type
     function GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;
     function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
   protected
-    procedure DoItemPropertyChanged(ASender: TObject; APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure DoItemPropertyChanged(ASender: TObject;
+      const AEventArgs: IPropertyChangedEventArgs);
     procedure DoPropertyChanged(const APropertyName: string;
       AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     procedure Changed(const Value: T; Action: TCollectionChangedAction); override;
@@ -61,7 +61,7 @@ implementation
 { TObservableCollection<T> }
 
 procedure TObservableCollection<T>.DoItemPropertyChanged(ASender: TObject;
-  APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+  const AEventArgs: IPropertyChangedEventArgs);
 begin
   inherited Changed(T(ASender), caReplaced);
 end;
@@ -69,7 +69,8 @@ end;
 procedure TObservableCollection<T>.DoPropertyChanged(
   const APropertyName: string; AUpdateTrigger: TUpdateTrigger);
 begin
-  FOnPropertyChanged.Invoke(Self, 'Count');
+  FOnPropertyChanged.Invoke(Self,
+    TPropertyChangedEventArgs.Create(APropertyName) as IPropertyChangedEventArgs);
 end;
 
 function TObservableCollection<T>.GetOnCollectionChanged: IEvent<TCollectionChangedEvent>;

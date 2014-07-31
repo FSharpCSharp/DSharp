@@ -34,7 +34,7 @@ interface
 uses
   Classes,
   DSharp.Core.CopyOperator,
-  DSharp.Core.Events,
+  Spring,
   SysUtils;
 
 type
@@ -142,7 +142,7 @@ end;
 
 procedure TField<T>.Initialize(Owner: TObject);
 begin
-  Value.FOnChange := FEvent.EventHandler;
+  Value.FOnChange := FEvent;
   Value.FOwner := Owner;
   Value.FCopyOperator := TPropertyCopyOperator<T>.Create(@Value);
 end;

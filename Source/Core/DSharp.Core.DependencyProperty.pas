@@ -33,10 +33,9 @@ interface
 
 uses
   Classes,
-  DSharp.Core.EventArgs,
-  DSharp.Core.Events,
   Generics.Collections,
   Rtti,
+  Spring,
   SyncObjs,
   TypInfo;
 

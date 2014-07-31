@@ -40,10 +40,10 @@ uses
   cxGridCustomTableView,
   cxGridCustomView,
   cxGridTableView,
-  DSharp.Collections,
   DSharp.DevExpress.PresenterDataSource,
   DSharp.Windows.CustomPresenter,
-  DSharp.WIndows.CustomPresenter.Types;
+  DSharp.WIndows.CustomPresenter.Types,
+  Spring.Collections;
 
 {$I '..\Windows\DSharp.Windows.CustomPresenter.Types.inc'}
 
@@ -139,6 +139,7 @@ uses
   DSharp.Core.DataTemplates,
   DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.ControlTemplates,
+  Spring.Collections.Lists,
   SysUtils;
 
 const
@@ -189,10 +190,10 @@ constructor TGridViewPresenter.Create(AOwner: TComponent);
 begin
   inherited;
   FCheckedItems := TList<TObject>.Create();
-  FCheckedItems.OnCollectionChanged.Add(DoCheckedItemsChanged);
+  FCheckedItems.OnChanged.Add(DoCheckedItemsChanged);
   FDataSource := TGridViewPresenterDataSource.Create(Self.View, FCheckedItems);
   FSelectedItems := TList<TObject>.Create();
-  FSelectedItems.OnCollectionChanged.Add(DoSelectedItemsChanged);
+  FSelectedItems.OnChanged.Add(DoSelectedItemsChanged);
   AllowMove := False;
   ShowHeader := True;
   View.OnCollectionChanged.Add(DoSourceCollectionChanged);
@@ -200,8 +201,8 @@ end;
 
 destructor TGridViewPresenter.Destroy;
 begin
-  FCheckedItems.OnCollectionChanged.Remove(DoCheckedItemsChanged);
-  FSelectedItems.OnCollectionChanged.Remove(DoSelectedItemsChanged);
+  FCheckedItems.OnChanged.Remove(DoCheckedItemsChanged);
+  FSelectedItems.OnChanged.Remove(DoSelectedItemsChanged);
   View.OnCollectionChanged.Remove(DoSourceCollectionChanged);
   FDataSource.Free();
   inherited;
@@ -276,7 +277,7 @@ procedure TGridViewPresenter.DoCheckedItemsChanged(Sender: TObject;
   const Item: TObject; Action: TCollectionChangedAction);
 begin
   case Action of
-    caAdd, caRemove, caExtract:
+    caAdded, caRemoved, caExtracted:
     begin
       FDataSource.DataChanged();
     end;
@@ -314,7 +315,7 @@ begin
 
   LTableView := TcxCustomGridTableView(FGridView);
   case Action of
-    caAdd:
+    caAdded:
     begin
       for i := 0 to LTableView.ViewData.RecordCount - 1 do
       begin
@@ -326,7 +327,7 @@ begin
         end;
       end;
     end;
-    caRemove, caExtract:
+    caRemoved, caExtracted:
     begin
       for i := 0 to LTableView.ViewData.RecordCount - 1 do
       begin
@@ -373,7 +374,7 @@ procedure TGridViewPresenter.DoSourceCollectionChanged(Sender: TObject;
   const Item: TObject; Action: TCollectionChangedAction);
 begin
   case Action of
-    caRemove, caExtract:
+    caRemoved, caExtracted:
     begin
       FSelectedItems.Remove(Item);
       FCheckedItems.Remove(Item);

@@ -66,8 +66,6 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Detour.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Dynamics.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Editable.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.EventArgs.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Extensions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Fibers.pas"/>

@@ -34,7 +34,7 @@ interface
 uses
   Classes,
   DSharp.Core.DataTemplates,
-  DSharp.Core.Events,
+  Spring,
   Spring.Collections,
   SysUtils;
 

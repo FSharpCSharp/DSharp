@@ -27,13 +27,13 @@ implementation
 procedure TSettings.SetCaption(const Value: string);
 begin
   FCaption := Value;
-  DoPropertyChanged('Caption');
+  NotifyOfPropertyChange('Caption');
 end;
 
 procedure TSettings.SetColor(const Value: TColor);
 begin
   FColor := Value;
-  DoPropertyChanged('Color');
+  NotifyOfPropertyChange('Color');
 end;
 
 end.

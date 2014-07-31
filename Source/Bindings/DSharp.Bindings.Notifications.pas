@@ -33,7 +33,7 @@ interface
 
 uses
   Classes,
-  DSharp.Core.Events;
+  Spring;
 
 type
   TUpdateTrigger = (utPropertyChanged, utLostFocus, utExplicit);
@@ -42,27 +42,29 @@ const
   UpdateTriggerDefault = utPropertyChanged;
 
 type
-  TPropertyChangedEvent = procedure(ASender: TObject;
-    APropertyName: string; AUpdateTrigger: TUpdateTrigger = utPropertyChanged) of object;
+  TPropertyChangedEventArgsEx = class(TPropertyChangedEventArgs)
+  private
+    fUpdateTrigger: TUpdateTrigger;
+    function GetUpdateTrigger: TUpdateTrigger;
+  public
+    constructor Create(const propertyName: string;
+      updateTrigger: TUpdateTrigger = UpdateTriggerDefault);
 
-  INotifyPropertyChanged = interface
-    ['{6627279B-8112-4A92-BBD3-795185A41966}']
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
-    function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
-    property OnPropertyChanged: IEvent<TPropertyChangedEvent>
-      read GetOnPropertyChanged;
+    property UpdateTrigger: TUpdateTrigger read GetUpdateTrigger;
   end;
 
-  TNotifyPropertyChanged = class sealed(TInterfacedObject, INotifyPropertyChanged)
+  INotifyPropertyChangedEx = interface(INotifyPropertyChanged)
+    ['{6627279B-8112-4A92-BBD3-795185A41966}']
+    procedure NotifyOfPropertyChange(const APropertyName: string);
+  end;
+
+  TNotifyPropertyChanged = class sealed(TComponent, INotifyPropertyChanged)
   private
     FOnPropertyChanged: Event<TPropertyChangedEvent>;
-    FOwner: TObject;
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
     function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
   public
-    constructor Create(AOwner: TObject);
+    procedure NotifyOfPropertyChange(const APropertyName: string;
+      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
   end;
 
 procedure NotifyPropertyChanged(AObject, ASender: TObject; const APropertyName: string;
@@ -82,26 +84,37 @@ begin
   if Supports(AObject, INotifyPropertyChanged, LNotifyPropertyChanged) then
   begin
     LPropertyChanged := LNotifyPropertyChanged.OnPropertyChanged;
-    LPropertyChanged.Invoke(ASender, APropertyName, AUpdateTrigger);
+    LPropertyChanged.Invoke(ASender, TPropertyChangedEventArgsEx.Create(
+      APropertyName, AUpdateTrigger) as IPropertyChangedEventArgs);
   end;
 end;
 
 { TNotifiyPropertyChanged }
 
-constructor TNotifyPropertyChanged.Create(AOwner: TObject);
-begin
-  FOwner := AOwner;
-end;
-
-procedure TNotifyPropertyChanged.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FOnPropertyChanged.Invoke(FOwner, APropertyName, AUpdateTrigger);
-end;
-
 function TNotifyPropertyChanged.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
   Result := FOnPropertyChanged;
+end;
+
+procedure TNotifyPropertyChanged.NotifyOfPropertyChange(
+  const APropertyName: string; AUpdateTrigger: TUpdateTrigger);
+begin
+  FOnPropertyChanged.Invoke(Owner, TPropertyChangedEventArgsEx.Create(
+    APropertyName, AUpdateTrigger) as IPropertyChangedEventArgs);
+end;
+
+{ TPropertyChangedEventArgsEx }
+
+constructor TPropertyChangedEventArgsEx.Create(const propertyName: string;
+  updateTrigger: TUpdateTrigger);
+begin
+  inherited Create(propertyName);
+  fUpdateTrigger := updateTrigger;
+end;
+
+function TPropertyChangedEventArgsEx.GetUpdateTrigger: TUpdateTrigger;
+begin
+  Result := fUpdateTrigger;
 end;
 
 end.

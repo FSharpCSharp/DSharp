@@ -34,11 +34,11 @@ interface
 uses
   Classes,
   DSharp.Core.Collections,
-  DSharp.Core.Events,
   DSharp.Core.Expressions,
   DSharp.Windows.ControlTemplates,
   Graphics,
   ImgList,
+  Spring,
   Spring.Collections,
   SysUtils,
   Types;

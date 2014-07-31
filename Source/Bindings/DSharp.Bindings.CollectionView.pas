@@ -37,7 +37,7 @@ uses
   DSharp.Bindings.Notifications,
   DSharp.Core.DataTemplates,
   DSharp.Core.PropertyChangedBase,
-  DSharp.Core.Events,
+  Spring,
   Spring.Collections,
   SysUtils;
 
@@ -283,10 +283,10 @@ begin
 
   DoCurrentChanged();
 
-  DoPropertyChanged('CurrentItem');
-  DoPropertyChanged('ItemIndex');
-  DoPropertyChanged('CanMoveCurrentToNext');
-  DoPropertyChanged('CanMoveCurrentToPrevious');
+  NotifyOfPropertyChange('CurrentItem');
+  NotifyOfPropertyChange('ItemIndex');
+  NotifyOfPropertyChange('CanMoveCurrentToNext');
+  NotifyOfPropertyChange('CanMoveCurrentToPrevious');
 end;
 
 procedure TCollectionView.SetItemsSource(const Value: IObjectList);
@@ -312,7 +312,7 @@ begin
 
     MoveCurrentToFirst;
 
-    DoPropertyChanged('ItemsSource');
+    NotifyOfPropertyChange('ItemsSource');
   end;
 end;
 

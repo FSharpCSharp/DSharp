@@ -34,10 +34,10 @@ interface
 uses
   Classes,
   DSharp.Bindings.Notifications,
-  DSharp.Core.Events;
+  Spring;
 
 type
-  TPropertyChangedBase = class abstract(TPersistent, IInterface, INotifyPropertyChanged)
+  TPropertyChangedBase = class abstract(TPersistent, IInterface, INotifyPropertyChangedEx)
   private
     FPropertyChanged: Event<TPropertyChangedEvent>;
     function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
@@ -45,23 +45,22 @@ type
     function _AddRef: Integer; stdcall;
     function _Release: Integer; stdcall;
   protected
-    procedure DoPropertyChanged(const APropertyName: string;
-      AUpdateTrigger: TUpdateTrigger = utPropertyChanged);
+    procedure NotifyOfPropertyChange(const APropertyName: string);
   end;
 
 implementation
 
 { TPropertyChangedBase }
 
-procedure TPropertyChangedBase.DoPropertyChanged(const APropertyName: string;
-  AUpdateTrigger: TUpdateTrigger);
-begin
-  FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
-end;
-
 function TPropertyChangedBase.GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;
 begin
   Result := FPropertyChanged;
+end;
+
+procedure TPropertyChangedBase.NotifyOfPropertyChange(const APropertyName: string);
+begin
+  FPropertyChanged.Invoke(Self, TPropertyChangedEventArgsEx.Create(APropertyName,
+    utPropertyChanged) as IPropertyChangedEventArgs);
 end;
 
 function TPropertyChangedBase.QueryInterface(const IID: TGUID; out Obj): HResult;

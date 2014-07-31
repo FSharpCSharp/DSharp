@@ -33,8 +33,8 @@ interface
 
 uses
   Classes,
+  Spring, // keep order as we do not want TPropertyChangedEvent from this unit
   DSharp.Core.DependencyProperty,
-  DSharp.Core.Events,
   Rtti;
 
 type
@@ -88,6 +88,9 @@ type
 
 implementation
 
+uses
+  Spring.Events;
+
 type
   TComponentExtensions = class
   private
@@ -132,7 +135,7 @@ begin
   LValue := TComponentExtensions.OnDataContextChangedProperty.GetValue(Self);
   if LValue.IsEmpty then
   begin
-    LEvent := TEvent<TPropertyChangedEvent>.Create(nil);
+    LEvent := TEvent<TPropertyChangedEvent>.Create;
 
     TComponentExtensions.OnDataContextChangedProperty.SetValue(Self,
       TValue.From<IEvent<TPropertyChangedEvent>>(LEvent));

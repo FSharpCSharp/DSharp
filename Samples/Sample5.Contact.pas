@@ -31,13 +31,13 @@ end;
 procedure TContact.SetFirstname(const Value: string);
 begin
   FFirstname := Value;
-  DoPropertyChanged('Firstname');
+  NotifyOfPropertyChange('Firstname');
 end;
 
 procedure TContact.SetLastname(const Value: string);
 begin
   FLastname := Value;
-  DoPropertyChanged('Lastname');
+  NotifyOfPropertyChange('Lastname');
 end;
 
 end.

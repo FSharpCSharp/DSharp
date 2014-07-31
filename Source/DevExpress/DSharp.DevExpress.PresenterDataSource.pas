@@ -37,8 +37,8 @@ uses
 {$ENDIF}
   cxCustomData,
   DSharp.Bindings.CollectionView,
-  DSharp.Collections,
-  DSharp.Windows.CustomPresenter;
+  DSharp.Windows.CustomPresenter,
+  Spring.Collections;
 
 type
   TGridViewPresenterDataSource = class(TcxCustomDataSource)

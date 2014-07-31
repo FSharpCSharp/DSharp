@@ -33,7 +33,7 @@ interface
 
 uses
   Classes,
-  DSharp.Core.Events;
+  Spring;
 
 type
   TCollectionNotifyEvent<T> = procedure(Sender: TObject; const Item: T;

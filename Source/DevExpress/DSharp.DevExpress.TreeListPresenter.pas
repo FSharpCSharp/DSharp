@@ -37,10 +37,10 @@ uses
   cxGraphics,
   cxTL,
   cxTLData,
-  DSharp.Collections,
   DSharp.DevExpress.PresenterDataSource,
   DSharp.Windows.CustomPresenter,
-  ImgList;
+  ImgList,
+  Spring.Collections;
 
 type
   TTreeListPresenter = class(TCustomPresenter)

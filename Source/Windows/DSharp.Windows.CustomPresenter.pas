@@ -37,14 +37,15 @@ uses
   DSharp.Bindings.CollectionView,
   DSharp.Bindings.Notifications,
   DSharp.Core.DataTemplates,
-  DSharp.Core.Events,
   DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.CustomPresenter.Types,
   Menus,
+  Spring,
   Spring.Collections,
   SysUtils;
 
 {$Include DSharp.Windows.CustomPresenter.Types.inc}
+{$HINTS OFF}
 
 type
   TCustomPresenter = class(TComponent, ICollectionViewNavigation,
@@ -55,7 +56,7 @@ type
     FCheckSupport: TCheckSupport;
     FColumnDefinitions: IColumnDefinitions;
     FImageList: TCustomImageList;
-    FNotifyPropertyChanged: INotifyPropertyChanged;
+    FNotifyPropertyChanged: TNotifyPropertyChanged;
     FOnDoubleClick: TNotifyEvent;
     FOnDragDrop: TDragDropEvent;
     FOnDragOver: TDragOverEvent;
@@ -78,7 +79,7 @@ type
     procedure SetPopupMenu(const Value: TPopupMenu);
     procedure SetSelectionMode(const Value: TSelectionMode);
     procedure SetShowHeader(const Value: Boolean);
-    property NotifyPropertyChanged: INotifyPropertyChanged
+    property NotifyPropertyChanged: TNotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
     procedure WriteColumnDefinitions(Writer: TWriter);
   protected
@@ -286,7 +287,7 @@ end;
 procedure TCustomPresenter.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  NotifyPropertyChanged.DoPropertyChanged(APropertyName, AUpdateTrigger);
+  FNotifyPropertyChanged.NotifyOfPropertyChange(APropertyName, AUpdateTrigger);
 end;
 
 procedure TCustomPresenter.DoSourceCollectionChanged(Sender: TObject;

@@ -221,7 +221,7 @@ end;
 procedure TXNode.SetValue(const Value: string);
 begin
   GetTextNode(FDOMNode).nodeValue := Value;
-  DoPropertyChanged('Value');
+  NotifyOfPropertyChange('Value');
 end;
 
 { TXNodeList }

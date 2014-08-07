@@ -39,7 +39,6 @@ uses
   DSharp.Core.DataConversion,
   DSharp.Core.Editable,
   DSharp.Core.Expressions,
-  DSharp.Core.NotificationHandler,
   DSharp.Core.Validations,
   Rtti,
   Spring,
@@ -445,7 +444,8 @@ constructor TBinding.Create(Collection: TCollection);
 begin
   inherited;
 
-  FNotificationHandler := TNotificationHandler.Create(Self, Notification);
+  FNotificationHandler := TNotificationHandler.Create(nil);
+  FNotificationHandler.OnNotification := Notification;
   FValidationErrors := TCollections.CreateInterfaceList<IValidationResult>;
   FValidationErrors.OnChanged.Add(DoValidationErrorsChanged);
   FValidationRules := TCollections.CreateInterfaceList<IValidationRule>;

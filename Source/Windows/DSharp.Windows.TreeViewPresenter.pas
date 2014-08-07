@@ -1731,7 +1731,8 @@ var
   LNodeData: PNodeData;
 begin
   LNodeData := PNodeData(Sender.GetNodeData(Node));
-  Abort := Assigned(LNodeData) and (LNodeData.Items.AsObject = TObject(Data));
+  Abort := Assigned(LNodeData) and Assigned(LNodeData.Items)
+    and (LNodeData.Items.AsObject = TObject(Data));
 end;
 
 function TTreeViewPresenter.GetNodeItem(Tree: TBaseVirtualTree;

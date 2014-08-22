@@ -249,6 +249,8 @@ begin
 end;
 
 procedure TCustomPresenter.DoDblClick(Sender: TObject);
+var
+  LItemTemplate: IDataTemplate;
 begin
   if Assigned(FOnDoubleClick) and Assigned(FAction)
     and not DelegatesEqual(@FOnDoubleClick, @FAction.OnExecute) then
@@ -262,6 +264,11 @@ begin
   if Assigned(FOnDoubleClick) then
   begin
     FOnDoubleClick(Self);
+  end else
+  begin
+    LItemTemplate := GetItemTemplate(View.CurrentItem);
+    if Assigned(LItemTemplate) and Assigned(LItemTemplate.Action) then
+      LItemTemplate.Action.Execute;
   end;
 end;
 

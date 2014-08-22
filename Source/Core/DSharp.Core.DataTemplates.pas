@@ -32,6 +32,7 @@ unit DSharp.Core.DataTemplates;
 interface
 
 uses
+  Classes,
   Spring.Collections,
   Rtti;
 
@@ -62,15 +63,24 @@ type
     // methods to manage the template "binding"
     function GetTemplateDataClass: TClass;
     procedure RegisterDataTemplate(const DataTemplate: IDataTemplate);
+
+    // methods to manage the default action
+    function GetAction: TBasicAction;
+    procedure SetAction(const Value: TBasicAction);
+    property Action: TBasicAction read GetAction write SetAction;
   end;
 
   TDataTemplate = class(TInterfacedObject, IDataTemplate)
   private
+    FAction: TBasicAction;
     FTemplates: IList<IDataTemplate>;
   protected
+    function GetAction: TBasicAction;
+    procedure SetAction(const Value: TBasicAction);
     property Templates: IList<IDataTemplate> read FTemplates;
   public
-    constructor Create;
+    constructor Create; overload;
+    constructor Create(const Action: TBasicAction); overload;
     destructor Destroy; override;
 
     function GetHint(const Item: TObject;
@@ -100,6 +110,8 @@ type
 
     function GetTemplateDataClass: TClass; virtual;
     procedure RegisterDataTemplate(const DataTemplate: IDataTemplate);
+
+    property Action: TBasicAction read GetAction write SetAction;
   end;
 
   TDataTemplate<T: class> = class(TDataTemplate)
@@ -199,9 +211,20 @@ begin
   FTemplates := TCollections.CreateInterfaceList<IDataTemplate>;
 end;
 
+constructor TDataTemplate.Create(const Action: TBasicAction);
+begin
+  Create;
+  FAction := Action;
+end;
+
 destructor TDataTemplate.Destroy;
 begin
   inherited;
+end;
+
+function TDataTemplate.GetAction: TBasicAction;
+begin
+  Result := FAction;
 end;
 
 function TDataTemplate.GetHint(const Item: TObject;
@@ -306,6 +329,12 @@ end;
 procedure TDataTemplate.RegisterDataTemplate(const DataTemplate: IDataTemplate);
 begin
   FTemplates.Add(DataTemplate);
+end;
+
+procedure TDataTemplate.SetAction(const Value: TBasicAction);
+begin
+  if FAction <> Value then
+    FAction := Value;
 end;
 
 procedure TDataTemplate.SetText(const Item: TObject; const ColumnIndex: Integer;

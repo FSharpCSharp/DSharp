@@ -599,6 +599,8 @@ end;
 
 procedure TTreeViewPresenter.DoDblClick(Sender: TObject);
 var
+  LItem: TObject;
+  LItemTemplate: IDataTemplate;
   LCursorPos: TPoint;
   LHitInfo: THitInfo;
 begin
@@ -607,12 +609,18 @@ begin
 
   if not IsMouseInToggleIcon(LHitInfo) then
   begin
-    if FListMode and Assigned(LHitInfo.HitNode)
+    if Assigned(LHitInfo.HitNode)
       and (LHitInfo.HitColumn < 1)
+      and not (hiOnItemButtonExact in LHitInfo.HitPositions)
       and ((hiOnNormalIcon in LHitInfo.HitPositions)
       or (not Assigned(OnDoubleClick) and not Assigned(Action))) then
     begin
-      FTreeView.ToggleNode(LHitInfo.HitNode);
+      LItem := GetNodeItem(FTreeView, LHitInfo.HitNode);
+      LItemTemplate := GetItemTemplate(LItem);
+      if Assigned(LItemTemplate) and Assigned(LItemTemplate.Action) then
+        LItemTemplate.Action.Execute
+      else
+        FTreeView.ToggleNode(LHitInfo.HitNode);
     end
     else
     begin
@@ -1121,6 +1129,7 @@ end;
 procedure TTreeViewPresenter.DoKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
+  LItemTemplate: IDataTemplate;
   i: Integer;
   LAllowed: Boolean;
   LNodes: TNodeArray;
@@ -1130,9 +1139,16 @@ begin
     case Key of
       VK_RETURN:
       begin
-        if Assigned(Action) and (FTreeView.SelectedCount > 0) then
+        if FTreeView.SelectedCount > 0 then
         begin
-          Action.Execute();
+          if Assigned(Action) then
+            Action.Execute
+          else
+          begin
+            LItemTemplate := GetItemTemplate(View.CurrentItem);
+            if Assigned(LItemTemplate) and Assigned(LItemTemplate.Action) then
+              LItemTemplate.Action.Execute;
+          end;
         end;
       end;
       VK_SPACE:

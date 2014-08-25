@@ -580,10 +580,15 @@ procedure TTreeViewPresenter.DoCompareNodes(Sender: TBaseVirtualTree; Node1,
   Node2: PVirtualNode; Column: TColumnIndex; var Result: Integer);
 var
   LItem1, LItem2: TObject;
+  LItemTemplate: IDataTemplate;
 begin
   if not Assigned(ColumnDefinitions) or (Column > -1) then
   begin
+    if not (vsInitialized in Node1.States) then
+      Sender.ReinitNode(Node1, False);
     LItem1 := GetNodeItem(Sender, Node1);
+    if not (vsInitialized in Node2.States) then
+      Sender.ReinitNode(Node2, False);
     LItem2 := GetNodeItem(Sender, Node2);
 
     if Assigned(FOnCompare) then
@@ -592,7 +597,12 @@ begin
     end
     else
     begin
-      Result := View.ItemTemplate.CompareItems(LItem1, LItem2, Column);
+      LItemTemplate := GetItemTemplate(LItem1);
+      if not Assigned(LItemTemplate) then
+      begin
+        LItemTemplate := View.ItemTemplate;
+      end;
+      Result := LItemTemplate.CompareItems(LItem1, LItem2, Column);
     end;
   end;
 end;
@@ -705,8 +715,14 @@ begin
             begin
               if FCurrentNode <> LNode then
               begin
-                FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
-                ExpandNode(LNode);
+                if FListMode then
+                  FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False)
+                else
+                begin
+                  FTreeView.MoveTo(LSelectedNodes[i], LNode, amAddChildLast, False);
+                  FTreeView.Sort(LNode, FTreeView.Header.SortColumn, FTreeView.Header.SortDirection);
+                  ExpandNode(LNode);
+                end;
               end;
             end;
             dmBelow: FTreeView.MoveTo(LSelectedNodes[i], LNode, amInsertAfter, False);

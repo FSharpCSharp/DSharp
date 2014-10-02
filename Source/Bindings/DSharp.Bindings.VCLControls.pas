@@ -675,8 +675,8 @@ end;
 
 constructor TForm.Create(AOwner: TComponent);
 begin
-  inherited;
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
+  inherited;
 end;
 
 function FindControl(AControl: TWinControl; APos: TPoint; AClass: TClass): TControl;

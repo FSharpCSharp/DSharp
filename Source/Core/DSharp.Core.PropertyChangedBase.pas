@@ -37,7 +37,8 @@ uses
   Spring;
 
 type
-  TPropertyChangedBase = class abstract(TPersistent, IInterface, INotifyPropertyChangedEx)
+  TPropertyChangedBase = class abstract(TPersistent, IInterface,
+    INotifyPropertyChanged, INotifyPropertyChangedEx)
   private
     FPropertyChanged: Event<TPropertyChangedEvent>;
     function GetOnPropertyChanged: IEvent<TPropertyChangedEvent>;

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -39,27 +39,39 @@ uses
 type
   TXmlReader = class(TInterfacedObject, IXmlReader)
   private
-    FCurrentNode: IXMLNode;
-    FDocument: IXMLDocument;
-    FIndex: Integer;
-    FRoot: TObject;
+    fAttributeIndex: Integer;
+    fCurrentNode: IXMLNode;
+    fDocument: IXMLDocument;
+    fElementNode: IXMLNode;
+    fIndex: Integer;
+    fRoot: TObject;
     function GetXml: string;
     procedure SetXml(const Value: string);
 
-    procedure CreateObject(var AValue: TValue);
+    procedure CreateObject(var value: TValue);
 
-    procedure ReadEnumerable(var AValue: TValue);
-    procedure ReadEvent(var AValue: TValue);
-    procedure ReadObject(var AValue: TValue);
+    procedure ReadAttribute(const instance: TObject);
+    procedure ReadElement(const instance: TObject);
+    procedure ReadEnumerable(const instance: TObject);
+    procedure ReadEvent(var value: TValue);
+    procedure ReadInterface(const instance: IInterface);
+    procedure ReadProperty(const instance: TObject; const prop: TRttiProperty);
+    procedure ReadObject(const instance: TObject);
   public
-    constructor Create(const AFilename: string = '');
+    constructor Create; overload;
+    constructor Create(const filename: string); overload;
 
-    function IsStartElement(): Boolean; overload;
-    function IsStartElement(const AName: string): Boolean; overload;
+    function IsStartElement: Boolean; overload;
+    function IsStartElement(const name: string): Boolean; overload;
+
+    function MoveToElement: Boolean;
+    function MoveToFirstAttribute: Boolean;
+    function MoveToNextAttribute: Boolean;
+
     procedure ReadStartElement; overload;
-    procedure ReadStartElement(const AName: string); overload;
+    procedure ReadStartElement(const name: string); overload;
     procedure ReadEndElement; overload;
-    procedure ReadValue(var AValue: TValue);
+    procedure ReadValue(var value: TValue);
 
     property Xml: string read GetXml write SetXml;
   end;
@@ -74,9 +86,6 @@ uses
   XMLDoc,
   XSBuiltIns;
 
-type
-  PMethod = ^TMethod;
-
 function XMLTimeToTime(const XMLTime: string): TDateTime;
 begin
   Result := Frac(XMLTimeToDateTime(FormatDateTime('yyyy-mm-dd''T', 0) + XMLTime));
@@ -84,281 +93,284 @@ end;
 
 { TXmlReader }
 
-constructor TXmlReader.Create(const AFilename: string);
+constructor TXmlReader.Create;
 begin
-  FDocument := TXMLDocument.Create(nil);
-  FDocument.Active := True;
-  if AFilename <> '' then
-  begin
-    FDocument.LoadFromFile(AFilename);
-  end;
+  inherited Create;
+
+  fDocument := TXMLDocument.Create(nil);
+  fDocument.Active := True;
 end;
 
-procedure TXmlReader.CreateObject(var AValue: TValue);
-var
-  LType: TRttiType;
-  LMethod: TRttiMethod;
-  LArgs: TArray<TValue>;
+constructor TXmlReader.Create(const filename: string);
 begin
-  if FindType(FCurrentNode.NodeName, LType)
-    and LType.TryGetStandardConstructor(LMethod) then
+  Create;
+
+  if filename <> '' then
+    fDocument.LoadFromFile(filename);
+end;
+
+procedure TXmlReader.CreateObject(var value: TValue);
+var
+  rttiType: TRttiType;
+  method: TRttiMethod;
+begin
+  if FindType(fCurrentNode.NodeName, rttiType)
+    and rttiType.TryGetStandardConstructor(method) then
   begin
-    SetLength(LArgs, LMethod.ParameterCount);
-    AValue := LMethod.Invoke(LType.AsInstance.MetaclassType, LArgs);
-    if not Assigned(FRoot) then
-    begin
-      FRoot := AValue.AsObject();
-    end;
+    value := method.Invoke(rttiType.AsInstance.MetaclassType, []);
+    if not Assigned(fRoot) then
+      fRoot := value.AsObject;
   end;
 end;
 
 function TXmlReader.GetXml: string;
 begin
-  Result := FormatXMLData(FDocument.XML.Text);
+  Result := FormatXMLData(fDocument.XML.Text);
 end;
 
 function TXmlReader.IsStartElement: Boolean;
 begin
-  if Assigned(FCurrentNode) then
-  begin
-    Result := FCurrentNode.ChildNodes.Count > FIndex;
-  end
+  if Assigned(fCurrentNode) then
+    Result := fCurrentNode.ChildNodes.Count > fIndex
   else
+    Result := Assigned(fDocument.DocumentElement);
+end;
+
+function TXmlReader.IsStartElement(const name: string): Boolean;
+begin
+  if Assigned(fCurrentNode) then
+    Result := (fCurrentNode.ChildNodes.Count > fIndex)
+      and SameText(fCurrentNode.ChildNodes[fIndex].NodeName, name)
+  else
+    Result := SameText(fDocument.DocumentElement.NodeName, name);
+end;
+
+function TXmlReader.MoveToElement: Boolean;
+begin
+  Result := Assigned(fElementNode);
+  if Result then
   begin
-    Result := Assigned(FDocument.DocumentElement);
+    fAttributeIndex := -1;
+    fCurrentNode := fElementNode;
+    fElementNode := nil;
   end;
 end;
 
-function TXmlReader.IsStartElement(const AName: string): Boolean;
+function TXmlReader.MoveToFirstAttribute: Boolean;
 begin
-  if Assigned(FCurrentNode) then
+  Result := fCurrentNode.AttributeNodes.Count > 0;
+  if Result then
   begin
-    Result := (FCurrentNode.ChildNodes.Count > FIndex)
-      and SameText(FCurrentNode.ChildNodes[FIndex].NodeName, AName);
-  end
+    fAttributeIndex := 0;
+    fElementNode := fCurrentNode;
+    fCurrentNode := fCurrentNode.AttributeNodes.First;
+  end;
+end;
+
+function TXmlReader.MoveToNextAttribute: Boolean;
+begin
+  if not Assigned(fElementNode) then
+    Result := MoveToFirstAttribute
   else
   begin
-    Result := SameText(FDocument.DocumentElement.NodeName, AName);
+    Result := fAttributeIndex < fElementNode.AttributeNodes.Count - 1;
+    if Result then
+    begin
+      Inc(fAttributeIndex);
+      fCurrentNode := fElementNode.AttributeNodes.Nodes[fAttributeIndex];
+    end;
+  end;
+end;
+
+procedure TXmlReader.ReadAttribute(const instance: TObject);
+var
+  prop: TRttiProperty;
+  attrAttribute: XmlAttributeAttribute;
+begin
+  for prop in instance.GetProperties do
+  begin
+    if prop.TryGetCustomAttribute<XmlAttributeAttribute>(attrAttribute)
+      and SameText(attrAttribute.AttributeName, fCurrentNode.NodeName) then
+    begin
+      ReadProperty(instance, prop);
+      Break;
+    end;
+  end;
+end;
+
+procedure TXmlReader.ReadElement(const instance: TObject);
+var
+  prop: TRttiProperty;
+  elemAttribute: XmlElementAttribute;
+begin
+  for prop in instance.GetProperties do
+  begin
+    if prop.TryGetCustomAttribute<XmlElementAttribute>(elemAttribute) then
+    begin
+      if SameText(elemAttribute.ElementName, fCurrentNode.NodeName) then
+      begin
+        ReadProperty(instance, prop);
+        Break;
+      end;
+      Continue;
+    end;
+
+    if prop.IsDefined<XmlAttributeAttribute> then
+      Continue;
+
+    if prop.Visibility < mvPublished then
+      Continue;
+
+    if SameText(prop.Name, fCurrentNode.NodeName) then
+    begin
+      ReadProperty(instance, prop);
+      Break;
+    end;
   end;
 end;
 
 procedure TXmlReader.ReadEndElement;
 begin
-  FIndex := FCurrentNode.ParentNode.ChildNodes.IndexOf(FCurrentNode) + 1;
-  FCurrentNode := FCurrentNode.ParentNode;
+  fIndex := fCurrentNode.ParentNode.ChildNodes.IndexOf(fCurrentNode) + 1;
+  fCurrentNode := fCurrentNode.ParentNode;
 end;
 
-procedure TXmlReader.ReadEnumerable(var AValue: TValue);
+procedure TXmlReader.ReadEnumerable(const instance: TObject);
 var
-  LObject: TObject;
-  LType: TRttiType;
-  LMethod: TRttiMethod;
-  LValue: TValue;
+  rttiType: TRttiType;
+  method: TRttiMethod;
+  value: TValue;
 begin
-  LObject := AValue.AsObject;
+  if instance.TryGetMethod('Clear', method) then
+    method.Invoke(instance, []);
 
-  if LObject.TryGetMethod('Clear', LMethod) then
+  if instance.HasMethod('GetEnumerator')
+    and instance.TryGetMethod('Add', method) then
   begin
-    LMethod.Invoke(LObject, []);
-  end;
-
-  if LObject.HasMethod('GetEnumerator')
-    and LObject.TryGetMethod('Add', LMethod) then
-  begin
-    LType := LMethod.GetParameters[0].ParamType;
-    while IsStartElement(LType.Name) do
+    rttiType := method.GetParameters[0].ParamType;
+    while IsStartElement(rttiType.Name)
+      or (rttiType.IsPublicType and IsStartElement(rttiType.QualifiedName)) do
     begin
-      ReadStartElement();
+      ReadStartElement;
 
-      TValue.Make(nil, LType.Handle, LValue);
-      ReadValue(LValue);
-      LMethod.Invoke(AValue, [LValue]);
+      TValue.Make(nil, rttiType.Handle, value);
+      ReadValue(value);
+      method.Invoke(instance, [value]);
 
-      ReadEndElement();
+      ReadEndElement;
     end;
   end;
 end;
 
-procedure TXmlReader.ReadEvent(var AValue: TValue);
+procedure TXmlReader.ReadEvent(var value: TValue);
+type
+  PMethod = ^TMethod;
 var
-  LEvent: PMethod;
-  LMethod: TRttiMethod;
+  event: PMethod;
+  method: TRttiMethod;
 begin
-  LEvent := AValue.GetReferenceToRawData();
-  if FRoot.TryGetMethod(VarToStrDef(FCurrentNode.NodeValue, ''), LMethod) then
+  event := value.GetReferenceToRawData;
+  if fRoot.TryGetMethod(VarToStrDef(fCurrentNode.NodeValue, ''), method) then
   begin
-    LEvent.Data := FRoot;
-    LEvent.Code := LMethod.CodeAddress;
+    event.Data := fRoot;
+    event.Code := method.CodeAddress;
   end;
 end;
 
-procedure TXmlReader.ReadObject(var AValue: TValue);
-var
-  LObject: TObject;
-  LProperty: TRttiProperty;
-  LValue: TValue;
-  LField: TRttiField;
-
-  function FindPropertyByElementName(AObject: TObject;
-    const AElementName: string; out AProperty: TRttiProperty): Boolean;
-  var
-    LProperty: TRttiProperty;
-    LAttribute: XmlElementAttribute;
-  begin
-    Result := False;
-    for LProperty in AObject.GetProperties do
-    begin
-      if LProperty.TryGetCustomAttribute<XmlElementAttribute>(LAttribute)
-        and SameText(LAttribute.ElementName, AElementName) then
-      begin
-        AProperty := LProperty;
-        Result := True;
-        Break;
-      end;
-    end;
-  end;
-
-  function FindFieldByElementName(AObject: TObject;
-    const AElementName: string; out AField: TRttiField): Boolean;
-  var
-    LField: TRttiField;
-    LAttribute: XmlElementAttribute;
-  begin
-    Result := False;
-    for LField in AObject.GetFields do
-    begin
-      if LField.TryGetCustomAttribute<XmlElementAttribute>(LAttribute)
-        and SameText(LAttribute.ElementName, AElementName) then
-      begin
-        AField := LField;
-        Result := True;
-        Break;
-      end;
-    end;
-  end;
-
+procedure TXmlReader.ReadInterface(const instance: IInterface);
 begin
-  ReadEnumerable(AValue);
+  ReadObject(instance as TObject);
+end;
 
-  LObject := AValue.AsObject;
+procedure TXmlReader.ReadObject(const instance: TObject);
+begin
+  ReadEnumerable(instance);
+
+  if MoveToFirstAttribute then
+  repeat
+    ReadAttribute(instance);
+  until not MoveToNextAttribute;
+  MoveToElement;
+
   while IsStartElement do
   begin
-    ReadStartElement();
-
-    if (LObject.TryGetProperty(FCurrentNode.NodeName, LProperty)
-      or FindPropertyByElementName(LObject, FCurrentNode.NodeName, LProperty))
-      and (LProperty.IsWritable or LProperty.PropertyType.IsInstance) then
-    begin
-      LValue := LProperty.GetValue(LObject);
-      ReadValue(LValue);
-      if not LProperty.PropertyType.IsInstance then
-      begin
-        LProperty.SetValue(LObject, LValue);
-      end;
-    end
-    else
-    if LObject.TryGetField(FCurrentNode.NodeName, LField)
-      or FindFieldByElementName(LObject, FCurrentNode.NodeName, LField) then
-    begin
-      LValue := LField.GetValue(LObject);
-      ReadValue(LValue);
-      if not LField.FieldType.IsInstance then
-      begin
-        LField.SetValue(LObject, LValue);
-      end;
-    end;
-
-    ReadEndElement();
+    ReadStartElement;
+    ReadElement(instance);
+    ReadEndElement;
   end;
+end;
+
+procedure TXmlReader.ReadProperty(const instance: TObject;
+  const prop: TRttiProperty);
+var
+  value: TValue;
+begin
+  if prop.IsReadable then
+    value := prop.GetValue(instance);
+  ReadValue(value);
+  if prop.IsWritable and not (prop.PropertyType.IsInstance or prop.PropertyType.IsInterface) then
+    prop.SetValue(instance, value);
 end;
 
 procedure TXmlReader.ReadStartElement;
 begin
-  if Assigned(FCurrentNode) then
-  begin
-    FCurrentNode := FCurrentNode.ChildNodes[FIndex];
-  end
+  if Assigned(fCurrentNode) then
+    fCurrentNode := fCurrentNode.ChildNodes[fIndex]
   else
-  begin
-    FCurrentNode := FDocument.DocumentElement;
-  end;
-  FIndex := 0;
+    fCurrentNode := fDocument.DocumentElement;
+  fIndex := 0;
 end;
 
-procedure TXmlReader.ReadStartElement(const AName: string);
+procedure TXmlReader.ReadStartElement(const name: string);
 begin
-  if IsStartElement(AName) then
-  begin
-    ReadStartElement();
-  end
+  if IsStartElement(name) then
+    ReadStartElement
   else
-  begin
-    raise EXmlException.CreateFmt('Element "%s" not found', [AName]);
-  end;
+    raise EXmlException.CreateFmt('Element "%s" not found', [name]);
 end;
 
-procedure TXmlReader.ReadValue(var AValue: TValue);
+procedure TXmlReader.ReadValue(var value: TValue);
 begin
-  if AValue.IsEmpty then
-  begin
-    CreateObject(AValue);
-  end;
+  if value.IsEmpty then
+    CreateObject(value);
 
-  case AValue.Kind of
+  case value.Kind of
     tkInteger, tkInt64:
-    begin
-      AValue := TValue.FromOrdinal(AValue.TypeInfo, StrToInt64(FCurrentNode.NodeValue));
-    end;
+      value := TValue.FromOrdinal(value.TypeInfo, StrToInt64(fCurrentNode.NodeValue));
     tkChar, tkString, tkWChar, tkLString, tkWString, tkUString:
-    begin
-      AValue := TValue.From<string>(VarToStrDef(FCurrentNode.NodeValue, ''));
-    end;
+      value := TValue.From<string>(VarToStrDef(fCurrentNode.NodeValue, ''));
     tkEnumeration:
-    begin
-      AValue := TValue.FromOrdinal(AValue.TypeInfo,
-        GetEnumValue(AValue.TypeInfo, FCurrentNode.NodeValue));
-    end;
+      value := TValue.FromOrdinal(value.TypeInfo,
+        GetEnumValue(value.TypeInfo, fCurrentNode.NodeValue));
     tkFloat:
     begin
-      if AValue.IsDate then
-      begin
-        AValue := TValue.From<TDate>(StrToDate(FCurrentNode.NodeValue, XmlFormatSettings));
-      end else
-      if AValue.IsDateTime then
-      begin
-        AValue := TValue.From<TDateTime>(XMLTimeToDateTime(FCurrentNode.NodeValue));
-      end else
-      if AValue.IsTime then
-      begin
-        AValue := TValue.From<TTime>(XMLTimeToTime(FCurrentNode.NodeValue));
-      end
+      if value.IsDate then
+        value := TValue.From<TDate>(StrToDate(fCurrentNode.NodeValue, XmlFormatSettings))
+      else if value.IsDateTime then
+        value := TValue.From<TDateTime>(XMLTimeToDateTime(fCurrentNode.NodeValue))
+      else if value.IsTime then
+        value := TValue.From<TTime>(XMLTimeToTime(fCurrentNode.NodeValue))
       else
-      begin
-        FCurrentNode.NodeValue := FloatToStr(AValue.AsExtended, XmlFormatSettings);
-      end;
+        value := StrToFloat(fCurrentNode.NodeValue, XmlFormatSettings);
     end;
     tkSet:
-    begin
-      TValue.Make(StringToSet(AValue.TypeInfo, FCurrentNode.NodeValue),
-        AValue.TypeInfo, AValue);
-    end;
+      TValue.Make(StringToSet(value.TypeInfo, fCurrentNode.NodeValue),
+        value.TypeInfo, value);
     tkClass:
-    begin
-      ReadObject(AValue);
-    end;
+      ReadObject(value.AsObject);
     tkMethod:
-    begin
-      ReadEvent(AValue);
-    end;
+      ReadEvent(value);
+    tkInterface:
+      ReadInterface(value.AsInterface);
   end;
 end;
 
 procedure TXmlReader.SetXml(const Value: string);
 begin
-  FDocument.XML.Text := Value;
-  FDocument.Active := True;
-  FCurrentNode := nil;
-  FIndex := 0;
+  fDocument.XML.Text := Value;
+  fDocument.Active := True;
+  fCurrentNode := nil;
+  fIndex := 0;
 end;
 
 end.

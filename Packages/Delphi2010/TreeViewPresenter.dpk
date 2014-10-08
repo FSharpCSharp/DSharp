@@ -38,6 +38,7 @@ contains
   DSharp.Windows.ColumnDefinitions.XmlDataTemplate in '..\..\Source\Windows\DSharp.Windows.ColumnDefinitions.XmlDataTemplate.pas',
   DSharp.Windows.ControlTemplates in '..\..\Source\Windows\DSharp.Windows.ControlTemplates.pas',
   DSharp.Windows.CustomPresenter in '..\..\Source\Windows\DSharp.Windows.CustomPresenter.pas',
+  DSharp.Windows.CustomPresenter.Types in '..\..\Source\Windows\DSharp.Windows.CustomPresenter.Types.pas',
   DSharp.Windows.TreeViewPresenter in '..\..\Source\Windows\DSharp.Windows.TreeViewPresenter.pas';
 
 end.

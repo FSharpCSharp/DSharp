@@ -84,9 +84,6 @@ end;
 
 function TExpectation.Execute(const Arguments: TArray<TValue>;
   ReturnType: TRttiType): TValue;
-type
-  PValueArray = ^TValueArray;
-  TValueArray = TArray<TValue>;
 begin
   try
     if Assigned(FCallback) then
@@ -96,7 +93,7 @@ begin
     Inc(FActualCount);
     if Assigned(FAction) then
     begin
-      Result := FAction(PValueArray(@Arguments)^);
+      Result := FAction(Arguments, ReturnType);
     end else
     if Assigned(FException) then
     begin

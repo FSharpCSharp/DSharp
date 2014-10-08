@@ -37,7 +37,7 @@ uses
   SysUtils;
 
 type
-  TMockAction = reference to function(var Args: array of TValue): TValue;
+  TMockAction = reference to function(const Args: TArray<TValue>; const ReturnType: TRttiType): TValue;
   TMockMode = (Mock, Stub);
 
   ISequence = interface

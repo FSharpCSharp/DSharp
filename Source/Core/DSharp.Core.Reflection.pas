@@ -444,6 +444,7 @@ type
     function GetAsInterface: TRttiInterfaceType;
     function GetIsInterface: Boolean;
     function GetMethodCount: Integer;
+    function GetVirtualMethodCount: Integer;
     function InheritsFrom(OtherType: PTypeInfo): Boolean;
   public
     function GetAttributesOfType<T: TCustomAttribute>: TArray<T>; deprecated 'use GetCustomAttributes instead';
@@ -555,6 +556,7 @@ type
     property AsInterface: TRttiInterfaceType read GetAsInterface;
     property IsInterface: Boolean read GetIsInterface;
     property MethodCount: Integer read GetMethodCount;
+    property VirtualMethodCount: Integer read GetVirtualMethodCount;
   end;
 
   TValue = Rtti.TValue;
@@ -2379,6 +2381,24 @@ begin
   end;
 end;
 
+function TRttiTypeHelper.GetVirtualMethodCount: Integer;
+var
+  LMethod: TRttiMethod;
+begin
+  Result := -1;
+  for LMethod in GetMethods do
+  begin
+    if LMethod.DispatchKind = dkVtable then
+    begin
+      if LMethod.VirtualIndex > Result then
+      begin
+        Result := LMethod.VirtualIndex;
+      end;
+    end;
+  end;
+  Inc(Result);
+end;
+
 function TRttiTypeHelper.InheritsFrom(OtherType: PTypeInfo): Boolean;
 var
   LType: TRttiType;
@@ -2962,13 +2982,18 @@ class function TValueHelper.ToString(const Value: TValue): string;
   function ArrayToString(const value: TValue): string;
   var
     i: Integer;
+    v: TValue;
   begin
     Result := '[';
     for i := 0 to value.GetArrayLength - 1 do
     begin
       if i > 0 then
         Result := Result + ', ';
-      Result := Result + TValue.ToString(value.GetArrayElement(i));
+      v := value.GetArrayElement(i);
+      if v.IsString then
+        Result := Result + QuotedStr(TValue.ToString(v))
+      else
+        Result := Result + TValue.ToString(v);
     end;
     Result := Result + ']';
   end;
@@ -3014,10 +3039,7 @@ begin
       Result := ArrayToString(Value);
     end;
   else
-    if Value.IsString then
-      Result := '''' + Value.ToString + ''''
-    else
-      Result := Value.ToString;
+    Result := Value.ToString;
   end;
 end;
 
@@ -3106,6 +3128,8 @@ var
   LClass: TClass;
   LPointer: Pointer;
 begin
+  FRegister.Free;
+
   for LClass in FPatchedClasses.Values do
   begin
     LPointer := PByte(LClass) + vmtSelfPtr;
@@ -3113,7 +3137,6 @@ begin
   end;
 
   FPatchedClasses.Free;
-  FRegister.Free;
 end;
 
 constructor TRttiPropertyExtension.Create(Parent: PTypeInfo;

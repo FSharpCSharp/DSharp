@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -39,19 +39,24 @@ uses
 type
   TXmlWriter = class(TInterfacedObject, IXmlWriter)
   private
-    FCurrentNode: IXMLNode;
-    FDocument: IXMLDocument;
+    fCurrentNode: IXMLNode;
+    fDocument: IXMLDocument;
+    fFilename: string;
     function GetXml: string;
 
-    procedure WriteEnumerable(const AValue: TValue);
-    procedure WriteEvent(const AValue: TValue);
-    procedure WriteObject(const AValue: TValue);
+    procedure WriteEnumerable(const instance: TObject);
+    procedure WriteEvent(const value: TValue);
+    procedure WriteInterface(const instance: IInterface);
+    procedure WriteObject(const instance: TObject);
   public
-    constructor Create;
+    constructor Create; overload;
+    constructor Create(const filename: string); overload;
+    destructor Destroy; override;
 
-    procedure WriteStartElement(const AName: string);
-    procedure WriteEndElement(const AName: string);
-    procedure WriteValue(const AValue: TValue);
+    procedure WriteAttribute(const name: string; const value: TValue);
+    procedure WriteEndElement(const name: string);
+    procedure WriteStartElement(const name: string);
+    procedure WriteValue(const value: TValue);
 
     property Xml: string read GetXml;
   end;
@@ -65,9 +70,6 @@ uses
   XMLDoc,
   XSBuiltIns;
 
-type
-  PMethod = ^TMethod;
-
 function TimeToXMLTime(Value: TDateTime): string;
 begin
   Result := Copy(DateTimeToXMLTime(Value), 12, 18);
@@ -77,50 +79,74 @@ end;
 
 constructor TXmlWriter.Create;
 begin
-  FDocument := TXMLDocument.Create(nil);
-  FDocument.Options := FDocument.Options + [doNodeAutoIndent];
-  FDocument.Active := True;
-  FDocument.Encoding := 'utf-8';
-  FDocument.Version := '1.0';
+  inherited Create;
+
+  fDocument := TXMLDocument.Create(nil);
+  fDocument.Options := fDocument.Options + [doNodeAutoIndent];
+  fDocument.Active := True;
+  fDocument.Encoding := 'utf-8';
+  fDocument.Version := '1.0';
+end;
+
+constructor TXmlWriter.Create(const filename: string);
+begin
+  Create;
+
+  fFilename := filename;
+end;
+
+destructor TXmlWriter.Destroy;
+begin
+  if fFilename <> '' then
+    fDocument.SaveToFile(fFilename);
+
+  inherited;
 end;
 
 function TXmlWriter.GetXml: string;
 begin
-  Result := FormatXMLData(FDocument.XML.Text);
+  Result := FormatXMLData(fDocument.XML.Text);
 end;
 
-procedure TXmlWriter.WriteEndElement(const AName: string);
+procedure TXmlWriter.WriteAttribute(const name: string; const value: TValue);
 var
-  LCurrentNode: IXMLNode;
+  currentNode: IXMLNode;
 begin
-  if SameText(FCurrentNode.NodeName, AName) then
-  begin
-    LCurrentNode := FCurrentNode;
-    FCurrentNode := LCurrentNode.ParentNode;
-    if not LCurrentNode.HasChildNodes then
-    begin
-      FCurrentNode.ChildNodes.Remove(LCurrentNode);
-    end;
+  currentNode := fCurrentNode;
+  try
+    fCurrentNode := fCurrentNode.AttributeNodes.Nodes[name];
+    WriteValue(value);
+  finally
+    fCurrentNode := currentNode;
   end;
 end;
 
-procedure TXmlWriter.WriteEnumerable(const AValue: TValue);
+procedure TXmlWriter.WriteEndElement(const name: string);
 var
-  LObject: TObject;
+  LCurrentNode: IXMLNode;
+begin
+  if SameText(fCurrentNode.NodeName, name) then
+  begin
+    LCurrentNode := fCurrentNode;
+    fCurrentNode := LCurrentNode.ParentNode;
+  end;
+end;
+
+procedure TXmlWriter.WriteEnumerable(const instance: TObject);
+var
   LEnumerator: TValue;
   LMethod: TRttiMethod;
   LProperty: TRttiProperty;
   LValue: TValue;
   LType: TRttiType;
   LFreeEnumerator: Boolean;
+  LTypeName: string;
 begin
-  LObject := AValue.AsObject;
-  if LObject.HasMethod('Add') and LObject.TryGetMethod('GetEnumerator', LMethod) then
+  if instance.HasMethod('Add') and instance.TryGetMethod('GetEnumerator', LMethod) then
   begin
-    LEnumerator := LMethod.Invoke(LObject, []);
+    LEnumerator := LMethod.Invoke(instance, []);
     LFreeEnumerator := LEnumerator.IsObject;
     try
-
       LType := LEnumerator.RttiType;
       if LType is TRttiInterfaceType then
       begin
@@ -133,156 +159,138 @@ begin
         while LMethod.Invoke(LEnumerator, []).AsBoolean do
         begin
           LValue := LProperty.GetValue(LEnumerator.AsPointer);
+          LTypeName := LProperty.PropertyType.Name;
 
-          WriteStartElement(LProperty.PropertyType.Name);
+          WriteStartElement(LTypeName);
           WriteValue(LValue);
-          WriteEndElement(LProperty.PropertyType.Name);
+          WriteEndElement(LTypeName);
         end;
       end;
     finally
       if LFreeEnumerator then
-        LEnumerator.AsObject.Free();
+        LEnumerator.AsObject.Free;
     end;
   end;
 end;
 
-procedure TXmlWriter.WriteEvent(const AValue: TValue);
+procedure TXmlWriter.WriteEvent(const value: TValue);
+type
+  PMethod = ^TMethod;
 var
   LEvent: PMethod;
   LMethod: TRttiMethod;
 begin
-  LEvent := AValue.GetReferenceToRawData();
+  LEvent := value.GetReferenceToRawData;
   if TObject(LEvent.Data).TryGetMethod(LEvent.Code, LMethod) then
-  begin
-    FCurrentNode.NodeValue := LMethod.Name;
-  end;
+    fCurrentNode.NodeValue := LMethod.Name;
 end;
 
-procedure TXmlWriter.WriteObject(const AValue: TValue);
+procedure TXmlWriter.WriteInterface(const instance: IInterface);
+begin
+  WriteObject(instance as TObject);
+end;
+
+procedure TXmlWriter.WriteObject(const instance: TObject);
 var
-  LObject: TObject;
-  LProperty: TRttiProperty;
-  LValue: TValue;
-  LAttribute: XmlElementAttribute;
-  LField: TRttiField;
+  prop: TRttiProperty;
+  value: TValue;
+  elemAttribute: XmlElementAttribute;
+  attrAttribute: XmlAttributeAttribute;
+  field: TRttiField;
 begin
-  LObject := AValue.AsObject;
-  if Assigned(LObject) then
+  if Assigned(instance) then
   begin
-    for LProperty in LObject.GetProperties() do
+    for prop in instance.GetProperties do
     begin
-      if (LProperty.Visibility = mvPublished)
-        and LProperty.TryGetValue(LObject, LValue)
-        and not LProperty.IsDefined<XmlIgnoreAttribute> then
+      if prop.IsDefined<XmlIgnoreAttribute> then
+        Continue;
+
+      value := prop.GetValue(instance);
+
+      // don't write default values
+      if (prop is TRttiInstanceProperty) and prop.PropertyType.IsOrdinal
+        and (TRttiInstanceProperty(prop).Default = value.AsOrdinal) then
+        Continue;
+
+      // don't write nil objects
+      if prop.PropertyType.IsInstance and (value.AsObject = nil) then
+        Continue;
+
+      if prop.TryGetCustomAttribute<XmlElementAttribute>(elemAttribute) then
       begin
-        if not (LProperty is TRttiInstanceProperty)
-          or not LProperty.PropertyType.IsOrdinal
-          or (LProperty.PropertyType.IsOrdinal
-          and (TRttiInstanceProperty(LProperty).Default <> LValue.AsOrdinal))
-          or (LProperty.PropertyType.IsInstance and (LValue.AsObject <> nil)) then
-        begin
-          if LProperty.TryGetCustomAttribute<XmlElementAttribute>(LAttribute) then
-          begin
-            WriteStartElement(LAttribute.ElementName);
-            WriteValue(LValue);
-            WriteEndElement(LAttribute.ElementName);
-          end
-          else
-          begin
-            WriteStartElement(LProperty.Name);
-            WriteValue(LValue);
-            WriteEndElement(LProperty.Name);
-          end;
-        end;
+        WriteStartElement(elemAttribute.ElementName);
+        WriteValue(value);
+        WriteEndElement(elemAttribute.ElementName);
+      end else
+      if prop.TryGetCustomAttribute<XmlAttributeAttribute>(attrAttribute) then
+        WriteAttribute(attrAttribute.AttributeName, value)
+      else if prop.Visibility = mvPublished then
+      begin
+        WriteStartElement(prop.Name);
+        WriteValue(value);
+        WriteEndElement(prop.Name);
       end;
     end;
 
-    for LField in LObject.GetType.GetFields do
+    for field in instance.GetFields do
     begin
-      if (LField.Visibility = mvPublished)
-        and LField.TryGetValue(LObject, LValue)
-        and not LField.IsDefined<XmlIgnoreAttribute> then
+      if field.IsDefined<XmlIgnoreAttribute> then
+        Continue;
+
+      value := field.GetValue(instance);
+
+      // don't write nil objects
+      if field.FieldType.IsInstance and (value.AsObject = nil) then
+        Continue;
+
+      if field.TryGetCustomAttribute<XmlElementAttribute>(elemAttribute) then
       begin
-        if not LField.FieldType.IsInstance or (LValue.AsObject <> nil) then
-        begin
-          if LField.TryGetCustomAttribute<XmlElementAttribute>(LAttribute) then
-          begin
-            WriteStartElement(LAttribute.ElementName);
-            WriteValue(LValue);
-            WriteEndElement(LAttribute.ElementName);
-          end
-          else
-          begin
-            WriteStartElement(LField.Name);
-            WriteValue(LValue);
-            WriteEndElement(LField.Name);
-          end;
-        end;
-      end;
+        WriteStartElement(elemAttribute.ElementName);
+        WriteValue(value);
+        WriteEndElement(elemAttribute.ElementName);
+      end else
+      if field.TryGetCustomAttribute<XmlAttributeAttribute>(attrAttribute) then
+        WriteAttribute(attrAttribute.AttributeName, value);
     end;
 
-    WriteEnumerable(AValue);
+    WriteEnumerable(instance);
   end;
 end;
 
-procedure TXmlWriter.WriteStartElement(const AName: string);
+procedure TXmlWriter.WriteStartElement(const name: string);
 begin
-  if Assigned(FCurrentNode) then
-  begin
-    FCurrentNode := FCurrentNode.AddChild(AName);
-  end
+  if Assigned(fCurrentNode) then
+    fCurrentNode := fCurrentNode.AddChild(name)
   else
-  begin
-    FCurrentNode := FDocument.AddChild(AName);
-  end;
+    fCurrentNode := fDocument.AddChild(name);
 end;
 
-procedure TXmlWriter.WriteValue(const AValue: TValue);
+procedure TXmlWriter.WriteValue(const value: TValue);
 begin
-  case AValue.Kind of
+  case value.Kind of
     tkInteger, tkInt64:
-    begin
-      FCurrentNode.NodeValue := AValue.ToString;
-    end;
+      fCurrentNode.NodeValue := value.ToString;
     tkChar, tkString, tkWChar, tkLString, tkWString, tkUString:
-    begin
-      FCurrentNode.NodeValue := AValue.ToString;
-    end;
+      fCurrentNode.NodeValue := value.ToString;
     tkEnumeration:
-    begin
-      FCurrentNode.NodeValue := AValue.ToString;
-    end;
+      fCurrentNode.NodeValue := value.ToString;
     tkFloat:
-    begin
-      if AValue.IsDate then
-      begin
-        FCurrentNode.NodeValue := DateToStr(AValue.AsDate, XmlFormatSettings);
-      end else
-      if AValue.IsDateTime then
-      begin
-        FCurrentNode.NodeValue := DateTimeToXMLTime(AValue.AsDateTime);
-      end else
-      if AValue.IsTime then
-      begin
-        FCurrentNode.NodeValue := TimeToXMLTime(AValue.AsTime);
-      end
+      if value.IsDate then
+        fCurrentNode.NodeValue := DateToStr(value.AsDate, XmlFormatSettings)
+      else if value.IsDateTime then
+        fCurrentNode.NodeValue := DateTimeToXMLTime(value.AsDateTime)
+      else if value.IsTime then
+        fCurrentNode.NodeValue := TimeToXMLTime(value.AsTime)
       else
-      begin
-        FCurrentNode.NodeValue := FloatToStr(AValue.AsExtended, XmlFormatSettings);
-      end;
-    end;
+        fCurrentNode.NodeValue := FloatToStr(value.AsExtended, XmlFormatSettings);
     tkSet:
-    begin
-      FCurrentNode.NodeValue := AValue.ToString;
-    end;
+      fCurrentNode.NodeValue := value.ToString;
     tkClass:
-    begin
-      WriteObject(AValue);
-    end;
+      WriteObject(value.AsObject);
     tkMethod:
-    begin
-      WriteEvent(AValue);
-    end;
+      WriteEvent(value);
+    tkInterface:
+      WriteInterface(value.AsInterface);
 
 //    tkPointer,
 //    tkProcedure:
@@ -291,7 +299,7 @@ begin
     tkRecord:
     begin
 //      FCurrentNode.NodeValue := AValue.ToString;
-//      for LProperty in AValue.GetType().GetProperties() do
+//      for LProperty in AValue.GetType.GetProperties do
 //      begin
 //      end;
     end;

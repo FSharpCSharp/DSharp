@@ -64,6 +64,7 @@ type
     procedure InitColumns; override;
     procedure InitEvents; override;
     procedure InitProperties; override;
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure SetCurrentItem(const Value: TObject); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -208,6 +209,17 @@ begin
   end;
 end;
 
+procedure TTreeListPresenter.Notification(AComponent: TComponent;
+  Operation: TOperation);
+begin
+  inherited;
+  if Operation = opRemove then
+  begin
+    if AComponent = FTreeList then
+      FTreeList := nil;
+  end;
+end;
+
 procedure TTreeListPresenter.Refresh;
 begin
   if Assigned(FTreeList) and ([csLoading, csDesigning] * ComponentState = []) then
@@ -226,8 +238,21 @@ end;
 
 procedure TTreeListPresenter.SetTreeList(const Value: TcxVirtualTreeList);
 begin
-  FTreeList := Value;
-  InitControl();
+  if FTreeList <> Value then
+  begin
+    if Assigned(FTreeList) then
+    begin
+      FTreeList.RemoveFreeNotification(Self);
+    end;
+
+    FTreeList := Value;
+
+    if Assigned(FTreeList) then
+    begin
+      FTreeList.FreeNotification(Self);
+    end;
+    InitControl();
+  end;
 end;
 {$ENDIF}
 

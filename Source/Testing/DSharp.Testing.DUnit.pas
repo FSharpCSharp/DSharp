@@ -72,16 +72,15 @@ type
   end;
 
   TTestCase = class(TestFramework.TTestCase)
-  protected
+  private
     FMethod: TRttiMethod;
     FArgs: TArray<TValue>;
-    FExpectedException: ExpectedExceptionAttribute;
+    FExpect: ExpectedExceptionAttribute;
+  protected
     procedure Invoke(AMethod: TTestMethod); override;
   public
     constructor Create(Method: TRttiMethod; const Args: TArray<TValue>); reintroduce;
     function GetName: string; override;
-    property ExpectedException: ExpectedExceptionAttribute
-      read FExpectedException write FExpectedException;
     class function Suite: ITestSuite; override;
     class procedure RegisterTest(const SuitePath: string = '');
   end;
@@ -175,8 +174,8 @@ end;
 
 procedure TTestCase.Invoke(AMethod: TTestMethod);
 begin
-  if Assigned(FExpectedException) then
-    StartExpectingException(FExpectedException.ExceptionType);
+  if Assigned(FExpect) then
+    StartExpectingException(FExpect.ExceptionType);
   if Assigned(FMethod) then
   begin
     FMethod.Invoke(Self, FArgs);
@@ -185,8 +184,8 @@ begin
   begin
     inherited;
   end;
-  if Assigned(FExpectedException) then
-    StopExpectingException(FExpectedException.NoExceptionMessage);
+  if Assigned(FExpect) then
+    StopExpectingException(FExpect.NoExceptionMessage);
 end;
 
 class procedure TTestCase.RegisterTest(const SuitePath: string = '');
@@ -270,7 +269,7 @@ begin
           end;
 
           LTestCase := TTestCaseClassInherited(testClass).Create(LMethod, LArgs);
-          LTestCase.ExpectedException := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
+          LTestCase.FExpect := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
           LTestSuite.AddTest(LTestCase);
         end;
 
@@ -279,7 +278,7 @@ begin
       else
       begin
         LTestCase := TTestCase(testClass.Create(LMethod.Name));
-        LTestCase.ExpectedException := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
+        LTestCase.FExpect := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
         AddTest(LTestCase);
       end;
     end;

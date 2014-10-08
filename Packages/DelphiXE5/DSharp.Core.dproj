@@ -14,11 +14,14 @@
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
     </PropertyGroup>
+<<<<<<< HEAD
     <PropertyGroup Condition="('$(Platform)'=='Android' and '$(Base)'=='true') or '$(Base_Android)'!=''">
         <Base_Android>true</Base_Android>
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
+=======
+>>>>>>> develop
     <PropertyGroup Condition="('$(Platform)'=='OSX32' and '$(Base)'=='true') or '$(Base_OSX32)'!=''">
         <Base_OSX32>true</Base_OSX32>
         <CfgParent>Base</CfgParent>
@@ -98,10 +101,13 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
     </PropertyGroup>
+<<<<<<< HEAD
     <PropertyGroup Condition="'$(Base_Android)'!=''">
         <BT_BuildType>Debug</BT_BuildType>
         <VerInfo_Keys>package=com.embarcadero.$(MSBuildProjectName);label=$(MSBuildProjectName);versionCode=1;versionName=1.0.0;persistent=False;restoreAnyVersion=False;installLocation=preferExternal;largeHeap=False;theme=TitleBar</VerInfo_Keys>
     </PropertyGroup>
+=======
+>>>>>>> develop
     <PropertyGroup Condition="'$(Base_OSX32)'!=''">
         <VerInfo_Keys>CFBundleName=$(MSBuildProjectName);CFBundleDisplayName=$(MSBuildProjectName);CFBundleIdentifier=$(MSBuildProjectName);CFBundleVersion=1.0.0.0;CFBundlePackageType=APPL;CFBundleSignature=????;CFBundleAllowMixedLocalizations=YES;CFBundleExecutable=$(MSBuildProjectName);NSHighResolutionCapable=true</VerInfo_Keys>
         <DCC_DcuOutput>..\..\Library\DelphiXE5\OSX32</DCC_DcuOutput>
@@ -182,6 +188,10 @@
         <DCCReference Include="..\..\Source\Core\DSharp.Core.EventArgs.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
+<<<<<<< HEAD
+=======
+        <DCCReference Include="..\..\Source\Core\DSharp.Core.Extensions.pas"/>
+>>>>>>> develop
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Fibers.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Framework.pas"/>
         <DCCReference Include="..\..\Source\Core\DSharp.Core.Generics.pas"/>
@@ -202,8 +212,11 @@
         <DCCReference Include="..\..\Source\Core\ObjAutoPatch.pas"/>
         <DCCReference Include="..\..\Source\Core\PatchUtils.pas"/>
         <DCCReference Include="..\..\Source\Core\RttiPatch.pas"/>
+<<<<<<< HEAD
         <DCCReference Include="..\..\Source\Core\DSharp.Core.RegularExpressions.pas"/>
         <DCCReference Include="..\..\Source\Logging\DSharp.Logging.Debug.pas"/>
+=======
+>>>>>>> develop
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -251,6 +264,7 @@
                     <VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
                     <VersionInfoKeys Name="Comments"/>
                 </VersionInfoKeys>
+<<<<<<< HEAD
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k190.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp190.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
@@ -260,6 +274,10 @@
                 <Platform value="Android">False</Platform>
                 <Platform value="iOSDevice">False</Platform>
                 <Platform value="iOSSimulator">False</Platform>
+=======
+            </Delphi.Personality>
+            <Platforms>
+>>>>>>> develop
                 <Platform value="OSX32">True</Platform>
                 <Platform value="Win32">True</Platform>
                 <Platform value="Win64">True</Platform>

@@ -40,33 +40,55 @@ uses
   DSharp.Core.DataTemplates,
   DSharp.Core.Events,
   DSharp.Windows.ColumnDefinitions,
+  DSharp.Windows.CustomPresenter.Types,
   Menus,
   SysUtils;
+
+{$Include DSharp.Windows.CustomPresenter.Types.inc}
 
 type
   TCustomPresenter = class(TComponent, ICollectionViewNavigation,
     ICollectionView, INotifyPropertyChanged)
   private
     FAction: TBasicAction;
+    FAllowMove: Boolean;
+    FCheckSupport: TCheckSupport;
     FColumnDefinitions: IColumnDefinitions;
     FImageList: TCustomImageList;
     FNotifyPropertyChanged: INotifyPropertyChanged;
     FOnDoubleClick: TNotifyEvent;
+    FOnDragDrop: TDragDropEvent;
+    FOnDragOver: TDragOverEvent;
+    FOnDragBegin: TDragBeginEvent;
+    FOnSelectionChanged: TNotifyEvent;
+    FOnSelectionChanging: TSelectionChangingEvent;
     FPopupMenu: TPopupMenu;
+    FShowHeader: Boolean;
+    FSelectionMode: TSelectionMode;
     FUseColumnDefinitions: Boolean;
     FView: TCollectionView;
     procedure DoColumnDefinitionsChanged(Sender: TObject; const Item: TColumnDefinition;
       Action: TCollectionNotification);
     procedure ReadColumnDefinitions(Reader: TReader);
     procedure SetAction(const Value: TBasicAction);
+    procedure SetAllowMove(const Value: Boolean);
+    procedure SetCheckSupport(const Value: TCheckSupport);
     procedure SetColumnDefinitions(const Value: IColumnDefinitions);
     procedure SetImageList(const Value: TCustomImageList);
     procedure SetPopupMenu(const Value: TPopupMenu);
+    procedure SetSelectionMode(const Value: TSelectionMode);
+    procedure SetShowHeader(const Value: Boolean);
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
     procedure WriteColumnDefinitions(Writer: TWriter);
   protected
+    FCollectionUpdateLock: Integer;
     FUpdateCount: Integer;
+    procedure ApplyAllowMove; virtual;
+    procedure ApplyCheckSupport; virtual;
+    procedure ApplySelectionMode; virtual;
+    procedure ApplyShowHeader; virtual;
+    procedure DoFilterItem(const AItem: TObject; var AAccepted: Boolean); virtual;
     function GetCanMoveCurrentToNext: Boolean; virtual;
     function GetCanMoveCurrentToPrevious: Boolean; virtual;
     procedure DefineProperties(Filer: TFiler); override;
@@ -106,9 +128,20 @@ type
       implements ICollectionView, ICollectionViewNavigation;
   published
     property Action: TBasicAction read FAction write SetAction;
+    property AllowMove: Boolean read FAllowMove write SetAllowMove default True;
+    property CheckSupport: TCheckSupport read FCheckSupport write SetCheckSupport default csNone;
     property ImageList: TCustomImageList read FImageList write SetImageList;
     property OnDoubleClick: TNotifyEvent read FOnDoubleClick write FOnDoubleClick;
+    property OnDragBegin: TDragBeginEvent read FOnDragBegin write FOnDragBegin;
+    property OnDragDrop: TDragDropEvent read FOnDragDrop write FOnDragDrop;
+    property OnDragOver: TDragOverEvent read FOnDragOver write FOnDragOver;
+    property OnSelectionChanged: TNotifyEvent
+      read FOnSelectionChanged write FOnSelectionChanged;
+    property OnSelectionChanging: TSelectionChangingEvent
+      read FOnSelectionChanging write FOnSelectionChanging;
     property PopupMenu: TPopupMenu read FPopupMenu write SetPopupMenu;
+    property SelectionMode: TSelectionMode read FSelectionMode write SetSelectionMode default smSingle;
+    property ShowHeader: Boolean read FShowHeader write SetShowHeader default True;
     property UseColumnDefinitions: Boolean
       read FUseColumnDefinitions write FUseColumnDefinitions default True;
   end;
@@ -148,6 +181,8 @@ uses
 constructor TCustomPresenter.Create(AOwner: TComponent);
 begin
   inherited;
+  FAllowMove := True;
+  FShowHeader := True;
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
   FView := TCollectionViewPresenterAdapter.Create(Self);
 
@@ -167,9 +202,29 @@ begin
   inherited;
 end;
 
+procedure TCustomPresenter.ApplyAllowMove;
+begin
+  // implemented by descendants
+end;
+
+procedure TCustomPresenter.ApplyCheckSupport;
+begin
+  // implemented by descendants
+end;
+
 procedure TCustomPresenter.ApplyFilter;
 begin
+  // implemented by descendants
+end;
 
+procedure TCustomPresenter.ApplySelectionMode;
+begin
+  // implemented by descendants
+end;
+
+procedure TCustomPresenter.ApplyShowHeader;
+begin
+  // implemented by descendants
 end;
 
 procedure TCustomPresenter.BeginUpdate;
@@ -206,6 +261,25 @@ begin
   if Assigned(FOnDoubleClick) then
   begin
     FOnDoubleClick(Self);
+  end;
+end;
+
+procedure TCustomPresenter.DoFilterItem(const AItem: TObject;
+  var AAccepted: Boolean);
+var
+  i: Integer;
+begin
+  View.Filter.Invoke(AItem, AAccepted);
+
+  if Assigned(ColumnDefinitions) then
+  begin
+    for i := 0 to Pred(ColumnDefinitions.Count) do
+    begin
+      if Assigned(ColumnDefinitions[i].Filter) then
+      begin
+        AAccepted := AAccepted and not ColumnDefinitions[i].Filter(AItem);
+      end;
+    end;
   end;
 end;
 
@@ -367,6 +441,26 @@ begin
   end;
 end;
 
+procedure TCustomPresenter.SetAllowMove(const Value: Boolean);
+begin
+  if FAllowMove <> Value then
+  begin
+    FAllowMove := Value;
+    if not (csDesigning in ComponentState) then
+      ApplyAllowMove();
+  end;
+end;
+
+procedure TCustomPresenter.SetCheckSupport(const Value: TCheckSupport);
+begin
+  if FCheckSupport <> Value then
+  begin
+    FCheckSupport := Value;
+    if not (csDesigning in ComponentState) then
+      ApplyCheckSupport();
+  end;
+end;
+
 procedure TCustomPresenter.SetColumnDefinitions(
   const Value: IColumnDefinitions);
 begin
@@ -432,6 +526,26 @@ begin
     end;
 
     InitControl();
+  end;
+end;
+
+procedure TCustomPresenter.SetSelectionMode(const Value: TSelectionMode);
+begin
+  if FSelectionMode <> Value then
+  begin
+    FSelectionMode := Value;
+    if not (csDesigning in ComponentState) then
+      ApplySelectionMode();
+  end;
+end;
+
+procedure TCustomPresenter.SetShowHeader(const Value: Boolean);
+begin
+  if FShowHeader <> Value then
+  begin
+    FShowHeader := Value;
+    if not (csDesigning in ComponentState) then
+      ApplyShowHeader();
   end;
 end;
 

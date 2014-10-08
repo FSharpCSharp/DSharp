@@ -31,6 +31,8 @@ unit DSharp.Core.VirtualClass;
 
 interface
 
+{$OVERFLOWCHECKS OFF}
+
 uses
   DSharp.Core.MethodIntercept,
   Rtti,
@@ -101,6 +103,9 @@ type
 
 implementation
 
+uses
+  Windows;
+
 { TVirtualClass }
 
 constructor TVirtualClass.Create(ClassType: TClass);
@@ -153,6 +158,8 @@ begin
   FDestroyStub[8] := $E9;
   PNativeUInt(@FDestroyStub[9])^ := NativeUInt(@TVirtualClass.Virtual_Destroy) - NativeUInt(@FDestroyStub[8]) - 5;
   FClassData.VirtualMethods.Destroy := @FDestroyStub;
+  VirtualProtect(@FDestroyStub, SizeOf(FDestroyStub), PAGE_EXECUTE_READWRITE, @i);
+  FlushInstructionCache(GetCurrentProcess, @FDestroyStub, SizeOf(FDestroyStub));
 end;
 
 //constructor TVirtualClass.Create(ClassType: TClass;

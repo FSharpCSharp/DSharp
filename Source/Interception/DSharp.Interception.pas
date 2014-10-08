@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2012, Stefan Glienke
+  Copyright (c) 2012-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -65,13 +65,9 @@ type
     Input: IMethodInvocation;
     GetNext: TFunc<TInvokeHandlerDelegate>): IMethodReturn;
 
-  IInvokeHandlerDelegate = interface(TInvokeHandlerDelegate)
-    ['{B647E6CE-49A9-434B-92B9-7EC1BE20A654}']
-  end;
-
   ICallHandler = interface
     ['{E583D6ED-82F2-4AC8-B899-C70ED56BCBE0}']
-    function Invoke(Input: IMethodInvocation;
+    function Invoke(Input: IMethodInvocation; // DO NOT ADD ANY METHOD BEFORE THIS ONE
       GetNext: TFunc<TInvokeHandlerDelegate>): IMethodReturn;
     function GetOrder: Integer;
     procedure SetOrder(const Value: Integer);
@@ -82,13 +78,9 @@ type
     Input: IMethodInvocation;
     GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
 
-  IInvokeInterceptionBehaviorDelegate = interface(TInvokeInterceptionBehaviorDelegate)
-    ['{5C26AD28-61E5-41EC-8975-94AB058002FA}']
-  end;
-
   IInterceptionBehavior = interface
     ['{B55F8EC2-EE17-4907-967F-B6BD08004A6A}']
-    function Invoke(Input: IMethodInvocation;
+    function Invoke(Input: IMethodInvocation; // DO NOT ADD ANY METHOD BEFORE THIS ONE
       GetNext: TFunc<TInvokeInterceptionBehaviorDelegate>): IMethodReturn;
 //    function GetRequiredInterfaces: TArray<PTypeInfo>;
     function WillExecute: Boolean;
@@ -176,6 +168,8 @@ type
       Interceptor: IInstanceInterceptor = nil): T; overload; static;
   end;
 
+  EInterceptionException = class(Exception);
+
 implementation
 
 uses
@@ -216,21 +210,15 @@ var
   i: Integer;
 begin
   if not Assigned(Interceptor) then
-  begin
     Interceptor := CreateInterceptor(InterceptedType);
-  end;
 
   if not Interceptor.CanIntercept(InterceptedType) then
-    raise EArgumentException.CreateResFmt(@SInterceptionNotSupported, [InterceptedType.Name]);
+    raise EInterceptionException.CreateResFmt(@SInterceptionNotSupported, [InterceptedType.Name]);
 
   Result := Interceptor.CreateProxy(InterceptedType, Target);
   for i := 0 to High(InterceptionBehaviors) do
-  begin
     if InterceptionBehaviors[i].WillExecute then
-    begin
       Result.AddInterceptionBehavior(InterceptionBehaviors[i]);
-    end;
-  end;
 end;
 
 class function TIntercept.ThroughProxy(const Target: TValue;
@@ -253,17 +241,17 @@ var
   proxy: IInterceptingProxy;
   instance: Pointer;
 begin
-  if not Target.IsEmpty then
-  begin
-    instance := PPointer(Target.GetReferenceToRawData)^;
-  end
+  if not (TypeInfo.Kind in [tkClass, tkInterface]) then
+    raise EInterceptionException.CreateResFmt(@SInterceptionNotSupported, [TypeInfo.Name]);
+
+  if Target.IsEmpty then
+    instance := nil
   else
-  begin
-    instance := nil;
-  end;
+    instance := PPointer(Target.GetReferenceToRawData)^;
+
   proxy := ThroughProxy(TypeInfo, instance, Interceptor, InterceptionBehaviors);
   case TypeInfo.Kind of
-    tkClass: instance := (proxy as TClassProxy).Instance;
+    tkClass: instance := (proxy as TClassProxy).Proxy;
     tkInterface:
     begin
       proxy.QueryInterface(GetTypeData(TypeInfo).Guid, instance);
@@ -297,9 +285,7 @@ class function TIntercept.ThroughProxyByAttributes(const Target: TValue;
   TypeInfo: PTypeInfo; Interceptor: IInstanceInterceptor): TValue;
 begin
   if not Assigned(Interceptor) then
-  begin
     Interceptor := CreateInterceptor(TypeInfo);
-  end;
 
   Result := ThroughProxy(Target, TypeInfo, Interceptor, [
     TPolicyInjectionBehavior.Create(TCurrentInterceptionRequest.Create(

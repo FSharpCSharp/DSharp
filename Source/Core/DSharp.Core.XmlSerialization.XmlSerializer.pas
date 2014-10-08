@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2011-2012, Stefan Glienke
+  Copyright (c) 2011-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,48 +32,96 @@ unit DSharp.Core.XmlSerialization.XmlSerializer;
 interface
 
 uses
-  DSharp.Core.XmlSerialization;
+  DSharp.Core.XmlSerialization,
+  TypInfo;
 
 type
   TXmlSerializer = class(TInterfacedObject, IXmlSerializer)
   public
-    function Deserialize(AReader: IXmlReader): TObject;
-    procedure Serialize(AObject: TObject; AWriter: IXmlWriter);
+    function Deserialize(reader: IXmlReader): TObject; virtual;
+    procedure Serialize(instance: TObject; writer: IXmlWriter); virtual;
+  end;
+
+  TXmlSerializer<T: class, constructor> = class(TXmlSerializer)
+  private
+    function GetTypeName: string;
+  public
+    function Deserialize(reader: IXmlReader): TObject; override;
+    procedure Serialize(instance: TObject; writer: IXmlWriter); override;
   end;
 
 implementation
 
 uses
+  DSharp.Core.Reflection,
   Rtti;
 
 { TXmlSerializer }
 
-function TXmlSerializer.Deserialize(AReader: IXmlReader): TObject;
+function TXmlSerializer.Deserialize(reader: IXmlReader): TObject;
 var
-  LValue: TValue;
+  value: TValue;
 begin
-  AReader.ReadStartElement();
+  reader.ReadStartElement;
 
-  AReader.ReadValue(LValue);
-  if LValue.IsObject then
-  begin
-    Result := LValue.AsObject();
-  end
+  reader.ReadValue(value);
+  if value.IsObject then
+    Result := value.AsObject
   else
-  begin
     Result := nil;
-  end;
 
-  AReader.ReadEndElement();
+  reader.ReadEndElement;
 end;
 
-procedure TXmlSerializer.Serialize(AObject: TObject; AWriter: IXmlWriter);
+procedure TXmlSerializer.Serialize(instance: TObject; writer: IXmlWriter);
 begin
-  AWriter.WriteStartElement(AObject.ClassName);
+  writer.WriteStartElement(instance.ClassName);
+  writer.WriteValue(TValue.From<TObject>(instance));
+  writer.WriteEndElement(instance.ClassName);
+end;
 
-  AWriter.WriteValue(TValue.From<TObject>(AObject));
+{ TXmlSerializer<T> }
 
-  AWriter.WriteEndElement(AObject.ClassName);
+function TXmlSerializer<T>.Deserialize(reader: IXmlReader): TObject;
+var
+  value: TValue;
+begin
+  reader.ReadStartElement;
+  Result := T.Create;
+  value := TValue.From<T>(Result);
+  reader.ReadValue(value);
+  reader.ReadEndElement;
+end;
+
+function TXmlSerializer<T>.GetTypeName: string;
+var
+  rttiType: TRttiType;
+  rootAttribute: XmlRootAttribute;
+begin
+  rttiType := GetRttiType(TypeInfo(T));
+  if rttiType.TryGetCustomAttribute<XmlRootAttribute>(rootAttribute) then
+    Exit(rootAttribute.ElementName);
+  if rttiType.IsPublicType then
+    Result := rttiType.QualifiedName
+  else
+    Result := rttiType.Name;
+  if rttiType.IsGenericTypeDefinition then
+  begin
+    Result := Copy(Result, 1, Pos('<', Result) - 1) + 'Of';
+    // keep it simple for now -> will move to reflection in the future
+    for rttiType in rttiType.GetGenericArguments do
+      Result := Result + rttiType.Name;
+  end;
+end;
+
+procedure TXmlSerializer<T>.Serialize(instance: TObject; writer: IXmlWriter);
+var
+  typeName: string;
+begin
+  typeName := GetTypeName;
+  writer.WriteStartElement(typeName);
+  writer.WriteValue(TValue.From<T>(instance));
+  writer.WriteEndElement(typeName);
 end;
 
 end.

@@ -1,5 +1,5 @@
 (*
-  Copyright (c) 2012, Stefan Glienke
+  Copyright (c) 2012-2014, Stefan Glienke
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -95,7 +95,7 @@ begin
         Inc(handlerIndex);
         if handlerIndex < FHandlers.Count then
         begin
-          Result := FHandlers[handlerIndex] as IInvokeHandlerDelegate;
+          Result := TInvokeHandlerDelegate(FHandlers[handlerIndex]);
         end
         else
         begin

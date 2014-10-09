@@ -4,6 +4,7 @@ interface
 
 uses
   Classes,
+  FMX.Controls.Model,
   FMX.StdCtrls,
   FMX.Edit,
   FMX.Memo,
@@ -31,9 +32,14 @@ type
     property NotifyPropertyChanged: INotifyPropertyChanged
       read FNotifyPropertyChanged implements INotifyPropertyChanged;
   protected
-    procedure DoChangeTracking; override;
+    function DefineModelClass: TDataModelClass; override;
   public
     constructor Create(AOwner: TComponent); override;
+  end;
+
+  TNotifyCustomEditModel = class(FMX.Edit.TCustomEditModel)
+  protected
+    procedure DoChangeTracking; override;
   end;
 
   TGroupBox = class(FMX.StdCtrls.TGroupBox, INotifyPropertyChanged)
@@ -112,6 +118,7 @@ type
 implementation
 
 uses
+  SysUtils,
   DSharp.Bindings.CollectionView.Adapters;
 
 { TCheckBox }
@@ -137,10 +144,9 @@ begin
   FNotifyPropertyChanged := TNotifyPropertyChanged.Create(Self);
 end;
 
-procedure TEdit.DoChangeTracking;
+function TEdit.DefineModelClass: TDataModelClass;
 begin
-  inherited;
-  NotifyPropertyChanged.DoPropertyChanged('Text');
+  Result := TNotifyCustomEditModel;
 end;
 
 { TGroupBox }
@@ -226,6 +232,17 @@ procedure TTrackBar.DoChanged;
 begin
   inherited;
   NotifyPropertyChanged.DoPropertyChanged('Value');
+end;
+
+procedure TNotifyCustomEditModel.DoChangeTracking;
+var
+  LNotifyPropertyChanged: INotifyPropertyChanged;
+begin
+  inherited;
+  if Supports(Owner, INotifyPropertyChanged, LNotifyPropertyChanged) then
+  begin
+    LNotifyPropertyChanged.DoPropertyChanged('Text');
+  end;
 end;
 
 end.

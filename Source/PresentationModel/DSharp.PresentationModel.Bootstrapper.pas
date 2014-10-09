@@ -138,6 +138,7 @@ implementation
 uses
   // DSharp.Aspects.Weaver,
   Spring.Reflection,
+  Spring.Reflection.Activator,
   DSharp.PresentationModel.Coroutine,
   DSharp.PresentationModel.CoroutineExecutionContext,
   DSharp.PresentationModel.CoroutineExecutionContextIntf,

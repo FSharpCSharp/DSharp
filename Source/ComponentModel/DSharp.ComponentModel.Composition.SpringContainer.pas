@@ -42,6 +42,7 @@ uses
   Generics.Collections,
   Rtti,
   Spring.Container,
+  Spring.Container.Common,
   Spring.Container.Core,
   Spring.Container.Injection,
   Spring.Container.Registration,
@@ -59,7 +60,7 @@ type
     function CreatePropertyInjectionDelegate(const propertyName: string): TFunc<TValue>; overload;
     function CreatePropertyInjectionDelegate(rttiProperty: TRttiProperty): TFunc<TValue>; overload;
     procedure ImportMember(Model: TComponentModel; Member: TRttiMember);
-    function RegisterClass(ClassType: TRttiType): TRegistration;
+    function RegisterClass(ClassType: TRttiType): IRegistration;
     procedure RegisterClassImplementingInterface(ClassType: TRttiInstanceType);
     procedure RegisterClassInheritedExport(ClassType: TRttiInstanceType);
   public
@@ -84,9 +85,9 @@ type
     fDelegate: TFunc<TValue>;
   protected
     procedure DoInject(const instance: TValue; const arguments: array of TValue); override;
-    procedure InitializeDependencies(out dependencies: TArray<TRttiType>); override;
+    procedure InitializeDependencies(out dependencies: TArray<TDependencyModel>); override;
   public
-    constructor Create(model: TComponentModel; const targetName: string;
+    constructor Create(const targetName: string;
       delegate: TFunc<TValue>);
   end;
 
@@ -95,9 +96,9 @@ type
     fDelegate: TFunc<TValue>;
   protected
     procedure DoInject(const instance: TValue; const arguments: array of TValue); override;
-    procedure InitializeDependencies(out dependencies: TArray<TRttiType>); override;
+    procedure InitializeDependencies(out dependencies: TArray<TDependencyModel>); override;
   public
-    constructor Create(model: TComponentModel; const targetName: string;
+    constructor Create(const targetName: string;
       delegate: TFunc<TValue>);
   end;
 
@@ -192,17 +193,17 @@ begin
     begin
       LValue := ResolveLazy(Member.RttiType);
       if Member is TRttiProperty then
-        Model.InjectProperty(Member.Name, LValue)
+        Injector.InjectProperty(Model, Member.Name, LValue)
       else if Member is TRttiField then
-        Model.InjectField(Member.Name, LValue);
+        Injector.InjectField(Model, Member.Name, LValue);
     end else
     if Member.RttiType.IsGenericTypeOf('Lazy') then
     begin
       LValue := ResolveLazy(Member.RttiType);
       if Member is TRttiProperty then
-        Model.InjectProperty(Member.Name, LValue)
+        Injector.InjectProperty(Model, Member.Name, LValue)
       else if Member is TRttiField then
-        Model.InjectField(Member.Name, LValue);
+        Injector.InjectField(Model, Member.Name, LValue);
     end else
     if Member.RttiType.IsGenericTypeOf('TArray') then
     begin
@@ -211,14 +212,14 @@ begin
         LValue := TValue.FromArray(Member.RttiType.Handle,
           ResolveAllLazy(Member.RttiType.GetGenericArguments[0]));
         if Member is TRttiProperty then
-          Model.InjectProperty(Member.Name, LValue)
+          Injector.InjectProperty(Model, Member.Name, LValue)
         else if Member is TRttiField then
-          Model.InjectField(Member.Name, LValue);
+          Injector.InjectField(Model, Member.Name, LValue);
       end else
       begin
         if Member is TRttiProperty then
         begin
-          LInjection := TPropertyInjectionWithDelegate.Create(Model, Member.Name,
+          LInjection := TPropertyInjectionWithDelegate.Create(Member.Name,
             function: TValue
             begin
               Result := TValue.FromArray(Member.RttiType.Handle,
@@ -228,7 +229,7 @@ begin
           Model.PropertyInjections.Add(LInjection);
         end else if Member is TRttiField then
         begin
-          LInjection := TFieldInjectionWithDelegate.Create(Model, Member.Name,
+          LInjection := TFieldInjectionWithDelegate.Create(Member.Name,
             function: TValue
             begin
               Result := TValue.FromArray(Member.RttiType.Handle,
@@ -244,13 +245,13 @@ begin
       begin
         if Member is TRttiProperty then
         begin
-          LInjection := TPropertyInjectionWithDelegate.Create(Model, Member.Name,
+          LInjection := TPropertyInjectionWithDelegate.Create(Member.Name,
             CreatePropertyInjectionDelegate(LImportAttribute.Name));
           LInjection.Initialize(Member);
           Model.PropertyInjections.Add(LInjection);
         end else if Member is TRttiField then
         begin
-          LInjection := TFieldInjectionWithDelegate.Create(Model, Member.Name,
+          LInjection := TFieldInjectionWithDelegate.Create(Member.Name,
             CreateFieldInjectionDelegate(LImportAttribute.Name));
           LInjection.Initialize(Member);
           Model.FieldInjections.Add(LInjection);
@@ -259,13 +260,13 @@ begin
       begin
         if Member is TRttiProperty then
         begin
-          LInjection := TPropertyInjectionWithDelegate.Create(Model, Member.Name,
+          LInjection := TPropertyInjectionWithDelegate.Create(Member.Name,
             CreatePropertyInjectionDelegate(TRttiProperty(Member)));
           LInjection.Initialize(Member);
           Model.PropertyInjections.Add(LInjection);
         end else if Member is TRttiField then
         begin
-          LInjection := TFieldInjectionWithDelegate.Create(Model, Member.Name,
+          LInjection := TFieldInjectionWithDelegate.Create(Member.Name,
             CreateFieldInjectionDelegate(TRttiField(Member)));
           LInjection.Initialize(Member);
           Model.FieldInjections.Add(LInjection);
@@ -308,7 +309,7 @@ begin
         RegisterClassImplementingInterface(TRttiInstanceType(LType));
         RegisterClassInheritedExport(TRttiInstanceType(LType));
 
-        LModel := ComponentRegistry.FindOne(LType.Handle);
+        LModel := Registry.FindOne(LType.Handle);
 
         if Assigned(LModel) then
         begin
@@ -347,7 +348,7 @@ begin
   end;
 end;
 
-function TSpringContainer.RegisterClass(ClassType: TRttiType): TRegistration;
+function TSpringContainer.RegisterClass(ClassType: TRttiType): IRegistration;
 var
   LPartCreationPolicyAttribute: PartCreationPolicyAttribute;
 begin
@@ -366,7 +367,7 @@ var
   LInterfaceTable: PInterfaceTable;
   LInterfaceType: TRttiInterfaceType;
   LParentType: TRttiInstanceType;
-  LRegistration: TRegistration;
+  LRegistration: IRegistration;
 begin
   LParentType := ClassType;
   while Assigned(LParentType) do
@@ -378,7 +379,7 @@ begin
       begin
         if FInterfaces.TryGetValue(LInterfaceTable.Entries[i].IID, LInterfaceType) then
         begin
-          if ComponentRegistry.FindOne(ClassType.Handle) = nil then
+          if Registry.FindOne(ClassType.Handle) = nil then
           begin
             LRegistration := RegisterClass(ClassType);
 
@@ -399,14 +400,14 @@ procedure TSpringContainer.RegisterClassInheritedExport(ClassType: TRttiInstance
 var
   LInheritedExportAttribute: InheritedExportAttribute;
   LParentType: TRttiInstanceType;
-  LRegistration: TRegistration;
+  LRegistration: IRegistration;
 begin
   LParentType := ClassType.BaseType;
   while Assigned(LParentType) do
   begin
     if LParentType.IsDefined<InheritedExportAttribute> then
     begin
-      if ComponentRegistry.FindOne(ClassType.Handle) = nil then
+      if Registry.FindOne(ClassType.Handle) = nil then
       begin
         LRegistration := RegisterType(ClassType.Handle);
 
@@ -452,7 +453,7 @@ var
   Index: Integer;
   TempResult: TArray<TValue>;
 begin
-  Models := GetComponentRegistry.FindAll(LazyType.Handle);
+  Models := Registry.FindAll(LazyType.Handle);
   SetLength(TempResult, Models.Count);
   Index := 0;
   for Model in Models do
@@ -545,10 +546,10 @@ end;
 
 { TPropertyInjectionWithDelegate }
 
-constructor TPropertyInjectionWithDelegate.Create(model: TComponentModel;
-  const targetName: string; delegate: TFunc<TValue>);
+constructor TPropertyInjectionWithDelegate.Create(const targetName: string;
+    delegate: TFunc<TValue>);
 begin
-  inherited Create(model, targetName);
+  inherited Create(targetName);
   fDelegate := delegate;
 end;
 
@@ -559,17 +560,17 @@ begin
 end;
 
 procedure TPropertyInjectionWithDelegate.InitializeDependencies(
-  out dependencies: TArray<TRttiType>);
+  out dependencies: TArray<TDependencyModel>);
 begin
   // no dependencies to initialize
 end;
 
 { TFieldInjectionWithDelegate }
 
-constructor TFieldInjectionWithDelegate.Create(model: TComponentModel;
-  const targetName: string; delegate: TFunc<TValue>);
+constructor TFieldInjectionWithDelegate.Create(const targetName: string;
+    delegate: TFunc<TValue>);
 begin
-  inherited Create(model, targetName);
+  inherited Create(targetName);
   fDelegate := delegate;
 end;
 
@@ -580,7 +581,7 @@ begin
 end;
 
 procedure TFieldInjectionWithDelegate.InitializeDependencies(
-  out dependencies: TArray<TRttiType>);
+  out dependencies: TArray<TDependencyModel>);
 begin
   // no dependencies to initialize
 end;

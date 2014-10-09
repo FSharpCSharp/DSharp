@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{CCA58CDB-8378-4AE3-A6CA-81C9C9E9BE94}</ProjectGuid>
-        <ProjectVersion>15.3</ProjectVersion>
+        <ProjectVersion>16.0</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <MainSource>GameLibrary.dpr</MainSource>
         <Base>True</Base>
@@ -31,6 +31,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
+        <SanitizedProjectName>GameLibrary</SanitizedProjectName>
         <VCL_Custom_Styles>&quot;Aqua Graphite|VCLSTYLE|$(PUBLIC)\Documents\RAD Studio\12.0\Styles\AquaGraphite.vsf&quot;</VCL_Custom_Styles>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;WinAPI;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1060</VerInfo_Locale>

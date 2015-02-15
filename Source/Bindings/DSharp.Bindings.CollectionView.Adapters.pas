@@ -82,6 +82,7 @@ type
 implementation
 
 uses
+  Spring,
   DSharp.Core.DataTemplates,
   DSharp.Core.Reflection,
   Rtti,

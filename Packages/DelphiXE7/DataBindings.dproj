@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{42AA9CF6-ECBC-4A29-903B-9C21946929EF}</ProjectGuid>
         <MainSource>DataBindings.dpk</MainSource>
-        <ProjectVersion>16.0</ProjectVersion>
+        <ProjectVersion>16.1</ProjectVersion>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <AppType>Package</AppType>

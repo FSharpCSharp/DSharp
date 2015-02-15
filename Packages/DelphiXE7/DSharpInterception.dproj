@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{5092D843-A476-45C0-B471-9CED34F5A73C}</ProjectGuid>
         <MainSource>DSharpInterception.dpk</MainSource>
-        <ProjectVersion>16.0</ProjectVersion>
+        <ProjectVersion>16.1</ProjectVersion>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <AppType>Package</AppType>

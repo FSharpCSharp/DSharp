@@ -37,7 +37,7 @@ interface
 
 uses
   Spring.Collections,
-  Spring.Collections.Extensions,
+  Spring.Collections.Base,
   Rtti,
   SysUtils;
 

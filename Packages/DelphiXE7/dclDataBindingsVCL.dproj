@@ -2,7 +2,7 @@
     <PropertyGroup>
         <ProjectGuid>{F4D88F43-58D1-4D74-8C0A-DEBC2231482D}</ProjectGuid>
         <MainSource>dclDataBindingsVCL.dpk</MainSource>
-        <ProjectVersion>16.0</ProjectVersion>
+        <ProjectVersion>16.1</ProjectVersion>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <AppType>Package</AppType>

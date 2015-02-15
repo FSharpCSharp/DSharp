@@ -309,7 +309,7 @@ begin
     if Supports(Collection.Owner, ICollectionView, LCollectionView) then
     begin
       // trigger filtering
-       LCollectionView.Filter.OnChanged(Self);
+      LCollectionView.Filter.OnChanged(Self);
     end;
   end;
 end;

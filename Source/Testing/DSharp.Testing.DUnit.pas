@@ -32,6 +32,7 @@ unit DSharp.Testing.DUnit;
 interface
 
 uses
+  Classes,
   Rtti,
   SysUtils,
   TestFramework;
@@ -75,14 +76,19 @@ type
   private
     FMethod: TRttiMethod;
     FArgs: TArray<TValue>;
-    FExpect: ExpectedExceptionAttribute;
+    FExpectedException: ExpectedExceptionAttribute;
+    class var FOnInvoke: TNotifyEvent;
   protected
     procedure Invoke(AMethod: TTestMethod); override;
   public
     constructor Create(Method: TRttiMethod; const Args: TArray<TValue>); reintroduce;
     function GetName: string; override;
+    property ExpectedException: ExpectedExceptionAttribute
+      read FExpectedException write FExpectedException;
     class function Suite: ITestSuite; override;
     class procedure RegisterTest(const SuitePath: string = '');
+
+    class property OnInvoke: TNotifyEvent read FOnInvoke write FOnInvoke;
   end;
 
   TTestSuite = class(TestFramework.TTestSuite)
@@ -164,7 +170,9 @@ function TTestCase.GetName: string;
 begin
   if Assigned(FMethod) then
   begin
-    Result := FMethod.Name + '(' + TValue.ToString(FArgs) + ')';
+    Result := FMethod.Name;
+    if Length(FArgs) > 0 then
+      Result := Result + '(' + TValue.ToString(FArgs) + ')';
   end
   else
   begin
@@ -174,8 +182,10 @@ end;
 
 procedure TTestCase.Invoke(AMethod: TTestMethod);
 begin
-  if Assigned(FExpect) then
-    StartExpectingException(FExpect.ExceptionType);
+  if Assigned(FOnInvoke) then
+    FOnInvoke(Self);
+  if Assigned(FExpectedException) then
+    StartExpectingException(FExpectedException.ExceptionType);
   if Assigned(FMethod) then
   begin
     FMethod.Invoke(Self, FArgs);
@@ -184,8 +194,8 @@ begin
   begin
     inherited;
   end;
-  if Assigned(FExpect) then
-    StopExpectingException(FExpect.NoExceptionMessage);
+  if Assigned(FExpectedException) then
+    StopExpectingException(FExpectedException.NoExceptionMessage);
 end;
 
 class procedure TTestCase.RegisterTest(const SuitePath: string = '');
@@ -255,31 +265,29 @@ begin
       LParameters := LMethod.GetParameters;
       SetLength(LArgs, Length(LParameters));
 
-      if Length(LParameters) > 0 then
+      LTestSuite := TTestSuite.Create(LMethod.Name);
+      AddTest(LTestSuite);
+
+      for LAttribute in LMethod.GetCustomAttributes<TestCaseAttribute> do
       begin
-        LTestSuite := TTestSuite.Create(LMethod.Name);
-        AddTest(LTestSuite);
-
-        for LAttribute in LMethod.GetCustomAttributes<TestCaseAttribute> do
+        for i := 0 to Pred(Length(LParameters)) do
         begin
-          for i := 0 to Pred(Length(LParameters)) do
-          begin
-            LAttribute.Values[i].TryConvert(
-              LParameters[i].ParamType.Handle, LArgs[i]);
-          end;
-
-          LTestCase := TTestCaseClassInherited(testClass).Create(LMethod, LArgs);
-          LTestCase.FExpect := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
-          LTestSuite.AddTest(LTestCase);
+          LAttribute.Values[i].TryConvert(
+            LParameters[i].ParamType.Handle, LArgs[i]);
         end;
 
-        InternalInvoke(0);
-      end
+        LTestCase := TTestCaseClassInherited(testClass).Create(LMethod, LArgs);
+        LTestCase.ExpectedException := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
+        LTestSuite.AddTest(LTestCase);
+      end;
+
+      if Length(LParameters) > 0 then
+        InternalInvoke(0)
       else
       begin
-        LTestCase := TTestCase(testClass.Create(LMethod.Name));
-        LTestCase.FExpect := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
-        AddTest(LTestCase);
+        LTestCase := TTestCaseClassInherited(testClass).Create(LMethod, nil);
+        LTestCase.ExpectedException := LMethod.GetCustomAttribute<ExpectedExceptionAttribute>;
+        LTestSuite.AddTest(LTestCase);
       end;
     end;
   end;

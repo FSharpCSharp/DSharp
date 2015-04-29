@@ -32,6 +32,7 @@ unit DSharp.Testing.Mock.Internals;
 interface
 
 uses
+  Classes,
   DSharp.Core.Times,
   DSharp.Interception,
   DSharp.Testing.Mock.Expectation,
@@ -53,6 +54,7 @@ type
     FMode: TMockMode;
     FState: TMockState;
     FTypeInfo: PTypeInfo;
+    class var FOnVerify: TNotifyEvent;
   protected
     function GetMode: TMockMode;
     procedure SetExpectedTimes(const Value: Times);
@@ -70,6 +72,8 @@ type
       read FCurrentExpectation write FCurrentExpectation;
     property Mode: TMockMode read GetMode write SetMode;
     property State: TMockState read FState write FState;
+
+    class property OnVerify: TNotifyEvent read FOnVerify write FOnVerify;
   end;
 
   TMock<T> = class(TMock, IMock<T>, ISetup<T>,
@@ -209,13 +213,12 @@ procedure TMock.Verify;
 var
   LExpectation: TExpectation;
 begin
+  if Assigned(FOnVerify) then
+    FOnVerify(Self);
+
   for LExpectation in FExpectations do
-  begin
     if not LExpectation.IsSatisfied then
-    begin
       raise EMockException.CreateFmt(CUnperformedExpectation, [LExpectation.ToString]);
-    end;
-  end;
 end;
 
 { TMock<T> }

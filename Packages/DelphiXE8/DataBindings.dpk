@@ -1,0 +1,49 @@
+package DataBindings;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'DSharp data binding runtime package'}
+{$LIBSUFFIX '220'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  xmlrtl,
+  DSharp.Core;
+
+contains
+  DSharp.Bindings in '..\..\Source\Bindings\DSharp.Bindings.pas',
+  DSharp.Bindings.Collections in '..\..\Source\Bindings\DSharp.Bindings.Collections.pas',
+  DSharp.Bindings.CollectionView in '..\..\Source\Bindings\DSharp.Bindings.CollectionView.pas',
+  DSharp.Bindings.CollectionView.Adapters in '..\..\Source\Bindings\DSharp.Bindings.CollectionView.Adapters.pas',
+  DSharp.Bindings.Exceptions in '..\..\Source\Bindings\DSharp.Bindings.Exceptions.pas',
+  DSharp.Bindings.Notifications in '..\..\Source\Bindings\DSharp.Bindings.Notifications.pas',
+  DSharp.Bindings.Validations in '..\..\Source\Bindings\DSharp.Bindings.Validations.pas',
+  DSharp.Collections.ObservableCollection in '..\..\Source\Collections\DSharp.Collections.ObservableCollection.pas',
+  DSharp.Core.PropertyChangedBase in '..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas',
+  DSharp.Core.XNode in '..\..\Source\Core\DSharp.Core.XNode.pas';
+
+end.

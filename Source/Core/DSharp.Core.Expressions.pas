@@ -529,9 +529,10 @@ type
 implementation
 
 uses
-  DSharp.Core.Reflection,
   Generics.Collections,
+  Spring,
   Spring.Collections,
+  DSharp.Core.Reflection,
   StrUtils,
   TypInfo;
 

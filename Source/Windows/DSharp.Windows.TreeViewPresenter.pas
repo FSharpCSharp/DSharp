@@ -42,6 +42,11 @@ uses
   DSharp.Windows.ColumnDefinitions,
   DSharp.Windows.CustomPresenter,
   DSharp.Windows.CustomPresenter.Types,
+{$IF CompilerVersion < 23}
+  ImgList,
+{$ELSE}
+  UITypes,
+{$IFEND}
   Menus,
   Spring,
   Spring.Collections,
@@ -108,7 +113,7 @@ type
       var HintText: string);
     procedure DoGetImageIndex(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Kind: TVTImageKind; Column: TColumnIndex; var Ghosted: Boolean;
-      var ImageIndex: Integer);
+      var ImageIndex: TImageIndex);
     procedure DoGetText(Sender: TBaseVirtualTree; Node: PVirtualNode;
       Column: TColumnIndex; TextType: TVSTTextType;
       var CellText: string);
@@ -942,7 +947,7 @@ end;
 
 procedure TTreeViewPresenter.DoGetImageIndex(Sender: TBaseVirtualTree;
   Node: PVirtualNode; Kind: TVTImageKind; Column: TColumnIndex;
-  var Ghosted: Boolean; var ImageIndex: Integer);
+  var Ghosted: Boolean; var ImageIndex: TImageIndex);
 var
   LItem: TObject;
   LItemTemplate: IDataTemplate;

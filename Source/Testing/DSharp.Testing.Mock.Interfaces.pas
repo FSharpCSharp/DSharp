@@ -73,7 +73,14 @@ type
     function WillReturn(const Value: TValue): IExpectInSequence<T>;
   end;
 
+  IMock = interface
+    ['{B11C9484-0AC0-4430-8FE6-5E9B4FB2281A}']
+    function GetInstance: TValue;
+    property Instance: TValue read GetInstance;
+  end;
+
   IMock<T> = interface
+    ['{B7EA4FD6-51F2-495A-A0B6-3A52852F2FBC}']
     function GetInstance: T;
     function GetMode: TMockMode;
     procedure SetMode(const Value: TMockMode);

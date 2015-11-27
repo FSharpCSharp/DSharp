@@ -46,7 +46,7 @@ type
   TMockState = (msDefining, msExecuting);
   TMockType = (mtUndefined, mtObject, mtInterface);
 
-  TMock = class(TInterfacedObject)
+  TMock = class(TInterfacedObject, IMock)
   private
     FCurrentExpectation: TExpectation;
     FCurrentSequence: ISequence;
@@ -54,13 +54,15 @@ type
     FMode: TMockMode;
     FState: TMockState;
     FTypeInfo: PTypeInfo;
+    FProxy: TValue;
     class var FOnVerify: TNotifyEvent;
+    function GetInstance: TValue;
   protected
     function GetMode: TMockMode;
     procedure SetExpectedTimes(const Value: Times);
     procedure SetMode(const Value: TMockMode);
   public
-    constructor Create;
+    constructor Create(typeInfo: PTypeInfo);
     destructor Destroy; override;
 
     function HasExpectation(Method: TRttiMethod): Boolean;
@@ -79,7 +81,6 @@ type
   TMock<T> = class(TMock, IMock<T>, ISetup<T>,
     IExpect<T>, IExpectInSequence<T>, IWhen<T>)
   private
-    FProxy: T;
     function GetInstance: T;
     function Setup: ISetup<T>;
   public
@@ -132,9 +133,12 @@ const
 
 { TMock }
 
-constructor TMock.Create;
+constructor TMock.Create(typeInfo: PTypeInfo);
 begin
+  inherited Create;
   FExpectations := TObjectList<TExpectation>.Create(True);
+  FTypeInfo := typeInfo;
+  FProxy := TIntercept.ThroughProxy(FProxy, fTypeInfo, nil, [TMockBehavior.Create(Self)]);
   FState := msExecuting;
 end;
 
@@ -169,6 +173,11 @@ begin
   else
     if not Result.AllowsInvocation then
       raise EMockException.CreateFmt(CUnexpectedInvocation, [Result.ToString]);
+end;
+
+function TMock.GetInstance: TValue;
+begin
+  Result := FProxy;
 end;
 
 function TMock.GetMode: TMockMode;
@@ -224,12 +233,8 @@ end;
 { TMock<T> }
 
 constructor TMock<T>.Create;
-var
-  i: Integer;
 begin
-  inherited Create;
-  FTypeInfo := TypeInfo(T);
-  FProxy := TIntercept.ThroughProxy<T>(FProxy, nil, [TMockBehavior.Create(Self)]);
+  inherited Create(TypeInfo(T));
 end;
 
 function TMock<T>.Any: IWhen<T>;
@@ -293,7 +298,7 @@ end;
 
 function TMock<T>.GetInstance: T;
 begin
-  Result := FProxy;
+  Result := FProxy.AsType<T>;
 end;
 
 function TMock<T>.InSequence(Sequence: ISequence): IExpect<T>;

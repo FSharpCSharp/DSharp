@@ -185,11 +185,11 @@ begin
   if Result then
   begin
     case GetInlineSize(TypeInfo) of
-      1: AResult := Self.FData.FAsSByte;
-      2: AResult := Self.FData.FAsSWord;
-      4: AResult := Self.FData.FAsSLong;
+      1: AResult := TValueData(Self).FAsSByte;
+      2: AResult := TValueData(Self).FAsSWord;
+      4: AResult := TValueData(Self).FAsSLong;
       else
-        AResult := Self.FData.FAsSInt64;
+        AResult := TValueData(Self).FAsSInt64;
     end;
   end;
 end;

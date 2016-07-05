@@ -136,7 +136,7 @@ begin
   if (FatalException is Exception) and not (FatalException is EAbort) then
   begin
     Result := Exception(FatalException);
-    Self.FFatalException := nil;
+    Exception((@Self.FatalException)^) := nil;
   end
   else
     Result := nil;

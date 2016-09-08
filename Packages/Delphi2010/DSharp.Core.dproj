@@ -52,7 +52,7 @@
 			<DelphiCompile Include="DSharp.Core.dpk">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="rtl.dcp"/>
+			<DCCReference Include="Spring.Base.dcp"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Fibers.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Iterators.pas"/>
 			<DCCReference Include="..\..\Source\Collections\DSharp.Collections.Threading.pas"/>
@@ -67,8 +67,6 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.DependencyProperty.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Detour.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Editable.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.EventArgs.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Events.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Extensions.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Fibers.pas"/>

@@ -104,6 +104,7 @@ type
 implementation
 
 uses
+  Spring.VirtualClass,
   Windows;
 
 { TVirtualClass }
@@ -111,7 +112,7 @@ uses
 constructor TVirtualClass.Create(ClassType: TClass);
 var
   i: Integer;
-  LMaxVirtualIndex: Integer;
+  LVirtualMethodCount: Integer;
   LMethod: TRttiMethod;
   LType: TRttiType;
 type
@@ -120,15 +121,11 @@ begin
   LType := FContext.GetType(ClassType);
   FMethodIntercepts := TMethodIntercepts.Create;
 
-  LMaxVirtualIndex := 0;
+  LVirtualMethodCount := GetVirtualMethodCount(ClassType);
   for LMethod in LType.GetMethods do
   begin
     if LMethod.DispatchKind = dkVtable then
     begin
-      if LMethod.VirtualIndex > LMaxVirtualIndex then
-      begin
-        LMaxVirtualIndex := LMethod.VirtualIndex;
-      end;
       if LMethod.VirtualIndex > -1 then
       begin
         FMethodIntercepts.Add(TMethodIntercept.Create(LMethod, DoInvoke));
@@ -136,9 +133,9 @@ begin
     end;
   end;
 
-  GetMem(FClassData, SizeOf(Pointer) * (LMaxVirtualIndex + 1) - vmtSelfPtr);
+  GetMem(FClassData, SizeOf(Pointer) * LVirtualMethodCount - vmtSelfPtr);
   Move(PClassData(PByte(ClassType) + vmtSelfPtr)^,
-    FClassData^, SizeOf(Pointer) * (LMaxVirtualIndex + 1) - vmtSelfPtr);
+    FClassData^, SizeOf(Pointer) * LVirtualMethodCount - vmtSelfPtr);
   GetMem(FClassData.Parent, SizeOf(Pointer));
   FClassData.Parent^ := ClassType;
   FVirtualMethodTable := PVtable(PByte(FClassData) - vmtSelfPtr);

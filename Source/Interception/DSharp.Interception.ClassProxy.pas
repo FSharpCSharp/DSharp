@@ -159,7 +159,7 @@ begin
 //              Input.Method.CallingConvention, nil));
 //          end;
         except
-          Result := Input.CreateExceptionMethodReturn(AcquireExceptionObject);
+          Result := Input.CreateExceptionMethodReturn(Exception(AcquireExceptionObject));
         end;
       end
       else

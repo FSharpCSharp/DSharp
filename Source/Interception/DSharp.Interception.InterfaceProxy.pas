@@ -103,7 +103,7 @@ begin
           Result := Input.CreateMethodReturn(
             Method.Invoke(TValue.From<IInterface>(Instance), LArgs));
         except
-          Result := Input.CreateExceptionMethodReturn(AcquireExceptionObject);
+          Result := Input.CreateExceptionMethodReturn(Exception(AcquireExceptionObject));
         end;
       end
       else

@@ -241,7 +241,7 @@ begin
   except
     on EAbort do;
     on Exception do
-      FException := AcquireExceptionObject;
+      FException := Exception(AcquireExceptionObject);
   end;
   FFinished := True;
   if FFreeOnTerminate then

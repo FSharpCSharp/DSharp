@@ -4,6 +4,7 @@ echo.
 del *.~* /s/q >nul 2>&1
 del *.local /s/q >nul 2>&1
 del *.identcache /s/q >nul 2>&1
+del *.stat /s/q >nul 2>&1
 del *.dcu /s/q >nul 2>&1
 del *.exe /s/q >nul 2>&1
 

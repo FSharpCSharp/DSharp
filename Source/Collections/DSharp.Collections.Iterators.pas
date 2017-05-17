@@ -58,6 +58,7 @@ type
   private
     fProc: TProc;
     fEnumerator: IEnumerator<T>;
+    procedure Start;
   public
     constructor Create(const proc: TProc);
 
@@ -143,26 +144,33 @@ end;
 
 function TIteratorBlock<T>.MoveNext: Boolean;
 begin
-  Result := False;
-
-  if fState = 1 then
-  begin
-{$IFDEF USE_FIBERS}
-    fEnumerator := TIteratorFiber<T>.Create(fProc);
-{$ELSE}
-    fEnumerator := TIteratorThread<T>.Create(fProc);
-{$ENDIF}
-    fState := 2;
-  end;
-
-  if fState = 2 then
-  begin
-    if fEnumerator.MoveNext then
+  case fState of
+    STATE_ENUMERATOR,
+    STATE_RUNNING:
     begin
-      fCurrent := fEnumerator.Current;
-      Result := True;
+      if fState = STATE_ENUMERATOR then
+        Start;
+
+      if fEnumerator.MoveNext then
+      begin
+        fCurrent := fEnumerator.Current;
+        Exit(True);
+      end;
+
+      fState := STATE_FINISHED;
     end;
   end;
+  Result := False;
+end;
+
+procedure TIteratorBlock<T>.Start;
+begin
+{$IFDEF USE_FIBERS}
+  fEnumerator := TIteratorFiber<T>.Create(fProc);
+{$ELSE}
+  fEnumerator := TIteratorThread<T>.Create(fProc);
+{$ENDIF}
+  fState := STATE_RUNNING;
 end;
 
 { Iterator<T> }

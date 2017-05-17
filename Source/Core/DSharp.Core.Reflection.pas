@@ -2497,7 +2497,7 @@ class function TValueHelper.Equals(const Left, Right: TArray<TValue>): Boolean;
 var
   i: Integer;
 begin
-  Result := Length(Left) = Length(Left);
+  Result := Length(Left) = Length(Right);
   if Result then
   begin
     for i := Low(Left) to High(Left) do

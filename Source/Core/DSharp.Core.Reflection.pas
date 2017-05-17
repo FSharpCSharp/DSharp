@@ -2786,6 +2786,11 @@ begin
       Result.VType := vtUnicodeString;
       Result.VUnicodeString := Pointer(ToObject.ToString);
     end;
+    tkInt64:
+    begin
+      Result.VType := vtInt64;
+      Result.VInt64 := GetReferenceToRawData;
+    end
   end;
 end;
 

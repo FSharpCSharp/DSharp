@@ -4,19 +4,19 @@ interface
 
 uses
   Classes,
-  DSharp.Collections,
-  DSharp.ComponentModel.Composition;
+  DSharp.ComponentModel.Composition,
+  Spring.Collections;
 
 type
   [PartCreationPolicy(cpShared)]
   TDemoDataProvider = class
   private
-    FContacts: IList;
-    function GetContacts: IList;
+    FContacts: IObjectList;
+    function GetContacts: IObjectList;
   public
     constructor Create;
     [Export('DemoData.Contacts')]
-    property Contacts: IList read GetContacts;
+    property Contacts: IObjectList read GetContacts;
   end;
 
 implementation
@@ -29,11 +29,11 @@ uses
 
 constructor TDemoDataProvider.Create;
 begin
-  FContacts := TObservableCollection<TObject>.Create();
+  FContacts := TObservableCollection<TObject>.Create() as IObjectList;
   FillContactList(FContacts);
 end;
 
-function TDemoDataProvider.GetContacts: IList;
+function TDemoDataProvider.GetContacts: IObjectList;
 begin
   Result := FContacts;
 end;

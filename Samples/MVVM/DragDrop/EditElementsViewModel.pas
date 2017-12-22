@@ -3,13 +3,13 @@ unit EditElementsViewModel;
 interface
 
 uses
-  DSharp.Collections;
+  Spring.Collections;
 
 type
   TEditElementsViewModel = class
   private
-    FAvailableElements: IList;
-    FSelectedElements: IList;
+    FAvailableElements: IObjectList;
+    FSelectedElements: IObjectList;
     FCurrentAvailableElement: TObject;
     FCurrentSelectedElement: TObject;
   public
@@ -18,8 +18,8 @@ type
     procedure AddElements(Sender: TObject);
     procedure RemoveElements(Sender: TObject);
 
-    property AvailableElements: IList read FAvailableElements;
-    property SelectedElements: IList read FSelectedElements;
+    property AvailableElements: IObjectList read FAvailableElements;
+    property SelectedElements: IObjectList read FSelectedElements;
 
     property CurrentAvailableElement: TObject
       read FCurrentAvailableElement write FCurrentAvailableElement;
@@ -33,8 +33,8 @@ implementation
 
 constructor TEditElementsViewModel.Create;
 begin
-  FAvailableElements := TList<TObject>.Create;
-  FSelectedElements := TList<TObject>.Create;
+  FAvailableElements := TCollections.CreateList<TObject> as IObjectList;
+  FSelectedElements := TCollections.CreateList<TObject> as IObjectList;
 end;
 
 procedure TEditElementsViewModel.AddElements(Sender: TObject);

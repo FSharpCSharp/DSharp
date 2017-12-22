@@ -354,7 +354,7 @@ begin
   if ClassType.TryGetCustomAttribute<PartCreationPolicyAttribute>(LPartCreationPolicyAttribute)
     and (LPartCreationPolicyAttribute.Policy = cpShared) then
   begin
-    Result.AsSingleton(TRefCounting.True);
+    Result.AsSingleton;
   end;
 end;
 

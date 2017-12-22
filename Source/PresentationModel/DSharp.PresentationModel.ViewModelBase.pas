@@ -36,13 +36,13 @@ uses
   DSharp.Aspects.Logging,
   DSharp.Bindings.Notifications,
   DSharp.Bindings.Validations,
-  DSharp.Collections,
   DSharp.ComponentModel.Composition,
-  DSharp.Core.Events,
   DSharp.Core.Validations,
   DSharp.PresentationModel.Screen,
   DSharp.PresentationModel.Validations,
-  DSharp.PresentationModel.WindowManager;
+  DSharp.PresentationModel.WindowManager,
+  Spring,
+  Spring.Collections;
 
 type
   [InheritedExport]
@@ -119,7 +119,7 @@ end;
 constructor TViewModelBase.Create(AOwner: TComponent);
 begin
   inherited;
-  FValidationErrors := TList<IValidationResult>.Create();
+  FValidationErrors := TCollections.CreateList<IValidationResult>;
 end;
 
 procedure TViewModelBase.AfterConstruction;
@@ -140,7 +140,8 @@ end;
 procedure TViewModelBase.DoPropertyChanged(const APropertyName: string;
   AUpdateTrigger: TUpdateTrigger);
 begin
-  FPropertyChanged.Invoke(Self, APropertyName, AUpdateTrigger);
+  FPropertyChanged.Invoke(Self, TPropertyChangedEventArgsEx.Create(
+    APropertyName, AUpdateTrigger) as IPropertyChangedEventArgs);
 end;
 
 function TViewModelBase.GetDisplayName: string;

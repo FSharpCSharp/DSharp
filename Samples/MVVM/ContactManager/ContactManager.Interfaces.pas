@@ -5,9 +5,9 @@ interface
 uses
   Contact,
   DSharp.Aspects.Logging,
-  DSharp.Collections,
   DSharp.ComponentModel.Composition,
-  DSharp.Core.Lazy;
+  DSharp.Core.Lazy,
+  Spring.Collections;
 
 type
   [InheritedExport]

@@ -40,8 +40,6 @@ uses
   DSharp.Bindings,
   DSharp.Bindings.Collections,
   DSharp.Bindings.VCLControls,
-  DSharp.Collections,
-  DSharp.Core.Events,
   DSharp.Core.Reflection,
   DSharp.PresentationModel.ConventionManager,
   DSharp.PresentationModel.ElementConvention,
@@ -50,6 +48,8 @@ uses
   DSharp.PresentationModel.ViewModelBinder,
   DSharp.PresentationModel.ViewLocator,
   DSharp.Windows.CustomPresenter,
+  Spring,
+  Spring.Collections,
   Rtti,
   SysUtils,
   TypInfo;
@@ -75,8 +75,7 @@ var
 { TConventionManager }
 
 procedure TConventionManager.FlowPanelCollectionChanged(Sender: TObject;
-  const Item: TObject; Action: TCollectionChangedAction);
-var
+  const Item: TObject; Action: TCollectionChangedAction);var
   i: Integer;
   LFlowPanel: TFlowPanel;
   LItemIndex: Integer;
@@ -84,7 +83,7 @@ var
 begin
   LFlowPanel := TFlowPanel(Sender);
   case Action of
-    caAdd:
+    caAdded:
     begin
       LView := ViewLocator.GetOrCreateViewType(Item.ClassType) as TControl;
 
@@ -96,7 +95,7 @@ begin
 
       ViewModelBinder.Bind(Item, LView);
     end;
-    caRemove:
+    caRemoved:
     begin
       LView := nil;
       for i := 0 to Pred(LFlowPanel.ControlCount) do
@@ -125,7 +124,7 @@ var
 begin
   LPageControl := TPageControl(Sender);
   case Action of
-    caAdd:
+    caAdded:
     begin
       LView := ViewLocator.GetOrCreateViewType(Item.ClassType) as TControl;
       LItemIndex := LPageControl.View.ItemsSource.IndexOf(Item);
@@ -153,7 +152,7 @@ var
 begin
   LScrollBox := TScrollBox(Sender);
   case Action of
-    caAdd:
+    caAdded:
     begin
       LView := ViewLocator.GetOrCreateViewType(Item.ClassType) as TControl;
       LView.Left := 0;
@@ -177,7 +176,7 @@ begin
 
       ViewModelBinder.Bind(Item, LView);
     end;
-    caRemove:
+    caRemoved:
     begin
       LView := nil;
       for i := 0 to Pred(LScrollBox.ControlCount) do
@@ -245,8 +244,8 @@ begin
         AConvention: TElementConvention)
       var
         LCollectionChanged: IEvent<TCollectionChangedEvent>;
-        LItems: IList;
-        LItem: TValue;
+        LItems: IObjectList;
+        LItem: TObject;
       begin
         SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
         ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
@@ -255,7 +254,7 @@ begin
         begin
           for LItem in LItems do
           begin
-            Manager.FlowPanelCollectionChanged(AViewElement, LItem.ToObject, caAdd);
+            Manager.FlowPanelCollectionChanged(AViewElement, LItem, caAdded);
           end;
         end;
         LCollectionChanged := TFlowPanel(AViewElement).View.OnCollectionChanged;
@@ -290,8 +289,8 @@ begin
       AConvention: TElementConvention)
     var
       LCollectionChanged: IEvent<TCollectionChangedEvent>;
-      LItems: IList;
-      LItem: TValue;
+      LItems: IObjectList;
+      LItem: TObject;
     begin
       SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
       ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
@@ -300,7 +299,7 @@ begin
       begin
         for LItem in LItems do
         begin
-          Manager.PageControlCollectionChanged(AViewElement, LItem.ToObject, caAdd);
+          Manager.PageControlCollectionChanged(AViewElement, LItem, caAdded);
         end;
       end;
       LCollectionChanged := TPageControl(AViewElement).View.OnCollectionChanged;
@@ -346,8 +345,8 @@ begin
       AConvention: TElementConvention)
     var
       LCollectionChanged: IEvent<TCollectionChangedEvent>;
-      LItems: IList;
-      LItem: TValue;
+      LItems: IObjectList;
+      LItem: TObject;
     begin
       SetBinding(AViewModel, APropertyName, AViewElement, ABindingType, AConvention);
       ConfigureSelectedItem(AViewModel, APropertyName, AViewElement, 'View.CurrentItem');
@@ -356,7 +355,7 @@ begin
       begin
         for LItem in LItems do
         begin
-          Manager.ScrollBoxCollectionChanged(AViewElement, LItem.ToObject, caAdd);
+          Manager.ScrollBoxCollectionChanged(AViewElement, LItem, caAdded);
         end;
       end;
       LCollectionChanged := TScrollBox(AViewElement).View.OnCollectionChanged;

@@ -43,9 +43,10 @@ type
     IEditable)
   private
     FCache: T;
+  protected
     FItem: T;
     procedure SetItem(const Value: T);
-  protected
+
     // IEditable
     procedure BeginEdit;
     procedure CancelEdit;

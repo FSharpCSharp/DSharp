@@ -3,10 +3,11 @@ unit MainViewModel;
 interface
 
 uses
-  DSharp.Collections,
   DSharp.ComponentModel.Composition,
   DSharp.PresentationModel.ViewModelBase,
-  Interfaces;
+  Interfaces,
+  Spring.Collections,
+  Spring.Container.Common;
 
 type
   [PartCreationPolicy(cpShared)]
@@ -14,6 +15,7 @@ type
   private
     fContent: IList<IDetailViewModel>;
   public
+    [Inject]
     constructor Create; override;
     procedure AddDetail;
     property Content: IList<IDetailViewModel> read fContent;
@@ -34,7 +36,7 @@ end;
 constructor TMainViewModel.Create;
 begin
   inherited;
-  fContent := TList<IDetailViewModel>.Create;
+  fContent := TCollections.CreateList<IDetailViewModel>;
 end;
 
 initialization

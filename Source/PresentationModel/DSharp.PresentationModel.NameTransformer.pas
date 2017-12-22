@@ -32,7 +32,7 @@ unit DSharp.PresentationModel.NameTransformer;
 interface
 
 uses
-  DSharp.Collections;
+  Spring.Collections;
 
 type
   TRule = class
@@ -50,8 +50,11 @@ type
     function Transform(const Source: string): IEnumerable<string>;
   end;
 
-  TNameTransformer = class(TObjectList<TRule>, INameTransformer)
+  TNameTransformer = class(TInterfacedObject, INameTransformer)
+  private
+    fRules: IList<TRule>;
   public
+    constructor Create;
     procedure AddRule(const ReplacePattern, ReplacementValue: string);
     function Transform(const Source: string): IEnumerable<string>;
   end;
@@ -71,20 +74,25 @@ end;
 
 { TNameTransformer }
 
+constructor TNameTransformer.Create;
+begin
+  fRules := TCollections.CreateObjectList<TRule>;
+end;
+
 procedure TNameTransformer.AddRule(const ReplacePattern,
   ReplacementValue: string);
 begin
-  Add(TRule.Create(ReplacePattern, ReplacementValue));
+  fRules.Add(TRule.Create(ReplacePattern, ReplacementValue));
 end;
 
 function TNameTransformer.Transform(const Source: string): IEnumerable<string>;
 var
-  LNameList: TList<string>;
+  LNameList: IList<string>;
   LRule: TRule;
 begin
-  LNameList := TList<string>.Create;
+  LNameList := TCollections.CreateList<string>;
 
-  for LRule in Self do
+  for LRule in fRules do
   begin
     if TRegEx.IsMatch(Source, LRule.ReplacePattern) then
     begin

@@ -5,15 +5,15 @@ interface
 uses
   Contact,
   ContactManager.Interfaces,
-  DSharp.Collections,
   DSharp.ComponentModel.Composition,
-  DSharp.PresentationModel.ViewModelBase;
+  DSharp.PresentationModel.ViewModelBase,
+  Spring.Collections;
 
 type
   TContactsOverviewViewModel = class(TViewModelBase, IContactsOverviewViewModel)
   private
     [Import('DemoData.Contacts')]
-    FContacts: IList;
+    FContacts: IObjectList;
     [ImportLazy]
     FContactDetails: IContactDetailsViewModel;
     FSelectedContact: TContact;
@@ -29,7 +29,7 @@ type
     property CanDeleteContact: Boolean read GetCanDeleteContact;
     property CanEditContact: Boolean read GetCanEditContact;
     property ContactDetails: IContactDetailsViewModel read FContactDetails;
-    property Contacts: IList read FContacts;
+    property Contacts: IObjectList read FContacts;
     property SelectedContact: TContact read GetSelectedContact write SetSelectedContact;
   end;
 

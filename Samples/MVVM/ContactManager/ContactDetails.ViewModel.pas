@@ -59,7 +59,7 @@ end;
 
 function TContactDetailsViewModel.GetContact: TContact;
 begin
-  Result := Item;
+  Result := FItem;
 end;
 
 function TContactDetailsViewModel.GetDisplayName: string;
@@ -90,7 +90,7 @@ end;
 
 procedure TContactDetailsViewModel.SetContact(const Value: TContact);
 begin
-  Item := Value;
+  inherited SetItem(Value);
 end;
 
 initialization

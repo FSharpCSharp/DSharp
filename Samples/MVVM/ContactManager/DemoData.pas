@@ -3,10 +3,10 @@ unit DemoData;
 interface
 
 uses
-  DSharp.Collections;
+  Spring.Collections;
 
-function CreateContactList: IList;
-procedure FillContactList(const AObjectList: IList);
+function CreateContactList: IObjectList;
+procedure FillContactList(const AObjectList: IObjectList);
 
 implementation
 
@@ -14,13 +14,13 @@ uses
   Contact,
   DSharp.Collections.ObservableCollection;
 
-function CreateContactList: IList;
+function CreateContactList: IObjectList;
 begin
-  Result := TObservableCollection<TObject>.Create(True);
+  Result := TObservableCollection<TObject>.Create(True) as IObjectList;
   FillContactList(Result);
 end;
 
-procedure FillContactList(const AObjectList: IList);
+procedure FillContactList(const AObjectList: IObjectList);
 var
   LContact: TContact;
 begin

@@ -42,28 +42,28 @@ uses
   SysUtils;
 
 type
-  TIteratorProc<T> = reference to function(var state: Integer; var current: T): Boolean;
+  TIteratorProc<T> = reference to function(var current: T): Boolean;
 
   TCustomIterator<T> = class(TIterator<T>)
   private
     fProc: TIteratorProc<T>;
+  protected
+    function Clone: TIterator<T>; override;
+    function TryMoveNext(var current: T): Boolean; override;
   public
     constructor Create(const proc: TIteratorProc<T>);
-
-    function Clone: TIterator<T>; override;
-    function MoveNext: Boolean; override;
   end;
 
   TIteratorBlock<T> = class(TIterator<T>)
   private
     fProc: TProc;
     fEnumerator: IEnumerator<T>;
-    procedure Start;
+  protected
+    function Clone: TIterator<T>; override;
+    procedure Start; override;
+    function TryMoveNext(var current: T): Boolean; override;
   public
     constructor Create(const proc: TProc);
-
-    function Clone: TIterator<T>; override;
-    function MoveNext: Boolean; override;
   end;
 
   Iterator<T> = record
@@ -124,9 +124,9 @@ begin
   Result := TCustomIterator<T>.Create(fProc);
 end;
 
-function TCustomIterator<T>.MoveNext: Boolean;
+function TCustomIterator<T>.TryMoveNext(var current: T): Boolean;
 begin
-  Result := fProc(fState, fCurrent);
+  Result := fProc(current);
 end;
 
 { TIteratorBlock<T> }
@@ -142,27 +142,6 @@ begin
   Result := TIteratorBlock<T>.Create(fProc);
 end;
 
-function TIteratorBlock<T>.MoveNext: Boolean;
-begin
-  case fState of
-    STATE_ENUMERATOR,
-    STATE_RUNNING:
-    begin
-      if fState = STATE_ENUMERATOR then
-        Start;
-
-      if fEnumerator.MoveNext then
-      begin
-        fCurrent := fEnumerator.Current;
-        Exit(True);
-      end;
-
-      fState := STATE_FINISHED;
-    end;
-  end;
-  Result := False;
-end;
-
 procedure TIteratorBlock<T>.Start;
 begin
 {$IFDEF USE_FIBERS}
@@ -170,7 +149,13 @@ begin
 {$ELSE}
   fEnumerator := TIteratorThread<T>.Create(fProc);
 {$ENDIF}
-  fState := STATE_RUNNING;
+end;
+
+function TIteratorBlock<T>.TryMoveNext(var current: T): Boolean;
+begin
+  Result := fEnumerator.MoveNext;
+  if Result then
+    current := fEnumerator.Current;
 end;
 
 { Iterator<T> }

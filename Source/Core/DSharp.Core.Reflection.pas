@@ -712,7 +712,8 @@ uses
   Generics.Defaults,
   Math,
   StrUtils,
-  SysConst;
+  SysConst,
+  Spring;
 
 var
   Context: TRttiContext;
@@ -730,19 +731,13 @@ end;
 
 function ConvAny2Nullable(const ASource: TValue; ATarget: PTypeInfo; out AResult: TValue): Boolean;
 var
-  LType: TRttiType;
   LValue: TValue;
-  LBuffer: array of Byte;
 begin
-  Result := TryGetRttiType(ATarget, LType) and LType.IsGenericTypeOf('Nullable')
-    and ASource.TryConvert(LType.GetGenericArguments[0].Handle, LValue);
+  Result := IsNullable(ATarget) and ASource.TryConvert(GetUnderlyingType(ATarget), LValue);
   if Result then
   begin
-    SetLength(LBuffer, LType.TypeSize);
-    Move(LValue.GetReferenceToRawData^, LBuffer[0], LType.TypeSize - SizeOf(string));
-    PString(@LBuffer[LType.TypeSize - SizeOf(string)])^ := DefaultTrueBoolStr;
-    TValue.Make(LBuffer, LType.Handle, AResult);
-    PString(@LBuffer[LType.TypeSize - SizeOf(string)])^ := '';
+    TValue.Make(nil, ATarget, AResult);
+    TNullableHelper.Create(ATarget).SetValue(AResult.GetReferenceToRawData, LValue);
   end
 end;
 
@@ -973,7 +968,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkInteger
     (
@@ -984,7 +979,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvOrd2Ord, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvOrd2Str, ConvFail, ConvFail, ConvFail
+      ConvOrd2Str, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkChar
     (
@@ -995,7 +990,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvOrd2Ord, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkEnumeration
     (
@@ -1006,7 +1001,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvOrd2Ord, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvOrd2Str, ConvFail, ConvFail, ConvFail
+      ConvOrd2Str, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkFloat
     (
@@ -1017,7 +1012,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFloat2Ord, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFloat2Str, ConvFail, ConvFail, ConvFail
+      ConvFloat2Str, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkString
     (
@@ -1028,7 +1023,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkSet
     (
@@ -1039,7 +1034,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkClass
     (
@@ -1050,7 +1045,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkMethod
     (
@@ -1061,7 +1056,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkWChar
     (
@@ -1072,7 +1067,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvOrd2Ord, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkLString
     (
@@ -1083,7 +1078,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkWString
     (
@@ -1094,7 +1089,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkVariant
     (
@@ -1105,7 +1100,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkArray
     (
@@ -1116,7 +1111,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkRecord
     (
@@ -1127,7 +1122,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkInterface
     (
@@ -1138,7 +1133,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvIntf2Intf, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkInt64
     (
@@ -1149,7 +1144,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvOrd2Ord, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvOrd2Str, ConvFail, ConvFail, ConvFail
+      ConvOrd2Str, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkDynArray
     (
@@ -1160,7 +1155,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkUString
     (
@@ -1171,7 +1166,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvStr2Ord, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkClassRef
     (
@@ -1182,7 +1177,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkPointer
     (
@@ -1193,7 +1188,7 @@ const
       // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     ),
     // tkProcedure
     (
@@ -1201,11 +1196,24 @@ const
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkSet, tkClass, tkMethod, tkWChar, tkLString, tkWString
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
-      // tkVariant, tkArray, tkRecord, tkInterface, tkInt64, tkDynArray
+      // tkSet, tkClass, tkMethod, tkWChar, tkLString, tkWString
       ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
       // tkUString, tkClassRef, tkPointer, tkProcedure
-      ConvFail, ConvFail, ConvFail, ConvFail
+      ConvFail, ConvFail, ConvFail, ConvFail {$IF Declared(tkMRecord)}, ConvFail{$IFEND}
     )
+{$IF Declared(tkMRecord)}
+    // tkMRecord
+    , (
+      // tkUnknown, tkInteger, tkChar, tkEnumeration, tkFloat,  tkString,
+      ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
+      // tkSet, tkClass, tkMethod, tkWChar, tkLString, tkWString
+      ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
+      // tkSet, tkClass, tkMethod, tkWChar, tkLString, tkWString
+      ConvFail, ConvFail, ConvFail, ConvFail, ConvFail, ConvFail,
+      // tkUString, tkClassRef, tkPointer, tkProcedure, tkMRecord
+      ConvFail, ConvFail, ConvFail, ConvFail, ConvFail
+    )
+{$IFEND}
   );
 {$ENDREGION}
 

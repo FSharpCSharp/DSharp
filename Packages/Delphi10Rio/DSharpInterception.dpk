@@ -1,0 +1,57 @@
+package DSharpInterception;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'DSharp Interception Library'}
+{$LIBSUFFIX '260'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  DSharp.Core;
+
+contains
+  DSharp.Interception in '..\..\Source\Interception\DSharp.Interception.pas',
+  DSharp.Interception.ApplyNoPoliciesMatchingRule in '..\..\Source\Interception\DSharp.Interception.ApplyNoPoliciesMatchingRule.pas',
+  DSharp.Interception.AttributeDrivenPolicy in '..\..\Source\Interception\DSharp.Interception.AttributeDrivenPolicy.pas',
+  DSharp.Interception.AttributeDrivenPolicyMatchingRule in '..\..\Source\Interception\DSharp.Interception.AttributeDrivenPolicyMatchingRule.pas',
+  DSharp.Interception.CallHandler in '..\..\Source\Interception\DSharp.Interception.CallHandler.pas',
+  DSharp.Interception.ClassInterceptor in '..\..\Source\Interception\DSharp.Interception.ClassInterceptor.pas',
+  DSharp.Interception.ClassProxy in '..\..\Source\Interception\DSharp.Interception.ClassProxy.pas',
+  DSharp.Interception.HandlerPipeline in '..\..\Source\Interception\DSharp.Interception.HandlerPipeline.pas',
+  DSharp.Interception.InjectionPolicy in '..\..\Source\Interception\DSharp.Interception.InjectionPolicy.pas',
+  DSharp.Interception.InterceptionBehaviorPipeline in '..\..\Source\Interception\DSharp.Interception.InterceptionBehaviorPipeline.pas',
+  DSharp.Interception.InterfaceInterceptor in '..\..\Source\Interception\DSharp.Interception.InterfaceInterceptor.pas',
+  DSharp.Interception.InterfaceMapping in '..\..\Source\Interception\DSharp.Interception.InterfaceMapping.pas',
+  DSharp.Interception.InterfaceProxy in '..\..\Source\Interception\DSharp.Interception.InterfaceProxy.pas',
+  DSharp.Interception.MethodImplementationInfo in '..\..\Source\Interception\DSharp.Interception.MethodImplementationInfo.pas',
+  DSharp.Interception.MethodInvocation in '..\..\Source\Interception\DSharp.Interception.MethodInvocation.pas',
+  DSharp.Interception.MethodReturn in '..\..\Source\Interception\DSharp.Interception.MethodReturn.pas',
+  DSharp.Interception.PipelineManager in '..\..\Source\Interception\DSharp.Interception.PipelineManager.pas',
+  DSharp.Interception.PolicyInjectionBehavior in '..\..\Source\Interception\DSharp.Interception.PolicyInjectionBehavior.pas',
+  DSharp.Interception.PolicySet in '..\..\Source\Interception\DSharp.Interception.PolicySet.pas';
+
+end.

@@ -74,7 +74,6 @@
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Lazy.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.MethodIntercept.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.NotificationHandler.pas"/>
-			<DCCReference Include="..\..\Source\Core\DSharp.Core.Nullable.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Properties.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
 			<DCCReference Include="..\..\Source\Core\DSharp.Core.Threading.pas"/>

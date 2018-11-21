@@ -1,13 +1,12 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{DF27A4A5-53FD-44E5-8375-1538912F8732}</ProjectGuid>
-        <MainSource>DSharp.Core.dpk</MainSource>
+        <ProjectGuid>{42AA9CF6-ECBC-4A29-903B-9C21946929EF}</ProjectGuid>
+        <MainSource>DataBindings.dpk</MainSource>
+        <ProjectVersion>18.5</ProjectVersion>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <AppType>Package</AppType>
         <FrameworkType>None</FrameworkType>
-        <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-        <ProjectVersion>16.1</ProjectVersion>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>7</TargetedPlatforms>
     </PropertyGroup>
@@ -63,12 +62,6 @@
         <Cfg_2>true</Cfg_2>
         <Base>true</Base>
     </PropertyGroup>
-    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
-        <Cfg_2_Win32>true</Cfg_2_Win32>
-        <CfgParent>Cfg_2</CfgParent>
-        <Cfg_2>true</Cfg_2>
-        <Base>true</Base>
-    </PropertyGroup>
     <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win64)'!=''">
         <Cfg_2_Win64>true</Cfg_2_Win64>
         <CfgParent>Cfg_2</CfgParent>
@@ -76,118 +69,83 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <SanitizedProjectName>DSharp_Core</SanitizedProjectName>
-        <DCC_DcuOutput>..\..\Library\DelphiXE7</DCC_DcuOutput>
-        <DCC_Description>DSharp Core Library</DCC_Description>
-        <DCC_Namespace>System;$(DCC_Namespace)</DCC_Namespace>
-        <DllSuffix>.DelphiXE7</DllSuffix>
-        <RuntimeOnlyPackage>true</RuntimeOnlyPackage>
-        <DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
+        <SanitizedProjectName>DataBindings</SanitizedProjectName>
+        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1031</VerInfo_Locale>
-        <DCC_E>false</DCC_E>
-        <GenPackage>true</GenPackage>
-        <DCC_ImageBase>00400000</DCC_ImageBase>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <DCC_S>false</DCC_S>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <DllSuffix>250</DllSuffix>
+        <DCC_Description>DSharp data binding runtime package</DCC_Description>
+        <DCC_OutputNeverBuildDcps>true</DCC_OutputNeverBuildDcps>
+        <RuntimeOnlyPackage>true</RuntimeOnlyPackage>
+        <GenPackage>true</GenPackage>
         <GenDll>true</GenDll>
-        <DCC_N>false</DCC_N>
-        <DCC_F>false</DCC_F>
-        <DCC_K>false</DCC_K>
+        <DCC_ImageBase>00400000</DCC_ImageBase>
+        <DCC_DcuOutput>..\..\Library\Delphi10Rio</DCC_DcuOutput>
+        <DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_OSX32)'!=''">
-        <VerInfo_Keys>CFBundleName=$(MSBuildProjectName);CFBundleDisplayName=$(MSBuildProjectName);CFBundleIdentifier=$(MSBuildProjectName);CFBundleVersion=1.0.0.0;CFBundlePackageType=APPL;CFBundleSignature=????;CFBundleAllowMixedLocalizations=YES;CFBundleExecutable=$(MSBuildProjectName);NSHighResolutionCapable=true</VerInfo_Keys>
-        <DCC_DcuOutput>..\..\Library\DelphiXE7\OSX32</DCC_DcuOutput>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleVersion=1.0.0;NSLocationWhenInUseUsageDescription=The reason for accessing the location information of the user;NSLocationAlwaysUsageDescription=The reason for accessing the location information of the user;NSContactsUsageDescription=The reason for accessing the contacts;CFBundleShortVersionString=1.0.0;NSLocationAlwaysAndWhenInUseUsageDescription=The reason for accessing the location information of the user</VerInfo_Keys>
+        <DCC_DcuOutput>..\..\Library\DelphiXE8\OSX32</DCC_DcuOutput>
         <Debugger_Launcher>/usr/X11/bin/xterm -e &quot;%debuggee%&quot;</Debugger_Launcher>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
-        <DCC_UsePackage>vcl;$(DCC_UsePackage)</DCC_UsePackage>
-        <DCC_Namespace>Winapi;$(DCC_Namespace)</DCC_Namespace>
-        <RuntimeOnlyPackage>true</RuntimeOnlyPackage>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Locale>1033</VerInfo_Locale>
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
+        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
-        <DCC_UsePackage>vcl;$(DCC_UsePackage)</DCC_UsePackage>
-        <DCC_Namespace>Winapi;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_DcuOutput>..\..\Library\DelphiXE7\Win64</DCC_DcuOutput>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <DCC_DcuOutput>..\..\Library\DelphiXE8\Win64</DCC_DcuOutput>
+        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
+        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
+        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
         <DCC_Optimize>false</DCC_Optimize>
         <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
-        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_OSX32)'!=''">
-        <VerInfo_Keys>CFBundleName=$(MSBuildProjectName);CFBundleDisplayName=$(MSBuildProjectName);CFBundleIdentifier=$(MSBuildProjectName);CFBundleVersion=1.0.0.0;CFBundlePackageType=APPL;CFBundleSignature=????;CFBundleAllowMixedLocalizations=YES;CFBundleExecutable=$(MSBuildProjectName);NSHighResolutionCapable=true</VerInfo_Keys>
-        <DCC_RemoteDebug>true</DCC_RemoteDebug>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleVersion=1.0.0;NSLocationWhenInUseUsageDescription=The reason for accessing the location information of the user;NSLocationAlwaysUsageDescription=The reason for accessing the location information of the user;NSContactsUsageDescription=The reason for accessing the contacts;CFBundleShortVersionString=1.0.0;NSLocationAlwaysAndWhenInUseUsageDescription=The reason for accessing the location information of the user</VerInfo_Keys>
+        <Debugger_Launcher>/usr/X11/bin/xterm -e &quot;%debuggee%&quot;</Debugger_Launcher>
+        <BT_BuildType>Debug</BT_BuildType>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <RuntimeOnlyPackage>true</RuntimeOnlyPackage>
-        <VerInfo_Locale>1033</VerInfo_Locale>
+        <DllSuffix>260</DllSuffix>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
+        <DCC_RemoteDebug>true</DCC_RemoteDebug>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
-        <DCC_DebugInformation>0</DCC_DebugInformation>
-        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+        <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_OSX32)'!=''">
-        <VerInfo_Keys>CFBundleName=$(MSBuildProjectName);CFBundleDisplayName=$(MSBuildProjectName);CFBundleIdentifier=$(MSBuildProjectName);CFBundleVersion=1.0.0.0;CFBundlePackageType=APPL;CFBundleSignature=????;CFBundleAllowMixedLocalizations=YES;CFBundleExecutable=$(MSBuildProjectName);NSHighResolutionCapable=true</VerInfo_Keys>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleVersion=1.0.0;NSLocationWhenInUseUsageDescription=The reason for accessing the location information of the user;NSLocationAlwaysUsageDescription=The reason for accessing the location information of the user;NSContactsUsageDescription=The reason for accessing the contacts;CFBundleShortVersionString=1.0.0;NSLocationAlwaysAndWhenInUseUsageDescription=The reason for accessing the location information of the user</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="Spring.Base.dcp"/>
-        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Fibers.pas"/>
-        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Iterators.pas"/>
-        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.Threading.pas"/>
-        <DCCReference Include="..\..\Source\ComponentModel\DSharp.ComponentModel.DataAnnotations.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Cache.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Collections.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.CopyOperator.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.DataConversion.Default.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.DataTemplates.Default.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.DependencyProperty.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Detour.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Dynamics.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Editable.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Expressions.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Extensions.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Fibers.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Framework.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Generics.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Lazy.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.MethodIntercept.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.NotificationHandler.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Properties.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Reflection.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Threading.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Times.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Utils.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.Validations.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.VirtualClass.pas"/>
-        <DCCReference Include="..\..\Source\Core\DSharp.Core.VirtualInterface.pas"/>
-        <DCCReference Include="..\..\Source\Logging\DSharp.Logging.pas"/>
-        <DCCReference Include="..\..\Source\Core\ObjAutoPatch.pas"/>
-        <DCCReference Include="..\..\Source\Core\PatchUtils.pas"/>
-        <DCCReference Include="..\..\Source\Core\RttiPatch.pas"/>
+        <DCCReference Include="xmlrtl.dcp"/>
+        <DCCReference Include="DSharp.Core.dcp"/>
+        <DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.pas"/>
+        <DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Collections.pas"/>
+        <DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.pas"/>
+        <DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.CollectionView.Adapters.pas"/>
+        <DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Exceptions.pas"/>
+        <DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Notifications.pas"/>
+        <DCCReference Include="..\..\Source\Bindings\DSharp.Bindings.Validations.pas"/>
+        <DCCReference Include="..\..\Source\Collections\DSharp.Collections.ObservableCollection.pas"/>
+        <DCCReference Include="..\..\Source\Core\DSharp.Core.PropertyChangedBase.pas"/>
+        <DCCReference Include="..\..\Source\Core\DSharp.Core.XNode.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -200,14 +158,13 @@
             <CfgParent>Base</CfgParent>
         </BuildConfiguration>
     </ItemGroup>
+    <Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
+    <Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
     <ProjectExtensions>
         <Borland.Personality>Delphi.Personality.12</Borland.Personality>
         <Borland.ProjectType>Package</Borland.ProjectType>
         <BorlandProject>
             <Delphi.Personality>
-                <Source>
-                    <Source Name="MainSource">DSharp.Core.dpk</Source>
-                </Source>
                 <VersionInfo>
                     <VersionInfo Name="IncludeVerInfo">True</VersionInfo>
                     <VersionInfo Name="AutoIncBuild">False</VersionInfo>
@@ -235,12 +192,17 @@
                     <VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
                     <VersionInfoKeys Name="Comments"/>
                 </VersionInfoKeys>
+                <Source>
+                    <Source Name="MainSource">DataBindings.dpk</Source>
+                </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k200.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp200.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\DataExplorerDBXPluginEnt260.bpl">DBExpress Enterprise Data Explorer Integration</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k260.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp260.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
+                <Platform value="Linux64">False</Platform>
                 <Platform value="OSX32">True</Platform>
                 <Platform value="Win32">True</Platform>
                 <Platform value="Win64">True</Platform>
@@ -248,6 +210,4 @@
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>
     </ProjectExtensions>
-    <Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
-    <Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
 </Project>
